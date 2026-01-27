@@ -91,7 +91,7 @@ const App = () => (
               <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
               
               {/* Other protected routes */}
-              <Route path="/calendar" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+              <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
               <Route path="/progress" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
