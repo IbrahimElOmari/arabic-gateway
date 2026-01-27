@@ -8,89 +8,130 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* HVA Green/Blue Color Palette - Light Mode */
+    --background: 150 20% 98%;
+    --foreground: 200 60% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 200 60% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 200 60% 10%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary: Deep teal/green */
+    --primary: 160 50% 35%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary: Light blue-green */
+    --secondary: 170 35% 92%;
+    --secondary-foreground: 160 50% 25%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted: Soft gray-green */
+    --muted: 160 15% 93%;
+    --muted-foreground: 160 10% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent: Vibrant teal */
+    --accent: 175 60% 45%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Success: Green */
+    --success: 142 70% 45%;
+    --success-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Warning: Amber */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 10%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 170 20% 88%;
+    --input: 170 20% 88%;
+    --ring: 160 50% 35%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Sidebar colors */
+    --sidebar-background: 160 25% 97%;
+    --sidebar-foreground: 200 40% 20%;
+    --sidebar-primary: 160 50% 35%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 170 30% 92%;
+    --sidebar-accent-foreground: 160 50% 25%;
+    --sidebar-border: 170 20% 88%;
+    --sidebar-ring: 160 50% 45%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Chart colors */
+    --chart-1: 160 50% 40%;
+    --chart-2: 200 60% 50%;
+    --chart-3: 142 70% 45%;
+    --chart-4: 38 92% 50%;
+    --chart-5: 280 60% 50%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* HVA Green/Blue Color Palette - Dark Mode */
+    --background: 200 50% 8%;
+    --foreground: 150 20% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 200 45% 12%;
+    --card-foreground: 150 20% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 200 45% 12%;
+    --popover-foreground: 150 20% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Primary: Lighter teal for dark mode */
+    --primary: 160 45% 55%;
+    --primary-foreground: 200 50% 8%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    /* Secondary: Dark blue-green */
+    --secondary: 180 30% 18%;
+    --secondary-foreground: 150 30% 85%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    /* Muted: Dark gray-blue */
+    --muted: 200 35% 15%;
+    --muted-foreground: 160 15% 60%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    /* Accent: Bright teal */
+    --accent: 175 55% 50%;
+    --accent-foreground: 200 50% 8%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    /* Success */
+    --success: 142 60% 50%;
+    --success-foreground: 200 50% 8%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Warning */
+    --warning: 38 85% 55%;
+    --warning-foreground: 200 50% 8%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 200 35% 20%;
+    --input: 200 35% 20%;
+    --ring: 160 45% 55%;
+
+    /* Sidebar colors - dark */
+    --sidebar-background: 200 50% 10%;
+    --sidebar-foreground: 150 20% 90%;
+    --sidebar-primary: 160 45% 55%;
+    --sidebar-primary-foreground: 200 50% 8%;
+    --sidebar-accent: 180 30% 18%;
+    --sidebar-accent-foreground: 150 30% 85%;
+    --sidebar-border: 200 35% 20%;
+    --sidebar-ring: 160 45% 60%;
+
+    /* Chart colors - dark */
+    --chart-1: 160 45% 55%;
+    --chart-2: 200 55% 55%;
+    --chart-3: 142 60% 50%;
+    --chart-4: 38 85% 55%;
+    --chart-5: 280 55% 55%;
+  }
+
+  /* RTL Support for Arabic */
+  [dir="rtl"] {
+    --font-sans: "Noto Sans Arabic", "Noto Sans", system-ui, sans-serif;
   }
 }
 
