@@ -1,0 +1,105 @@
+{
+  "app": {
+    "name": "Huis van het Arabisch",
+    "shortName": "HVA",
+    "tagline": "Leer Arabisch met passie en toewijding"
+  },
+  "common": {
+    "loading": "Laden...",
+    "error": "Er is een fout opgetreden",
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "delete": "Verwijderen",
+    "edit": "Bewerken",
+    "create": "Aanmaken",
+    "search": "Zoeken",
+    "filter": "Filteren",
+    "submit": "Verzenden",
+    "back": "Terug",
+    "next": "Volgende",
+    "previous": "Vorige",
+    "close": "Sluiten",
+    "yes": "Ja",
+    "no": "Nee",
+    "or": "of",
+    "and": "en"
+  },
+  "auth": {
+    "login": "Inloggen",
+    "logout": "Uitloggen",
+    "register": "Registreren",
+    "email": "E-mailadres",
+    "password": "Wachtwoord",
+    "confirmPassword": "Bevestig wachtwoord",
+    "forgotPassword": "Wachtwoord vergeten?",
+    "resetPassword": "Wachtwoord resetten",
+    "fullName": "Volledige naam",
+    "phone": "Telefoonnummer",
+    "address": "Adres",
+    "dateOfBirth": "Geboortedatum",
+    "studyLevel": "Studieniveau",
+    "alreadyHaveAccount": "Heb je al een account?",
+    "noAccount": "Nog geen account?",
+    "loginSuccess": "Succesvol ingelogd",
+    "registerSuccess": "Account succesvol aangemaakt",
+    "logoutSuccess": "Succesvol uitgelogd",
+    "invalidCredentials": "Ongeldige inloggegevens",
+    "passwordMismatch": "Wachtwoorden komen niet overeen"
+  },
+  "roles": {
+    "admin": "Beheerder",
+    "teacher": "Leerkracht",
+    "student": "Leerling"
+  },
+  "levels": {
+    "beginner": "Beginner",
+    "intermediate": "Gemiddeld",
+    "advanced": "Gevorderd"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "selfStudy": "Zelfstudie",
+    "liveLessons": "Live Lessen",
+    "recordings": "Opnames",
+    "forum": "Forum",
+    "chat": "Chat",
+    "calendar": "Kalender",
+    "progress": "Voortgang",
+    "settings": "Instellingen",
+    "profile": "Profiel",
+    "admin": "Beheer"
+  },
+  "categories": {
+    "reading": "Lezen",
+    "writing": "Schrijven",
+    "listening": "Luisteren",
+    "speaking": "Spreken",
+    "grammar": "Grammatica"
+  },
+  "dashboard": {
+    "welcome": "Welkom terug",
+    "yourProgress": "Jouw voortgang",
+    "upcomingLessons": "Aankomende lessen",
+    "recentExercises": "Recente oefeningen",
+    "notifications": "Meldingen"
+  },
+  "settings": {
+    "language": "Taal",
+    "theme": "Thema",
+    "themeLight": "Licht",
+    "themeDark": "Donker",
+    "themeSystem": "Systeem",
+    "themeStyle": "Stijl",
+    "professional": "Professioneel",
+    "playful": "Speels",
+    "notifications": "Meldingen",
+    "privacy": "Privacy"
+  },
+  "install": {
+    "title": "Installeer de App",
+    "description": "Installeer Huis van het Arabisch op je apparaat voor een betere ervaring",
+    "button": "Installeren",
+    "iosInstructions": "Tik op het deel-icoon en selecteer 'Zet op beginscherm'"
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "app": {
+    "name": "بيت العربية",
+    "shortName": "HVA",
+    "tagline": "تعلم العربية بشغف وتفانٍ"
+  },
+  "common": {
+    "loading": "جاري التحميل...",
+    "error": "حدث خطأ",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "create": "إنشاء",
+    "search": "بحث",
+    "filter": "تصفية",
+    "submit": "إرسال",
+    "back": "رجوع",
+    "next": "التالي",
+    "previous": "السابق",
+    "close": "إغلاق",
+    "yes": "نعم",
+    "no": "لا",
+    "or": "أو",
+    "and": "و"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "register": "التسجيل",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "resetPassword": "إعادة تعيين كلمة المرور",
+    "fullName": "الاسم الكامل",
+    "phone": "رقم الهاتف",
+    "address": "العنوان",
+    "dateOfBirth": "تاريخ الميلاد",
+    "studyLevel": "مستوى الدراسة",
+    "alreadyHaveAccount": "لديك حساب بالفعل؟",
+    "noAccount": "ليس لديك حساب؟",
+    "loginSuccess": "تم تسجيل الدخول بنجاح",
+    "registerSuccess": "تم إنشاء الحساب بنجاح",
+    "logoutSuccess": "تم تسجيل الخروج بنجاح",
+    "invalidCredentials": "بيانات غير صالحة",
+    "passwordMismatch": "كلمات المرور غير متطابقة"
+  },
+  "roles": {
+    "admin": "مدير",
+    "teacher": "معلم",
+    "student": "طالب"
+  },
+  "levels": {
+    "beginner": "مبتدئ",
+    "intermediate": "متوسط",
+    "advanced": "متقدم"
+  },
+  "nav": {
+    "home": "الرئيسية",
+    "dashboard": "لوحة التحكم",
+    "selfStudy": "الدراسة الذاتية",
+    "liveLessons": "الدروس المباشرة",
+    "recordings": "التسجيلات",
+    "forum": "المنتدى",
+    "chat": "الدردشة",
+    "calendar": "التقويم",
+    "progress": "التقدم",
+    "settings": "الإعدادات",
+    "profile": "الملف الشخصي",
+    "admin": "الإدارة"
+  },
+  "categories": {
+    "reading": "القراءة",
+    "writing": "الكتابة",
+    "listening": "الاستماع",
+    "speaking": "المحادثة",
+    "grammar": "القواعد"
+  },
+  "dashboard": {
+    "welcome": "مرحباً بعودتك",
+    "yourProgress": "تقدمك",
+    "upcomingLessons": "الدروس القادمة",
+    "recentExercises": "التمارين الأخيرة",
+    "notifications": "الإشعارات"
+  },
+  "settings": {
+    "language": "اللغة",
+    "theme": "المظهر",
+    "themeLight": "فاتح",
+    "themeDark": "داكن",
+    "themeSystem": "النظام",
+    "themeStyle": "النمط",
+    "professional": "احترافي",
+    "playful": "مرح",
+    "notifications": "الإشعارات",
+    "privacy": "الخصوصية"
+  },
+  "install": {
+    "title": "تثبيت التطبيق",
+    "description": "ثبّت بيت العربية على جهازك للحصول على تجربة أفضل",
+    "button": "تثبيت",
+    "iosInstructions": "اضغط على أيقونة المشاركة واختر 'إضافة إلى الشاشة الرئيسية'"
+  }
+}

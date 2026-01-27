@@ -1,0 +1,105 @@
+{
+  "app": {
+    "name": "House of Arabic",
+    "shortName": "HVA",
+    "tagline": "Learn Arabic with passion and dedication"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "or": "or",
+    "and": "and"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "email": "Email address",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "forgotPassword": "Forgot password?",
+    "resetPassword": "Reset password",
+    "fullName": "Full name",
+    "phone": "Phone number",
+    "address": "Address",
+    "dateOfBirth": "Date of birth",
+    "studyLevel": "Study level",
+    "alreadyHaveAccount": "Already have an account?",
+    "noAccount": "Don't have an account?",
+    "loginSuccess": "Successfully logged in",
+    "registerSuccess": "Account successfully created",
+    "logoutSuccess": "Successfully logged out",
+    "invalidCredentials": "Invalid credentials",
+    "passwordMismatch": "Passwords do not match"
+  },
+  "roles": {
+    "admin": "Administrator",
+    "teacher": "Teacher",
+    "student": "Student"
+  },
+  "levels": {
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "selfStudy": "Self-Study",
+    "liveLessons": "Live Lessons",
+    "recordings": "Recordings",
+    "forum": "Forum",
+    "chat": "Chat",
+    "calendar": "Calendar",
+    "progress": "Progress",
+    "settings": "Settings",
+    "profile": "Profile",
+    "admin": "Admin"
+  },
+  "categories": {
+    "reading": "Reading",
+    "writing": "Writing",
+    "listening": "Listening",
+    "speaking": "Speaking",
+    "grammar": "Grammar"
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "yourProgress": "Your progress",
+    "upcomingLessons": "Upcoming lessons",
+    "recentExercises": "Recent exercises",
+    "notifications": "Notifications"
+  },
+  "settings": {
+    "language": "Language",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "themeStyle": "Style",
+    "professional": "Professional",
+    "playful": "Playful",
+    "notifications": "Notifications",
+    "privacy": "Privacy"
+  },
+  "install": {
+    "title": "Install the App",
+    "description": "Install House of Arabic on your device for a better experience",
+    "button": "Install",
+    "iosInstructions": "Tap the share icon and select 'Add to Home Screen'"
+  }
+}
