@@ -17,6 +17,25 @@ import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from "./pages/DashboardPage";
 import NotFound from "./pages/NotFound";
 
+// Admin pages
+import { AdminLayout } from "./components/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UsersPage from "./pages/admin/UsersPage";
+import TeacherApprovalsPage from "./pages/admin/TeacherApprovalsPage";
+import ClassesPage from "./pages/admin/ClassesPage";
+import LevelsPage from "./pages/admin/LevelsPage";
+import PaymentsPage from "./pages/admin/PaymentsPage";
+import DiscountCodesPage from "./pages/admin/DiscountCodesPage";
+
+// Self-Study pages
+import SelfStudyPage from "./pages/SelfStudyPage";
+import CategoryPage from "./pages/CategoryPage";
+import ExercisePage from "./pages/ExercisePage";
+
+// Live Lessons pages
+import LiveLessonsPage from "./pages/LiveLessonsPage";
+import RecordingsPage from "./pages/RecordingsPage";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -43,11 +62,16 @@ const App = () => (
                 }
               />
               
-              {/* Placeholder routes - will be implemented in later phases */}
-              <Route path="/self-study" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-              <Route path="/self-study/:category" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-              <Route path="/live-lessons" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-              <Route path="/recordings" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+              {/* Self-Study routes */}
+              <Route path="/self-study" element={<ProtectedRoute><SelfStudyPage /></ProtectedRoute>} />
+              <Route path="/self-study/:category" element={<ProtectedRoute><CategoryPage /></ProtectedRoute>} />
+              <Route path="/self-study/:category/:exerciseId" element={<ProtectedRoute><ExercisePage /></ProtectedRoute>} />
+              
+              {/* Live Lessons routes */}
+              <Route path="/live-lessons" element={<ProtectedRoute><LiveLessonsPage /></ProtectedRoute>} />
+              <Route path="/recordings" element={<ProtectedRoute><RecordingsPage /></ProtectedRoute>} />
+              
+              {/* Other protected routes */}
               <Route path="/forum" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
               <Route path="/chat" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
               <Route path="/calendar" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
@@ -56,14 +80,15 @@ const App = () => (
               <Route path="/settings" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
               
               {/* Admin routes */}
-              <Route
-                path="/admin/*"
-                element={
-                  <ProtectedRoute requiredRole="admin">
-                    <DashboardPage />
-                  </ProtectedRoute>
-                }
-              />
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<AdminDashboard />} />
+                <Route path="users" element={<UsersPage />} />
+                <Route path="teachers" element={<TeacherApprovalsPage />} />
+                <Route path="classes" element={<ClassesPage />} />
+                <Route path="levels" element={<LevelsPage />} />
+                <Route path="payments" element={<PaymentsPage />} />
+                <Route path="discounts" element={<DiscountCodesPage />} />
+              </Route>
               
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
