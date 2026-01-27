@@ -1,10 +1,10 @@
 {
   "name": "Huis van het Arabisch",
   "short_name": "HVA",
-  "description": "Leer Arabisch met passie en toewijding - Learn Arabic with passion and dedication",
+  "description": "Learn Arabic with Huis van het Arabisch - A blended learning platform",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f7faf8",
+  "background_color": "#ffffff",
   "theme_color": "#3d8c6e",
   "orientation": "portrait-primary",
   "icons": [
@@ -32,6 +32,11 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "categories": ["education", "language"],
+  "lang": "nl",
+  "dir": "auto"
+}
   ],
   "categories": ["education", "productivity"],
   "lang": "nl",
