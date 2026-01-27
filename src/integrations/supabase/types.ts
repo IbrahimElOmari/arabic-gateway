@@ -215,6 +215,36 @@ export type Database = {
           },
         ]
       }
+      data_retention_log: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          processed_at: string | null
+          retention_end_date: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          processed_at?: string | null
+          retention_end_date?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          processed_at?: string | null
+          retention_end_date?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       discount_codes: {
         Row: {
           class_id: string | null
@@ -267,6 +297,104 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      event_attendees: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          responded_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          responded_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          responded_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_attendees_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          all_day: boolean
+          color: string | null
+          created_at: string
+          creator_id: string
+          description: string | null
+          end_time: string
+          event_type: string
+          id: string
+          location: string | null
+          notes: string | null
+          recurrence_end_date: string | null
+          recurrence_rule: string | null
+          reminder_minutes: number[] | null
+          start_time: string
+          target_id: string | null
+          target_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          all_day?: boolean
+          color?: string | null
+          created_at?: string
+          creator_id: string
+          description?: string | null
+          end_time: string
+          event_type?: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+          recurrence_end_date?: string | null
+          recurrence_rule?: string | null
+          reminder_minutes?: number[] | null
+          start_time: string
+          target_id?: string | null
+          target_type: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          all_day?: boolean
+          color?: string | null
+          created_at?: string
+          creator_id?: string
+          description?: string | null
+          end_time?: string
+          event_type?: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+          recurrence_end_date?: string | null
+          recurrence_rule?: string | null
+          reminder_minutes?: number[] | null
+          start_time?: string
+          target_id?: string | null
+          target_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       exercise_attempts: {
         Row: {
@@ -1248,11 +1376,54 @@ export type Database = {
         }
         Relationships: []
       }
+      users_pending_deletion: {
+        Row: {
+          created_at: string
+          deletion_scheduled_at: string
+          id: string
+          status: string
+          unenrolled_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deletion_scheduled_at: string
+          id?: string
+          status?: string
+          unenrolled_at: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deletion_scheduled_at?: string
+          id?: string
+          status?: string
+          unenrolled_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      anonymize_user_data: { Args: { p_user_id: string }; Returns: undefined }
+      cancel_user_deletion: { Args: { p_user_id: string }; Returns: undefined }
+      get_upcoming_deletions: {
+        Args: { days_ahead?: number }
+        Returns: {
+          days_until_deletion: number
+          deletion_scheduled_at: string
+          email: string
+          full_name: string
+          unenrolled_at: string
+          user_id: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -1263,6 +1434,18 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_discount_usage: { Args: { p_code: string }; Returns: undefined }
+      mark_user_for_deletion: {
+        Args: { p_unenrolled_at?: string; p_user_id: string }
+        Returns: undefined
+      }
+      process_data_retention: {
+        Args: never
+        Returns: {
+          admin_notifications: Json
+          processed_count: number
+        }[]
       }
     }
     Enums: {

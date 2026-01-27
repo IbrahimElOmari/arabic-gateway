@@ -8,6 +8,7 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Form,
   FormControl,
@@ -16,6 +17,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Card,
   CardContent,
@@ -27,13 +35,17 @@ import {
 
 const registerSchema = z
   .object({
-    fullName: z.string().min(2).max(100),
-    email: z.string().email(),
-    password: z.string().min(8),
+    fullName: z.string().min(2, 'Naam moet minimaal 2 karakters zijn').max(100),
+    email: z.string().email('Ongeldig e-mailadres'),
+    phone: z.string().max(20).optional().or(z.literal('')),
+    address: z.string().max(200).optional().or(z.literal('')),
+    dateOfBirth: z.string().optional().or(z.literal('')),
+    studyLevel: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
+    password: z.string().min(8, 'Wachtwoord moet minimaal 8 karakters zijn'),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
+    message: 'Wachtwoorden komen niet overeen',
     path: ['confirmPassword'],
   });
 
@@ -51,6 +63,10 @@ export function RegisterForm() {
     defaultValues: {
       fullName: '',
       email: '',
+      phone: '',
+      address: '',
+      dateOfBirth: '',
+      studyLevel: undefined,
       password: '',
       confirmPassword: '',
     },
@@ -58,7 +74,15 @@ export function RegisterForm() {
 
   const onSubmit = async (data: RegisterFormValues) => {
     setIsLoading(true);
-    await signUp(data.email, data.password, data.fullName);
+    await signUp(
+      data.email, 
+      data.password, 
+      data.fullName,
+      data.phone || null,
+      data.address || null,
+      data.dateOfBirth || null,
+      data.studyLevel || null
+    );
     setIsLoading(false);
   };
 
@@ -106,6 +130,81 @@ export function RegisterForm() {
                       {...field}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('auth.phone')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="tel"
+                      placeholder="+32 XXX XX XX XX"
+                      autoComplete="tel"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('auth.address')}</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Straat, huisnummer, postcode, stad"
+                      autoComplete="street-address"
+                      rows={2}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="dateOfBirth"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('auth.dateOfBirth')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      max={new Date().toISOString().split('T')[0]}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="studyLevel"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('auth.studyLevel')}</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t('common.select') || 'Select...'} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="beginner">{t('levels.beginner')}</SelectItem>
+                      <SelectItem value="intermediate">{t('levels.intermediate')}</SelectItem>
+                      <SelectItem value="advanced">{t('levels.advanced')}</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
