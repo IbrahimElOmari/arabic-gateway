@@ -101,5 +101,70 @@
     "description": "ثبّت بيت العربية على جهازك للحصول على تجربة أفضل",
     "button": "تثبيت",
     "iosInstructions": "اضغط على أيقونة المشاركة واختر 'إضافة إلى الشاشة الرئيسية'"
+  },
+  "forum": {
+    "title": "المنتدى",
+    "description": "انضم إلى المناقشات مع الطلاب والمعلمين",
+    "posts": "منشورات",
+    "newPost": "منشور جديد",
+    "createPost": "إنشاء منشور جديد",
+    "postTitle": "عنوان المنشور",
+    "postContent": "اكتب منشورك...",
+    "postCreated": "تم إنشاء المنشور بنجاح",
+    "postDeleted": "تم حذف المنشور",
+    "noPosts": "لا توجد منشورات حتى الآن",
+    "beFirst": "كن أول من يبدأ نقاشاً!",
+    "likes": "إعجابات",
+    "comments": "التعليقات",
+    "writeComment": "اكتب تعليقاً...",
+    "commentAdded": "تمت إضافة التعليق",
+    "commentDeleted": "تم حذف التعليق",
+    "noComments": "لا توجد تعليقات حتى الآن",
+    "postNotFound": "المنشور غير موجود"
+  },
+  "chat": {
+    "title": "دردشة الفصل",
+    "noClasses": "لا توجد فصول حتى الآن",
+    "enrollFirst": "سجل في فصل للانضمام إلى الدردشة",
+    "noMessages": "لا توجد رسائل حتى الآن. ابدأ المحادثة!",
+    "typeMessage": "اكتب رسالة..."
+  },
+  "teacher": {
+    "dashboard": "لوحة تحكم المعلم",
+    "dashboardDescription": "إدارة فصولك وطلابك",
+    "lessons": "الدروس",
+    "recordings": "التسجيلات",
+    "exercises": "التمارين",
+    "submissions": "المهام المقدمة",
+    "students": "الطلاب",
+    "backToApp": "العودة للتطبيق"
+  },
+  "calendar": {
+    "description": "إدارة تقويمك الشخصي والأحداث",
+    "newEvent": "حدث جديد",
+    "createEvent": "إنشاء حدث",
+    "editEvent": "تعديل الحدث",
+    "eventTitle": "العنوان",
+    "eventTitlePlaceholder": "مثال: دراسة العربية",
+    "eventType": "النوع",
+    "types": {
+      "personal": "شخصي",
+      "general": "عام",
+      "lesson": "درس",
+      "exam": "امتحان",
+      "deadline": "موعد نهائي",
+      "webinar": "ندوة عبر الإنترنت"
+    },
+    "allDay": "طوال اليوم",
+    "startTime": "وقت البدء",
+    "endTime": "وقت الانتهاء",
+    "location": "الموقع",
+    "locationPlaceholder": "مثال: عبر الإنترنت أو عنوان",
+    "eventCreated": "تم إنشاء الحدث",
+    "eventUpdated": "تم تحديث الحدث",
+    "eventDeleted": "تم حذف الحدث",
+    "fillRequired": "يرجى ملء جميع الحقول المطلوبة",
+    "noEvents": "لا توجد أحداث",
+    "today": "اليوم"
   }
 }

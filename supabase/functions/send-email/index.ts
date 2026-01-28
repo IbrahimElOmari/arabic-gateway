@@ -541,17 +541,21 @@ serve(async (req: Request) => {
 
     console.log(`Email sent successfully: ${type} to ${to}`, emailResponse);
 
+    // Handle response - Resend returns { data: { id }, error }
+    const messageId = 'data' in emailResponse && emailResponse.data ? emailResponse.data.id : 'sent';
+
     return new Response(
       JSON.stringify({ 
         success: true,
-        message_id: emailResponse.id 
+        message_id: messageId 
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Email sending error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

@@ -200,5 +200,33 @@
     "correct": "Correct",
     "incorrect": "Incorrect",
     "fileSubmission": "File submission"
+  },
+  "calendar": {
+    "description": "Manage your personal calendar and events",
+    "newEvent": "New Event",
+    "createEvent": "Create Event",
+    "editEvent": "Edit Event",
+    "eventTitle": "Title",
+    "eventTitlePlaceholder": "e.g., Study Arabic",
+    "eventType": "Type",
+    "types": {
+      "personal": "Personal",
+      "general": "General",
+      "lesson": "Lesson",
+      "exam": "Exam",
+      "deadline": "Deadline",
+      "webinar": "Webinar"
+    },
+    "allDay": "All Day",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "location": "Location",
+    "locationPlaceholder": "e.g., Online or address",
+    "eventCreated": "Event created",
+    "eventUpdated": "Event updated",
+    "eventDeleted": "Event deleted",
+    "fillRequired": "Please fill in all required fields",
+    "noEvents": "No events",
+    "today": "Today"
   }
 }
