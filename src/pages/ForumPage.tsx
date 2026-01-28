@@ -14,6 +14,14 @@ const iconMap: Record<string, React.ElementType> = {
   "sparkles": Sparkles,
 };
 
+// Map room names to translation keys
+const roomNameToKey: Record<string, string> = {
+  "general": "general",
+  "exercises": "exercises",
+  "resources": "resources",
+  "collaboration": "collaboration",
+};
+
 export default function ForumPage() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
@@ -55,15 +63,23 @@ export default function ForumPage() {
     return room.name_en;
   };
 
+  const getRoomDescription = (roomName: string) => {
+    const key = roomNameToKey[roomName.toLowerCase()];
+    if (key) {
+      return t(`forum.roomDescriptions.${key}`);
+    }
+    return "";
+  };
+
   return (
     <MainLayout>
       <div className="container py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">
-            {t("forum.title", "Forum")}
+            {t("forum.title")}
           </h1>
           <p className="text-muted-foreground">
-            {t("forum.description", "Join discussions with fellow students and teachers")}
+            {t("forum.description")}
           </p>
         </div>
 
@@ -88,13 +104,15 @@ export default function ForumPage() {
                         <div>
                           <CardTitle className="text-lg">{getRoomName(room)}</CardTitle>
                           <CardDescription>
-                            {count} {t("forum.posts", "posts")}
+                            {count} {t("forum.posts")}
                           </CardDescription>
                         </div>
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground">{room.description}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {getRoomDescription(room.name)}
+                      </p>
                     </CardContent>
                   </Card>
                 </Link>

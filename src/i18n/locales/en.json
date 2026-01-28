@@ -24,7 +24,11 @@
     "or": "or",
     "and": "and",
     "select": "Select",
-    "more": "more"
+    "more": "more",
+    "of": "of",
+    "total": "total",
+    "thisWeek": "This week",
+    "min": "min"
   },
   "auth": {
     "login": "Login",
@@ -84,7 +88,13 @@
     "yourProgress": "Your progress",
     "upcomingLessons": "Upcoming lessons",
     "recentExercises": "Recent exercises",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "overallProgress": "Overall Progress",
+    "exercisesDone": "Exercises Done",
+    "nextLesson": "Next Lesson",
+    "studyTime": "Study Time",
+    "noUpcomingLessons": "No upcoming lessons scheduled. Check back later!",
+    "startFirstExercise": "Start your first exercise to see your activity here!"
   },
   "settings": {
     "language": "Language",
@@ -122,7 +132,19 @@
     "commentAdded": "Comment added",
     "commentDeleted": "Comment deleted",
     "noComments": "No comments yet",
-    "postNotFound": "Post not found"
+    "postNotFound": "Post not found",
+    "rooms": {
+      "general": "General",
+      "exercises": "Exercises",
+      "resources": "Resources",
+      "collaboration": "Collaboration"
+    },
+    "roomDescriptions": {
+      "general": "General discussions about learning Arabic",
+      "exercises": "Discuss exercises and get help with practice",
+      "resources": "Share resources, tips, and interesting content",
+      "collaboration": "Find study partners and collaborate with classmates"
+    }
   },
   "chat": {
     "title": "Class Chat",
@@ -232,5 +254,64 @@
     "fillRequired": "Please fill in all required fields",
     "noEvents": "No events",
     "today": "Today"
+  },
+  "selfStudy": {
+    "title": "Self Study",
+    "description": "Practice and improve your Arabic skills at your own pace",
+    "progress": "Progress",
+    "averageScore": "Average score",
+    "noExercises": "No exercises available yet",
+    "checkBack": "Check back soon for new exercises!",
+    "categoryDescriptions": {
+      "reading": "Improve your Arabic reading skills",
+      "writing": "Practice writing in Arabic",
+      "listening": "Develop your listening comprehension",
+      "speaking": "Practice your Arabic pronunciation",
+      "grammar": "Master Arabic grammar rules"
+    }
+  },
+  "lessons": {
+    "liveClasses": "Live Classes",
+    "upcomingDescription": "Join live sessions with your teacher",
+    "noUpcoming": "No upcoming lessons",
+    "checkBack": "Check back later for scheduled classes",
+    "joinMeet": "Join Meeting",
+    "recordings": "Recordings",
+    "recordingsDescription": "Watch past lesson recordings",
+    "watchRecording": "Watch Recording",
+    "noRecordings": "No recordings available",
+    "recordingsComingSoon": "Recordings will appear here after live sessions"
+  },
+  "footer": {
+    "about": "About",
+    "contact": "Contact",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "copyright": "© {{year}} House of Arabic. All rights reserved."
+  },
+  "home": {
+    "featuresDescription": "Comprehensive Arabic learning covering all essential skills",
+    "levelsTitle": "Three Learning Levels",
+    "levelsDescription": "Progress through structured levels at your own pace",
+    "levelCardDescription": "Structured curriculum with live lessons and self-study exercises",
+    "ctaTitle": "Start Your Arabic Journey Today",
+    "ctaDescription": "Join our community of learners and start speaking Arabic with confidence"
+  },
+  "admin": {
+    "dashboard": "Admin Dashboard",
+    "dashboardDescription": "Overview of your platform statistics",
+    "totalUsers": "Total Users",
+    "registeredUsers": "Registered users",
+    "activeClasses": "Active Classes",
+    "totalClasses": "Total classes",
+    "activeStudents": "Active Students",
+    "activeEnrollments": "Active enrollments",
+    "pendingApprovals": "Pending Approvals",
+    "teacherApplications": "Teacher applications",
+    "recentActivity": "Recent Activity",
+    "latestActions": "Latest administrative actions",
+    "noRecentActivity": "No recent activity",
+    "paymentStatus": "Payment Status",
+    "paymentDescription": "Payment system is ready for Stripe integration"
   }
 }

@@ -32,10 +32,10 @@ export default function LiveLessonsPage() {
       <div className="container py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">
-            {t("lessons.liveClasses", "Live Classes")}
+            {t("lessons.liveClasses")}
           </h1>
           <p className="text-muted-foreground">
-            {t("lessons.upcomingDescription", "Join live sessions with your teacher")}
+            {t("lessons.upcomingDescription")}
           </p>
         </div>
 
@@ -60,13 +60,13 @@ export default function LiveLessonsPage() {
                       <Calendar className="h-4 w-4" />
                       {format(new Date(lesson.scheduled_at), "PPp")}
                     </span>
-                    <span>{lesson.duration_minutes} min</span>
+                    <span>{lesson.duration_minutes} {t("common.min")}</span>
                   </div>
                   {lesson.meet_link && (
                     <Button asChild>
                       <a href={lesson.meet_link} target="_blank" rel="noopener noreferrer">
                         <Video className="h-4 w-4 mr-2" />
-                        {t("lessons.joinMeet", "Join Meeting")}
+                        {t("lessons.joinMeet")}
                       </a>
                     </Button>
                   )}
@@ -78,8 +78,8 @@ export default function LiveLessonsPage() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold">{t("lessons.noUpcoming", "No upcoming lessons")}</h3>
-              <p className="text-muted-foreground">{t("lessons.checkBack", "Check back later for scheduled classes")}</p>
+              <h3 className="text-lg font-semibold">{t("lessons.noUpcoming")}</h3>
+              <p className="text-muted-foreground">{t("lessons.checkBack")}</p>
             </CardContent>
           </Card>
         )}
