@@ -211,6 +211,8 @@
     "eventTitle": "Titel",
     "eventTitlePlaceholder": "bijv. Arabisch studeren",
     "eventType": "Type",
+    "eventDescription": "Beschrijving",
+    "selectEvent": "Selecteer een evenement om details te bekijken",
     "types": {
       "personal": "Persoonlijk",
       "general": "Algemeen",

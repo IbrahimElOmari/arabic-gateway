@@ -473,9 +473,9 @@ export default function CalendarPage() {
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  {t('calendar.selectEvent')}
-                </p>
+              <p className="text-sm text-muted-foreground">
+                {t('calendar.selectEvent')}
+              </p>
               )}
             </CardContent>
           </Card>
