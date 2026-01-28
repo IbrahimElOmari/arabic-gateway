@@ -16,42 +16,42 @@ import {
   Calendar
 } from 'lucide-react';
 
-const features = [
-  {
-    icon: BookOpen,
-    titleKey: 'categories.reading',
-    descriptionKey: 'Read and comprehend Arabic texts',
-  },
-  {
-    icon: PenTool,
-    titleKey: 'categories.writing',
-    descriptionKey: 'Practice writing in Arabic',
-  },
-  {
-    icon: Headphones,
-    titleKey: 'categories.listening',
-    descriptionKey: 'Improve your listening skills',
-  },
-  {
-    icon: Mic,
-    titleKey: 'categories.speaking',
-    descriptionKey: 'Develop your speaking abilities',
-  },
-  {
-    icon: MessageCircle,
-    titleKey: 'categories.grammar',
-    descriptionKey: 'Master Arabic grammar rules',
-  },
-  {
-    icon: GraduationCap,
-    titleKey: 'nav.liveLessons',
-    descriptionKey: 'Join live sessions with teachers',
-  },
-];
-
 export default function HomePage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+
+  const features = [
+    {
+      icon: BookOpen,
+      titleKey: 'categories.reading',
+      descriptionKey: 'selfStudy.categoryDescriptions.reading',
+    },
+    {
+      icon: PenTool,
+      titleKey: 'categories.writing',
+      descriptionKey: 'selfStudy.categoryDescriptions.writing',
+    },
+    {
+      icon: Headphones,
+      titleKey: 'categories.listening',
+      descriptionKey: 'selfStudy.categoryDescriptions.listening',
+    },
+    {
+      icon: Mic,
+      titleKey: 'categories.speaking',
+      descriptionKey: 'selfStudy.categoryDescriptions.speaking',
+    },
+    {
+      icon: MessageCircle,
+      titleKey: 'categories.grammar',
+      descriptionKey: 'selfStudy.categoryDescriptions.grammar',
+    },
+    {
+      icon: GraduationCap,
+      titleKey: 'nav.liveLessons',
+      descriptionKey: 'lessons.upcomingDescription',
+    },
+  ];
 
   return (
     <MainLayout>
@@ -97,7 +97,7 @@ export default function HomePage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold">{t('nav.selfStudy')}</h2>
             <p className="mt-4 text-muted-foreground">
-              Comprehensive Arabic learning covering all essential skills
+              {t('home.featuresDescription')}
             </p>
           </div>
           
@@ -109,7 +109,7 @@ export default function HomePage() {
                     <feature.icon className="h-6 w-6 text-primary" />
                   </div>
                   <CardTitle>{t(feature.titleKey)}</CardTitle>
-                  <CardDescription>{feature.descriptionKey}</CardDescription>
+                  <CardDescription>{t(feature.descriptionKey)}</CardDescription>
                 </CardHeader>
               </Card>
             ))}
@@ -121,9 +121,9 @@ export default function HomePage() {
       <section className="py-20 bg-muted/50">
         <div className="container">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold">Three Learning Levels</h2>
+            <h2 className="text-3xl font-bold">{t('home.levelsTitle')}</h2>
             <p className="mt-4 text-muted-foreground">
-              Progress through structured levels at your own pace
+              {t('home.levelsDescription')}
             </p>
           </div>
           
@@ -140,7 +140,7 @@ export default function HomePage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground">
-                    Structured curriculum with live lessons and self-study exercises
+                    {t('home.levelCardDescription')}
                   </p>
                 </CardContent>
               </Card>
@@ -154,10 +154,10 @@ export default function HomePage() {
         <div className="container">
           <Card className="bg-primary text-primary-foreground p-8 md:p-12 text-center">
             <h2 className="text-3xl font-bold mb-4">
-              Start Your Arabic Journey Today
+              {t('home.ctaTitle')}
             </h2>
             <p className="mb-8 opacity-90">
-              Join our community of learners and start speaking Arabic with confidence
+              {t('home.ctaDescription')}
             </p>
             <Button asChild size="lg" variant="secondary">
               <Link to="/register">{t('auth.register')}</Link>

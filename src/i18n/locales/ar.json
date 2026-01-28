@@ -24,7 +24,11 @@
     "or": "أو",
     "and": "و",
     "select": "اختر",
-    "more": "المزيد"
+    "more": "المزيد",
+    "of": "من",
+    "total": "الإجمالي",
+    "thisWeek": "هذا الأسبوع",
+    "min": "دقيقة"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -84,7 +88,13 @@
     "yourProgress": "تقدمك",
     "upcomingLessons": "الدروس القادمة",
     "recentExercises": "التمارين الأخيرة",
-    "notifications": "الإشعارات"
+    "notifications": "الإشعارات",
+    "overallProgress": "التقدم الإجمالي",
+    "exercisesDone": "التمارين المنجزة",
+    "nextLesson": "الدرس القادم",
+    "studyTime": "وقت الدراسة",
+    "noUpcomingLessons": "لا توجد دروس قادمة. تحقق لاحقاً!",
+    "startFirstExercise": "ابدأ أول تمرين لمشاهدة نشاطك هنا!"
   },
   "settings": {
     "language": "اللغة",
@@ -122,7 +132,19 @@
     "commentAdded": "تمت إضافة التعليق",
     "commentDeleted": "تم حذف التعليق",
     "noComments": "لا توجد تعليقات حتى الآن",
-    "postNotFound": "المنشور غير موجود"
+    "postNotFound": "المنشور غير موجود",
+    "rooms": {
+      "general": "عام",
+      "exercises": "تمارين",
+      "resources": "إضافات",
+      "collaboration": "تعاون"
+    },
+    "roomDescriptions": {
+      "general": "مناقشات عامة حول تعلم اللغة العربية",
+      "exercises": "ناقش التمارين واحصل على المساعدة في التطبيق",
+      "resources": "شارك الموارد والنصائح والمحتوى المفيد",
+      "collaboration": "ابحث عن شركاء للدراسة وتعاون مع زملائك"
+    }
   },
   "chat": {
     "title": "دردشة الفصل",
@@ -232,5 +254,64 @@
     "fillRequired": "يرجى ملء جميع الحقول المطلوبة",
     "noEvents": "لا توجد أحداث",
     "today": "اليوم"
+  },
+  "selfStudy": {
+    "title": "الدراسة الذاتية",
+    "description": "تدرب وحسّن مهاراتك في اللغة العربية بالسرعة التي تناسبك",
+    "progress": "التقدم",
+    "averageScore": "متوسط الدرجات",
+    "noExercises": "لا توجد تمارين متاحة بعد",
+    "checkBack": "تحقق قريباً للحصول على تمارين جديدة!",
+    "categoryDescriptions": {
+      "reading": "حسّن مهاراتك في قراءة اللغة العربية",
+      "writing": "تدرب على الكتابة باللغة العربية",
+      "listening": "طوّر قدرتك على الاستماع",
+      "speaking": "تدرب على النطق العربي",
+      "grammar": "أتقن قواعد اللغة العربية"
+    }
+  },
+  "lessons": {
+    "liveClasses": "الدروس المباشرة",
+    "upcomingDescription": "انضم إلى الجلسات المباشرة مع معلمك",
+    "noUpcoming": "لا توجد دروس قادمة",
+    "checkBack": "تحقق لاحقاً للحصول على الدروس المجدولة",
+    "joinMeet": "انضم للاجتماع",
+    "recordings": "التسجيلات",
+    "recordingsDescription": "شاهد تسجيلات الدروس السابقة",
+    "watchRecording": "شاهد التسجيل",
+    "noRecordings": "لا توجد تسجيلات متاحة",
+    "recordingsComingSoon": "ستظهر التسجيلات هنا بعد الجلسات المباشرة"
+  },
+  "footer": {
+    "about": "حول",
+    "contact": "اتصل بنا",
+    "privacyPolicy": "سياسة الخصوصية",
+    "termsOfService": "شروط الخدمة",
+    "copyright": "© {{year}} بيت العربية. جميع الحقوق محفوظة."
+  },
+  "home": {
+    "featuresDescription": "تعلم شامل للغة العربية يغطي جميع المهارات الأساسية",
+    "levelsTitle": "ثلاثة مستويات تعليمية",
+    "levelsDescription": "تقدم عبر مستويات منظمة بالسرعة التي تناسبك",
+    "levelCardDescription": "منهج منظم مع دروس مباشرة وتمارين للدراسة الذاتية",
+    "ctaTitle": "ابدأ رحلتك في تعلم العربية اليوم",
+    "ctaDescription": "انضم إلى مجتمعنا من المتعلمين وابدأ التحدث بالعربية بثقة"
+  },
+  "admin": {
+    "dashboard": "لوحة تحكم المدير",
+    "dashboardDescription": "نظرة عامة على إحصائيات منصتك",
+    "totalUsers": "إجمالي المستخدمين",
+    "registeredUsers": "المستخدمون المسجلون",
+    "activeClasses": "الفصول النشطة",
+    "totalClasses": "إجمالي الفصول",
+    "activeStudents": "الطلاب النشطون",
+    "activeEnrollments": "التسجيلات النشطة",
+    "pendingApprovals": "الموافقات المعلقة",
+    "teacherApplications": "طلبات المعلمين",
+    "recentActivity": "النشاط الأخير",
+    "latestActions": "آخر الإجراءات الإدارية",
+    "noRecentActivity": "لا يوجد نشاط حديث",
+    "paymentStatus": "حالة الدفع",
+    "paymentDescription": "نظام الدفع جاهز لتكامل Stripe"
   }
 }

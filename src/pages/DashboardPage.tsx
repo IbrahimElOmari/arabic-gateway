@@ -44,7 +44,7 @@ export default function DashboardPage() {
           {/* Stats Cards */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Overall Progress</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('dashboard.overallProgress')}</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -55,18 +55,18 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Exercises Done</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('dashboard.exercisesDone')}</CardTitle>
               <BookOpen className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">24</div>
-              <p className="text-xs text-muted-foreground">of 56 total</p>
+              <p className="text-xs text-muted-foreground">{t('common.of')} 56 {t('common.total')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Next Lesson</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('dashboard.nextLesson')}</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -77,12 +77,12 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Study Time</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('dashboard.studyTime')}</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">12h</div>
-              <p className="text-xs text-muted-foreground">This week</p>
+              <p className="text-xs text-muted-foreground">{t('common.thisWeek')}</p>
             </CardContent>
           </Card>
         </div>
@@ -116,7 +116,7 @@ export default function DashboardPage() {
           <Card>
             <CardContent className="p-6">
               <div className="text-center text-muted-foreground py-8">
-                No upcoming lessons scheduled. Check back later!
+                {t('dashboard.noUpcomingLessons')}
               </div>
             </CardContent>
           </Card>
@@ -128,7 +128,7 @@ export default function DashboardPage() {
           <Card>
             <CardContent className="p-6">
               <div className="text-center text-muted-foreground py-8">
-                Start your first exercise to see your activity here!
+                {t('dashboard.startFirstExercise')}
               </div>
             </CardContent>
           </Card>

@@ -65,16 +65,20 @@ export default function SelfStudyPage() {
     return category.name_en;
   };
 
+  const getLocalizedDescription = (categoryName: string) => {
+    return t(`selfStudy.categoryDescriptions.${categoryName}`, "");
+  };
+
   return (
     <MainLayout>
       <div className="container py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">
-            {t("selfStudy.title", "Self Study")}
+            {t("selfStudy.title")}
           </h1>
           <p className="text-muted-foreground">
-            {t("selfStudy.description", "Practice and improve your Arabic skills at your own pace")}
+            {t("selfStudy.description")}
           </p>
         </div>
 
@@ -105,7 +109,7 @@ export default function SelfStudyPage() {
                             {getLocalizedName(category)}
                           </CardTitle>
                           <CardDescription>
-                            {category.description}
+                            {getLocalizedDescription(category.name)}
                           </CardDescription>
                         </div>
                       </div>
@@ -114,7 +118,7 @@ export default function SelfStudyPage() {
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">
-                            {t("selfStudy.progress", "Progress")}
+                            {t("selfStudy.progress")}
                           </span>
                           <span className="font-medium">
                             {categoryProgress?.completed || 0}/{categoryProgress?.total || 0}
@@ -123,7 +127,7 @@ export default function SelfStudyPage() {
                         <Progress value={progressPercent} className="h-2" />
                         {categoryProgress?.score !== undefined && categoryProgress.score > 0 && (
                           <p className="text-sm text-muted-foreground">
-                            {t("selfStudy.averageScore", "Average score")}: {categoryProgress.score.toFixed(0)}%
+                            {t("selfStudy.averageScore")}: {categoryProgress.score.toFixed(0)}%
                           </p>
                         )}
                       </div>
@@ -141,10 +145,10 @@ export default function SelfStudyPage() {
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold text-foreground">
-                {t("selfStudy.noExercises", "No exercises available yet")}
+                {t("selfStudy.noExercises")}
               </h3>
               <p className="text-muted-foreground">
-                {t("selfStudy.checkBack", "Check back soon for new exercises!")}
+                {t("selfStudy.checkBack")}
               </p>
             </CardContent>
           </Card>

@@ -24,7 +24,11 @@
     "or": "of",
     "and": "en",
     "select": "Selecteer",
-    "more": "meer"
+    "more": "meer",
+    "of": "van",
+    "total": "totaal",
+    "thisWeek": "Deze week",
+    "min": "min"
   },
   "auth": {
     "login": "Inloggen",
@@ -84,7 +88,13 @@
     "yourProgress": "Jouw voortgang",
     "upcomingLessons": "Aankomende lessen",
     "recentExercises": "Recente oefeningen",
-    "notifications": "Meldingen"
+    "notifications": "Meldingen",
+    "overallProgress": "Totale Voortgang",
+    "exercisesDone": "Oefeningen Voltooid",
+    "nextLesson": "Volgende Les",
+    "studyTime": "Studietijd",
+    "noUpcomingLessons": "Geen aankomende lessen gepland. Kom later terug!",
+    "startFirstExercise": "Start je eerste oefening om je activiteit hier te zien!"
   },
   "settings": {
     "language": "Taal",
@@ -122,7 +132,19 @@
     "commentAdded": "Reactie toegevoegd",
     "commentDeleted": "Reactie verwijderd",
     "noComments": "Nog geen reacties",
-    "postNotFound": "Bericht niet gevonden"
+    "postNotFound": "Bericht niet gevonden",
+    "rooms": {
+      "general": "Algemeen",
+      "exercises": "Oefeningen",
+      "resources": "Bronnen",
+      "collaboration": "Samenwerking"
+    },
+    "roomDescriptions": {
+      "general": "Algemene discussies over het leren van Arabisch",
+      "exercises": "Bespreek oefeningen en krijg hulp bij het oefenen",
+      "resources": "Deel bronnen, tips en interessante inhoud",
+      "collaboration": "Vind studiegenoten en werk samen met klasgenoten"
+    }
   },
   "chat": {
     "title": "Klas Chat",
@@ -232,5 +254,64 @@
     "fillRequired": "Vul alle verplichte velden in",
     "noEvents": "Geen evenementen",
     "today": "Vandaag"
+  },
+  "selfStudy": {
+    "title": "Zelfstudie",
+    "description": "Oefen en verbeter je Arabische vaardigheden in je eigen tempo",
+    "progress": "Voortgang",
+    "averageScore": "Gemiddelde score",
+    "noExercises": "Nog geen oefeningen beschikbaar",
+    "checkBack": "Kom binnenkort terug voor nieuwe oefeningen!",
+    "categoryDescriptions": {
+      "reading": "Verbeter je Arabische leesvaardigheden",
+      "writing": "Oefen schrijven in het Arabisch",
+      "listening": "Ontwikkel je luistervaardigheid",
+      "speaking": "Oefen je Arabische uitspraak",
+      "grammar": "Beheers de Arabische grammaticaregels"
+    }
+  },
+  "lessons": {
+    "liveClasses": "Live Lessen",
+    "upcomingDescription": "Neem deel aan live sessies met je docent",
+    "noUpcoming": "Geen aankomende lessen",
+    "checkBack": "Kom later terug voor geplande lessen",
+    "joinMeet": "Deelnemen aan Vergadering",
+    "recordings": "Opnames",
+    "recordingsDescription": "Bekijk opnames van eerdere lessen",
+    "watchRecording": "Bekijk Opname",
+    "noRecordings": "Geen opnames beschikbaar",
+    "recordingsComingSoon": "Opnames verschijnen hier na live sessies"
+  },
+  "footer": {
+    "about": "Over ons",
+    "contact": "Contact",
+    "privacyPolicy": "Privacybeleid",
+    "termsOfService": "Servicevoorwaarden",
+    "copyright": "© {{year}} Huis van het Arabisch. Alle rechten voorbehouden."
+  },
+  "home": {
+    "featuresDescription": "Uitgebreid Arabisch leren met alle essentiële vaardigheden",
+    "levelsTitle": "Drie Leerniveaus",
+    "levelsDescription": "Vorder door gestructureerde niveaus in je eigen tempo",
+    "levelCardDescription": "Gestructureerd curriculum met live lessen en zelfstudie-oefeningen",
+    "ctaTitle": "Begin Vandaag Je Arabische Reis",
+    "ctaDescription": "Word lid van onze gemeenschap van leerlingen en begin met vertrouwen Arabisch te spreken"
+  },
+  "admin": {
+    "dashboard": "Beheerderspaneel",
+    "dashboardDescription": "Overzicht van je platformstatistieken",
+    "totalUsers": "Totaal Gebruikers",
+    "registeredUsers": "Geregistreerde gebruikers",
+    "activeClasses": "Actieve Klassen",
+    "totalClasses": "Totaal klassen",
+    "activeStudents": "Actieve Studenten",
+    "activeEnrollments": "Actieve inschrijvingen",
+    "pendingApprovals": "Wachtende Goedkeuringen",
+    "teacherApplications": "Docentaanvragen",
+    "recentActivity": "Recente Activiteit",
+    "latestActions": "Laatste beheeracties",
+    "noRecentActivity": "Geen recente activiteit",
+    "paymentStatus": "Betalingsstatus",
+    "paymentDescription": "Betalingssysteem is klaar voor Stripe integratie"
   }
 }
