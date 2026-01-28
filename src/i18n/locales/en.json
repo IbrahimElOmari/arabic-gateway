@@ -22,7 +22,9 @@
     "yes": "Yes",
     "no": "No",
     "or": "or",
-    "and": "and"
+    "and": "and",
+    "select": "Select",
+    "more": "more"
   },
   "auth": {
     "login": "Login",

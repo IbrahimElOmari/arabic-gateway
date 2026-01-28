@@ -22,7 +22,9 @@
     "yes": "Ja",
     "no": "Nee",
     "or": "of",
-    "and": "en"
+    "and": "en",
+    "select": "Selecteer",
+    "more": "meer"
   },
   "auth": {
     "login": "Inloggen",
