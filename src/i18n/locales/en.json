@@ -211,6 +211,8 @@
     "eventTitle": "Title",
     "eventTitlePlaceholder": "e.g., Study Arabic",
     "eventType": "Type",
+    "eventDescription": "Description",
+    "selectEvent": "Select an event to view details",
     "types": {
       "personal": "Personal",
       "general": "General",
