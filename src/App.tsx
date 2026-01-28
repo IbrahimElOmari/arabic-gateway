@@ -43,6 +43,9 @@ import ExercisePage from "./pages/ExercisePage";
 import LiveLessonsPage from "./pages/LiveLessonsPage";
 import RecordingsPage from "./pages/RecordingsPage";
 
+// Calendar page
+import CalendarPage from "./pages/CalendarPage";
+
 // Community pages
 import ForumPage from "./pages/ForumPage";
 import ForumRoomPage from "./pages/ForumRoomPage";

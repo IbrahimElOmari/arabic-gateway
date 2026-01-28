@@ -200,5 +200,33 @@
     "correct": "Juist",
     "incorrect": "Onjuist",
     "fileSubmission": "Bestandsinzending"
+  },
+  "calendar": {
+    "description": "Beheer je persoonlijke agenda en evenementen",
+    "newEvent": "Nieuw Evenement",
+    "createEvent": "Evenement Aanmaken",
+    "editEvent": "Evenement Bewerken",
+    "eventTitle": "Titel",
+    "eventTitlePlaceholder": "bijv. Arabisch studeren",
+    "eventType": "Type",
+    "types": {
+      "personal": "Persoonlijk",
+      "general": "Algemeen",
+      "lesson": "Les",
+      "exam": "Examen",
+      "deadline": "Deadline",
+      "webinar": "Webinar"
+    },
+    "allDay": "Hele dag",
+    "startTime": "Starttijd",
+    "endTime": "Eindtijd",
+    "location": "Locatie",
+    "locationPlaceholder": "bijv. Online of adres",
+    "eventCreated": "Evenement aangemaakt",
+    "eventUpdated": "Evenement bijgewerkt",
+    "eventDeleted": "Evenement verwijderd",
+    "fillRequired": "Vul alle verplichte velden in",
+    "noEvents": "Geen evenementen",
+    "today": "Vandaag"
   }
 }
