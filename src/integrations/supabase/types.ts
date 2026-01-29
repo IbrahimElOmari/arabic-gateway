@@ -1044,6 +1044,53 @@ export type Database = {
           },
         ]
       }
+      placement_tests: {
+        Row: {
+          assessed_by: string | null
+          assessment_notes: string | null
+          assigned_level_id: string | null
+          created_at: string
+          id: string
+          meet_link: string | null
+          scheduled_at: string | null
+          status: Database["public"]["Enums"]["placement_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assessed_by?: string | null
+          assessment_notes?: string | null
+          assigned_level_id?: string | null
+          created_at?: string
+          id?: string
+          meet_link?: string | null
+          scheduled_at?: string | null
+          status?: Database["public"]["Enums"]["placement_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assessed_by?: string | null
+          assessment_notes?: string | null
+          assigned_level_id?: string | null
+          created_at?: string
+          id?: string
+          meet_link?: string | null
+          scheduled_at?: string | null
+          status?: Database["public"]["Enums"]["placement_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placement_tests_assigned_level_id_fkey"
+            columns: ["assigned_level_id"]
+            isOneToOne: false
+            referencedRelation: "levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           address: string | null
@@ -1461,6 +1508,7 @@ export type Database = {
       lesson_status: "scheduled" | "in_progress" | "completed" | "canceled"
       payment_method: "stripe" | "manual" | "cash" | "bank_transfer"
       payment_status: "pending" | "succeeded" | "failed" | "refunded"
+      placement_status: "pending" | "scheduled" | "completed" | "cancelled"
       plan_type: "one_time" | "subscription" | "installment"
       question_type:
         | "multiple_choice"
@@ -1615,6 +1663,7 @@ export const Constants = {
       lesson_status: ["scheduled", "in_progress", "completed", "canceled"],
       payment_method: ["stripe", "manual", "cash", "bank_transfer"],
       payment_status: ["pending", "succeeded", "failed", "refunded"],
+      placement_status: ["pending", "scheduled", "completed", "cancelled"],
       plan_type: ["one_time", "subscription", "installment"],
       question_type: [
         "multiple_choice",

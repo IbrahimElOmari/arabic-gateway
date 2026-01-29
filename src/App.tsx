@@ -26,6 +26,7 @@ import ClassesPage from "./pages/admin/ClassesPage";
 import LevelsPage from "./pages/admin/LevelsPage";
 import PaymentsPage from "./pages/admin/PaymentsPage";
 import DiscountCodesPage from "./pages/admin/DiscountCodesPage";
+import PlacementsPage from "./pages/admin/PlacementsPage";
 
 // Teacher pages
 import { TeacherLayout } from "./components/teacher/TeacherLayout";
@@ -118,6 +119,7 @@ const App = () => (
                 <Route path="levels" element={<LevelsPage />} />
                 <Route path="payments" element={<PaymentsPage />} />
                 <Route path="discounts" element={<DiscountCodesPage />} />
+                <Route path="placements" element={<PlacementsPage />} />
               </Route>
               
               {/* Catch-all */}

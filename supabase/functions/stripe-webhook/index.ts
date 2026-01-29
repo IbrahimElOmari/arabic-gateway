@@ -116,11 +116,56 @@ serve(async (req: Request) => {
           await supabase.rpc("increment_discount_usage", { p_code: discountCode });
         }
 
+        // Send enrollment confirmation email
+        const { data: userProfile } = await supabase
+          .from("profiles")
+          .select("email, full_name, preferred_language")
+          .eq("user_id", userId)
+          .single();
+
+        const { data: classInfo } = await supabase
+          .from("classes")
+          .select("name, level_id, start_date, levels(name_nl, name_en, name_ar)")
+          .eq("id", classId)
+          .single();
+
+        if (userProfile?.email) {
+          const lang = userProfile.preferred_language || "nl";
+          const levelData = classInfo?.levels as any;
+          const levelName = lang === "ar" ? levelData?.name_ar : 
+                            lang === "en" ? levelData?.name_en : levelData?.name_nl;
+
+          try {
+            await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${supabaseKey}`,
+              },
+              body: JSON.stringify({
+                type: "enrollment_confirmation",
+                to: userProfile.email,
+                language: lang,
+                data: {
+                  name: userProfile.full_name,
+                  className: classInfo?.name,
+                  levelName: levelName,
+                  startDate: classInfo?.start_date || "Binnenkort",
+                  dashboardUrl: "https://huisvanhetarabisch.nl/dashboard",
+                },
+              }),
+            });
+          } catch (emailError) {
+            console.error("Failed to send enrollment email:", emailError);
+          }
+        }
+
         console.log(`Enrollment completed for user ${userId} in class ${classId}`);
         break;
       }
 
-      case "invoice.payment_succeeded": {
+      case "invoice.payment_succeeded":
+      case "invoice.paid": {
         const invoice = event.data.object as Stripe.Invoice;
         const subscriptionId = invoice.subscription as string;
 
@@ -141,7 +186,7 @@ serve(async (req: Request) => {
           const customerId = invoice.customer as string;
           const { data: subscription } = await supabase
             .from("subscriptions")
-            .select("user_id")
+            .select("user_id, class_id, classes(name)")
             .eq("stripe_customer_id", customerId)
             .maybeSingle();
 
@@ -154,6 +199,40 @@ serve(async (req: Request) => {
               payment_method: "stripe",
               stripe_payment_intent_id: invoice.payment_intent as string || null,
             });
+
+            // Send payment confirmation email
+            const { data: userProfile } = await supabase
+              .from("profiles")
+              .select("email, full_name, preferred_language")
+              .eq("user_id", subscription.user_id)
+              .single();
+
+            if (userProfile?.email) {
+              const classData = subscription.classes as any;
+              try {
+                await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${supabaseKey}`,
+                  },
+                  body: JSON.stringify({
+                    type: "payment_confirmation",
+                    to: userProfile.email,
+                    language: userProfile.preferred_language || "nl",
+                    data: {
+                      name: userProfile.full_name,
+                      amount: ((invoice.amount_paid || 0) / 100).toFixed(2),
+                      className: classData?.name || "Klas",
+                      paymentDate: new Date().toLocaleDateString("nl-NL"),
+                      paymentId: invoice.id,
+                    },
+                  }),
+                });
+              } catch (emailError) {
+                console.error("Failed to send payment confirmation email:", emailError);
+              }
+            }
           }
         }
         break;
@@ -172,7 +251,7 @@ serve(async (req: Request) => {
           // Log for admin notification
           const { data: subscription } = await supabase
             .from("subscriptions")
-            .select("user_id, class_id")
+            .select("user_id, class_id, classes(name)")
             .eq("stripe_subscription_id", subscriptionId)
             .maybeSingle();
 
@@ -188,6 +267,39 @@ serve(async (req: Request) => {
                 amount: invoice.amount_due / 100,
               },
             });
+
+            // Send payment failed email to user
+            const { data: userProfile } = await supabase
+              .from("profiles")
+              .select("email, full_name, preferred_language")
+              .eq("user_id", subscription.user_id)
+              .single();
+
+            if (userProfile?.email) {
+              const classData = subscription.classes as any;
+              try {
+                await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${supabaseKey}`,
+                  },
+                  body: JSON.stringify({
+                    type: "payment_failed",
+                    to: userProfile.email,
+                    language: userProfile.preferred_language || "nl",
+                    data: {
+                      name: userProfile.full_name,
+                      amount: ((invoice.amount_due || 0) / 100).toFixed(2),
+                      className: classData?.name || "Klas",
+                      retryUrl: "https://huisvanhetarabisch.nl/dashboard",
+                    },
+                  }),
+                });
+              } catch (emailError) {
+                console.error("Failed to send payment failed email:", emailError);
+              }
+            }
           }
         }
         break;

@@ -14,7 +14,11 @@ type EmailType =
   | "submission_feedback"
   | "enrollment_confirmation"
   | "payment_confirmation"
-  | "payment_failed";
+  | "payment_failed"
+  | "exercise_released"
+  | "placement_scheduled"
+  | "placement_completed"
+  | "teacher_review_needed";
 
 interface EmailRequest {
   type: EmailType;
@@ -481,6 +485,242 @@ const EMAIL_TEMPLATES: Record<EmailType, Record<string, { subject: string; html:
             <p>يرجى التحقق من بيانات الدفع والمحاولة مرة أخرى.</p>
             <a href="${data.retryUrl}" style="display: inline-block; padding: 12px 24px; background: #3d8c6e; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">
               حاول مرة أخرى
+            </a>
+          </div>
+        </div>
+      `,
+    },
+  },
+  exercise_released: {
+    nl: {
+      subject: "Nieuwe oefeningen beschikbaar! - Huis van het Arabisch",
+      html: (data) => `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #3d8c6e, #3db8a0); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">Huis van het Arabisch</h1>
+          </div>
+          <div style="padding: 30px; background: #f9f9f9;">
+            <h2>📚 Nieuwe oefeningen!</h2>
+            <p>Beste ${data.name},</p>
+            <p>Er zijn nieuwe oefeningen voor je beschikbaar:</p>
+            <ul>${data.exercises.map((e: string) => `<li>${e}</li>`).join('')}</ul>
+            <a href="${data.dashboardUrl}" style="display: inline-block; padding: 12px 24px; background: #3d8c6e; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+              Bekijk oefeningen
+            </a>
+          </div>
+        </div>
+      `,
+    },
+    en: {
+      subject: "New exercises available! - House of Arabic",
+      html: (data) => `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #3d8c6e, #3db8a0); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">House of Arabic</h1>
+          </div>
+          <div style="padding: 30px; background: #f9f9f9;">
+            <h2>📚 New exercises!</h2>
+            <p>Dear ${data.name},</p>
+            <p>New exercises are now available for you:</p>
+            <ul>${data.exercises.map((e: string) => `<li>${e}</li>`).join('')}</ul>
+            <a href="${data.dashboardUrl}" style="display: inline-block; padding: 12px 24px; background: #3d8c6e; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+              View exercises
+            </a>
+          </div>
+        </div>
+      `,
+    },
+    ar: {
+      subject: "تمارين جديدة متاحة! - بيت العربية",
+      html: (data) => `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl;">
+          <div style="background: linear-gradient(135deg, #3d8c6e, #3db8a0); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">بيت العربية</h1>
+          </div>
+          <div style="padding: 30px; background: #f9f9f9;">
+            <h2>📚 تمارين جديدة!</h2>
+            <p>عزيزي ${data.name}،</p>
+            <p>تمارين جديدة متاحة لك الآن:</p>
+            <ul>${data.exercises.map((e: string) => `<li>${e}</li>`).join('')}</ul>
+            <a href="${data.dashboardUrl}" style="display: inline-block; padding: 12px 24px; background: #3d8c6e; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+              عرض التمارين
+            </a>
+          </div>
+        </div>
+      `,
+    },
+  },
+  placement_scheduled: {
+    nl: {
+      subject: "Niveau-test ingepland - Huis van het Arabisch",
+      html: (data) => `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #3d8c6e, #3db8a0); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">Huis van het Arabisch</h1>
+          </div>
+          <div style="padding: 30px; background: #f9f9f9;">
+            <h2>📅 Niveau-test ingepland</h2>
+            <p>Beste ${data.name},</p>
+            <p>Je niveau-test is ingepland voor:</p>
+            <p><strong>${data.scheduledAt}</strong></p>
+            <a href="${data.meetLink}" style="display: inline-block; padding: 12px 24px; background: #3d8c6e; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+              Deelnemen aan meeting
+            </a>
+            <p style="color: #666; font-size: 14px;">Bewaar deze link goed. Je hebt hem nodig om deel te nemen aan de test.</p>
+          </div>
+        </div>
+      `,
+    },
+    en: {
+      subject: "Placement test scheduled - House of Arabic",
+      html: (data) => `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #3d8c6e, #3db8a0); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">House of Arabic</h1>
+          </div>
+          <div style="padding: 30px; background: #f9f9f9;">
+            <h2>📅 Placement test scheduled</h2>
+            <p>Dear ${data.name},</p>
+            <p>Your placement test has been scheduled for:</p>
+            <p><strong>${data.scheduledAt}</strong></p>
+            <a href="${data.meetLink}" style="display: inline-block; padding: 12px 24px; background: #3d8c6e; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+              Join meeting
+            </a>
+            <p style="color: #666; font-size: 14px;">Keep this link safe. You'll need it to join the test.</p>
+          </div>
+        </div>
+      `,
+    },
+    ar: {
+      subject: "تم جدولة اختبار تحديد المستوى - بيت العربية",
+      html: (data) => `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl;">
+          <div style="background: linear-gradient(135deg, #3d8c6e, #3db8a0); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">بيت العربية</h1>
+          </div>
+          <div style="padding: 30px; background: #f9f9f9;">
+            <h2>📅 تم جدولة اختبار تحديد المستوى</h2>
+            <p>عزيزي ${data.name}،</p>
+            <p>تم جدولة اختبار تحديد المستوى الخاص بك في:</p>
+            <p><strong>${data.scheduledAt}</strong></p>
+            <a href="${data.meetLink}" style="display: inline-block; padding: 12px 24px; background: #3d8c6e; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+              انضم إلى الاجتماع
+            </a>
+            <p style="color: #666; font-size: 14px;">احتفظ بهذا الرابط. ستحتاجه للانضمام إلى الاختبار.</p>
+          </div>
+        </div>
+      `,
+    },
+  },
+  placement_completed: {
+    nl: {
+      subject: "Je niveau is bepaald! - Huis van het Arabisch",
+      html: (data) => `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #3d8c6e, #3db8a0); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">Huis van het Arabisch</h1>
+          </div>
+          <div style="padding: 30px; background: #f9f9f9;">
+            <h2>🎉 Je niveau is bepaald!</h2>
+            <p>Beste ${data.name},</p>
+            <p>Je bent ingedeeld op niveau: <strong>${data.levelName}</strong></p>
+            ${data.className ? `<p>Je bent ingeschreven voor de klas: <strong>${data.className}</strong></p>` : ''}
+            <a href="${data.dashboardUrl}" style="display: inline-block; padding: 12px 24px; background: #3d8c6e; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+              Ga naar je dashboard
+            </a>
+          </div>
+        </div>
+      `,
+    },
+    en: {
+      subject: "Your level has been determined! - House of Arabic",
+      html: (data) => `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #3d8c6e, #3db8a0); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">House of Arabic</h1>
+          </div>
+          <div style="padding: 30px; background: #f9f9f9;">
+            <h2>🎉 Your level has been determined!</h2>
+            <p>Dear ${data.name},</p>
+            <p>You have been assigned to level: <strong>${data.levelName}</strong></p>
+            ${data.className ? `<p>You have been enrolled in class: <strong>${data.className}</strong></p>` : ''}
+            <a href="${data.dashboardUrl}" style="display: inline-block; padding: 12px 24px; background: #3d8c6e; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+              Go to your dashboard
+            </a>
+          </div>
+        </div>
+      `,
+    },
+    ar: {
+      subject: "تم تحديد مستواك! - بيت العربية",
+      html: (data) => `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl;">
+          <div style="background: linear-gradient(135deg, #3d8c6e, #3db8a0); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">بيت العربية</h1>
+          </div>
+          <div style="padding: 30px; background: #f9f9f9;">
+            <h2>🎉 تم تحديد مستواك!</h2>
+            <p>عزيزي ${data.name}،</p>
+            <p>تم تعيينك في المستوى: <strong>${data.levelName}</strong></p>
+            ${data.className ? `<p>تم تسجيلك في الفصل: <strong>${data.className}</strong></p>` : ''}
+            <a href="${data.dashboardUrl}" style="display: inline-block; padding: 12px 24px; background: #3d8c6e; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+              انتقل إلى لوحة التحكم
+            </a>
+          </div>
+        </div>
+      `,
+    },
+  },
+  teacher_review_needed: {
+    nl: {
+      subject: "Inzending wacht op beoordeling - Huis van het Arabisch",
+      html: (data) => `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #3d8c6e, #3db8a0); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">Huis van het Arabisch</h1>
+          </div>
+          <div style="padding: 30px; background: #f9f9f9;">
+            <h2>📝 Nieuwe inzending te beoordelen</h2>
+            <p><strong>${data.studentName}</strong> heeft de oefening <strong>${data.exerciseTitle}</strong> ingeleverd.</p>
+            <p>Er zijn open vragen die handmatige beoordeling vereisen.</p>
+            <a href="${data.reviewUrl}" style="display: inline-block; padding: 12px 24px; background: #3d8c6e; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+              Beoordeel nu
+            </a>
+          </div>
+        </div>
+      `,
+    },
+    en: {
+      subject: "Submission awaiting review - House of Arabic",
+      html: (data) => `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #3d8c6e, #3db8a0); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">House of Arabic</h1>
+          </div>
+          <div style="padding: 30px; background: #f9f9f9;">
+            <h2>📝 New submission to review</h2>
+            <p><strong>${data.studentName}</strong> has submitted the exercise <strong>${data.exerciseTitle}</strong>.</p>
+            <p>There are open questions that require manual review.</p>
+            <a href="${data.reviewUrl}" style="display: inline-block; padding: 12px 24px; background: #3d8c6e; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+              Review now
+            </a>
+          </div>
+        </div>
+      `,
+    },
+    ar: {
+      subject: "إجابة تنتظر المراجعة - بيت العربية",
+      html: (data) => `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; direction: rtl;">
+          <div style="background: linear-gradient(135deg, #3d8c6e, #3db8a0); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">بيت العربية</h1>
+          </div>
+          <div style="padding: 30px; background: #f9f9f9;">
+            <h2>📝 إجابة جديدة للمراجعة</h2>
+            <p>قدم <strong>${data.studentName}</strong> التمرين <strong>${data.exerciseTitle}</strong>.</p>
+            <p>هناك أسئلة مفتوحة تتطلب مراجعة يدوية.</p>
+            <a href="${data.reviewUrl}" style="display: inline-block; padding: 12px 24px; background: #3d8c6e; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+              مراجعة الآن
             </a>
           </div>
         </div>
