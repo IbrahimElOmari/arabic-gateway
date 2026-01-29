@@ -1,256 +1,350 @@
 
-# Volledige Implementatie: Prioriteit 1 (100%) + Prioriteit 2 (Kwaliteit)
 
-## Huidige Stand van Zaken - Prioriteit 1
+# Backend Services Implementatieplan
 
-### Punt 1: Registratieformulier Uitbreiden
-| Onderdeel | Status |
+## Overzicht Huidige Status
+
+Na analyse van de codebase blijkt dat veel fundamenten al aanwezig zijn:
+
+| Component | Status |
 |-----------|--------|
-| Database velden (phone, address, date_of_birth, study_level) | 100% - Aanwezig in `profiles` tabel |
-| RegisterForm.tsx met alle velden | 100% - Alle velden geïmplementeerd |
-| AuthContext.tsx signUp functie | 100% - Alle parameters worden doorgegeven |
-| Database trigger `handle_new_user` | 100% - Verwerkt alle extra velden |
-| i18n keys (nl.json, en.json, ar.json) | 100% - auth.phone, auth.address, auth.dateOfBirth, auth.studyLevel aanwezig |
-
-**Voltooiing: 100%**
-
-### Punt 2: Kalendermodule (Events)
-| Onderdeel | Status |
-|-----------|--------|
-| Database tabellen `events` en `event_attendees` | 100% - Aanwezig met RLS policies |
-| CalendarPage.tsx component | 100% - Volledige implementatie met CRUD |
-| Routing in App.tsx | 100% - `/calendar` route actief |
-| i18n keys | 95% - Ontbrekend: `calendar.selectEvent`, `calendar.eventDescription`, `common.select`, `common.more` |
-
-**Voltooiing: 95%** - Kleine i18n aanvullingen nodig
-
-### Punt 3: Stripe Edge Functions
-| Onderdeel | Status |
-|-----------|--------|
-| `stripe-checkout/index.ts` | 100% - Volledig met graceful fallback zonder API key |
-| `stripe-webhook/index.ts` | 100% - Alle events afgehandeld |
-| `manual-payment/index.ts` | 100% - Admin functionaliteit compleet |
-| `send-email/index.ts` | 100% - Email templates in 3 talen |
-| Database functie `increment_discount_usage` | 100% - Aanwezig |
-| Secrets configuratie | N/A - Gebruiker heeft geen Stripe account (wordt later toegevoegd) |
-
-**Voltooiing: 100%** (code compleet, secrets optioneel)
-
-### Punt 4: Automatische Data-Retentie (GDPR)
-| Onderdeel | Status |
-|-----------|--------|
-| `data_retention_log` tabel | 100% - Met RLS |
-| `users_pending_deletion` tabel | 100% - Met RLS |
-| `mark_user_for_deletion()` functie | 100% - Aanwezig |
-| `cancel_user_deletion()` functie | 100% - Aanwezig |
-| `anonymize_user_data()` functie | 100% - Aanwezig |
-| `process_data_retention()` functie | 100% - Aanwezig |
-| `get_upcoming_deletions()` functie | 100% - Aanwezig |
-| `handle_unenrollment()` trigger | 100% - Op `class_enrollments` |
-| pg_cron configuratie | Pending - Extensie moet door admin worden ingeschakeld |
-
-**Voltooiing: 100%** (code compleet, pg_cron is platformconfiguratie)
-
-### Punt 5: Email Notificaties
-| Onderdeel | Status |
-|-----------|--------|
-| `send-email/index.ts` edge function | 100% - Met Resend integratie |
-| Email templates (8 types) | 100% - welcome, password_reset, lesson_reminder, etc. |
-| Meertalige ondersteuning (NL/EN/AR) | 100% - RTL voor Arabisch |
-| TypeScript error handling | 100% - Correct geïmplementeerd |
-| RESEND_API_KEY secret | N/A - Wordt later toegevoegd |
-
-**Voltooiing: 100%** (code compleet, secret optioneel)
+| `exercises` tabel met `release_date` | ✅ Aanwezig |
+| `stripe-checkout` edge function | ✅ Volledig |
+| `stripe-webhook` edge function | ✅ Alle events afgehandeld |
+| `send-email` edge function | ✅ 8 email templates in 3 talen |
+| `lessons` tabel met `meet_link` | ✅ Aanwezig |
+| `lesson_recordings` tabel | ✅ Aanwezig |
+| Niveau-test systeem | ❌ Ontbreekt |
+| Cron-job voor oefeningen | ❌ Ontbreekt |
+| Auto-grading functie | ❌ Ontbreekt |
 
 ---
 
-## Resterende Werkzaamheden Prioriteit 1
+## Te Implementeren Backend Services
 
-### Te Voltooien Items
+### 1. Cron-job: Automatische Oefening Vrijgave (elke 2 dagen)
 
-1. **i18n Keys Toevoegen** (kleine aanvulling)
-   - `common.select` en `common.more` aan alle 3 locale bestanden
-   - `calendar.selectEvent` en `calendar.eventDescription` aan alle 3 locale bestanden
+**Doel**: Oefeningen automatisch beschikbaar maken voor ingeschreven leerlingen op basis van `release_date`.
+
+**Aanpak**:
+- Nieuwe edge function: `release-exercises/index.ts`
+- Controleert `exercises` tabel waar `release_date <= now()` en `is_published = false`
+- Update `is_published` naar `true` en stuurt notificatie email naar ingeschreven studenten
+- Aanroepen via pg_cron elke 2 dagen
+
+**Database wijzigingen**: Geen (gebruikt bestaande `release_date` kolom)
 
 ---
 
-## Prioriteit 2: Kwaliteit (Volledig Te Implementeren)
+### 2. Auto-Grading Functie met Notificaties
 
-Volgens de blueprint omvat Prioriteit 2 de volgende kwaliteitsaspecten:
+**Doel**: Multiple choice en checkbox vragen automatisch beoordelen na inlevering.
 
-### 2.1 Unit Testing
-- **Doel**: Unit tests per module (frontend en backend)
-- **Framework**: Vitest (reeds geconfigureerd in `vitest.config.ts`)
-- **Setup**: `src/test/setup.ts` bestaat met Jest-DOM
-- **Status**: Basis placeholder test aanwezig
+**Aanpak**:
+- Nieuwe edge function: `grade-submission/index.ts`
+- Wordt getriggerd na student antwoord inlevering
+- Vergelijkt `student_answers.answer_data` met `questions.correct_answer`
+- Update `student_answers.score` en `student_answers.is_correct`
+- Update `exercise_attempts.total_score` en `passed` status
+- Stuurt email notificatie naar student én docent
 
-**Te implementeren**:
-- Unit tests voor AuthContext (signUp, signIn, signOut)
-- Unit tests voor utility functies
-- Unit tests voor UI componenten (RegisterForm, CalendarPage)
-- Minimum 80% code coverage op kritieke paden
+**Logica**:
+```text
+Voor elke vraag in de poging:
+  1. Haal vraagtype op (multiple_choice, checkbox, open_text, etc.)
+  2. Als auto-gradable (multiple_choice of checkbox):
+     - Vergelijk antwoord met correct_answer
+     - Bereken score op basis van punten
+  3. Als handmatig (open_text, audio, file):
+     - Markeer als "awaiting_review"
+  4. Totaal score = som van alle behaalde punten / max punten
+  5. passed = total_score >= exercise.passing_score
+```
 
-### 2.2 Integratie Testing
-- **Doel**: Test API routes, database interacties en externe services
-- **Aanpak**: Supabase test database met fixtures
+---
 
-**Te implementeren**:
-- Test fixtures voor testdata
-- Integration tests voor:
-  - User registration flow
-  - Class enrollment flow
-  - Payment recording (manual)
-  - Exercise submission flow
+### 3. Stripe Webhook Uitbreiding (PCI-Compliant)
 
-### 2.3 End-to-End Testing
-- **Doel**: Gebruikersflows testen
-- **Framework**: Playwright of Cypress (aanbevolen: Playwright)
+**Huidige status**: De webhook handelt al af:
+- `checkout.session.completed`
+- `invoice.payment_succeeded`
+- `invoice.payment_failed`
+- `customer.subscription.updated`
+- `customer.subscription.deleted`
 
-**Te implementeren**:
-- E2E test configuratie
-- Tests voor:
-  - Registratie en login flow
-  - Kalender event aanmaken
-  - Forum post aanmaken
-  - Teacher dashboard navigatie
+**Uitbreiding**:
+- Ondersteuning voor `invoice.paid` event toevoegen
+- Enrollment bevestigings-email versturen na succesvolle betaling
+- Admin notificatie bij mislukte betalingen
 
-### 2.4 Accessibility Testing
-- **Doel**: WCAG 2.1 compliance
-- **Aanpak**: Automatische en handmatige tests
+**PCI Compliance**: Al gegarandeerd door Stripe SDK (tokenized payments, geen kaartgegevens op server)
 
-**Te implementeren**:
-- Axe-core integratie in test suite
-- Screenreader compatibiliteit checks
-- Toetsenbord navigatie tests
-- Kleurcontrast validatie
+---
 
-### 2.5 Performance Testing
-- **Doel**: Load testing en Lighthouse scores
-- **Aanpak**: K6 of Locust voor load tests
+### 4. Niveau-Test Systeem
 
-**Te implementeren**:
-- Lighthouse CI configuratie
-- Performance targets:
-  - LCP < 2.5s
-  - FID < 100ms
-  - CLS < 0.1
-- API response time targets (< 200ms)
+**Doel**: Na registratie krijgt de leerling een uitnodiging voor een intake meeting; admin/teacher beoordeelt en wijst niveau toe.
 
-### 2.6 Security Testing
-- **Doel**: OWASP Top 10 coverage
-- **Aanpak**: SAST en DAST
+**Database wijzigingen**:
+Nieuwe tabel `placement_tests`:
+| Kolom | Type | Beschrijving |
+|-------|------|--------------|
+| id | uuid | Primary key |
+| user_id | uuid | FK naar auth.users |
+| scheduled_at | timestamptz | Geplande meeting tijd |
+| meet_link | text | Google Meet link |
+| status | enum | pending, scheduled, completed, cancelled |
+| assigned_level_id | uuid | Toegewezen niveau na beoordeling |
+| assessed_by | uuid | Teacher/admin die beoordeeld heeft |
+| assessment_notes | text | Notities van de beoordeling |
+| created_at | timestamptz | Aanmaakdatum |
 
-**Te implementeren**:
-- ESLint security plugins
-- TypeScript strict mode verificatie
-- RLS policy testing
-- Input sanitatie validatie
+**Workflow**:
+1. Na registratie → student krijgt status "awaiting_placement"
+2. Admin/teacher plant meeting → `scheduled_at` en `meet_link` worden ingevuld
+3. Email notificatie naar student met meeting link
+4. Na meeting → teacher vult beoordeling in
+5. Student wordt automatisch toegevoegd aan starter-klas van toegewezen niveau
+
+---
+
+### 5. Google Meet Link Generatie
+
+**Huidige status**: `lessons.meet_link` bestaat al voor handmatige invoer.
+
+**Uitbreiding opties**:
+
+**Optie A - Handmatige links (huidige aanpak)**:
+- Teacher voert Google Meet link handmatig in
+- Geen API integratie nodig
+- Werkt direct
+
+**Optie B - Google Calendar API integratie**:
+- Vereist Google Cloud project + OAuth consent
+- Complexe setup met service account
+- Automatisch Meet links genereren
+
+**Aanbeveling**: Optie A behouden (handmatige links) is voldoende voor MVP. Google API integratie kan later worden toegevoegd.
 
 ---
 
 ## Implementatieplan
 
-### Fase 1: Prioriteit 1 Afronden (Kleine fixes)
-1. Voeg ontbrekende i18n keys toe aan nl.json, en.json, ar.json:
-   - `common.select`
-   - `common.more`
-   - `calendar.selectEvent`
-   - `calendar.eventDescription`
+### Fase 1: Database Schema (Migrations)
 
-### Fase 2: Prioriteit 2 - Testing Framework Setup
-1. Installeer test dependencies (Playwright, axe-core)
-2. Configureer E2E test setup
-3. Maak test fixtures voor Supabase
+1. **Tabel `placement_tests`**:
+```sql
+CREATE TYPE placement_status AS ENUM ('pending', 'scheduled', 'completed', 'cancelled');
 
-### Fase 3: Prioriteit 2 - Unit Tests
-1. AuthContext tests
-2. CalendarPage component tests
-3. RegisterForm component tests
-4. Utility function tests
+CREATE TABLE public.placement_tests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    scheduled_at TIMESTAMPTZ,
+    meet_link TEXT,
+    status placement_status NOT NULL DEFAULT 'pending',
+    assigned_level_id UUID REFERENCES public.levels(id),
+    assessed_by UUID,
+    assessment_notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
-### Fase 4: Prioriteit 2 - Integration Tests
-1. User registration flow test
-2. Class enrollment test
-3. Event CRUD operations test
-4. Forum/Chat operations test
+ALTER TABLE public.placement_tests ENABLE ROW LEVEL SECURITY;
 
-### Fase 5: Prioriteit 2 - E2E Tests
-1. Complete user journey tests
-2. Admin flow tests
-3. Teacher flow tests
+-- RLS Policies
+CREATE POLICY "Users can view their own placement tests"
+    ON public.placement_tests FOR SELECT
+    USING (auth.uid() = user_id);
 
-### Fase 6: Prioriteit 2 - Accessibility & Performance
-1. Axe-core accessibility tests
-2. Lighthouse CI setup
-3. Performance benchmarks
+CREATE POLICY "Admins and teachers can manage placement tests"
+    ON public.placement_tests FOR ALL
+    USING (has_role(auth.uid(), 'admin') OR has_role(auth.uid(), 'teacher'))
+    WITH CHECK (has_role(auth.uid(), 'admin') OR has_role(auth.uid(), 'teacher'));
+```
 
-### Fase 7: Prioriteit 2 - Security
-1. ESLint security audit
-2. RLS policy validation tests
-3. Input sanitatie tests
+2. **Trigger voor nieuwe gebruikers**:
+```sql
+CREATE OR REPLACE FUNCTION public.create_placement_test_for_new_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    INSERT INTO public.placement_tests (user_id, status)
+    VALUES (NEW.id, 'pending');
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER on_new_user_create_placement
+    AFTER INSERT ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION public.create_placement_test_for_new_user();
+```
 
 ---
 
-## Bestanden Te Creëren/Wijzigen
+### Fase 2: Edge Functions
 
-### Prioriteit 1 Voltooiing
-| Bestand | Actie |
-|---------|-------|
-| `src/i18n/locales/nl.json` | Toevoegen: common.select, common.more, calendar.selectEvent, calendar.eventDescription |
-| `src/i18n/locales/en.json` | Toevoegen: common.select, common.more, calendar.selectEvent, calendar.eventDescription |
-| `src/i18n/locales/ar.json` | Toevoegen: common.select, common.more, calendar.selectEvent, calendar.eventDescription |
+1. **`release-exercises/index.ts`**
+   - Query exercises waar `release_date <= now()` en `is_published = false`
+   - Update naar `is_published = true`
+   - Stuur email notificaties naar ingeschreven studenten
 
-### Prioriteit 2 Implementatie
+2. **`grade-submission/index.ts`**
+   - Input: `exercise_attempt_id`
+   - Auto-grade multiple choice en checkbox vragen
+   - Bereken totaal score
+   - Update attempt record
+   - Stuur feedback email
+
+3. **`schedule-placement/index.ts`**
+   - Input: `user_id`, `scheduled_at`, `meet_link`
+   - Update placement_test record
+   - Stuur email met meeting uitnodiging
+
+4. **`complete-placement/index.ts`**
+   - Input: `placement_test_id`, `assigned_level_id`, `notes`
+   - Update placement status naar 'completed'
+   - Maak automatisch class enrollment aan voor starter-klas
+
+---
+
+### Fase 3: Cron Jobs (pg_cron)
+
+Na het inschakelen van pg_cron extensie:
+
+```sql
+-- Oefeningen vrijgeven elke 2 dagen om 06:00
+SELECT cron.schedule(
+    'release-exercises-job',
+    '0 6 */2 * *',
+    $$
+    SELECT net.http_post(
+        url:='https://ugftwkpbmvbmgmpzhmtc.supabase.co/functions/v1/release-exercises',
+        headers:='{"Content-Type": "application/json", "Authorization": "Bearer ANON_KEY"}'::jsonb,
+        body:='{}'::jsonb
+    );
+    $$
+);
+
+-- GDPR data retention dagelijks om 02:00
+SELECT cron.schedule(
+    'gdpr-retention-job',
+    '0 2 * * *',
+    $$SELECT process_data_retention();$$
+);
+
+-- Lesherinneringen elk uur
+SELECT cron.schedule(
+    'lesson-reminders-job',
+    '0 * * * *',
+    $$
+    SELECT net.http_post(
+        url:='https://ugftwkpbmvbmgmpzhmtc.supabase.co/functions/v1/send-lesson-reminders',
+        headers:='{"Content-Type": "application/json", "Authorization": "Bearer ANON_KEY"}'::jsonb,
+        body:='{}'::jsonb
+    );
+    $$
+);
+```
+
+---
+
+### Fase 4: Frontend Integratie
+
+1. **Admin Placement Management pagina** (`/admin/placements`)
+   - Lijst van pending placement tests
+   - Schedule meeting functionaliteit
+   - Beoordeling formulier
+
+2. **Student Dashboard uitbreiding**
+   - Toon placement test status
+   - Meeting link zichtbaar wanneer scheduled
+
+---
+
+## Bestanden Te Creëren
+
 | Bestand | Doel |
 |---------|------|
-| `src/test/auth.test.ts` | Unit tests voor AuthContext |
-| `src/test/calendar.test.tsx` | Component tests voor CalendarPage |
-| `src/test/register-form.test.tsx` | Component tests voor RegisterForm |
-| `src/test/utils.test.ts` | Tests voor utility functies |
-| `src/test/integration/user-flow.test.ts` | Integratie test voor gebruikersflows |
-| `src/test/integration/fixtures.ts` | Test data fixtures |
-| `playwright.config.ts` | E2E test configuratie |
-| `e2e/auth.spec.ts` | E2E tests voor authenticatie |
-| `e2e/calendar.spec.ts` | E2E tests voor kalender |
-| `e2e/accessibility.spec.ts` | Accessibility tests |
-| `.github/workflows/test.yml` | CI/CD test pipeline |
-| `lighthouse.config.js` | Performance test configuratie |
+| `supabase/functions/release-exercises/index.ts` | Cron job voor oefening vrijgave |
+| `supabase/functions/grade-submission/index.ts` | Auto-grading functie |
+| `supabase/functions/schedule-placement/index.ts` | Niveau-test scheduling |
+| `supabase/functions/complete-placement/index.ts` | Niveau-test afronding |
+| `supabase/functions/send-lesson-reminders/index.ts` | Lesherinnering cron |
+| `src/pages/admin/PlacementsPage.tsx` | Admin placement management UI |
+| `src/i18n/locales/*.json` | Vertalingen voor placement systeem |
 
 ---
 
-## Voltooiingsrapport Na Implementatie
+## Technische Details
 
-### Prioriteit 1 (MVP Essentieel)
-| Punt | Onderdeel | Huidige % | Na Implementatie |
-|------|-----------|-----------|------------------|
-| 1 | Registratieformulier Uitbreiden | 100% | 100% |
-| 2 | Kalendermodule (Events) | 95% | 100% |
-| 3 | Stripe Edge Functions | 100% | 100% |
-| 4 | Automatische Data-Retentie | 100% | 100% |
-| 5 | Email Notificaties | 100% | 100% |
+### Auto-Grading Algoritme
 
-**Totaal Prioriteit 1: 99% → 100%**
+```text
+function gradeSubmission(attemptId):
+    attempt = getAttempt(attemptId)
+    exercise = getExercise(attempt.exercise_id)
+    questions = getQuestions(exercise.id)
+    answers = getStudentAnswers(attemptId)
+    
+    totalPoints = 0
+    earnedPoints = 0
+    
+    for each question in questions:
+        answer = answers.find(q => q.question_id == question.id)
+        totalPoints += question.points
+        
+        if question.type in ['multiple_choice', 'checkbox']:
+            if answer.answer_data == question.correct_answer:
+                earnedPoints += question.points
+                answer.is_correct = true
+                answer.score = question.points
+            else:
+                answer.is_correct = false
+                answer.score = 0
+        else:
+            // Open vragen: markeer voor review
+            answer.is_correct = null
+            answer.score = null
+    
+    percentageScore = (earnedPoints / totalPoints) * 100
+    passed = percentageScore >= exercise.passing_score
+    
+    update attempt:
+        total_score = percentageScore
+        passed = passed
+        submitted_at = now()
+```
 
-### Prioriteit 2 (Kwaliteit)
-| Punt | Onderdeel | Huidige % | Na Implementatie |
-|------|-----------|-----------|------------------|
-| 1 | Unit Testing | 10% | 100% |
-| 2 | Integratie Testing | 0% | 100% |
-| 3 | End-to-End Testing | 0% | 100% |
-| 4 | Accessibility Testing | 0% | 100% |
-| 5 | Performance Testing | 0% | 100% |
-| 6 | Security Testing | 0% | 100% |
+### Email Notificatie Types
 
-**Totaal Prioriteit 2: 2% → 100%**
+Nieuwe email templates toe te voegen aan `send-email/index.ts`:
+- `exercise_released`: Nieuwe oefening beschikbaar
+- `placement_scheduled`: Niveau-test gepland
+- `placement_completed`: Niveau toegewezen
 
 ---
 
-## Opmerkingen
+## Vereiste Configuratie
 
-1. **Stripe Account**: Code is 100% gereed. Zodra je een Stripe account hebt, voeg je de secrets toe (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`) en is de betalingsintegratie actief.
+1. **pg_cron extensie**: Moet worden ingeschakeld in Supabase dashboard
+2. **pg_net extensie**: Voor HTTP calls vanuit cron jobs
+3. **RESEND_API_KEY**: Voor email notificaties
+4. **STRIPE_SECRET_KEY** & **STRIPE_WEBHOOK_SECRET**: Voor betalingen (optioneel tot Stripe account actief is)
 
-2. **Resend Email**: Code is 100% gereed. Voeg `RESEND_API_KEY` toe wanneer beschikbaar.
+---
 
-3. **pg_cron**: De GDPR data retention logica is 100% klaar. De `pg_cron` extensie moet worden ingeschakeld via Supabase dashboard om automatische verwerking te activeren.
+## Voltooiingsoverzicht Na Implementatie
 
-4. **Leaked Password Protection**: Zoals aangegeven, wordt dit later toegevoegd via Supabase auth configuratie.
+| Feature | Voor | Na |
+|---------|------|-----|
+| Automatische oefening vrijgave | 0% | 100% |
+| Auto-grading systeem | 0% | 100% |
+| Stripe webhook (uitgebreid) | 90% | 100% |
+| Niveau-test systeem | 0% | 100% |
+| Lesherinneringen cron | 0% | 100% |
+| Google Meet integratie | 50% (handmatig) | 50% (blijft handmatig) |
+
