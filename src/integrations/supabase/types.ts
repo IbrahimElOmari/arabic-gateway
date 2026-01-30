@@ -44,6 +44,168 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_daily_stats: {
+        Row: {
+          active_users: number
+          avg_session_duration_seconds: number
+          class_id: string | null
+          created_at: string
+          exercises_completed: number
+          exercises_started: number
+          id: string
+          lessons_attended: number
+          level_id: string | null
+          new_users: number
+          page_views: number
+          stat_date: string
+          total_sessions: number
+          total_users: number
+        }
+        Insert: {
+          active_users?: number
+          avg_session_duration_seconds?: number
+          class_id?: string | null
+          created_at?: string
+          exercises_completed?: number
+          exercises_started?: number
+          id?: string
+          lessons_attended?: number
+          level_id?: string | null
+          new_users?: number
+          page_views?: number
+          stat_date: string
+          total_sessions?: number
+          total_users?: number
+        }
+        Update: {
+          active_users?: number
+          avg_session_duration_seconds?: number
+          class_id?: string | null
+          created_at?: string
+          exercises_completed?: number
+          exercises_started?: number
+          id?: string
+          lessons_attended?: number
+          level_id?: string | null
+          new_users?: number
+          page_views?: number
+          stat_date?: string
+          total_sessions?: number
+          total_users?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_daily_stats_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_daily_stats_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      analytics_events: {
+        Row: {
+          browser: string | null
+          country: string | null
+          created_at: string
+          device_type: string | null
+          event_name: string
+          event_type: Database["public"]["Enums"]["analytics_event_type"]
+          id: string
+          os: string | null
+          page_path: string | null
+          properties: Json | null
+          referrer: string | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          browser?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          event_name: string
+          event_type: Database["public"]["Enums"]["analytics_event_type"]
+          id?: string
+          os?: string | null
+          page_path?: string | null
+          properties?: Json | null
+          referrer?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          browser?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          event_name?: string
+          event_type?: Database["public"]["Enums"]["analytics_event_type"]
+          id?: string
+          os?: string | null
+          page_path?: string | null
+          properties?: Json | null
+          referrer?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      badges: {
+        Row: {
+          badge_type: Database["public"]["Enums"]["badge_type"]
+          created_at: string
+          description_ar: string
+          description_en: string
+          description_nl: string
+          icon: string
+          id: string
+          name_ar: string
+          name_en: string
+          name_nl: string
+          points_value: number
+          rarity: Database["public"]["Enums"]["badge_rarity"]
+          requirement_value: number | null
+        }
+        Insert: {
+          badge_type: Database["public"]["Enums"]["badge_type"]
+          created_at?: string
+          description_ar: string
+          description_en: string
+          description_nl: string
+          icon?: string
+          id?: string
+          name_ar: string
+          name_en: string
+          name_nl: string
+          points_value?: number
+          rarity?: Database["public"]["Enums"]["badge_rarity"]
+          requirement_value?: number | null
+        }
+        Update: {
+          badge_type?: Database["public"]["Enums"]["badge_type"]
+          created_at?: string
+          description_ar?: string
+          description_en?: string
+          description_nl?: string
+          icon?: string
+          id?: string
+          name_ar?: string
+          name_en?: string
+          name_nl?: string
+          points_value?: number
+          rarity?: Database["public"]["Enums"]["badge_rarity"]
+          requirement_value?: number | null
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           class_id: string
@@ -545,6 +707,33 @@ export type Database = {
           },
         ]
       }
+      feature_usage: {
+        Row: {
+          created_at: string
+          feature_name: string
+          id: string
+          unique_users: number
+          usage_count: number
+          usage_date: string
+        }
+        Insert: {
+          created_at?: string
+          feature_name: string
+          id?: string
+          unique_users?: number
+          usage_count?: number
+          usage_date: string
+        }
+        Update: {
+          created_at?: string
+          feature_name?: string
+          id?: string
+          unique_users?: number
+          usage_count?: number
+          usage_date?: string
+        }
+        Relationships: []
+      }
       forum_comments: {
         Row: {
           author_id: string
@@ -737,6 +926,57 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      leaderboards: {
+        Row: {
+          class_id: string | null
+          id: string
+          level_id: string | null
+          period: Database["public"]["Enums"]["leaderboard_period"]
+          period_start: string
+          points: number
+          rank: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          class_id?: string | null
+          id?: string
+          level_id?: string | null
+          period: Database["public"]["Enums"]["leaderboard_period"]
+          period_start: string
+          points?: number
+          rank?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          class_id?: string | null
+          id?: string
+          level_id?: string | null
+          period?: Database["public"]["Enums"]["leaderboard_period"]
+          period_start?: string
+          points?: number
+          rank?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leaderboards_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leaderboards_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "levels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lesson_attendance: {
         Row: {
@@ -1091,6 +1331,36 @@ export type Database = {
           },
         ]
       }
+      points_transactions: {
+        Row: {
+          action: Database["public"]["Enums"]["points_action"]
+          created_at: string
+          id: string
+          points: number
+          reference_id: string | null
+          reference_type: string | null
+          user_id: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["points_action"]
+          created_at?: string
+          id?: string
+          points: number
+          reference_id?: string | null
+          reference_type?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["points_action"]
+          created_at?: string
+          id?: string
+          points?: number
+          reference_id?: string | null
+          reference_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -1188,6 +1458,66 @@ export type Database = {
             columns: ["exercise_id"]
             isOneToOne: false
             referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_analytics: {
+        Row: {
+          avg_score: number | null
+          created_at: string
+          exercises_attempted: number
+          exercises_passed: number
+          id: string
+          lessons_attended: number
+          streak_days: number
+          strongest_category: string | null
+          study_time_minutes: number
+          user_id: string
+          weakest_category: string | null
+          week_start: string
+        }
+        Insert: {
+          avg_score?: number | null
+          created_at?: string
+          exercises_attempted?: number
+          exercises_passed?: number
+          id?: string
+          lessons_attended?: number
+          streak_days?: number
+          strongest_category?: string | null
+          study_time_minutes?: number
+          user_id: string
+          weakest_category?: string | null
+          week_start: string
+        }
+        Update: {
+          avg_score?: number | null
+          created_at?: string
+          exercises_attempted?: number
+          exercises_passed?: number
+          id?: string
+          lessons_attended?: number
+          streak_days?: number
+          strongest_category?: string | null
+          study_time_minutes?: number
+          user_id?: string
+          weakest_category?: string | null
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_analytics_strongest_category_fkey"
+            columns: ["strongest_category"]
+            isOneToOne: false
+            referencedRelation: "exercise_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_analytics_weakest_category_fkey"
+            columns: ["weakest_category"]
+            isOneToOne: false
+            referencedRelation: "exercise_categories"
             referencedColumns: ["id"]
           },
         ]
@@ -1363,6 +1693,54 @@ export type Database = {
           },
         ]
       }
+      support_tickets: {
+        Row: {
+          assigned_to: string | null
+          category: Database["public"]["Enums"]["ticket_category"]
+          created_at: string
+          description: string
+          first_response_at: string | null
+          id: string
+          priority: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at: string | null
+          status: Database["public"]["Enums"]["ticket_status"]
+          subject: string
+          ticket_number: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category: Database["public"]["Enums"]["ticket_category"]
+          created_at?: string
+          description: string
+          first_response_at?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["ticket_status"]
+          subject: string
+          ticket_number: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: Database["public"]["Enums"]["ticket_category"]
+          created_at?: string
+          description?: string
+          first_response_at?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["ticket_status"]
+          subject?: string
+          ticket_number?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       teacher_applications: {
         Row: {
           created_at: string
@@ -1402,6 +1780,199 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_label_assignments: {
+        Row: {
+          label_id: string
+          ticket_id: string
+        }
+        Insert: {
+          label_id: string
+          ticket_id: string
+        }
+        Update: {
+          label_id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_label_assignments_label_id_fkey"
+            columns: ["label_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_labels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_label_assignments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_labels: {
+        Row: {
+          color: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      ticket_responses: {
+        Row: {
+          attachments: Json | null
+          content: string
+          created_at: string
+          id: string
+          is_internal: boolean
+          ticket_id: string
+          user_id: string
+        }
+        Insert: {
+          attachments?: Json | null
+          content: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          ticket_id: string
+          user_id: string
+        }
+        Update: {
+          attachments?: Json | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          ticket_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_responses_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      two_factor_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string | null
+          method: Database["public"]["Enums"]["two_factor_method"]
+          success: boolean
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          method: Database["public"]["Enums"]["two_factor_method"]
+          success: boolean
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          method?: Database["public"]["Enums"]["two_factor_method"]
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_badges: {
+        Row: {
+          badge_id: string
+          earned_at: string
+          id: string
+          is_displayed: boolean
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          earned_at?: string
+          id?: string
+          is_displayed?: boolean
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          earned_at?: string
+          id?: string
+          is_displayed?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_points: {
+        Row: {
+          current_streak: number
+          exercises_completed: number
+          id: string
+          last_activity_date: string | null
+          lessons_attended: number
+          longest_streak: number
+          perfect_scores: number
+          total_points: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          current_streak?: number
+          exercises_completed?: number
+          id?: string
+          last_activity_date?: string | null
+          lessons_attended?: number
+          longest_streak?: number
+          perfect_scores?: number
+          total_points?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          current_streak?: number
+          exercises_completed?: number
+          id?: string
+          last_activity_date?: string | null
+          lessons_attended?: number
+          longest_streak?: number
+          perfect_scores?: number
+          total_points?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1419,6 +1990,42 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_two_factor: {
+        Row: {
+          backup_codes: string[] | null
+          created_at: string
+          id: string
+          is_enabled: boolean
+          last_used_at: string | null
+          method: Database["public"]["Enums"]["two_factor_method"]
+          totp_secret: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          backup_codes?: string[] | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          last_used_at?: string | null
+          method?: Database["public"]["Enums"]["two_factor_method"]
+          totp_secret?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          backup_codes?: string[] | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          last_used_at?: string | null
+          method?: Database["public"]["Enums"]["two_factor_method"]
+          totp_secret?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -1459,7 +2066,18 @@ export type Database = {
     }
     Functions: {
       anonymize_user_data: { Args: { p_user_id: string }; Returns: undefined }
+      award_points: {
+        Args: {
+          p_action: Database["public"]["Enums"]["points_action"]
+          p_points: number
+          p_reference_id?: string
+          p_reference_type?: string
+          p_user_id: string
+        }
+        Returns: number
+      }
       cancel_user_deletion: { Args: { p_user_id: string }; Returns: undefined }
+      generate_ticket_number: { Args: never; Returns: string }
       get_upcoming_deletions: {
         Args: { days_ahead?: number }
         Returns: {
@@ -1494,10 +2112,42 @@ export type Database = {
           processed_count: number
         }[]
       }
+      update_user_streak: { Args: { p_user_id: string }; Returns: number }
     }
     Enums: {
+      analytics_event_type:
+        | "page_view"
+        | "exercise_start"
+        | "exercise_complete"
+        | "lesson_join"
+        | "lesson_leave"
+        | "video_play"
+        | "video_pause"
+        | "video_complete"
+        | "download"
+        | "search"
+        | "login"
+        | "logout"
+        | "signup"
+        | "error"
+        | "feature_use"
       app_role: "admin" | "teacher" | "student"
       application_status: "pending" | "approved" | "rejected"
+      badge_rarity: "common" | "rare" | "epic" | "legendary"
+      badge_type:
+        | "first_exercise"
+        | "first_lesson"
+        | "streak_7"
+        | "streak_30"
+        | "streak_100"
+        | "perfect_score"
+        | "speed_learner"
+        | "night_owl"
+        | "early_bird"
+        | "community_helper"
+        | "level_complete"
+        | "all_categories"
+        | "dedication"
       discount_type: "percentage" | "fixed_amount"
       exercise_category:
         | "reading"
@@ -1505,11 +2155,22 @@ export type Database = {
         | "listening"
         | "speaking"
         | "grammar"
+      leaderboard_period: "weekly" | "monthly" | "all_time"
       lesson_status: "scheduled" | "in_progress" | "completed" | "canceled"
       payment_method: "stripe" | "manual" | "cash" | "bank_transfer"
       payment_status: "pending" | "succeeded" | "failed" | "refunded"
       placement_status: "pending" | "scheduled" | "completed" | "cancelled"
       plan_type: "one_time" | "subscription" | "installment"
+      points_action:
+        | "exercise_complete"
+        | "exercise_perfect"
+        | "lesson_attend"
+        | "streak_bonus"
+        | "badge_earned"
+        | "forum_post"
+        | "forum_help"
+        | "daily_login"
+        | "level_complete"
       question_type:
         | "multiple_choice"
         | "checkbox"
@@ -1523,6 +2184,21 @@ export type Database = {
         | "past_due"
         | "canceled"
         | "paused"
+      ticket_category:
+        | "technical"
+        | "billing"
+        | "content"
+        | "account"
+        | "feedback"
+        | "other"
+      ticket_priority: "low" | "medium" | "high" | "urgent"
+      ticket_status:
+        | "open"
+        | "in_progress"
+        | "waiting_response"
+        | "resolved"
+        | "closed"
+      two_factor_method: "totp" | "sms" | "email"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1650,8 +2326,41 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      analytics_event_type: [
+        "page_view",
+        "exercise_start",
+        "exercise_complete",
+        "lesson_join",
+        "lesson_leave",
+        "video_play",
+        "video_pause",
+        "video_complete",
+        "download",
+        "search",
+        "login",
+        "logout",
+        "signup",
+        "error",
+        "feature_use",
+      ],
       app_role: ["admin", "teacher", "student"],
       application_status: ["pending", "approved", "rejected"],
+      badge_rarity: ["common", "rare", "epic", "legendary"],
+      badge_type: [
+        "first_exercise",
+        "first_lesson",
+        "streak_7",
+        "streak_30",
+        "streak_100",
+        "perfect_score",
+        "speed_learner",
+        "night_owl",
+        "early_bird",
+        "community_helper",
+        "level_complete",
+        "all_categories",
+        "dedication",
+      ],
       discount_type: ["percentage", "fixed_amount"],
       exercise_category: [
         "reading",
@@ -1660,11 +2369,23 @@ export const Constants = {
         "speaking",
         "grammar",
       ],
+      leaderboard_period: ["weekly", "monthly", "all_time"],
       lesson_status: ["scheduled", "in_progress", "completed", "canceled"],
       payment_method: ["stripe", "manual", "cash", "bank_transfer"],
       payment_status: ["pending", "succeeded", "failed", "refunded"],
       placement_status: ["pending", "scheduled", "completed", "cancelled"],
       plan_type: ["one_time", "subscription", "installment"],
+      points_action: [
+        "exercise_complete",
+        "exercise_perfect",
+        "lesson_attend",
+        "streak_bonus",
+        "badge_earned",
+        "forum_post",
+        "forum_help",
+        "daily_login",
+        "level_complete",
+      ],
       question_type: [
         "multiple_choice",
         "checkbox",
@@ -1680,6 +2401,23 @@ export const Constants = {
         "canceled",
         "paused",
       ],
+      ticket_category: [
+        "technical",
+        "billing",
+        "content",
+        "account",
+        "feedback",
+        "other",
+      ],
+      ticket_priority: ["low", "medium", "high", "urgent"],
+      ticket_status: [
+        "open",
+        "in_progress",
+        "waiting_response",
+        "resolved",
+        "closed",
+      ],
+      two_factor_method: ["totp", "sms", "email"],
     },
   },
 } as const

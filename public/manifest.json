@@ -33,14 +33,16 @@
       "purpose": "maskable"
     }
   ],
-  "categories": ["education", "language"],
-  "lang": "nl",
-  "dir": "auto"
-}
-  ],
   "categories": ["education", "productivity"],
   "lang": "nl",
-  "dir": "ltr",
+  "dir": "auto",
+  "prefer_related_applications": false,
+  "related_applications": [
+    {
+      "platform": "play",
+      "id": "app.lovable.5b95bcb7d1cf4a9b8b6f5039d3774e2e"
+    }
+  ],
   "screenshots": [],
   "shortcuts": [
     {
@@ -56,6 +58,23 @@
       "description": "Bekijk je live lessen",
       "url": "/live-lessons",
       "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Ga naar je dashboard",
+      "url": "/dashboard",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
     }
-  ]
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
 }
