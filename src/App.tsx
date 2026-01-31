@@ -27,6 +27,7 @@ import LevelsPage from "./pages/admin/LevelsPage";
 import PaymentsPage from "./pages/admin/PaymentsPage";
 import DiscountCodesPage from "./pages/admin/DiscountCodesPage";
 import PlacementsPage from "./pages/admin/PlacementsPage";
+import AnalyticsPage from "./pages/admin/AnalyticsPage";
 
 // Teacher pages
 import { TeacherLayout } from "./components/teacher/TeacherLayout";
@@ -46,6 +47,12 @@ import RecordingsPage from "./pages/RecordingsPage";
 
 // Calendar page
 import CalendarPage from "./pages/CalendarPage";
+
+// Settings and Install pages
+import SettingsPage from "./pages/SettingsPage";
+import InstallPage from "./pages/InstallPage";
+import HelpdeskPage from "./pages/HelpdeskPage";
+import GamificationPage from "./pages/GamificationPage";
 
 // Community pages
 import ForumPage from "./pages/ForumPage";
@@ -98,7 +105,10 @@ const App = () => (
               <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
               <Route path="/progress" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-              <Route path="/settings" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+              <Route path="/helpdesk" element={<ProtectedRoute><HelpdeskPage /></ProtectedRoute>} />
+              <Route path="/gamification" element={<ProtectedRoute><GamificationPage /></ProtectedRoute>} />
+              <Route path="/install" element={<InstallPage />} />
               
               {/* Teacher routes */}
               <Route path="/teacher" element={<TeacherLayout />}>
@@ -120,6 +130,7 @@ const App = () => (
                 <Route path="payments" element={<PaymentsPage />} />
                 <Route path="discounts" element={<DiscountCodesPage />} />
                 <Route path="placements" element={<PlacementsPage />} />
+                <Route path="analytics" element={<AnalyticsPage />} />
               </Route>
               
               {/* Catch-all */}
