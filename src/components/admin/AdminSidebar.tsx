@@ -12,6 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
   UserCheck,
+  ClipboardCheck,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -31,8 +33,10 @@ export function AdminSidebar({ collapsed, onToggle }: AdminSidebarProps) {
     { to: "/admin/teachers", icon: UserCheck, label: t("admin.teacherApprovals", "Teacher Approvals") },
     { to: "/admin/classes", icon: BookOpen, label: t("admin.classes", "Classes") },
     { to: "/admin/levels", icon: Layers, label: t("admin.levels", "Levels") },
+    { to: "/admin/placements", icon: ClipboardCheck, label: t("admin.placements", "Placements") },
     { to: "/admin/payments", icon: CreditCard, label: t("admin.payments", "Payments") },
     { to: "/admin/discounts", icon: Percent, label: t("admin.discounts", "Discounts") },
+    { to: "/admin/analytics", icon: BarChart3, label: t("admin.analytics", "Analytics") },
     { to: "/admin/settings", icon: Settings, label: t("admin.settings", "Settings") },
   ];
 
