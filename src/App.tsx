@@ -41,6 +41,15 @@ import SelfStudyPage from "./pages/SelfStudyPage";
 import CategoryPage from "./pages/CategoryPage";
 import ExercisePage from "./pages/ExercisePage";
 
+// Teacher exercise and materials pages
+import TeacherExercisesPage from "./pages/teacher/TeacherExercisesPage";
+import TeacherMaterialsPage from "./pages/teacher/TeacherMaterialsPage";
+
+// Knowledge base
+import KnowledgeBasePage from "./pages/KnowledgeBasePage";
+import KnowledgeBaseManagementPage from "./pages/admin/KnowledgeBaseManagementPage";
+import ContentReportsPage from "./pages/admin/ContentReportsPage";
+import AdminInvitationsPage from "./pages/admin/AdminInvitationsPage";
 // Live Lessons pages
 import LiveLessonsPage from "./pages/LiveLessonsPage";
 import RecordingsPage from "./pages/RecordingsPage";
@@ -116,9 +125,12 @@ const App = () => (
                 <Route path="lessons" element={<TeacherLessonsPage />} />
                 <Route path="recordings" element={<TeacherRecordingsPage />} />
                 <Route path="submissions" element={<TeacherSubmissionsPage />} />
-                <Route path="exercises" element={<DashboardPage />} />
-                <Route path="students" element={<DashboardPage />} />
+                <Route path="exercises" element={<TeacherExercisesPage />} />
+                <Route path="materials" element={<TeacherMaterialsPage />} />
               </Route>
+              
+              {/* Knowledge base */}
+              <Route path="/faq" element={<KnowledgeBasePage />} />
               
               {/* Admin routes */}
               <Route path="/admin" element={<AdminLayout />}>
@@ -131,6 +143,9 @@ const App = () => (
                 <Route path="discounts" element={<DiscountCodesPage />} />
                 <Route path="placements" element={<PlacementsPage />} />
                 <Route path="analytics" element={<AnalyticsPage />} />
+                <Route path="faq" element={<KnowledgeBaseManagementPage />} />
+                <Route path="reports" element={<ContentReportsPage />} />
+                <Route path="invitations" element={<AdminInvitationsPage />} />
               </Route>
               
               {/* Catch-all */}
