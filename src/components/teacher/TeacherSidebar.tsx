@@ -28,8 +28,8 @@ export function TeacherSidebar({ collapsed, onToggle }: TeacherSidebarProps) {
     { to: "/teacher/lessons", icon: Calendar, label: t("teacher.lessons", "Lessons") },
     { to: "/teacher/recordings", icon: Video, label: t("teacher.recordings", "Recordings") },
     { to: "/teacher/exercises", icon: BookOpen, label: t("teacher.exercises", "Exercises") },
-    { to: "/teacher/submissions", icon: FileCheck, label: t("teacher.submissions", "Submissions") },
-    { to: "/teacher/students", icon: Users, label: t("teacher.students", "Students") },
+    { to: "/teacher/materials", icon: FileCheck, label: t("teacher.materials", "Materials") },
+    { to: "/teacher/submissions", icon: Users, label: t("teacher.submissions", "Submissions") },
   ];
 
   return (

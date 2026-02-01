@@ -36,8 +36,10 @@ export function AdminSidebar({ collapsed, onToggle }: AdminSidebarProps) {
     { to: "/admin/placements", icon: ClipboardCheck, label: t("admin.placements", "Placements") },
     { to: "/admin/payments", icon: CreditCard, label: t("admin.payments", "Payments") },
     { to: "/admin/discounts", icon: Percent, label: t("admin.discounts", "Discounts") },
+    { to: "/admin/faq", icon: BookOpen, label: t("admin.knowledgeBase", "Knowledge Base") },
+    { to: "/admin/reports", icon: ClipboardCheck, label: t("admin.contentReports", "Reports") },
+    { to: "/admin/invitations", icon: UserCheck, label: t("admin.invitations", "Invitations") },
     { to: "/admin/analytics", icon: BarChart3, label: t("admin.analytics", "Analytics") },
-    { to: "/admin/settings", icon: Settings, label: t("admin.settings", "Settings") },
   ];
 
   return (

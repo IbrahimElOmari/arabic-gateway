@@ -44,6 +44,39 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          role: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          invited_by: string
+          role?: string
+          token: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          role?: string
+          token?: string
+        }
+        Relationships: []
+      }
       analytics_daily_stats: {
         Row: {
           active_users: number
@@ -377,6 +410,48 @@ export type Database = {
           },
         ]
       }
+      content_reports: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string
+          description: string | null
+          id: string
+          reason: string
+          reporter_id: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          reason: string
+          reporter_id: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          reason?: string
+          reporter_id?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       data_retention_log: {
         Row: {
           action: string
@@ -706,6 +781,110 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      faq_articles: {
+        Row: {
+          category_id: string
+          content_ar: string
+          content_en: string
+          content_nl: string
+          created_at: string
+          created_by: string
+          display_order: number
+          helpful_count: number
+          id: string
+          is_published: boolean
+          not_helpful_count: number
+          title_ar: string
+          title_en: string
+          title_nl: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          category_id: string
+          content_ar: string
+          content_en: string
+          content_nl: string
+          created_at?: string
+          created_by: string
+          display_order?: number
+          helpful_count?: number
+          id?: string
+          is_published?: boolean
+          not_helpful_count?: number
+          title_ar: string
+          title_en: string
+          title_nl: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          category_id?: string
+          content_ar?: string
+          content_en?: string
+          content_nl?: string
+          created_at?: string
+          created_by?: string
+          display_order?: number
+          helpful_count?: number
+          id?: string
+          is_published?: boolean
+          not_helpful_count?: number
+          title_ar?: string
+          title_en?: string
+          title_nl?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faq_articles_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "faq_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      faq_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          icon: string
+          id: string
+          is_active: boolean
+          name_ar: string
+          name_en: string
+          name_nl: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          icon?: string
+          id?: string
+          is_active?: boolean
+          name_ar: string
+          name_en: string
+          name_nl: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          icon?: string
+          id?: string
+          is_active?: boolean
+          name_ar?: string
+          name_en?: string
+          name_nl?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       feature_usage: {
         Row: {
