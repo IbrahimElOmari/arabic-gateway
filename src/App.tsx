@@ -40,6 +40,7 @@ import TeacherSubmissionsPage from "./pages/teacher/TeacherSubmissionsPage";
 import SelfStudyPage from "./pages/SelfStudyPage";
 import CategoryPage from "./pages/CategoryPage";
 import ExercisePage from "./pages/ExercisePage";
+import FinalExamPage from "./pages/FinalExamPage";
 
 // Teacher exercise and materials pages
 import TeacherExercisesPage from "./pages/teacher/TeacherExercisesPage";
@@ -50,6 +51,7 @@ import KnowledgeBasePage from "./pages/KnowledgeBasePage";
 import KnowledgeBaseManagementPage from "./pages/admin/KnowledgeBaseManagementPage";
 import ContentReportsPage from "./pages/admin/ContentReportsPage";
 import AdminInvitationsPage from "./pages/admin/AdminInvitationsPage";
+import FinalExamsPage from "./pages/admin/FinalExamsPage";
 // Live Lessons pages
 import LiveLessonsPage from "./pages/LiveLessonsPage";
 import RecordingsPage from "./pages/RecordingsPage";
@@ -99,6 +101,7 @@ const App = () => (
               <Route path="/self-study" element={<ProtectedRoute><SelfStudyPage /></ProtectedRoute>} />
               <Route path="/self-study/:category" element={<ProtectedRoute><CategoryPage /></ProtectedRoute>} />
               <Route path="/self-study/:category/:exerciseId" element={<ProtectedRoute><ExercisePage /></ProtectedRoute>} />
+              <Route path="/final-exam/:examId" element={<ProtectedRoute><FinalExamPage /></ProtectedRoute>} />
               
               {/* Live Lessons routes */}
               <Route path="/live-lessons" element={<ProtectedRoute><LiveLessonsPage /></ProtectedRoute>} />
@@ -146,6 +149,7 @@ const App = () => (
                 <Route path="faq" element={<KnowledgeBaseManagementPage />} />
                 <Route path="reports" element={<ContentReportsPage />} />
                 <Route path="invitations" element={<AdminInvitationsPage />} />
+                <Route path="final-exams" element={<FinalExamsPage />} />
               </Route>
               
               {/* Catch-all */}

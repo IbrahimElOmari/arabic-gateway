@@ -34,7 +34,9 @@ import {
   ListChecks,
   CheckSquare,
   FileText,
-  Upload
+  Upload,
+  Mic,
+  Video
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -43,12 +45,14 @@ interface ExerciseBuilderProps {
   onBack: () => void;
 }
 
-type QuestionType = "multiple_choice" | "checkbox" | "open_text" | "file_upload";
+type QuestionType = "multiple_choice" | "checkbox" | "open_text" | "audio_upload" | "video_upload" | "file_upload";
 
 const questionTypeIcons: Record<QuestionType, React.ElementType> = {
   multiple_choice: ListChecks,
   checkbox: CheckSquare,
   open_text: FileText,
+  audio_upload: Mic,
+  video_upload: Video,
   file_upload: Upload,
 };
 
@@ -369,6 +373,8 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
                     <SelectItem value="multiple_choice">{t("questionTypes.multiple_choice", "Multiple Choice")}</SelectItem>
                     <SelectItem value="checkbox">{t("questionTypes.checkbox", "Checkbox (Multiple Answers)")}</SelectItem>
                     <SelectItem value="open_text">{t("questionTypes.open_text", "Open Text")}</SelectItem>
+                    <SelectItem value="audio_upload">{t("questionTypes.audio_upload", "Audio Recording")}</SelectItem>
+                    <SelectItem value="video_upload">{t("questionTypes.video_upload", "Video Recording")}</SelectItem>
                     <SelectItem value="file_upload">{t("questionTypes.file_upload", "File Upload")}</SelectItem>
                   </SelectContent>
                 </Select>

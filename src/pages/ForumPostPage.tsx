@@ -4,13 +4,14 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ThumbsUp, Pin, Lock, Loader2, ArrowLeft, Trash, Edit, Send } from "lucide-react";
+import { ThumbsUp, Pin, Lock, Loader2, ArrowLeft, Trash, Edit, Send, Flag } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import { ReportContentDialog } from "@/components/moderation/ReportContentDialog";
 
 export default function ForumPostPage() {
   const { roomName, postId } = useParams();
@@ -20,6 +21,11 @@ export default function ForumPostPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [newComment, setNewComment] = useState("");
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reportTarget, setReportTarget] = useState<{
+    type: "forum_post" | "forum_comment";
+    id: string;
+  } | null>(null);
 
   const { data: post, isLoading } = useQuery({
     queryKey: ["forum-post", postId],
@@ -160,16 +166,30 @@ export default function ForumPostPage() {
                   </CardDescription>
                 </div>
               </div>
-              {canDeletePost && (
+              <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => deletePostMutation.mutate()}
-                  className="text-destructive"
+                  onClick={() => {
+                    setReportTarget({ type: "forum_post", id: post.id });
+                    setReportDialogOpen(true);
+                  }}
+                  className="text-muted-foreground hover:text-destructive"
+                  title={t("moderation.reportContent", "Report content")}
                 >
-                  <Trash className="h-4 w-4" />
+                  <Flag className="h-4 w-4" />
                 </Button>
-              )}
+                {canDeletePost && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => deletePostMutation.mutate()}
+                    className="text-destructive"
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -232,16 +252,30 @@ export default function ForumPostPage() {
                           <p className="text-sm mt-1">{comment.content}</p>
                         </div>
                       </div>
-                      {(comment.author_id === user?.id || isAdmin || isTeacher) && (
+                      <div className="flex items-center gap-1">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 text-destructive"
-                          onClick={() => deleteCommentMutation.mutate(comment.id)}
+                          className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                          onClick={() => {
+                            setReportTarget({ type: "forum_comment", id: comment.id });
+                            setReportDialogOpen(true);
+                          }}
+                          title={t("moderation.reportContent", "Report content")}
                         >
-                          <Trash className="h-3 w-3" />
+                          <Flag className="h-3 w-3" />
                         </Button>
-                      )}
+                        {(comment.author_id === user?.id || isAdmin || isTeacher) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-destructive"
+                            onClick={() => deleteCommentMutation.mutate(comment.id)}
+                          >
+                            <Trash className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -253,6 +287,16 @@ export default function ForumPostPage() {
             </p>
           )}
         </div>
+
+        {/* Report Dialog */}
+        {reportTarget && (
+          <ReportContentDialog
+            open={reportDialogOpen}
+            onOpenChange={setReportDialogOpen}
+            contentType={reportTarget.type}
+            contentId={reportTarget.id}
+          />
+        )}
       </div>
     </MainLayout>
   );

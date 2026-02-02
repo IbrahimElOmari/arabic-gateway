@@ -23,6 +23,9 @@ import { toast } from "@/hooks/use-toast";
 import { MultipleChoiceQuestion } from "@/components/exercises/questions/MultipleChoiceQuestion";
 import { CheckboxQuestion } from "@/components/exercises/questions/CheckboxQuestion";
 import { OpenTextQuestion } from "@/components/exercises/questions/OpenTextQuestion";
+import { AudioUploadQuestion } from "@/components/exercises/questions/AudioUploadQuestion";
+import { VideoUploadQuestion } from "@/components/exercises/questions/VideoUploadQuestion";
+import { FileUploadQuestion } from "@/components/exercises/questions/FileUploadQuestion";
 
 interface Question {
   id: string;
@@ -399,14 +402,35 @@ export default function ExercisePage() {
                   onChange={(value) => handleAnswerChange(currentQuestion.id, value)}
                 />
               )}
-              {(currentQuestion.type === "open_text" ||
-                currentQuestion.type === "audio_upload" ||
-                currentQuestion.type === "video_upload" ||
-                currentQuestion.type === "file_upload") && (
+              {currentQuestion.type === "open_text" && (
                 <OpenTextQuestion
                   value={answers[currentQuestion.id] as string}
                   onChange={(value) => handleAnswerChange(currentQuestion.id, value)}
                   placeholder={t("exercises.typeAnswer", "Type your answer here...")}
+                />
+              )}
+              {currentQuestion.type === "audio_upload" && (
+                <AudioUploadQuestion
+                  value={answers[currentQuestion.id] as string}
+                  onChange={(url) => handleAnswerChange(currentQuestion.id, url)}
+                  attemptId={attemptId}
+                  questionId={currentQuestion.id}
+                />
+              )}
+              {currentQuestion.type === "video_upload" && (
+                <VideoUploadQuestion
+                  value={answers[currentQuestion.id] as string}
+                  onChange={(url) => handleAnswerChange(currentQuestion.id, url)}
+                  attemptId={attemptId}
+                  questionId={currentQuestion.id}
+                />
+              )}
+              {currentQuestion.type === "file_upload" && (
+                <FileUploadQuestion
+                  value={answers[currentQuestion.id] as string}
+                  onChange={(url) => handleAnswerChange(currentQuestion.id, url)}
+                  attemptId={attemptId}
+                  questionId={currentQuestion.id}
                 />
               )}
             </CardContent>
