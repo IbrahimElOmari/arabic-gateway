@@ -913,6 +913,151 @@ export type Database = {
         }
         Relationships: []
       }
+      final_exam_attempts: {
+        Row: {
+          attempt_number: number
+          final_exam_id: string
+          id: string
+          passed: boolean | null
+          promoted_to_level_id: string | null
+          started_at: string
+          student_id: string
+          submitted_at: string | null
+          total_score: number | null
+        }
+        Insert: {
+          attempt_number?: number
+          final_exam_id: string
+          id?: string
+          passed?: boolean | null
+          promoted_to_level_id?: string | null
+          started_at?: string
+          student_id: string
+          submitted_at?: string | null
+          total_score?: number | null
+        }
+        Update: {
+          attempt_number?: number
+          final_exam_id?: string
+          id?: string
+          passed?: boolean | null
+          promoted_to_level_id?: string | null
+          started_at?: string
+          student_id?: string
+          submitted_at?: string | null
+          total_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "final_exam_attempts_final_exam_id_fkey"
+            columns: ["final_exam_id"]
+            isOneToOne: false
+            referencedRelation: "final_exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "final_exam_attempts_promoted_to_level_id_fkey"
+            columns: ["promoted_to_level_id"]
+            isOneToOne: false
+            referencedRelation: "levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      final_exam_questions: {
+        Row: {
+          correct_answer: Json | null
+          created_at: string
+          display_order: number
+          final_exam_id: string
+          id: string
+          options: Json | null
+          points: number
+          question_text: Json
+          type: string
+        }
+        Insert: {
+          correct_answer?: Json | null
+          created_at?: string
+          display_order?: number
+          final_exam_id: string
+          id?: string
+          options?: Json | null
+          points?: number
+          question_text: Json
+          type?: string
+        }
+        Update: {
+          correct_answer?: Json | null
+          created_at?: string
+          display_order?: number
+          final_exam_id?: string
+          id?: string
+          options?: Json | null
+          points?: number
+          question_text?: Json
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "final_exam_questions_final_exam_id_fkey"
+            columns: ["final_exam_id"]
+            isOneToOne: false
+            referencedRelation: "final_exams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      final_exams: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean
+          level_id: string
+          max_attempts: number
+          passing_score: number
+          time_limit_seconds: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          level_id: string
+          max_attempts?: number
+          passing_score?: number
+          time_limit_seconds?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          level_id?: string
+          max_attempts?: number
+          passing_score?: number
+          time_limit_seconds?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "final_exams_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forum_comments: {
         Row: {
           author_id: string
@@ -2290,6 +2435,14 @@ export type Database = {
           admin_notifications: Json
           processed_count: number
         }[]
+      }
+      promote_student_to_next_level: {
+        Args: {
+          p_current_level_id: string
+          p_exam_attempt_id: string
+          p_student_id: string
+        }
+        Returns: string
       }
       update_user_streak: { Args: { p_user_id: string }; Returns: number }
     }

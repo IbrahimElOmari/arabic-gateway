@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { TwoFactorSetup } from '@/components/security/TwoFactorSetup';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,11 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Shield, User, Bell, Palette } from 'lucide-react';
+import { Shield, User, Bell, Palette, Sun, Moon, Monitor, Briefcase, Sparkles } from 'lucide-react';
 
 export default function SettingsPage() {
   const { t } = useTranslation();
   const { profile } = useAuth();
+  const { theme, setTheme, themeStyle, setThemeStyle } = useTheme();
 
   return (
     <MainLayout>
@@ -148,15 +150,89 @@ export default function SettingsPage() {
           <TabsContent value="appearance" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>{t('settings.appearanceSettings')}</CardTitle>
-                <CardDescription>{t('settings.appearanceDescription')}</CardDescription>
+                <CardTitle>{t('settings.appearanceSettings', 'Appearance Settings')}</CardTitle>
+                <CardDescription>{t('settings.appearanceDescription', 'Customize how the app looks')}</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>{t('settings.theme')}</Label>
+              <CardContent className="space-y-6">
+                {/* Color Theme */}
+                <div className="space-y-3">
+                  <Label>{t('settings.colorTheme', 'Color Theme')}</Label>
+                  <div className="grid grid-cols-3 gap-3">
+                    <Button
+                      variant={theme === 'light' ? "default" : "outline"}
+                      onClick={() => setTheme('light')}
+                      className="flex items-center gap-2"
+                    >
+                      <Sun className="h-4 w-4" />
+                      {t('settings.themeLight', 'Light')}
+                    </Button>
+                    <Button
+                      variant={theme === 'dark' ? "default" : "outline"}
+                      onClick={() => setTheme('dark')}
+                      className="flex items-center gap-2"
+                    >
+                      <Moon className="h-4 w-4" />
+                      {t('settings.themeDark', 'Dark')}
+                    </Button>
+                    <Button
+                      variant={theme === 'system' ? "default" : "outline"}
+                      onClick={() => setTheme('system')}
+                      className="flex items-center gap-2"
+                    >
+                      <Monitor className="h-4 w-4" />
+                      {t('settings.themeSystem', 'System')}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Style Theme */}
+                <div className="space-y-3">
+                  <Label>{t('settings.themeStyle', 'Style')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    {t('settings.themeDescription')}
+                    {t('settings.styleThemeDescription', 'Choose between a clean professional look or a more playful design')}
                   </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Card 
+                      className={`cursor-pointer p-4 transition-all ${
+                        themeStyle === 'professional' 
+                          ? 'ring-2 ring-primary bg-primary/5' 
+                          : 'hover:bg-accent/50'
+                      }`}
+                      onClick={() => setThemeStyle('professional')}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-primary/10">
+                          <Briefcase className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{t('settings.professional', 'Professional')}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {t('settings.professionalDescription', 'Clean, minimal interface')}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                    <Card 
+                      className={`cursor-pointer p-4 transition-all ${
+                        themeStyle === 'playful' 
+                          ? 'ring-2 ring-primary bg-primary/5' 
+                          : 'hover:bg-accent/50'
+                      }`}
+                      onClick={() => setThemeStyle('playful')}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-accent/20">
+                          <Sparkles className="h-6 w-6 text-accent-foreground" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{t('settings.playful', 'Playful')}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {t('settings.playfulDescription', 'Rounded, colorful design')}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -7,13 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { MessageCircle, Plus, ThumbsUp, Pin, Lock, Loader2, ArrowLeft } from "lucide-react";
+import { MessageCircle, Plus, ThumbsUp, Pin, Lock, Loader2, ArrowLeft, Flag } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import { ReportContentDialog } from "@/components/moderation/ReportContentDialog";
 
 export default function ForumRoomPage() {
   const { roomName } = useParams();
@@ -23,6 +24,8 @@ export default function ForumRoomPage() {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newPost, setNewPost] = useState({ title: "", content: "" });
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reportTarget, setReportTarget] = useState<{ type: "forum_post"; id: string } | null>(null);
 
   const { data: room, isLoading: roomLoading } = useQuery({
     queryKey: ["forum-room", roomName],
@@ -204,18 +207,34 @@ export default function ForumRoomPage() {
                           </CardDescription>
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          likeMutation.mutate(post.id);
-                        }}
-                        className={userLikes?.includes(post.id) ? "text-primary" : "text-muted-foreground"}
-                      >
-                        <ThumbsUp className="h-4 w-4 mr-1" />
-                        {post.likes_count}
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            likeMutation.mutate(post.id);
+                          }}
+                          className={userLikes?.includes(post.id) ? "text-primary" : "text-muted-foreground"}
+                        >
+                          <ThumbsUp className="h-4 w-4 mr-1" />
+                          {post.likes_count}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setReportTarget({ type: "forum_post", id: post.id });
+                            setReportDialogOpen(true);
+                          }}
+                          className="text-muted-foreground hover:text-destructive"
+                          title={t("moderation.reportContent", "Report content")}
+                        >
+                          <Flag className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -233,6 +252,16 @@ export default function ForumRoomPage() {
               <p className="text-muted-foreground">{t("forum.beFirst", "Be the first to start a discussion!")}</p>
             </CardContent>
           </Card>
+        )}
+
+        {/* Report Dialog */}
+        {reportTarget && (
+          <ReportContentDialog
+            open={reportDialogOpen}
+            onOpenChange={setReportDialogOpen}
+            contentType={reportTarget.type}
+            contentId={reportTarget.id}
+          />
         )}
       </div>
     </MainLayout>
