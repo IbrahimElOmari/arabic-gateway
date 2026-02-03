@@ -30,7 +30,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Flag, CheckCircle, XCircle, Eye, Loader2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Flag, CheckCircle, XCircle, Eye, Loader2, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
@@ -42,6 +52,8 @@ export default function ContentReportsPage() {
   const [selectedReport, setSelectedReport] = useState<any>(null);
   const [reviewNotes, setReviewNotes] = useState("");
   const [newStatus, setNewStatus] = useState<string>("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [reportToDelete, setReportToDelete] = useState<any>(null);
 
   const { data: reports, isLoading } = useQuery({
     queryKey: ["content-reports", statusFilter],
@@ -80,6 +92,51 @@ export default function ContentReportsPage() {
       setReviewNotes("");
       toast({
         title: t("moderation.reportUpdated", "Report Updated"),
+      });
+    },
+  });
+
+  const deleteContentMutation = useMutation({
+    mutationFn: async (report: any) => {
+      // Delete the content based on type
+      if (report.content_type === "forum_post") {
+        const { error } = await supabase
+          .from("forum_posts")
+          .delete()
+          .eq("id", report.content_id);
+        if (error) throw error;
+      } else if (report.content_type === "forum_comment") {
+        const { error } = await supabase
+          .from("forum_comments")
+          .delete()
+          .eq("id", report.content_id);
+        if (error) throw error;
+      } else if (report.content_type === "chat_message") {
+        const { error } = await supabase
+          .from("chat_messages")
+          .delete()
+          .eq("id", report.content_id);
+        if (error) throw error;
+      }
+
+      // Update report status to resolved
+      const { error: updateError } = await supabase
+        .from("content_reports")
+        .update({
+          status: "resolved",
+          review_notes: "Content deleted by moderator",
+          reviewed_by: user!.id,
+          reviewed_at: new Date().toISOString(),
+        })
+        .eq("id", report.id);
+      if (updateError) throw updateError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["content-reports"] });
+      setDeleteDialogOpen(false);
+      setReportToDelete(null);
+      toast({
+        title: t("moderation.contentDeleted", "Content Deleted"),
       });
     },
   });
@@ -181,7 +238,7 @@ export default function ContentReportsPage() {
                     </TableCell>
                     <TableCell>{getStatusBadge(report.status)}</TableCell>
                     <TableCell>{format(new Date(report.created_at), "MMM d, yyyy HH:mm")}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right space-x-1">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -191,9 +248,22 @@ export default function ContentReportsPage() {
                           setNewStatus(report.status);
                         }}
                       >
-                        <Eye className="h-4 w-4 mr-2" />
+                        <Eye className="h-4 w-4 mr-1" />
                         {t("moderation.review", "Review")}
                       </Button>
+                      {report.status === "pending" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => {
+                            setReportToDelete(report);
+                            setDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))
@@ -277,6 +347,37 @@ export default function ContentReportsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Content Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("moderation.deleteContent", "Delete Content")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(
+                "moderation.deleteContentDescription",
+                "This will permanently delete the reported content. This action cannot be undone."
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel", "Cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => reportToDelete && deleteContentMutation.mutate(reportToDelete)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteContentMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              {t("common.delete", "Delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
