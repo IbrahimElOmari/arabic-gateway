@@ -40,6 +40,7 @@ export function AdminSidebar({ collapsed, onToggle }: AdminSidebarProps) {
     { to: "/admin/reports", icon: ClipboardCheck, label: t("admin.contentReports", "Reports") },
     { to: "/admin/invitations", icon: UserCheck, label: t("admin.invitations", "Invitations") },
     { to: "/admin/analytics", icon: BarChart3, label: t("admin.analytics", "Analytics") },
+    { to: "/admin/final-exams", icon: GraduationCap, label: t("admin.finalExams", "Final Exams") },
   ];
 
   return (
