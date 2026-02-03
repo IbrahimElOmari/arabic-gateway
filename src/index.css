@@ -135,6 +135,53 @@ All colors MUST be HSL.
   }
 }
 
+/* Professional Theme (default) */
+.theme-professional {
+  --radius: 0.5rem;
+}
+
+.theme-professional .card {
+  @apply shadow-sm;
+}
+
+.theme-professional button {
+  @apply font-medium;
+}
+
+/* Playful Theme */
+.theme-playful {
+  --radius: 1rem;
+}
+
+.theme-playful .card {
+  @apply shadow-lg hover:shadow-xl transition-shadow duration-300;
+}
+
+.theme-playful button {
+  @apply font-bold;
+}
+
+.theme-playful h1,
+.theme-playful h2,
+.theme-playful h3 {
+  @apply font-bold;
+}
+
+.theme-playful .btn-primary,
+.theme-playful [data-slot="button"][data-variant="default"] {
+  @apply rounded-full;
+}
+
+.theme-playful input,
+.theme-playful textarea,
+.theme-playful select {
+  @apply rounded-xl;
+}
+
+.theme-playful .avatar {
+  @apply ring-2 ring-primary/20;
+}
+
 @layer base {
   * {
     @apply border-border;

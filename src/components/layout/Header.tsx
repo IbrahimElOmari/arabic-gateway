@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Menu, User, Settings, LogOut } from 'lucide-react';
+import { Menu, User, Settings, LogOut, TrendingUp } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 export function Header() {
@@ -148,6 +148,10 @@ export function Header() {
                 <DropdownMenuItem onClick={() => navigate('/profile')}>
                   <User className="mr-2 h-4 w-4" />
                   {t('nav.profile')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/progress')}>
+                  <TrendingUp className="mr-2 h-4 w-4" />
+                  {t('nav.progress')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/settings')}>
                   <Settings className="mr-2 h-4 w-4" />

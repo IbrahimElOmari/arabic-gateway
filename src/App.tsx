@@ -64,6 +64,7 @@ import SettingsPage from "./pages/SettingsPage";
 import InstallPage from "./pages/InstallPage";
 import HelpdeskPage from "./pages/HelpdeskPage";
 import GamificationPage from "./pages/GamificationPage";
+import ProgressPage from "./pages/ProgressPage";
 
 // Community pages
 import ForumPage from "./pages/ForumPage";
@@ -115,7 +116,7 @@ const App = () => (
               
               {/* Other protected routes */}
               <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
-              <Route path="/progress" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+              <Route path="/progress" element={<ProtectedRoute><ProgressPage /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
               <Route path="/helpdesk" element={<ProtectedRoute><HelpdeskPage /></ProtectedRoute>} />
