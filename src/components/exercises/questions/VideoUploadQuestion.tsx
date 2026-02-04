@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
-import { Video, Square, Play, Pause, Upload, Loader2, Trash2, Camera } from "lucide-react";
+import { Video, Square, Upload, Loader2, Trash2, Camera, Clock } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface VideoUploadQuestionProps {
@@ -11,9 +11,21 @@ interface VideoUploadQuestionProps {
   onChange: (url: string) => void;
   attemptId: string | null;
   questionId: string;
+  maxDurationSeconds?: number;
+  maxFileSizeMB?: number;
 }
 
-export function VideoUploadQuestion({ value, onChange, attemptId, questionId }: VideoUploadQuestionProps) {
+const MAX_FILE_SIZE_MB = 50;
+const MAX_DURATION_SECONDS = 180; // 3 minutes
+
+export function VideoUploadQuestion({ 
+  value, 
+  onChange, 
+  attemptId, 
+  questionId,
+  maxDurationSeconds = MAX_DURATION_SECONDS,
+  maxFileSizeMB = MAX_FILE_SIZE_MB,
+}: VideoUploadQuestionProps) {
   const { t } = useTranslation();
   const [isRecording, setIsRecording] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
@@ -22,20 +34,41 @@ export function VideoUploadQuestion({ value, onChange, attemptId, questionId }: 
   const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(value || null);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [recordingTime, setRecordingTime] = useState(0);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
   const videoPlaybackRef = useRef<HTMLVideoElement>(null);
   const chunksRef = useRef<Blob[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
     };
   }, [stream]);
+
+  // Auto-stop recording when max duration reached
+  useEffect(() => {
+    if (recordingTime >= maxDurationSeconds && isRecording) {
+      stopRecording();
+      toast({
+        title: t("exercises.maxDurationReached", "Maximum Duration Reached"),
+        description: t("exercises.recordingStopped", "Recording automatically stopped."),
+      });
+    }
+  }, [recordingTime, maxDurationSeconds, isRecording]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
 
   const startCamera = async () => {
     try {
@@ -71,6 +104,12 @@ export function VideoUploadQuestion({ value, onChange, attemptId, questionId }: 
     
     mediaRecorderRef.current = mediaRecorder;
     chunksRef.current = [];
+    setRecordingTime(0);
+    
+    // Start timer
+    timerRef.current = setInterval(() => {
+      setRecordingTime(prev => prev + 1);
+    }, 1000);
     
     mediaRecorder.ondataavailable = (e) => {
       if (e.data.size > 0) {
@@ -81,12 +120,13 @@ export function VideoUploadQuestion({ value, onChange, attemptId, questionId }: 
     mediaRecorder.onstop = () => {
       const blob = new Blob(chunksRef.current, { type: "video/webm" });
       
-      // Check file size (50MB max)
-      if (blob.size > 50 * 1024 * 1024) {
+      // Check file size
+      const sizeMB = blob.size / (1024 * 1024);
+      if (sizeMB > maxFileSizeMB) {
         toast({
           variant: "destructive",
           title: t("exercises.fileTooLarge", "File Too Large"),
-          description: t("exercises.maxFileSize", "Maximum file size is 50MB."),
+          description: t("exercises.maxFileSize", `Maximum file size is ${maxFileSizeMB}MB.`),
         });
         return;
       }
@@ -101,6 +141,11 @@ export function VideoUploadQuestion({ value, onChange, attemptId, questionId }: 
   };
 
   const stopRecording = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
@@ -120,6 +165,7 @@ export function VideoUploadQuestion({ value, onChange, attemptId, questionId }: 
       setStream(null);
     }
     setIsPreviewing(false);
+    setRecordingTime(0);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,11 +181,12 @@ export function VideoUploadQuestion({ value, onChange, attemptId, questionId }: 
       return;
     }
     
-    if (file.size > 50 * 1024 * 1024) {
+    const sizeMB = file.size / (1024 * 1024);
+    if (sizeMB > maxFileSizeMB) {
       toast({
         variant: "destructive",
         title: t("exercises.fileTooLarge", "File Too Large"),
-        description: t("exercises.maxFileSize", "Maximum file size is 50MB."),
+        description: t("exercises.maxFileSize", `Maximum file size is ${maxFileSizeMB}MB.`),
       });
       return;
     }
@@ -199,12 +246,13 @@ export function VideoUploadQuestion({ value, onChange, attemptId, questionId }: 
   const clearRecording = () => {
     setVideoBlob(null);
     setVideoUrl(null);
+    setRecordingTime(0);
     onChange("");
   };
 
   return (
     <div className="space-y-4">
-      {/* Camera preview */}
+      {/* Camera preview with timer */}
       {isPreviewing && (
         <div className="relative rounded-lg overflow-hidden bg-muted">
           <video
@@ -215,10 +263,25 @@ export function VideoUploadQuestion({ value, onChange, attemptId, questionId }: 
             className="w-full aspect-video object-cover"
           />
           {isRecording && (
-            <div className="absolute top-4 left-4 flex items-center gap-2 bg-destructive text-destructive-foreground px-3 py-1 rounded-full animate-pulse">
-              <div className="w-2 h-2 rounded-full bg-current" />
-              <span className="text-sm font-medium">REC</span>
-            </div>
+            <>
+              <div className="absolute top-4 left-4 flex items-center gap-2 bg-destructive text-destructive-foreground px-3 py-1 rounded-full animate-pulse">
+                <div className="w-2 h-2 rounded-full bg-current" />
+                <span className="text-sm font-medium">REC</span>
+              </div>
+              <div className="absolute top-4 right-4 flex items-center gap-2 bg-background/80 text-foreground px-3 py-1 rounded-full">
+                <Clock className="h-4 w-4" />
+                <span className="text-sm font-mono font-bold">
+                  {formatTime(recordingTime)} / {formatTime(maxDurationSeconds)}
+                </span>
+              </div>
+              {/* Progress bar for time limit */}
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-background/50">
+                <div 
+                  className="h-full bg-destructive transition-all duration-1000"
+                  style={{ width: `${(recordingTime / maxDurationSeconds) * 100}%` }}
+                />
+              </div>
+            </>
           )}
         </div>
       )}
@@ -246,7 +309,7 @@ export function VideoUploadQuestion({ value, onChange, attemptId, questionId }: 
 
       {/* Recording controls */}
       {!videoUrl && (
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           {!isPreviewing ? (
             <Button 
               onClick={startCamera} 
@@ -278,7 +341,7 @@ export function VideoUploadQuestion({ value, onChange, attemptId, questionId }: 
             <Button 
               onClick={stopRecording} 
               variant="destructive"
-              className="gap-2 animate-pulse"
+              className="gap-2"
             >
               <Square className="h-4 w-4" />
               {t("exercises.stopRecording", "Stop Recording")}
@@ -345,7 +408,7 @@ export function VideoUploadQuestion({ value, onChange, attemptId, questionId }: 
       )}
 
       <p className="text-xs text-muted-foreground">
-        {t("exercises.maxVideoSize", "Maximum file size: 50MB. Supported formats: MP4, WebM")}
+        {t("exercises.videoLimits", `Max duration: ${Math.floor(maxDurationSeconds / 60)} min | Max size: ${maxFileSizeMB}MB | Formats: MP4, WebM`)}
       </p>
     </div>
   );
