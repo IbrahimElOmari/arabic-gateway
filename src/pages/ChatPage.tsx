@@ -4,13 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageCircle, Send, Smile, Loader2 } from "lucide-react";
+import { MessageCircle, Send, Smile, Loader2, Flag } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect, useRef } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ReportContentDialog } from "@/components/moderation/ReportContentDialog";
 
 const EMOJIS = ["👍", "❤️", "😊", "🎉", "👏", "🙏", "💪", "✨"];
 
@@ -21,6 +22,8 @@ export default function ChatPage() {
   const [newMessage, setNewMessage] = useState("");
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reportMessageId, setReportMessageId] = useState<string | null>(null);
 
   // Get user's enrolled classes
   const { data: enrollments, isLoading: enrollmentsLoading } = useQuery({
@@ -292,6 +295,18 @@ export default function ChatPage() {
                             </PopoverContent>
                           </Popover>
                           
+                          {/* Report button */}
+                          <button
+                            onClick={() => {
+                              setReportMessageId(message.id);
+                              setReportDialogOpen(true);
+                            }}
+                            className="text-muted-foreground hover:text-destructive p-1"
+                            title={t("moderation.reportContent", "Report content")}
+                          >
+                            <Flag className="h-3 w-3" />
+                          </button>
+                          
                           <span className="text-xs text-muted-foreground">
                             {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
                           </span>
@@ -323,6 +338,16 @@ export default function ChatPage() {
             </div>
           </div>
         </Card>
+
+        {/* Report Dialog */}
+        {reportMessageId && (
+          <ReportContentDialog
+            open={reportDialogOpen}
+            onOpenChange={setReportDialogOpen}
+            contentType="chat_message"
+            contentId={reportMessageId}
+          />
+        )}
       </div>
     </MainLayout>
   );

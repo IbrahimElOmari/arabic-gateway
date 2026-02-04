@@ -1,9 +1,9 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
-import { Mic, Square, Play, Pause, Upload, Loader2, Trash2 } from "lucide-react";
+import { Mic, Square, Play, Pause, Upload, Loader2, Trash2, Clock } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface AudioUploadQuestionProps {
@@ -11,9 +11,21 @@ interface AudioUploadQuestionProps {
   onChange: (url: string) => void;
   attemptId: string | null;
   questionId: string;
+  maxDurationSeconds?: number;
+  maxFileSizeMB?: number;
 }
 
-export function AudioUploadQuestion({ value, onChange, attemptId, questionId }: AudioUploadQuestionProps) {
+const MAX_FILE_SIZE_MB = 10;
+const MAX_DURATION_SECONDS = 300; // 5 minutes
+
+export function AudioUploadQuestion({ 
+  value, 
+  onChange, 
+  attemptId, 
+  questionId,
+  maxDurationSeconds = MAX_DURATION_SECONDS,
+  maxFileSizeMB = MAX_FILE_SIZE_MB,
+}: AudioUploadQuestionProps) {
   const { t } = useTranslation();
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -21,15 +33,48 @@ export function AudioUploadQuestion({ value, onChange, attemptId, questionId }: 
   const [uploadProgress, setUploadProgress] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(value || null);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
+
+  // Auto-stop recording when max duration reached
+  useEffect(() => {
+    if (recordingTime >= maxDurationSeconds && isRecording) {
+      stopRecording();
+      toast({
+        title: t("exercises.maxDurationReached", "Maximum Duration Reached"),
+        description: t("exercises.recordingStopped", "Recording automatically stopped."),
+      });
+    }
+  }, [recordingTime, maxDurationSeconds, isRecording]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus") 
           ? "audio/webm;codecs=opus" 
@@ -38,6 +83,12 @@ export function AudioUploadQuestion({ value, onChange, attemptId, questionId }: 
       
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
+      setRecordingTime(0);
+      
+      // Start timer
+      timerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
       
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
@@ -47,10 +98,27 @@ export function AudioUploadQuestion({ value, onChange, attemptId, questionId }: 
       
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        
+        // Check file size
+        const sizeMB = blob.size / (1024 * 1024);
+        if (sizeMB > maxFileSizeMB) {
+          toast({
+            variant: "destructive",
+            title: t("exercises.fileTooLarge", "File Too Large"),
+            description: t("exercises.maxAudioSize", `Maximum file size is ${maxFileSizeMB}MB.`),
+          });
+          return;
+        }
+        
         setAudioBlob(blob);
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
-        stream.getTracks().forEach(track => track.stop());
+        setAudioDuration(recordingTime);
+        
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
       };
       
       mediaRecorder.start();
@@ -66,6 +134,11 @@ export function AudioUploadQuestion({ value, onChange, attemptId, questionId }: 
   };
 
   const stopRecording = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
@@ -96,6 +169,16 @@ export function AudioUploadQuestion({ value, onChange, attemptId, questionId }: 
       return;
     }
     
+    const sizeMB = file.size / (1024 * 1024);
+    if (sizeMB > maxFileSizeMB) {
+      toast({
+        variant: "destructive",
+        title: t("exercises.fileTooLarge", "File Too Large"),
+        description: t("exercises.maxAudioSize", `Maximum file size is ${maxFileSizeMB}MB.`),
+      });
+      return;
+    }
+    
     setAudioBlob(file);
     const url = URL.createObjectURL(file);
     setAudioUrl(url);
@@ -110,7 +193,7 @@ export function AudioUploadQuestion({ value, onChange, attemptId, questionId }: 
     try {
       const fileName = `${attemptId}/${questionId}/audio-${Date.now()}.webm`;
       
-      // Simulate progress (Supabase doesn't provide real upload progress)
+      // Simulate progress
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => Math.min(prev + 10, 90));
       }, 100);
@@ -152,19 +235,35 @@ export function AudioUploadQuestion({ value, onChange, attemptId, questionId }: 
   const clearRecording = () => {
     setAudioBlob(null);
     setAudioUrl(null);
+    setRecordingTime(0);
+    setAudioDuration(0);
     onChange("");
   };
 
   return (
     <div className="space-y-4">
+      {/* Timer display during recording */}
+      {isRecording && (
+        <div className="flex items-center justify-center gap-2 p-4 bg-destructive/10 rounded-lg animate-pulse">
+          <div className="w-3 h-3 rounded-full bg-destructive animate-pulse" />
+          <Clock className="h-5 w-5 text-destructive" />
+          <span className="text-2xl font-mono font-bold text-destructive">
+            {formatTime(recordingTime)}
+          </span>
+          <span className="text-sm text-muted-foreground">
+            / {formatTime(maxDurationSeconds)}
+          </span>
+        </div>
+      )}
+
       {/* Recording controls */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         {!isRecording ? (
           <Button 
             onClick={startRecording} 
             variant="outline"
             className="gap-2"
-            disabled={isUploading}
+            disabled={isUploading || !!audioUrl}
           >
             <Mic className="h-4 w-4 text-destructive" />
             {t("exercises.startRecording", "Start Recording")}
@@ -173,24 +272,27 @@ export function AudioUploadQuestion({ value, onChange, attemptId, questionId }: 
           <Button 
             onClick={stopRecording} 
             variant="destructive"
-            className="gap-2 animate-pulse"
+            className="gap-2"
           >
             <Square className="h-4 w-4" />
             {t("exercises.stopRecording", "Stop Recording")}
           </Button>
         )}
         
-        <span className="text-muted-foreground">{t("common.or", "or")}</span>
-        
-        <Button 
-          variant="outline" 
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isRecording || isUploading}
-          className="gap-2"
-        >
-          <Upload className="h-4 w-4" />
-          {t("exercises.uploadFile", "Upload File")}
-        </Button>
+        {!isRecording && !audioUrl && (
+          <>
+            <span className="text-muted-foreground">{t("common.or", "or")}</span>
+            <Button 
+              variant="outline" 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              {t("exercises.uploadFile", "Upload File")}
+            </Button>
+          </>
+        )}
         <input
           ref={fileInputRef}
           type="file"
@@ -199,6 +301,11 @@ export function AudioUploadQuestion({ value, onChange, attemptId, questionId }: 
           className="hidden"
         />
       </div>
+
+      {/* File size info */}
+      <p className="text-xs text-muted-foreground">
+        {t("exercises.audioLimits", `Max duration: ${Math.floor(maxDurationSeconds / 60)} min | Max size: ${maxFileSizeMB}MB`)}
+      </p>
 
       {/* Audio preview */}
       {audioUrl && (
@@ -220,10 +327,11 @@ export function AudioUploadQuestion({ value, onChange, attemptId, questionId }: 
           />
           
           <div className="flex-1">
-            <div className="h-8 bg-primary/20 rounded-full overflow-hidden">
-              <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">
+            <div className="h-8 bg-primary/20 rounded-full overflow-hidden flex items-center justify-center">
+              <span className="text-xs text-muted-foreground">
                 {t("exercises.audioRecorded", "Audio recorded")}
-              </div>
+                {audioDuration > 0 && ` (${formatTime(audioDuration)})`}
+              </span>
             </div>
           </div>
           
