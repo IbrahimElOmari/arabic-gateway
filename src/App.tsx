@@ -35,6 +35,7 @@ import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import TeacherLessonsPage from "./pages/teacher/TeacherLessonsPage";
 import TeacherRecordingsPage from "./pages/teacher/TeacherRecordingsPage";
 import TeacherSubmissionsPage from "./pages/teacher/TeacherSubmissionsPage";
+import ContentStudioPage from "./pages/teacher/ContentStudioPage";
 
 // Self-Study pages
 import SelfStudyPage from "./pages/SelfStudyPage";
@@ -126,6 +127,7 @@ const App = () => (
               {/* Teacher routes */}
               <Route path="/teacher" element={<TeacherLayout />}>
                 <Route index element={<TeacherDashboard />} />
+                <Route path="content-studio" element={<ContentStudioPage />} />
                 <Route path="lessons" element={<TeacherLessonsPage />} />
                 <Route path="recordings" element={<TeacherRecordingsPage />} />
                 <Route path="submissions" element={<TeacherSubmissionsPage />} />
