@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   GraduationCap,
+  Palette,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ export function TeacherSidebar({ collapsed, onToggle }: TeacherSidebarProps) {
 
   const navItems = [
     { to: "/teacher", icon: LayoutDashboard, label: t("teacher.dashboard", "Dashboard"), end: true },
+    { to: "/teacher/content-studio", icon: Palette, label: t("teacher.contentStudio", "Content Studio") },
     { to: "/teacher/lessons", icon: Calendar, label: t("teacher.lessons", "Lessons") },
     { to: "/teacher/recordings", icon: Video, label: t("teacher.recordings", "Recordings") },
     { to: "/teacher/exercises", icon: BookOpen, label: t("teacher.exercises", "Exercises") },
