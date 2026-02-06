@@ -739,5 +739,39 @@
     "tryAgain": "Try Again",
     "attemptsRemaining": "Attempts Remaining",
     "noExamAvailable": "No exam available for this level"
+  },
+  "contentStudio": {
+    "title": "Content Studio",
+    "description": "Create and manage all your educational content in one place",
+    "selfStudy": "Self-Study Exercises",
+    "selfStudyDesc": "Create reading, writing, listening, speaking, and grammar exercises",
+    "liveLessons": "Live Lessons",
+    "liveLessonsDesc": "Schedule Google Meet sessions with your students",
+    "recordings": "Lesson Recordings",
+    "recordingsDesc": "Upload and manage video recordings of past lessons",
+    "materials": "Course Materials",
+    "materialsDesc": "Upload PDFs, slides, and supplementary documents",
+    "submissions": "Student Submissions",
+    "submissionsDesc": "Review and grade student work",
+    "selectClass": "Select Target Class",
+    "selectClassDesc": "All content you create will be assigned to this class",
+    "chooseClass": "Choose a class...",
+    "selectClassFirst": "Select a Class First",
+    "selectClassFirstDesc": "Choose a class from the dropdown above to start creating content.",
+    "noClassesAdmin": "No classes exist yet. Create a class first in Admin → Classes.",
+    "noClassesTeacher": "You are not assigned to any classes yet. Contact an administrator.",
+    "quickStats": "Quick Statistics",
+    "exercises": "Exercises",
+    "lessons": "Lessons",
+    "recordingsCount": "Recordings",
+    "materialsCount": "Materials"
+  },
+  "accessibility": {
+    "skipToMain": "Skip to main content",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "toggleTheme": "Toggle theme",
+    "switchLanguage": "Switch language",
+    "loading": "Loading, please wait"
   }
 }
