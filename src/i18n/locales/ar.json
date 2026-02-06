@@ -727,5 +727,39 @@
     "tryAgain": "حاول مرة أخرى",
     "attemptsRemaining": "المحاولات المتبقية",
     "noExamAvailable": "لا يوجد اختبار متاح لهذا المستوى"
+  },
+  "contentStudio": {
+    "title": "استوديو المحتوى",
+    "description": "أنشئ وأدر كل محتواك التعليمي في مكان واحد",
+    "selfStudy": "تمارين الدراسة الذاتية",
+    "selfStudyDesc": "أنشئ تمارين القراءة والكتابة والاستماع والتحدث والقواعد",
+    "liveLessons": "الدروس المباشرة",
+    "liveLessonsDesc": "جدول جلسات Google Meet مع طلابك",
+    "recordings": "تسجيلات الدروس",
+    "recordingsDesc": "ارفع وأدر تسجيلات الفيديو للدروس السابقة",
+    "materials": "مواد الدورة",
+    "materialsDesc": "ارفع ملفات PDF والعروض التقديمية والمستندات الإضافية",
+    "submissions": "أعمال الطلاب",
+    "submissionsDesc": "راجع وقيّم أعمال الطلاب",
+    "selectClass": "اختر الفصل المستهدف",
+    "selectClassDesc": "كل المحتوى الذي تنشئه سيُعيّن لهذا الفصل",
+    "chooseClass": "اختر فصلاً...",
+    "selectClassFirst": "اختر فصلاً أولاً",
+    "selectClassFirstDesc": "اختر فصلاً من القائمة أعلاه لبدء إنشاء المحتوى.",
+    "noClassesAdmin": "لا توجد فصول بعد. أنشئ فصلاً أولاً في الإدارة ← الفصول.",
+    "noClassesTeacher": "لم يتم تعيينك لأي فصل بعد. تواصل مع المدير.",
+    "quickStats": "إحصائيات سريعة",
+    "exercises": "التمارين",
+    "lessons": "الدروس",
+    "recordingsCount": "التسجيلات",
+    "materialsCount": "المواد"
+  },
+  "accessibility": {
+    "skipToMain": "انتقل إلى المحتوى الرئيسي",
+    "openMenu": "فتح القائمة",
+    "closeMenu": "إغلاق القائمة",
+    "toggleTheme": "تبديل المظهر",
+    "switchLanguage": "تغيير اللغة",
+    "loading": "جاري التحميل، يرجى الانتظار"
   }
 }

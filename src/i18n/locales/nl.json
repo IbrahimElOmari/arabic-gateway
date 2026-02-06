@@ -739,5 +739,39 @@
     "tryAgain": "Probeer opnieuw",
     "attemptsRemaining": "Resterende pogingen",
     "noExamAvailable": "Geen toets beschikbaar voor dit niveau"
+  },
+  "contentStudio": {
+    "title": "Content Studio",
+    "description": "Maak en beheer al je educatieve content op één plek",
+    "selfStudy": "Zelfstudie Oefeningen",
+    "selfStudyDesc": "Maak lees-, schrijf-, luister-, spreek- en grammatica-oefeningen",
+    "liveLessons": "Live Lessen",
+    "liveLessonsDesc": "Plan Google Meet-sessies met je studenten",
+    "recordings": "Lesopnames",
+    "recordingsDesc": "Upload en beheer video-opnames van eerdere lessen",
+    "materials": "Cursusmateriaal",
+    "materialsDesc": "Upload PDF's, slides en aanvullende documenten",
+    "submissions": "Studentinzendingen",
+    "submissionsDesc": "Beoordeel en geef cijfers aan studentenwerk",
+    "selectClass": "Selecteer Doelklas",
+    "selectClassDesc": "Alle content die je maakt wordt aan deze klas toegewezen",
+    "chooseClass": "Kies een klas...",
+    "selectClassFirst": "Selecteer eerst een klas",
+    "selectClassFirstDesc": "Kies een klas uit de dropdown hierboven om te beginnen met content maken.",
+    "noClassesAdmin": "Er bestaan nog geen klassen. Maak eerst een klas aan in Beheer → Klassen.",
+    "noClassesTeacher": "Je bent nog niet toegewezen aan een klas. Neem contact op met een beheerder.",
+    "quickStats": "Snelle Statistieken",
+    "exercises": "Oefeningen",
+    "lessons": "Lessen",
+    "recordingsCount": "Opnames",
+    "materialsCount": "Materialen"
+  },
+  "accessibility": {
+    "skipToMain": "Ga naar hoofdinhoud",
+    "openMenu": "Menu openen",
+    "closeMenu": "Menu sluiten",
+    "toggleTheme": "Thema wisselen",
+    "switchLanguage": "Taal wisselen",
+    "loading": "Laden, even geduld"
   }
 }
