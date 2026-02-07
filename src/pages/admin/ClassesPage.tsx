@@ -35,8 +35,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Pencil, Trash2, Loader2, Search, Users, UserPlus, GraduationCap, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Search, Users, UserPlus, GraduationCap, X, CreditCard } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { ClassPaymentSettings } from "@/components/admin/ClassPaymentSettings";
 
 interface ClassData {
   id: string;
@@ -63,6 +64,7 @@ export default function ClassesPage() {
   const [editingClass, setEditingClass] = useState<ClassData | null>(null);
   const [assignDialogClass, setAssignDialogClass] = useState<ClassData | null>(null);
   const [assignTab, setAssignTab] = useState<"teacher" | "students">("teacher");
+  const [paymentSettingsClass, setPaymentSettingsClass] = useState<ClassData | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -596,6 +598,14 @@ export default function ClassesPage() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        onClick={() => setPaymentSettingsClass(cls)}
+                        title={t("admin.paymentSettings", "Payment Settings")}
+                      >
+                        <CreditCard className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => handleEdit(cls)}
                       >
                         <Pencil className="h-4 w-4" />
@@ -758,6 +768,26 @@ export default function ClassesPage() {
               {t("common.close", "Close")}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Settings Dialog */}
+      <Dialog open={!!paymentSettingsClass} onOpenChange={() => setPaymentSettingsClass(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              {t("admin.paymentSettings", "Payment Settings")} - {paymentSettingsClass?.name}
+            </DialogTitle>
+          </DialogHeader>
+          {paymentSettingsClass && (
+            <ClassPaymentSettings
+              classId={paymentSettingsClass.id}
+              className={paymentSettingsClass.name}
+              currentPrice={paymentSettingsClass.price}
+              currency={paymentSettingsClass.currency}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>
