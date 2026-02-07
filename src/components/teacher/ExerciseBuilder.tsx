@@ -75,6 +75,8 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
     correct_answers: [] as number[],
     points: 1,
     explanation: "",
+    time_limit_seconds: null as number | null,
+    requires_manual_grading: false,
   });
 
   // Get exercise details
@@ -127,6 +129,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
         points: form.points,
         explanation: form.explanation || null,
         display_order: displayOrder,
+        time_limit_seconds: form.time_limit_seconds,
       });
       if (error) throw error;
     },
@@ -167,6 +170,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
           correct_answer: correctAnswer,
           points: form.points,
           explanation: form.explanation || null,
+          time_limit_seconds: form.time_limit_seconds,
         })
         .eq("id", id);
       if (error) throw error;
@@ -209,6 +213,8 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
       correct_answers: [],
       points: 1,
       explanation: "",
+      time_limit_seconds: null,
+      requires_manual_grading: false,
     });
   };
 
@@ -227,6 +233,8 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
       correct_answers: Array.isArray(question.correct_answer) ? question.correct_answer : [],
       points: question.points,
       explanation: question.explanation || "",
+      time_limit_seconds: question.time_limit_seconds || null,
+      requires_manual_grading: ["open_text", "audio_upload", "video_upload", "file_upload"].includes(question.type),
     });
     setShowQuestionDialog(true);
   };
@@ -450,6 +458,49 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
                 </TabsContent>
               ))}
             </Tabs>
+
+            {/* Timer per vraag */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>{t("teacher.timeLimit", "Time Limit per Question")} ({t("common.seconds", "seconds")})</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={questionForm.time_limit_seconds || ""}
+                  onChange={(e) => setQuestionForm({ 
+                    ...questionForm, 
+                    time_limit_seconds: e.target.value ? parseInt(e.target.value) : null 
+                  })}
+                  placeholder={t("teacher.noTimeLimit", "No limit")}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t("teacher.timeLimitHint", "Leave empty for no time limit")}
+                </p>
+              </div>
+              <div>
+                <Label>{t("teacher.correctionType", "Correction Type")}</Label>
+                <Select
+                  value={questionForm.requires_manual_grading ? "manual" : "auto"}
+                  onValueChange={(v) => setQuestionForm({ 
+                    ...questionForm, 
+                    requires_manual_grading: v === "manual" 
+                  })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">{t("teacher.autoCorrection", "Automatic")}</SelectItem>
+                    <SelectItem value="manual">{t("teacher.manualCorrection", "Manual by Teacher")}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {questionForm.requires_manual_grading 
+                    ? t("teacher.manualCorrectionHint", "Teacher will review and grade")
+                    : t("teacher.autoCorrectionHint", "System grades automatically")}
+                </p>
+              </div>
+            </div>
 
             <div>
               <Label>{t("teacher.explanation", "Explanation (shown after answer)")}</Label>
