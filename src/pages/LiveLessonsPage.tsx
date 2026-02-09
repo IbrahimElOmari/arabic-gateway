@@ -1,17 +1,20 @@
 import { useTranslation } from "react-i18next";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Video, Loader2 } from "lucide-react";
+import { Calendar, Video, Loader2, Plus, Palette } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { Link } from "react-router-dom";
 
 export default function LiveLessonsPage() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, isAdmin, isTeacher } = useAuth();
+  
+  const showManagementCTA = isAdmin || isTeacher;
 
   const { data: lessons, isLoading } = useQuery({
     queryKey: ["upcoming-lessons", user?.id],
@@ -79,7 +82,25 @@ export default function LiveLessonsPage() {
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold">{t("lessons.noUpcoming")}</h3>
-              <p className="text-muted-foreground">{t("lessons.checkBack")}</p>
+              <p className="text-muted-foreground mb-4">{t("lessons.checkBack")}</p>
+              
+              {/* CTA buttons for admin/teacher - always visible when empty */}
+              {showManagementCTA && (
+                <div className="flex flex-col sm:flex-row gap-3 mt-2">
+                  <Button asChild data-testid="create-lesson-cta">
+                    <Link to="/teacher/lessons">
+                      <Plus className="h-4 w-4 mr-2" />
+                      {t("teacher.newLesson", "New Lesson")}
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link to="/teacher/content-studio">
+                      <Palette className="h-4 w-4 mr-2" />
+                      {t("nav.contentStudio", "Content Studio")}
+                    </Link>
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

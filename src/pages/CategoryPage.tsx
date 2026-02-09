@@ -15,12 +15,14 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { ArrowLeft, Clock, CheckCircle, PlayCircle, Lock, Loader2 } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle, PlayCircle, Lock, Loader2, Plus, Palette } from "lucide-react";
 
 export default function CategoryPage() {
   const { t, i18n } = useTranslation();
   const { category } = useParams<{ category: string }>();
-  const { user } = useAuth();
+  const { user, isAdmin, isTeacher } = useAuth();
+  
+  const showManagementCTA = isAdmin || isTeacher;
 
   // Fetch category info
   const { data: categoryInfo } = useQuery({
@@ -227,12 +229,31 @@ export default function CategoryPage() {
               <p className="text-muted-foreground mb-4">
                 {t("selfStudy.checkBackCategory", "Check back soon for new exercises!")}
               </p>
-              <Link to="/self-study">
-                <Button variant="outline">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  {t("common.back", "Back")}
-                </Button>
-              </Link>
+              
+              {/* CTA buttons for admin/teacher - always visible when empty */}
+              {showManagementCTA ? (
+                <div className="flex flex-col sm:flex-row gap-3 mt-2">
+                  <Button asChild data-testid="create-exercise-cta">
+                    <Link to="/teacher/exercises">
+                      <Plus className="h-4 w-4 mr-2" />
+                      {t("teacher.createExercise", "Create Exercise")}
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link to="/teacher/content-studio">
+                      <Palette className="h-4 w-4 mr-2" />
+                      {t("nav.contentStudio", "Content Studio")}
+                    </Link>
+                  </Button>
+                </div>
+              ) : (
+                <Link to="/self-study">
+                  <Button variant="outline">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    {t("common.back", "Back")}
+                  </Button>
+                </Link>
+              )}
             </CardContent>
           </Card>
         )}

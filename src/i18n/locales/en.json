@@ -74,7 +74,11 @@
     "progress": "Progress",
     "settings": "Settings",
     "profile": "Profile",
-    "admin": "Admin"
+    "admin": "Admin",
+    "contentStudio": "Content Studio",
+    "adminPanel": "Admin Panel",
+    "management": "Management",
+    "gamification": "Gamification"
   },
   "categories": {
     "reading": "Reading",

@@ -10,7 +10,8 @@ export function AdminLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { user, role, loading } = useAuth();
 
-  if (loading) {
+  // Show loader while auth is loading OR while we have a user but role isn't loaded yet
+  if (loading || (user && role === null)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

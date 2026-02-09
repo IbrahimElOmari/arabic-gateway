@@ -74,7 +74,11 @@
     "progress": "التقدم",
     "settings": "الإعدادات",
     "profile": "الملف الشخصي",
-    "admin": "الإدارة"
+    "admin": "الإدارة",
+    "contentStudio": "استوديو المحتوى",
+    "adminPanel": "لوحة الإدارة",
+    "management": "الإدارة",
+    "gamification": "التحفيز"
   },
   "categories": {
     "reading": "القراءة",
