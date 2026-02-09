@@ -14,13 +14,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Menu, User, Settings, LogOut, TrendingUp } from 'lucide-react';
+import { Menu, User, Settings, LogOut, TrendingUp, Shield, Palette } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 export function Header() {
   const { t } = useTranslation();
-  const { user, profile, role, signOut } = useAuth();
+  const { user, profile, role, signOut, isAdmin, isTeacher } = useAuth();
   const navigate = useNavigate();
+  
+  const showManagementLinks = isAdmin || isTeacher;
 
   const handleLogout = async () => {
     await signOut();
@@ -65,6 +67,34 @@ export function Header() {
                     <Link to="/forum" className="text-muted-foreground hover:text-foreground">
                       {t('nav.forum')}
                     </Link>
+                    {/* Management links for mobile */}
+                    {showManagementLinks && (
+                      <>
+                        <div className="border-t pt-4 mt-2">
+                          <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">
+                            {t('nav.management', 'Beheer')}
+                          </p>
+                          <Link 
+                            to="/teacher/content-studio" 
+                            className="flex items-center gap-2 text-primary hover:text-primary/80"
+                            data-testid="mobile-content-studio-link"
+                          >
+                            <Palette className="h-4 w-4" />
+                            {t('nav.contentStudio', 'Content Studio')}
+                          </Link>
+                          {isAdmin && (
+                            <Link 
+                              to="/admin" 
+                              className="flex items-center gap-2 text-primary hover:text-primary/80 mt-2"
+                              data-testid="mobile-admin-link"
+                            >
+                              <Shield className="h-4 w-4" />
+                              {t('nav.adminPanel', 'Beheerderspaneel')}
+                            </Link>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </>
                 )}
               </nav>
@@ -106,6 +136,29 @@ export function Header() {
               >
                 {t('nav.forum')}
               </Link>
+              {/* Management links for admin/teacher - always visible */}
+              {showManagementLinks && (
+                <>
+                  <Link
+                    to="/teacher/content-studio"
+                    className="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+                    data-testid="header-content-studio-link"
+                  >
+                    <Palette className="h-4 w-4" />
+                    {t('nav.contentStudio', 'Content Studio')}
+                  </Link>
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      className="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+                      data-testid="header-admin-link"
+                    >
+                      <Shield className="h-4 w-4" />
+                      {t('nav.admin', 'Beheer')}
+                    </Link>
+                  )}
+                </>
+              )}
             </>
           )}
         </nav>
@@ -157,6 +210,22 @@ export function Header() {
                   <Settings className="mr-2 h-4 w-4" />
                   {t('nav.settings')}
                 </DropdownMenuItem>
+                {/* Management links in dropdown */}
+                {showManagementLinks && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate('/teacher/content-studio')}>
+                      <Palette className="mr-2 h-4 w-4" />
+                      {t('nav.contentStudio', 'Content Studio')}
+                    </DropdownMenuItem>
+                    {isAdmin && (
+                      <DropdownMenuItem onClick={() => navigate('/admin')}>
+                        <Shield className="mr-2 h-4 w-4" />
+                        {t('nav.adminPanel', 'Beheerderspaneel')}
+                      </DropdownMenuItem>
+                    )}
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />

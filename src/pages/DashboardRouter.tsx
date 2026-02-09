@@ -2,15 +2,14 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
-import StudentDashboard from './StudentDashboard';
 
 /**
- * DashboardPage acts as a router:
- * - Admin → redirects to /admin
- * - Teacher → redirects to /teacher  
- * - Student → renders StudentDashboard
+ * DashboardRouter redirects users based on their role:
+ * - Admin → /admin
+ * - Teacher → /teacher
+ * - Student → stays on student dashboard
  */
-export default function DashboardPage() {
+export default function DashboardRouter() {
   const { user, role, loading, isAdmin, isTeacher } = useAuth();
   const navigate = useNavigate();
 
@@ -31,7 +30,7 @@ export default function DashboardPage() {
     } else if (isTeacher) {
       navigate('/teacher', { replace: true });
     }
-    // Students stay on this page - render StudentDashboard below
+    // Students stay on this page - we'll render the student dashboard
   }, [user, role, loading, isAdmin, isTeacher, navigate]);
 
   // Show loader while determining where to redirect
@@ -43,15 +42,7 @@ export default function DashboardPage() {
     );
   }
 
-  // If still here and user is a student, render the student dashboard
-  if (user && role === 'student') {
-    return <StudentDashboard />;
-  }
-
-  // For admin/teacher, this will be shown briefly before redirect
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-    </div>
-  );
+  // For students (or while redirect is happening), render nothing
+  // The actual StudentDashboard will be imported lazily
+  return null;
 }

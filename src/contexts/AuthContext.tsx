@@ -51,6 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const [roleLoading, setRoleLoading] = useState(false);
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
 
@@ -86,52 +87,70 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setRole(data?.role as AppRole || null);
     } catch (error) {
       console.error('Error fetching role:', error);
+      setRole(null);
+    }
+  };
+
+  const fetchUserData = async (userId: string) => {
+    setRoleLoading(true);
+    try {
+      await Promise.all([
+        fetchProfile(userId),
+        fetchRole(userId),
+      ]);
+    } finally {
+      setRoleLoading(false);
     }
   };
 
   const refreshProfile = async () => {
     if (user) {
-      await fetchProfile(user.id);
-      await fetchRole(user.id);
+      await fetchUserData(user.id);
     }
   };
 
   useEffect(() => {
+    let mounted = true;
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
+        if (!mounted) return;
+        
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
 
         if (currentSession?.user) {
           // Use setTimeout to prevent potential deadlock with Supabase client
-          setTimeout(() => {
-            fetchProfile(currentSession.user.id);
-            fetchRole(currentSession.user.id);
+          setTimeout(async () => {
+            if (!mounted) return;
+            await fetchUserData(currentSession.user.id);
+            if (mounted) setLoading(false);
           }, 0);
         } else {
           setProfile(null);
           setRole(null);
+          setLoading(false);
         }
-
-        setLoading(false);
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+    supabase.auth.getSession().then(async ({ data: { session: existingSession } }) => {
+      if (!mounted) return;
+      
       setSession(existingSession);
       setUser(existingSession?.user ?? null);
 
       if (existingSession?.user) {
-        fetchProfile(existingSession.user.id);
-        fetchRole(existingSession.user.id);
+        await fetchUserData(existingSession.user.id);
       }
 
-      setLoading(false);
+      if (mounted) setLoading(false);
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);

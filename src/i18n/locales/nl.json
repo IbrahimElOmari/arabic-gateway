@@ -74,7 +74,11 @@
     "progress": "Voortgang",
     "settings": "Instellingen",
     "profile": "Profiel",
-    "admin": "Beheer"
+    "admin": "Beheer",
+    "contentStudio": "Content Studio",
+    "adminPanel": "Beheerderspaneel",
+    "management": "Beheer",
+    "gamification": "Gamification"
   },
   "categories": {
     "reading": "Lezen",
