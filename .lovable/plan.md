@@ -1,737 +1,176 @@
 
-# Volledige Implementatieplan: 5 Features naar 100%
-
-## Huidige Situatie per Feature
-
-### 1. Audio/Video Upload (35% → 100%)
-**Probleem**: `ExercisePage.tsx` regel 402-411 toont OpenTextQuestion voor audio_upload, video_upload en file_upload types. Geen echte media upload UI.
-
-**ExerciseBuilder.tsx** mist ook `audio_upload` en `video_upload` als selecteerbare vraagtypen (alleen `multiple_choice`, `checkbox`, `open_text`, `file_upload` op regel 46).
-
-### 2. Professional/Playful Theme (40% → 100%)
-**Probleem**: `ThemeContext.tsx` ondersteunt alleen `light | dark | system`. `SettingsPage.tsx` appearance tab (regel 148-163) toont alleen placeholder tekst, geen toggle.
-
-Database `profiles.preferred_theme` bestaat maar wordt niet gebruikt.
-
-### 3. Eindtoets Niveauprogressie (40% → 100%)
-**Probleem**: Alleen `placement_tests` tabel voor intake. Geen eindtoets-systeem waarmee studenten naar volgend niveau kunnen promoveren.
-
-### 4. Moderatie Report Button (85% → 100%)
-**Probleem**: `ReportContentDialog.tsx` is volledig (144 regels), maar `ForumPostPage.tsx` en `ForumRoomPage.tsx` importeren deze component niet en tonen geen report knop.
-
-### 5. CI/CD Coverage (70% → 100%)
-**Probleem**: 
-- `vitest.config.ts` mist coverage configuratie
-- `.github/workflows/node.js.yml` runt alleen `npm test`, geen coverage of Playwright
-- 8 unit tests aanwezig, maar geen coverage rapportage
-- Playwright config aanwezig maar niet in CI
-
----
-
-## Implementatie Details
-
-### 1. Audio/Video Upload Componenten
-
-**Nieuwe bestanden:**
-- `src/components/exercises/questions/AudioUploadQuestion.tsx`
-- `src/components/exercises/questions/VideoUploadQuestion.tsx`  
-- `src/components/exercises/questions/FileUploadQuestion.tsx`
-
-**AudioUploadQuestion.tsx functionaliteit:**
-- Native `MediaRecorder` API voor browser-opname
-- Start/stop opname knoppen
-- Audio playback preview met `<audio>` element
-- Upload naar Supabase Storage `student-uploads` bucket
-- Fallback file input voor bestaande audio bestanden
-- Progress indicator tijdens upload
-- Ondersteunde formaten: webm, mp3, wav, ogg
-
-**VideoUploadQuestion.tsx functionaliteit:**
-- Native `MediaRecorder` API met `navigator.mediaDevices.getUserMedia`
-- Live camera preview in `<video>` element
-- Opname start/stop met countdown timer
-- Video playback na opname
-- Upload naar Supabase Storage
-- Max bestandsgrootte validatie (50MB)
-- Ondersteunde formaten: webm, mp4
-
-**FileUploadQuestion.tsx functionaliteit:**
-- Drag-and-drop zone met `onDrop` handler
-- File input fallback
-- File type validatie op basis van vraag configuratie
-- Upload progress bar
-- Preview voor afbeeldingen
-- Download link na upload
-
-**Wijzigingen ExercisePage.tsx:**
-```typescript
-// Huidige code regel 402-411:
-{(currentQuestion.type === "open_text" ||
-  currentQuestion.type === "audio_upload" ||
-  currentQuestion.type === "video_upload" ||
-  currentQuestion.type === "file_upload") && (
-  <OpenTextQuestion ... />
-)}
-
-// Nieuwe code:
-{currentQuestion.type === "open_text" && (
-  <OpenTextQuestion ... />
-)}
-{currentQuestion.type === "audio_upload" && (
-  <AudioUploadQuestion
-    value={answers[currentQuestion.id] as string}
-    onChange={(url) => handleAnswerChange(currentQuestion.id, url)}
-    attemptId={attemptId}
-    questionId={currentQuestion.id}
-  />
-)}
-{currentQuestion.type === "video_upload" && (
-  <VideoUploadQuestion
-    value={answers[currentQuestion.id] as string}
-    onChange={(url) => handleAnswerChange(currentQuestion.id, url)}
-    attemptId={attemptId}
-    questionId={currentQuestion.id}
-  />
-)}
-{currentQuestion.type === "file_upload" && (
-  <FileUploadQuestion
-    value={answers[currentQuestion.id] as string}
-    onChange={(url) => handleAnswerChange(currentQuestion.id, url)}
-    attemptId={attemptId}
-    questionId={currentQuestion.id}
-  />
-)}
-```
-
-**Wijzigingen ExerciseBuilder.tsx:**
-```typescript
-// Regel 46 - uitbreiden QuestionType:
-type QuestionType = "multiple_choice" | "checkbox" | "open_text" | "audio_upload" | "video_upload" | "file_upload";
-
-// Regel 48-53 - uitbreiden icons:
-const questionTypeIcons: Record<QuestionType, React.ElementType> = {
-  multiple_choice: ListChecks,
-  checkbox: CheckSquare,
-  open_text: FileText,
-  audio_upload: Mic,
-  video_upload: Video,
-  file_upload: Upload,
-};
-
-// Regel 369-373 - uitbreiden SelectContent:
-<SelectItem value="audio_upload">{t("questionTypes.audio_upload", "Audio Recording")}</SelectItem>
-<SelectItem value="video_upload">{t("questionTypes.video_upload", "Video Recording")}</SelectItem>
-```
-
----
-
-### 2. Professional/Playful Theme Toggle
-
-**Wijzigingen ThemeContext.tsx:**
-```typescript
-type Theme = 'light' | 'dark' | 'system';
-type ThemeStyle = 'professional' | 'playful';
-
-interface ThemeContextType {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-  resolvedTheme: 'light' | 'dark';
-  themeStyle: ThemeStyle;
-  setThemeStyle: (style: ThemeStyle) => void;
-}
-
-// State toevoegen:
-const [themeStyle, setThemeStyleState] = useState<ThemeStyle>(() => {
-  return (localStorage.getItem('themeStyle') as ThemeStyle) || 'professional';
-});
-
-// Effect voor class toepassing:
-useEffect(() => {
-  const root = window.document.documentElement;
-  root.classList.remove('theme-professional', 'theme-playful');
-  root.classList.add(`theme-${themeStyle}`);
-}, [themeStyle]);
-
-// Setter met database sync:
-const setThemeStyle = async (newStyle: ThemeStyle) => {
-  setThemeStyleState(newStyle);
-  localStorage.setItem('themeStyle', newStyle);
-  // Sync naar profiles.preferred_theme indien ingelogd
-};
-```
-
-**Wijzigingen src/index.css:**
-```css
-/* Professional Theme (default) */
-.theme-professional {
-  --radius: 0.375rem;
-  --font-weight-heading: 600;
-  --shadow-elevation: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.theme-professional .btn {
-  @apply font-medium tracking-normal;
-}
-
-/* Playful Theme */
-.theme-playful {
-  --radius: 1rem;
-  --font-weight-heading: 700;
-  --shadow-elevation: 0 4px 14px rgba(0,0,0,0.15);
-}
-
-.theme-playful .btn {
-  @apply font-bold tracking-wide;
-}
-
-.theme-playful .card {
-  @apply shadow-lg hover:shadow-xl transition-shadow;
-}
-
-.theme-playful h1, .theme-playful h2, .theme-playful h3 {
-  @apply bg-gradient-to-r from-primary to-accent bg-clip-text;
-}
-```
-
-**Wijzigingen SettingsPage.tsx appearance tab (regel 148-163):**
-```tsx
-<TabsContent value="appearance" className="space-y-6">
-  <Card>
-    <CardHeader>
-      <CardTitle>{t('settings.appearanceSettings')}</CardTitle>
-      <CardDescription>{t('settings.appearanceDescription')}</CardDescription>
-    </CardHeader>
-    <CardContent className="space-y-6">
-      {/* Color Theme */}
-      <div className="space-y-3">
-        <Label>{t('settings.colorTheme')}</Label>
-        <div className="grid grid-cols-3 gap-3">
-          {(['light', 'dark', 'system'] as const).map((t) => (
-            <Button
-              key={t}
-              variant={theme === t ? "default" : "outline"}
-              onClick={() => setTheme(t)}
-              className="flex items-center gap-2"
-            >
-              {t === 'light' && <Sun className="h-4 w-4" />}
-              {t === 'dark' && <Moon className="h-4 w-4" />}
-              {t === 'system' && <Monitor className="h-4 w-4" />}
-              {t('settings.theme.' + t)}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      {/* Style Theme */}
-      <div className="space-y-3">
-        <Label>{t('settings.styleTheme')}</Label>
-        <p className="text-sm text-muted-foreground">
-          {t('settings.styleThemeDescription')}
-        </p>
-        <div className="grid grid-cols-2 gap-4">
-          <Card 
-            className={`cursor-pointer p-4 transition-all ${
-              themeStyle === 'professional' 
-                ? 'ring-2 ring-primary' 
-                : 'hover:bg-accent/50'
-            }`}
-            onClick={() => setThemeStyle('professional')}
-          >
-            <div className="flex items-center gap-3">
-              <Briefcase className="h-8 w-8 text-primary" />
-              <div>
-                <p className="font-medium">{t('settings.professional')}</p>
-                <p className="text-xs text-muted-foreground">
-                  {t('settings.professionalDescription')}
-                </p>
-              </div>
-            </div>
-          </Card>
-          <Card 
-            className={`cursor-pointer p-4 transition-all ${
-              themeStyle === 'playful' 
-                ? 'ring-2 ring-primary' 
-                : 'hover:bg-accent/50'
-            }`}
-            onClick={() => setThemeStyle('playful')}
-          >
-            <div className="flex items-center gap-3">
-              <Sparkles className="h-8 w-8 text-accent" />
-              <div>
-                <p className="font-medium">{t('settings.playful')}</p>
-                <p className="text-xs text-muted-foreground">
-                  {t('settings.playfulDescription')}
-                </p>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-</TabsContent>
-```
-
----
-
-### 3. Eindtoets Niveauprogressie Systeem
-
-**Database migratie:**
-```sql
--- Nieuwe tabel voor eindtoetsen
-CREATE TABLE public.final_exams (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    level_id UUID NOT NULL REFERENCES public.levels(id) ON DELETE CASCADE,
-    title TEXT NOT NULL,
-    description TEXT,
-    passing_score INTEGER NOT NULL DEFAULT 70,
-    time_limit_seconds INTEGER,
-    max_attempts INTEGER NOT NULL DEFAULT 3,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    created_by UUID NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
--- Eindtoets pogingen
-CREATE TABLE public.final_exam_attempts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    final_exam_id UUID NOT NULL REFERENCES public.final_exams(id) ON DELETE CASCADE,
-    student_id UUID NOT NULL,
-    attempt_number INTEGER NOT NULL DEFAULT 1,
-    started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    submitted_at TIMESTAMPTZ,
-    total_score NUMERIC,
-    passed BOOLEAN,
-    promoted_to_level_id UUID REFERENCES public.levels(id),
-    UNIQUE(final_exam_id, student_id, attempt_number)
-);
-
--- RLS policies
-ALTER TABLE public.final_exams ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.final_exam_attempts ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Anyone can view active final exams"
-    ON public.final_exams FOR SELECT
-    USING (is_active = true OR has_role(auth.uid(), 'admin'));
-
-CREATE POLICY "Admins and teachers can manage final exams"
-    ON public.final_exams FOR ALL
-    USING (has_role(auth.uid(), 'admin') OR has_role(auth.uid(), 'teacher'))
-    WITH CHECK (has_role(auth.uid(), 'admin') OR has_role(auth.uid(), 'teacher'));
-
-CREATE POLICY "Students can view their own attempts"
-    ON public.final_exam_attempts FOR SELECT
-    USING (auth.uid() = student_id);
-
-CREATE POLICY "Students can create their own attempts"
-    ON public.final_exam_attempts FOR INSERT
-    WITH CHECK (auth.uid() = student_id);
-
-CREATE POLICY "Students can update their own attempts"
-    ON public.final_exam_attempts FOR UPDATE
-    USING (auth.uid() = student_id);
-
-CREATE POLICY "Teachers and admins can view all attempts"
-    ON public.final_exam_attempts FOR SELECT
-    USING (has_role(auth.uid(), 'admin') OR has_role(auth.uid(), 'teacher'));
-
--- Functie voor niveau promotie
-CREATE OR REPLACE FUNCTION public.promote_student_to_next_level(
-    p_student_id UUID,
-    p_current_level_id UUID,
-    p_exam_attempt_id UUID
-)
-RETURNS UUID
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-    v_current_order INTEGER;
-    v_next_level_id UUID;
-    v_next_class_id UUID;
-BEGIN
-    -- Huidige niveau volgorde ophalen
-    SELECT display_order INTO v_current_order
-    FROM public.levels
-    WHERE id = p_current_level_id;
-    
-    -- Volgende niveau ophalen
-    SELECT id INTO v_next_level_id
-    FROM public.levels
-    WHERE display_order = v_current_order + 1
-    ORDER BY display_order
-    LIMIT 1;
-    
-    IF v_next_level_id IS NULL THEN
-        -- Hoogste niveau bereikt
-        RETURN NULL;
-    END IF;
-    
-    -- Zoek actieve klas in volgend niveau
-    SELECT id INTO v_next_class_id
-    FROM public.classes
-    WHERE level_id = v_next_level_id
-    AND is_active = true
-    ORDER BY start_date DESC
-    LIMIT 1;
-    
-    IF v_next_class_id IS NOT NULL THEN
-        -- Schrijf student in voor nieuwe klas
-        INSERT INTO public.class_enrollments (student_id, class_id, status)
-        VALUES (p_student_id, v_next_class_id, 'enrolled')
-        ON CONFLICT DO NOTHING;
-    END IF;
-    
-    -- Update exam attempt met promotie
-    UPDATE public.final_exam_attempts
-    SET promoted_to_level_id = v_next_level_id
-    WHERE id = p_exam_attempt_id;
-    
-    -- Award punten voor niveau voltooiing
-    PERFORM public.award_points(
-        p_student_id, 
-        'level_completed'::points_action, 
-        500,
-        p_current_level_id,
-        'level'
-    );
-    
-    RETURN v_next_level_id;
-END;
-$$;
-```
-
-**Nieuwe pagina: src/pages/FinalExamPage.tsx**
-- Controleert of student alle oefeningen van niveau heeft voltooid
-- Toont eindtoets met timer
-- Na slagen: automatische promotie naar volgend niveau
-- Confetti animatie bij succes
-- Link naar nieuwe klas
-
-**Nieuwe admin pagina: src/pages/admin/FinalExamsPage.tsx**
-- Beheer eindtoetsen per niveau
-- Koppeling aan bestaande questions tabel
-- Resultaten overzicht
-
----
-
-### 4. Moderatie Report Button Integratie
-
-**Wijzigingen ForumPostPage.tsx:**
-```typescript
-// Import toevoegen regel 1-14:
-import { ReportContentDialog } from "@/components/moderation/ReportContentDialog";
-import { Flag } from "lucide-react";
-
-// State toevoegen:
-const [reportDialogOpen, setReportDialogOpen] = useState(false);
-const [reportTarget, setReportTarget] = useState<{
-  type: "forum_post" | "forum_comment";
-  id: string;
-} | null>(null);
-
-// In post header (na delete knop, regel 163-171):
-<Button
-  variant="ghost"
-  size="icon"
-  onClick={() => {
-    setReportTarget({ type: "forum_post", id: post.id });
-    setReportDialogOpen(true);
-  }}
-  className="text-muted-foreground hover:text-destructive"
->
-  <Flag className="h-4 w-4" />
-</Button>
-
-// Bij comments (regel 235-244, na delete knop):
-<Button
-  variant="ghost"
-  size="icon"
-  className="h-6 w-6 text-muted-foreground hover:text-destructive"
-  onClick={() => {
-    setReportTarget({ type: "forum_comment", id: comment.id });
-    setReportDialogOpen(true);
-  }}
->
-  <Flag className="h-3 w-3" />
-</Button>
-
-// Dialog aan einde component:
-{reportTarget && (
-  <ReportContentDialog
-    open={reportDialogOpen}
-    onOpenChange={setReportDialogOpen}
-    contentType={reportTarget.type}
-    contentId={reportTarget.id}
-  />
-)}
-```
-
-**Wijzigingen ForumRoomPage.tsx:**
-```typescript
-// Zelfde imports en state als ForumPostPage
-
-// In post card (regel 207-218), na like button:
-<Button
-  variant="ghost"
-  size="sm"
-  onClick={(e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setReportTarget({ type: "forum_post", id: post.id });
-    setReportDialogOpen(true);
-  }}
-  className="text-muted-foreground hover:text-destructive"
->
-  <Flag className="h-4 w-4" />
-</Button>
-
-// Dialog toevoegen aan einde
-```
-
----
-
-### 5. CI/CD met Coverage Rapportage
-
-**Wijzigingen vitest.config.ts:**
-```typescript
-export default defineConfig({
-  plugins: [react()],
-  test: {
-    environment: "jsdom",
-    globals: true,
-    setupFiles: ["./src/test/setup.ts"],
-    include: ["src/**/*.{test,spec}.{ts,tsx}"],
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html', 'lcov'],
-      exclude: [
-        'node_modules/',
-        'src/test/',
-        '**/*.d.ts',
-        'src/main.tsx',
-        'src/vite-env.d.ts',
-      ],
-      thresholds: {
-        lines: 60,
-        functions: 60,
-        branches: 50,
-        statements: 60,
-      },
-    },
-  },
-  resolve: {
-    alias: { "@": path.resolve(__dirname, "./src") },
-  },
-});
-```
-
-**Nieuw bestand: .github/workflows/ci.yml (volledig)**
-```yaml
-name: CI/CD Pipeline
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-jobs:
-  lint-and-typecheck:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run lint --if-present
-      - run: npx tsc --noEmit
-
-  unit-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run test:coverage
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./coverage/lcov.info
-          fail_ci_if_error: false
-      - name: Coverage Summary
-        uses: irongut/CodeCoverageSummary@v1.3.0
-        with:
-          filename: coverage/cobertura-coverage.xml
-          badge: true
-          format: markdown
-          output: both
-
-  e2e-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-      - run: npx playwright install --with-deps
-      - run: npm run build
-      - run: npx playwright test
-        env:
-          CI: true
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 30
-
-  build:
-    runs-on: ubuntu-latest
-    needs: [lint-and-typecheck, unit-tests]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run build
-      - uses: actions/upload-artifact@v4
-        with:
-          name: build-output
-          path: dist/
-```
-
-**Wijzigingen package.json scripts:**
-```json
-{
-  "scripts": {
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
-  }
-}
-```
-
-**Nieuwe tests toevoegen:**
-
-`src/test/gamification.test.ts`:
-- Test badge unlocking logic
-- Test streak calculation
-- Test points awarding
-
-`src/test/helpdesk.test.ts`:
-- Test ticket creation
-- Test ticket status updates
-- Test response handling
-
-`src/test/exercises.test.ts`:
-- Test auto-grading logic
-- Test score calculation
-- Test passing threshold
-
-`e2e/forum.spec.ts`:
-- Test post creation flow
-- Test comment adding
-- Test report functionality
-
-`e2e/exercises.spec.ts`:
-- Test exercise completion flow
-- Test file upload
-- Test timer functionality
-
----
-
-## Bestanden Overzicht
-
-| Actie | Bestand |
-|-------|---------|
-| Nieuw | `src/components/exercises/questions/AudioUploadQuestion.tsx` |
-| Nieuw | `src/components/exercises/questions/VideoUploadQuestion.tsx` |
-| Nieuw | `src/components/exercises/questions/FileUploadQuestion.tsx` |
-| Wijzig | `src/pages/ExercisePage.tsx` |
-| Wijzig | `src/components/teacher/ExerciseBuilder.tsx` |
-| Wijzig | `src/contexts/ThemeContext.tsx` |
-| Wijzig | `src/pages/SettingsPage.tsx` |
-| Wijzig | `src/index.css` |
-| Nieuw | `supabase/migrations/xxx_final_exams.sql` |
-| Nieuw | `src/pages/FinalExamPage.tsx` |
-| Nieuw | `src/pages/admin/FinalExamsPage.tsx` |
-| Wijzig | `src/pages/ForumPostPage.tsx` |
-| Wijzig | `src/pages/ForumRoomPage.tsx` |
-| Wijzig | `vitest.config.ts` |
-| Nieuw | `.github/workflows/ci.yml` |
-| Wijzig | `package.json` |
-| Nieuw | `src/test/gamification.test.ts` |
-| Nieuw | `src/test/helpdesk.test.ts` |
-| Nieuw | `src/test/exercises.test.ts` |
-| Nieuw | `e2e/forum.spec.ts` |
-| Nieuw | `e2e/exercises.spec.ts` |
-| Wijzig | `src/App.tsx` (routes) |
-| Wijzig | `src/i18n/locales/*.json` (vertalingen) |
-
----
-
-## Verwachte Resultaten na Implementatie
-
-| Feature | Voor | Na |
-|---------|------|-----|
-| Audio/Video Upload | 35% | 100% |
-| Professional/Playful Theme | 40% | 100% |
-| Eindtoets Niveauprogressie | 40% | 100% |
-| Moderatie Report Button | 85% | 100% |
-| CI/CD Coverage | 70% | 100% |
-
----
-
-## Technische Details
-
-### MediaRecorder API (Audio/Video)
-```typescript
-const mediaRecorder = new MediaRecorder(stream, {
-  mimeType: 'audio/webm;codecs=opus' // of 'video/webm;codecs=vp9'
-});
-
-mediaRecorder.ondataavailable = (e) => {
-  chunks.push(e.data);
-};
-
-mediaRecorder.onstop = async () => {
-  const blob = new Blob(chunks, { type: mimeType });
-  const file = new File([blob], `recording-${Date.now()}.webm`);
-  // Upload naar Supabase Storage
-};
-```
-
-### Niveau Progressie Flow
-```text
-1. Student voltooit alle oefeningen in niveau
-2. "Eindtoets" knop wordt actief in dashboard
-3. Student start eindtoets
-4. Na slagen (≥70%):
-   a. promote_student_to_next_level() wordt aangeroepen
-   b. 500 punten worden toegekend
-   c. Student wordt ingeschreven in nieuwe klas
-   d. Confetti animatie + felicitatie bericht
-5. Bij zakken: feedback + nieuwe poging mogelijk (max 3)
-```
-
-### Coverage Thresholds
-```text
-Lines:      60% (opbouwend naar 80%)
-Functions:  60%
-Branches:   50%
-Statements: 60%
-```
+Doel (volgens jouw criteria)
+- Zorgen dat Admin en Leerkracht via een zichtbare, vindbare UI content kunnen aanmaken/bewerken/publiceren en dat Leerlingen die content effectief kunnen gebruiken.
+- Oplossen van het concrete probleem uit je screenshots: je ziet op studentpagina’s (/self-study/reading, /self-study/speaking, /live-lessons) geen knoppen om content te maken, en je geraakt niet “vlot” in de admin/leerkrachtmodules waar die knoppen wél horen te staan.
+
+Analyse van de screenshots + echte oorzaak
+1) Je screenshots tonen student-UI routes
+- /self-study/reading en /self-study/speaking zijn student “consumption” pagina’s (CategoryPage). Die tonen alleen oefeningen die:
+  - is_published = true
+  - release_date <= nu
+- /live-lessons is ook een student “consumption” pagina (LiveLessonsPage): toont enkel aankomende lessen.
+
+=> Op deze routes is het normaal dat er geen “Create” knoppen staan voor studenten. Voor admin/leerkracht moet er wél altijd een duidelijke “Content beheren / Content Studio” ingang zichtbaar zijn.
+
+2) Admin kan momenteel vaak niet in /admin of /teacher UI blijven (race-condition met rol laden)
+- Ik heb dit gereproduceerd in de preview met de browser-tool: bij navigeren naar /admin/classes kwam ik terug op /dashboard.
+- Tegelijk toont de netwerkresponse dat jouw user_roles echt “admin” teruggeeft.
+- Dit wijst op een timing-probleem: de app zet loading=false voordat role opgehaald is, waardoor AdminLayout/TeacherLayout soms role === null zien en je meteen terugsturen naar /dashboard. Resultaat: adminfunctionaliteiten “bestaan” in code, maar zijn in de praktijk niet betrouwbaar zichtbaar/toegankelijk.
+
+3) Zelfs als de leerkracht oefening publiceert, verschijnen ze vaak niet in studentpagina’s (release_date probleem)
+- TeacherExercisesPage laat “publish” togglen, maar zet geen release_date.
+- CategoryPage filtert op release_date <= nu. Als release_date null is, zie je “No exercises available…”, zelfs al bestaan er oefeningen.
+=> Dit maakt het lijken alsof “er is geen functionaliteit”, terwijl de creator UI elders zit en de release-logica niet correct gekoppeld is.
+
+Wat dit plan dus oplost
+A. Admin/Leerkracht modules worden altijd toegankelijk (geen redirect-race).
+B. Admin/Leerkracht krijgen overal een zichtbare “Content beheren” ingang (Header + Dashboard + empty states).
+C. Content Studio wordt werkelijk “centraal”: class-keuze wordt onthouden en doorgegeven aan alle contentmodules.
+D. Oefeningen/lessen die admin/leerkracht maakt, verschijnen daadwerkelijk bij leerlingen (release_date + class filtering).
+E. Bewijs leveren: automatische E2E checks + zichtbare “audit”-punten in de UI (data-testid) + screenshots na implementatie.
+
+Fase 1 — Toegang & zichtbaarheid herstellen (kritiek, lost “geen knoppen” gevoel op)
+1.1 Auth/Role loading fix (root cause)
+- Aanpassen AuthContext zodat loading pas false wordt nadat role én profile zijn opgehaald (of een expliciete roleLoading/profileLoading).
+- AdminLayout en TeacherLayout: wanneer user bestaat maar role nog null/undefined is, toon loader i.p.v. redirect.
+Acceptatie:
+- Als admin direct naar /admin/classes gaat (refresh inbegrepen), blijft hij op /admin/classes en ziet de sidebar + “Create Class” UI.
+- Als leerkracht naar /teacher/exercises gaat, blijft hij daar en ziet “Create Exercise”.
+
+1.2 /dashboard rol-gestuurd maken (zodat admin niet op student-dashboard blijft “hangen”)
+- Maak /dashboard een “DashboardRouter”:
+  - admin -> redirect /admin
+  - teacher -> redirect /teacher
+  - student -> huidige DashboardPage (student dashboard)
+Acceptatie:
+- Admin die /dashboard opent ziet adminomgeving automatisch.
+- Leerkracht die /dashboard opent ziet leerkrachtomgeving automatisch.
+
+1.3 Header navigatie uitbreiden (zichtbare UI ingang)
+- In Header (desktop én mobile sheet):
+  - Voor admin: extra link “Beheer” (naar /admin) + “Content Studio” (naar /teacher/content-studio of nieuwe /admin/content-studio).
+  - Voor leerkracht: link “Content Studio” (naar /teacher/content-studio) + “Leerkracht” (naar /teacher).
+- In avatar dropdown: dezelfde ingangen (altijd zichtbaar voor juiste rol).
+Acceptatie:
+- Op elke pagina (ook /self-study/reading), ziet admin/leerkracht een duidelijke knop/link om naar beheer/contentstudio te gaan.
+
+Fase 2 — Content Studio echt centraal + class-keuze afdwingen/onthouden
+2.1 “Actieve klas” state die overal geldt
+- Introduceer een lichte ClassContext/ActiveClass mechanism:
+  - activeClassId wordt opgeslagen in localStorage (bijv. hva_active_class_id)
+  - ContentStudioPage zet activeClassId bij selectie
+  - Teacher pages lezen activeClassId en gebruiken het als default filter en default in create dialogs
+
+2.2 Teacher/Admin content pages gebruiken dezelfde class-toegang logica
+- Maak 1 gedeelde hook: useAccessibleClasses()
+  - admin: alle actieve classes
+  - teacher: classes waar teacher_id = user.id
+- Vervang op deze pagina’s de huidige “teacher_id filter” queries:
+  - TeacherDashboard
+  - TeacherExercisesPage
+  - TeacherLessonsPage
+  - TeacherRecordingsPage
+  - TeacherSubmissionsPage
+  - TeacherMaterialsPage
+Door: useAccessibleClasses() + activeClassId filter.
+Acceptatie:
+- Admin kan in teacher-modules content maken voor eender welke klas (na selectie).
+- Leerkracht ziet enkel eigen klassen.
+- Als leerkracht meerdere klassen heeft: eerst klas kiezen (UI zichtbaar), daarna content maken.
+
+2.3 UI vereiste “eerst klas kiezen” afdwingen
+- Bovenaan elke teacher content pagina:
+  - Toon ClassSelector component.
+  - Als meerdere klassen en activeClassId leeg: blokkeer create-knoppen met duidelijke melding “Selecteer eerst een klas”.
+Acceptatie:
+- Geen verborgen flow: gebruiker ziet altijd waarom hij niet kan creëren.
+
+Fase 3 — Student ziet content echt verschijnen (fix release + filtering)
+3.1 Oefeningen: release_date + publish flow correct maken
+- Integreren van ExerciseReleaseSettings in TeacherExercisesPage:
+  - Per exercise row: knop “Publicatie” (open dialog) met:
+    - release_date (default: nu)
+    - due_date (optioneel)
+    - is_published (toggle)
+    - “Handmatig publiceren”
+    - “Verbergen”
+- Bij “Publish ON” als release_date leeg is: automatisch release_date = nu zetten.
+Acceptatie:
+- Na aanmaken + publiceren verschijnt oefening in /self-study/{category} voor de juiste klas.
+
+3.2 Student routes filteren op student’s klas
+- CategoryPage: filter exercises ook op class_id van de ingelogde student (via class_enrollments).
+- LiveLessonsPage: filter lessons ook op student’s class_id.
+Acceptatie:
+- Leerling ziet alleen content van zijn eigen klas.
+- Dit voorkomt ook “leeg” door RLS/filters mismatch en is functioneel correct volgens jouw rolmodel.
+
+3.3 Empty state CTA’s voor admin/leerkracht op studentpagina’s (zichtbaarheid)
+- Op /self-study/:category als leeg en role in {admin, teacher}:
+  - Toon extra knop “Maak oefening aan” -> Content Studio / TeacherExercisesPage met category preselect + activeClassId.
+- Op /live-lessons als leeg en role in {admin, teacher}:
+  - Toon extra knop “Plan live les” -> TeacherLessonsPage met class preselect.
+Acceptatie:
+- Screenshots zoals die van jou hebben dan wél duidelijke knoppen (voor admin/leerkracht) zelfs in lege staat.
+
+Fase 4 — “Bewijs” leveren dat het zichtbaar + functioneel is (zonder claims)
+4.1 In-app “bewijs” = zichtbare UI elementen + testIDs
+- Voeg data-testid toe op kritieke UI elementen:
+  - header-admin-link, header-content-studio-link
+  - admin-classes-create-button
+  - teacher-exercises-create-button
+  - teacher-lessons-new-button
+  - exercise-release-settings-button
+  - submissions-review-dialog-open
+Doel: objectief aantoonbaar (geautomatiseerd) dat knoppen bestaan.
+
+4.2 Playwright E2E smoke flows (bewijs via CI + lokaal reproduceerbaar)
+- Maak/Update E2E tests:
+  - Admin: login -> nav /admin/classes -> verwacht “Create Class” zichtbaar -> open dialog
+  - Admin: nav -> Content Studio -> select class -> open Exercises -> create exercise -> publish -> check zichtbaar in student category (via student account)
+  - Teacher: login -> Content Studio -> create lesson -> check zichtbaar voor student in /live-lessons
+- Laat tests screenshots nemen op sleutelstappen (Playwright screenshot) zodat je letterlijk beeldbewijs hebt.
+
+4.3 Handmatige “bewijs” deliverable na implementatie (door mij)
+- Na implementatie maak ik met de browser-tool screenshots op:
+  - /dashboard (admin -> redirect /admin zichtbaar)
+  - /admin/classes (create/edit/delete zichtbaar)
+  - /teacher/content-studio (class selector zichtbaar)
+  - /teacher/exercises (create + publicatie instellingen zichtbaar)
+  - /self-study/reading (na publiceren: oefening zichtbaar)
+  - /live-lessons (na plannen: les zichtbaar)
+Deze screenshots worden meegestuurd in mijn eindrapport.
+
+Fase 5 — Kleine UX/i18n issues die je screenshots ook tonen (quick wins)
+- Vertalingfix: “nav.gamification” ontbreekt op dashboard (key ontbreekt in i18n of wordt fout gebruikt).
+- Labels en CTA’s vertalen in NL/EN/AR en RTL-layout check voor de nieuwe knoppen.
+
+Wat je na deze uitvoering wél ziet (concreet, UI-locaties)
+- Top navigatie (header): “Beheer” en/of “Content Studio” voor admin/leerkracht.
+- /dashboard: admin gaat automatisch naar admin dashboard, teacher naar teacher dashboard.
+- /self-study/reading of /live-lessons (lege staat): admin/leerkracht ziet “Maak oefening aan” / “Plan live les” knoppen.
+- Teacher pages: altijd een ClassSelector bovenaan; create knoppen werken pas na class selectie (zichtbaar en duidelijk).
+
+Risico’s / afhankelijkheden
+- Als er RLS policies bestaan die admin/teacher toegang beperken, moeten we die in dezelfde iteratie nalopen en corrigeren. (De UI kan pas “echt werken” als writes/reads ook toegestaan zijn per rol.)
+- Als exercises.release_date in DB geen column/default heeft of constraints, moeten we een kleine backend schema update doen (migration) om release_date consistent te maken.
+
+Acceptatiecriteria (strikt volgens jouw regels)
+Een feature uit dit onderdeel is pas “100%” wanneer:
+- Admin/Leerkracht:
+  - via UI bereikbaar (zonder URL handmatig typen)
+  - via UI kan creëren/bewerken/publiceren
+  - voor de juiste klas (met expliciete keuze bij >1 klas)
+- Leerling:
+  - kan de gepubliceerde content via UI zien en gebruiken
+- UI is zichtbaar in NL/EN/AR (RTL correct)
+- E2E test bevestigt aanwezigheid van de knoppen + basisflow werkt, met screenshots als artefact.
+
+Volgorde van implementatie (zodat je snel resultaat ziet)
+1) Role-loading fix + /dashboard router + header links (lost 80% van het “geen knoppen zichtbaar” probleem direct op)
+2) ClassContext + useAccessibleClasses + integratie op teacher/admin pages
+3) Release settings integreren + publish zet release_date + student filters op class
+4) Empty state CTA’s op studentpagina’s voor admin/leerkracht
+5) E2E tests + screenshots + i18n/RTL polish
+
+Resultaat: jouw exacte screenshots zouden na stap 1 en 4 al duidelijke knoppen tonen, en na stap 3 zouden “No exercises available” en “Geen aankomende lessen” verdwijnen zodra je content aanmaakt en publiceert via de UI.
