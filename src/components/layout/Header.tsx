@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,8 +22,6 @@ export function Header() {
   const { t } = useTranslation();
   const { user, profile, role, signOut, isAdmin, isTeacher } = useAuth();
   const navigate = useNavigate();
-  
-  const showManagementLinks = isAdmin || isTeacher;
 
   const handleLogout = async () => {
     await signOut();
@@ -36,6 +35,19 @@ export function Header() {
       .join('')
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  const getRoleBadgeVariant = () => {
+    if (role === 'admin') return 'destructive' as const;
+    if (role === 'teacher') return 'default' as const;
+    return 'secondary' as const;
+  };
+
+  const getRoleLabel = () => {
+    if (role === 'admin') return t('roles.admin', 'Beheerder');
+    if (role === 'teacher') return t('roles.teacher', 'Leerkracht');
+    if (role === 'student') return t('roles.student', 'Student');
+    return '';
   };
 
   return (
@@ -67,33 +79,31 @@ export function Header() {
                     <Link to="/forum" className="text-muted-foreground hover:text-foreground">
                       {t('nav.forum')}
                     </Link>
-                    {/* Management links for mobile */}
-                    {showManagementLinks && (
-                      <>
-                        <div className="border-t pt-4 mt-2">
-                          <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">
-                            {t('nav.management', 'Beheer')}
-                          </p>
+                    {/* Management links for admin/teacher in mobile */}
+                    {(role === 'admin' || role === 'teacher') && (
+                      <div className="border-t pt-4 mt-2">
+                        <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">
+                          {t('nav.management', 'Beheer')}
+                        </p>
+                        <Link 
+                          to="/teacher/content-studio" 
+                          className="flex items-center gap-2 text-primary hover:text-primary/80"
+                          data-testid="mobile-content-studio-link"
+                        >
+                          <Palette className="h-4 w-4" />
+                          {t('nav.contentStudio', 'Content Studio')}
+                        </Link>
+                        {role === 'admin' && (
                           <Link 
-                            to="/teacher/content-studio" 
-                            className="flex items-center gap-2 text-primary hover:text-primary/80"
-                            data-testid="mobile-content-studio-link"
+                            to="/admin" 
+                            className="flex items-center gap-2 text-primary hover:text-primary/80 mt-2"
+                            data-testid="mobile-admin-link"
                           >
-                            <Palette className="h-4 w-4" />
-                            {t('nav.contentStudio', 'Content Studio')}
+                            <Shield className="h-4 w-4" />
+                            {t('nav.adminPanel', 'Beheerderspaneel')}
                           </Link>
-                          {isAdmin && (
-                            <Link 
-                              to="/admin" 
-                              className="flex items-center gap-2 text-primary hover:text-primary/80 mt-2"
-                              data-testid="mobile-admin-link"
-                            >
-                              <Shield className="h-4 w-4" />
-                              {t('nav.adminPanel', 'Beheerderspaneel')}
-                            </Link>
-                          )}
-                        </div>
-                      </>
+                        )}
+                      </div>
                     )}
                   </>
                 )}
@@ -136,8 +146,8 @@ export function Header() {
               >
                 {t('nav.forum')}
               </Link>
-              {/* Management links for admin/teacher - always visible */}
-              {showManagementLinks && (
+              {/* Management links - using role directly for reliability */}
+              {(role === 'admin' || role === 'teacher') && (
                 <>
                   <Link
                     to="/teacher/content-studio"
@@ -147,7 +157,7 @@ export function Header() {
                     <Palette className="h-4 w-4" />
                     {t('nav.contentStudio', 'Content Studio')}
                   </Link>
-                  {isAdmin && (
+                  {role === 'admin' && (
                     <Link
                       to="/admin"
                       className="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
@@ -170,69 +180,77 @@ export function Header() {
           <ThemeSwitcher />
 
           {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={profile?.avatar_url || ''} />
-                    <AvatarFallback>
-                      {profile?.full_name ? getInitials(profile.full_name) : 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {profile?.full_name}
-                    </p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user.email}
-                    </p>
-                    {role && (
-                      <p className="text-xs text-primary">
-                        {t(`roles.${role}`)}
+            <div className="flex items-center gap-2">
+              {/* Role badge - always visible */}
+              {role && (
+                <Badge variant={getRoleBadgeVariant()} className="hidden sm:inline-flex text-xs">
+                  {getRoleLabel()}
+                </Badge>
+              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={profile?.avatar_url || ''} />
+                      <AvatarFallback>
+                        {profile?.full_name ? getInitials(profile.full_name) : 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {profile?.full_name}
                       </p>
-                    )}
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate('/profile')}>
-                  <User className="mr-2 h-4 w-4" />
-                  {t('nav.profile')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/progress')}>
-                  <TrendingUp className="mr-2 h-4 w-4" />
-                  {t('nav.progress')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/settings')}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  {t('nav.settings')}
-                </DropdownMenuItem>
-                {/* Management links in dropdown */}
-                {showManagementLinks && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate('/teacher/content-studio')}>
-                      <Palette className="mr-2 h-4 w-4" />
-                      {t('nav.contentStudio', 'Content Studio')}
-                    </DropdownMenuItem>
-                    {isAdmin && (
-                      <DropdownMenuItem onClick={() => navigate('/admin')}>
-                        <Shield className="mr-2 h-4 w-4" />
-                        {t('nav.adminPanel', 'Beheerderspaneel')}
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                      {role && (
+                        <Badge variant={getRoleBadgeVariant()} className="w-fit mt-1 text-xs">
+                          {getRoleLabel()}
+                        </Badge>
+                      )}
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/profile')}>
+                    <User className="mr-2 h-4 w-4" />
+                    {t('nav.profile')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/progress')}>
+                    <TrendingUp className="mr-2 h-4 w-4" />
+                    {t('nav.progress')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/settings')}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    {t('nav.settings')}
+                  </DropdownMenuItem>
+                  {/* Management links in dropdown - using role directly */}
+                  {(role === 'admin' || role === 'teacher') && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => navigate('/teacher/content-studio')}>
+                        <Palette className="mr-2 h-4 w-4" />
+                        {t('nav.contentStudio', 'Content Studio')}
                       </DropdownMenuItem>
-                    )}
-                  </>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  {t('auth.logout')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                      {role === 'admin' && (
+                        <DropdownMenuItem onClick={() => navigate('/admin')}>
+                          <Shield className="mr-2 h-4 w-4" />
+                          {t('nav.adminPanel', 'Beheerderspaneel')}
+                        </DropdownMenuItem>
+                      )}
+                    </>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    {t('auth.logout')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           ) : (
             <div className="flex items-center space-x-2">
               <Button variant="ghost" asChild>

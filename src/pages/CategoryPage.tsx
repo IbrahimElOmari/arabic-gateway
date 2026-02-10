@@ -20,9 +20,9 @@ import { ArrowLeft, Clock, CheckCircle, PlayCircle, Lock, Loader2, Plus, Palette
 export default function CategoryPage() {
   const { t, i18n } = useTranslation();
   const { category } = useParams<{ category: string }>();
-  const { user, isAdmin, isTeacher } = useAuth();
+  const { user, role } = useAuth();
   
-  const showManagementCTA = isAdmin || isTeacher;
+  const showManagementCTA = role === 'admin' || role === 'teacher';
 
   // Fetch category info
   const { data: categoryInfo } = useQuery({

@@ -12,9 +12,9 @@ import { Link } from "react-router-dom";
 
 export default function LiveLessonsPage() {
   const { t } = useTranslation();
-  const { user, isAdmin, isTeacher } = useAuth();
+  const { user, role } = useAuth();
   
-  const showManagementCTA = isAdmin || isTeacher;
+  const showManagementCTA = role === 'admin' || role === 'teacher';
 
   const { data: lessons, isLoading } = useQuery({
     queryKey: ["upcoming-lessons", user?.id],
