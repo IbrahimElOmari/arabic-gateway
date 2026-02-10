@@ -202,7 +202,7 @@ export default function ClassesPage() {
         name: data.name,
         description: data.description || null,
         level_id: data.level_id,
-        teacher_id: data.teacher_id || null,
+        teacher_id: data.teacher_id && data.teacher_id !== 'none' ? data.teacher_id : null,
         max_students: data.max_students,
         price: data.price ? parseFloat(data.price) : null,
         currency: data.currency,
@@ -238,7 +238,7 @@ export default function ClassesPage() {
           name: data.name,
           description: data.description || null,
           level_id: data.level_id,
-          teacher_id: data.teacher_id || null,
+          teacher_id: data.teacher_id && data.teacher_id !== 'none' ? data.teacher_id : null,
           max_students: data.max_students,
           price: data.price ? parseFloat(data.price) : null,
           currency: data.currency,
@@ -347,7 +347,7 @@ export default function ClassesPage() {
       name: cls.name,
       description: cls.description || "",
       level_id: cls.level_id,
-      teacher_id: cls.teacher_id || "",
+      teacher_id: cls.teacher_id || "none",
       max_students: cls.max_students,
       price: cls.price?.toString() || "",
       currency: cls.currency,
@@ -415,7 +415,7 @@ export default function ClassesPage() {
               <SelectValue placeholder={t("admin.selectTeacher", "Select teacher")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">{t("admin.noTeacher", "No teacher")}</SelectItem>
+              <SelectItem value="none">{t("admin.noTeacher", "No teacher")}</SelectItem>
               {teachers?.map((teacher) => (
                 <SelectItem key={teacher.user_id} value={teacher.user_id}>
                   {teacher.full_name}
