@@ -98,7 +98,11 @@
     "nextLesson": "الدرس القادم",
     "studyTime": "وقت الدراسة",
     "noUpcomingLessons": "لا توجد دروس قادمة. تحقق لاحقاً!",
-    "startFirstExercise": "ابدأ أول تمرين لمشاهدة نشاطك هنا!"
+    "startFirstExercise": "ابدأ أول تمرين لمشاهدة نشاطك هنا!",
+    "quickActions": "إجراءات سريعة",
+    "adminFallback": "أنت مسجل الدخول كمدير.",
+    "teacherFallback": "أنت مسجل الدخول كمعلم.",
+    "studyTime": "وقت الدراسة"
   },
   "settings": {
     "language": "اللغة",
@@ -266,6 +270,9 @@
     "averageScore": "متوسط الدرجات",
     "noExercises": "لا توجد تمارين متاحة بعد",
     "checkBack": "تحقق قريباً للحصول على تمارين جديدة!",
+    "noExercisesInCategory": "لا توجد تمارين متاحة في هذه الفئة",
+    "checkBackCategory": "تحقق قريباً للحصول على تمارين جديدة!",
+    "enrollFirst": "سجل في فصل لرؤية التمارين.",
     "categoryDescriptions": {
       "reading": "حسّن مهاراتك في قراءة اللغة العربية",
       "writing": "تدرب على الكتابة باللغة العربية",
@@ -717,7 +724,12 @@
     "exportPDF": "تصدير كـ PDF",
     "backToCategory": "العودة للفئة",
     "points": "نقاط",
-    "all": "الكل"
+    "all": "الكل",
+    "published": "منشور",
+    "draft": "مسودة",
+    "publish": "نشر",
+    "unpublish": "إلغاء النشر",
+    "saveChanges": "حفظ التغييرات"
   },
   "finalExam": {
     "title": "الاختبار النهائي",

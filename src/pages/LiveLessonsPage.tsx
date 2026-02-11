@@ -14,32 +14,52 @@ export default function LiveLessonsPage() {
   const { t } = useTranslation();
   const { user, role } = useAuth();
   
-  const showManagementCTA = role === 'admin' || role === 'teacher';
+  const isStaff = role === 'admin' || role === 'teacher';
 
-  const { data: lessons, isLoading } = useQuery({
-    queryKey: ["upcoming-lessons", user?.id],
+  // Fetch student's enrolled class IDs
+  const { data: enrolledClassIds } = useQuery({
+    queryKey: ["my-enrolled-classes", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
+        .from("class_enrollments")
+        .select("class_id")
+        .eq("student_id", user!.id)
+        .eq("status", "enrolled");
+      if (error) throw error;
+      return data?.map(e => e.class_id) || [];
+    },
+    enabled: !!user && role === 'student',
+  });
+
+  const { data: lessons, isLoading } = useQuery({
+    queryKey: ["upcoming-lessons", user?.id, enrolledClassIds, isStaff],
+    queryFn: async () => {
+      let query = supabase
         .from("lessons")
         .select("*, class:classes(name)")
         .gte("scheduled_at", new Date().toISOString())
         .order("scheduled_at");
+      
+      // Students only see lessons from their enrolled classes
+      if (!isStaff && enrolledClassIds && enrolledClassIds.length > 0) {
+        query = query.in("class_id", enrolledClassIds);
+      } else if (!isStaff && (!enrolledClassIds || enrolledClassIds.length === 0)) {
+        return [];
+      }
+      
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
-    enabled: !!user,
+    enabled: !!user && (isStaff || enrolledClassIds !== undefined),
   });
 
   return (
     <MainLayout>
       <div className="container py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">
-            {t("lessons.liveClasses")}
-          </h1>
-          <p className="text-muted-foreground">
-            {t("lessons.upcomingDescription")}
-          </p>
+          <h1 className="text-3xl font-bold text-foreground">{t("lessons.liveClasses")}</h1>
+          <p className="text-muted-foreground">{t("lessons.upcomingDescription")}</p>
         </div>
 
         {isLoading ? (
@@ -82,10 +102,13 @@ export default function LiveLessonsPage() {
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold">{t("lessons.noUpcoming")}</h3>
-              <p className="text-muted-foreground mb-4">{t("lessons.checkBack")}</p>
+              <p className="text-muted-foreground mb-4">
+                {!isStaff && (!enrolledClassIds || enrolledClassIds.length === 0)
+                  ? t("selfStudy.enrollFirst", "Enroll in a class to see lessons.")
+                  : t("lessons.checkBack")}
+              </p>
               
-              {/* CTA buttons for admin/teacher - always visible when empty */}
-              {showManagementCTA && (
+              {isStaff && (
                 <div className="flex flex-col sm:flex-row gap-3 mt-2">
                   <Button asChild data-testid="create-lesson-cta">
                     <Link to="/teacher/lessons">
