@@ -3,12 +3,11 @@ import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -33,30 +32,42 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Edit, Trash2, Eye, EyeOff, Loader2, BookOpen, GripVertical } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, EyeOff, Loader2, Calendar } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ExerciseBuilder } from "@/components/teacher/ExerciseBuilder";
+import { ExerciseReleaseSettings } from "@/components/exercises/ExerciseReleaseSettings";
 
 export default function TeacherExercisesPage() {
   const { t, i18n } = useTranslation();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [showExerciseDialog, setShowExerciseDialog] = useState(false);
-  const [editingExercise, setEditingExercise] = useState<any>(null);
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
+  const [releaseExercise, setReleaseExercise] = useState<any>(null);
 
-  // Get teacher's classes
+  // Get accessible classes based on role (admin sees all, teacher sees own)
   const { data: classes } = useQuery({
-    queryKey: ["teacher-classes", user?.id],
+    queryKey: ["teacher-classes", user?.id, isAdmin],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("classes")
-        .select("id, name")
-        .eq("teacher_id", user!.id);
-      if (error) throw error;
-      return data;
+      if (isAdmin) {
+        const { data, error } = await supabase
+          .from("classes")
+          .select("id, name, level:levels(name)")
+          .eq("is_active", true)
+          .order("name");
+        if (error) throw error;
+        return data;
+      } else {
+        const { data, error } = await supabase
+          .from("classes")
+          .select("id, name, level:levels(name)")
+          .eq("teacher_id", user!.id)
+          .eq("is_active", true)
+          .order("name");
+        if (error) throw error;
+        return data;
+      }
     },
     enabled: !!user,
   });
@@ -74,7 +85,7 @@ export default function TeacherExercisesPage() {
     },
   });
 
-  // Get exercises for teacher's classes
+  // Get exercises for accessible classes
   const classIds = classes?.map((c) => c.id) || [];
   const { data: exercises, isLoading } = useQuery({
     queryKey: ["teacher-exercises", classIds],
@@ -108,6 +119,7 @@ export default function TeacherExercisesPage() {
         .insert({
           ...form,
           created_by: user!.id,
+          release_date: new Date().toISOString(),
         })
         .select()
         .single();
@@ -140,15 +152,18 @@ export default function TeacherExercisesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teacher-exercises"] });
-      toast({
-        title: t("teacher.exerciseDeleted", "Exercise Deleted"),
-      });
+      toast({ title: t("teacher.exerciseDeleted", "Exercise Deleted") });
     },
   });
 
   const togglePublishMutation = useMutation({
     mutationFn: async ({ id, isPublished }: { id: string; isPublished: boolean }) => {
-      const { error } = await supabase.from("exercises").update({ is_published: isPublished }).eq("id", id);
+      const updateData: any = { is_published: isPublished };
+      // Auto-set release_date to now when publishing
+      if (isPublished) {
+        updateData.release_date = new Date().toISOString();
+      }
+      const { error } = await supabase.from("exercises").update(updateData).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -195,7 +210,7 @@ export default function TeacherExercisesPage() {
             {t("teacher.exercisesDescription", "Create and manage exercises for your classes")}
           </p>
         </div>
-        <Button onClick={() => { resetForm(); setEditingExercise(null); setShowExerciseDialog(true); }}>
+        <Button onClick={() => { resetForm(); setShowExerciseDialog(true); }} data-testid="teacher-exercises-create-button">
           <Plus className="h-4 w-4 mr-2" />
           {t("teacher.createExercise", "Create Exercise")}
         </Button>
@@ -233,13 +248,23 @@ export default function TeacherExercisesPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>{format(new Date(exercise.created_at), "MMM d, yyyy")}</TableCell>
-                    <TableCell className="text-right space-x-2">
+                    <TableCell className="text-right space-x-1">
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => togglePublishMutation.mutate({ id: exercise.id, isPublished: !exercise.is_published })}
+                        title={exercise.is_published ? t("common.unpublish", "Unpublish") : t("common.publish", "Publish")}
                       >
                         {exercise.is_published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setReleaseExercise(exercise)}
+                        title={t("exercises.releaseSettings", "Release Settings")}
+                        data-testid="exercise-release-settings-button"
+                      >
+                        <Calendar className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -291,7 +316,7 @@ export default function TeacherExercisesPage() {
                 <SelectContent>
                   {classes?.map((cls) => (
                     <SelectItem key={cls.id} value={cls.id}>
-                      {cls.name}
+                      {cls.name} {cls.level?.name ? `(${cls.level.name})` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -373,6 +398,19 @@ export default function TeacherExercisesPage() {
               {t("common.create", "Create")}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Release Settings Dialog */}
+      <Dialog open={!!releaseExercise} onOpenChange={(open) => !open && setReleaseExercise(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("exercises.releaseSettings", "Release Settings")}</DialogTitle>
+            <DialogDescription>{releaseExercise?.title}</DialogDescription>
+          </DialogHeader>
+          {releaseExercise && (
+            <ExerciseReleaseSettings exercise={releaseExercise} />
+          )}
         </DialogContent>
       </Dialog>
     </div>

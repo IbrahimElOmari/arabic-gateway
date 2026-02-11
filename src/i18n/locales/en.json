@@ -98,7 +98,11 @@
     "nextLesson": "Next Lesson",
     "studyTime": "Study Time",
     "noUpcomingLessons": "No upcoming lessons scheduled. Check back later!",
-    "startFirstExercise": "Start your first exercise to see your activity here!"
+    "startFirstExercise": "Start your first exercise to see your activity here!",
+    "quickActions": "Quick Actions",
+    "adminFallback": "You are logged in as an administrator.",
+    "teacherFallback": "You are logged in as a teacher.",
+    "studyTime": "Study Time"
   },
   "settings": {
     "language": "Language",
@@ -266,6 +270,9 @@
     "averageScore": "Average score",
     "noExercises": "No exercises available yet",
     "checkBack": "Check back soon for new exercises!",
+    "noExercisesInCategory": "No exercises available in this category",
+    "checkBackCategory": "Check back soon for new exercises!",
+    "enrollFirst": "Enroll in a class to see exercises.",
     "categoryDescriptions": {
       "reading": "Improve your Arabic reading skills",
       "writing": "Practice writing in Arabic",
@@ -729,7 +736,12 @@
     "category": "Category",
     "date": "Date",
     "timeSpentMin": "Time (min)",
-    "totalLessons": "total lessons"
+    "totalLessons": "total lessons",
+    "published": "Published",
+    "draft": "Draft",
+    "publish": "Publish",
+    "unpublish": "Unpublish",
+    "saveChanges": "Save Changes"
   },
   "finalExam": {
     "title": "Final Exam",

@@ -98,7 +98,11 @@
     "nextLesson": "Volgende Les",
     "studyTime": "Studietijd",
     "noUpcomingLessons": "Geen aankomende lessen gepland. Kom later terug!",
-    "startFirstExercise": "Start je eerste oefening om je activiteit hier te zien!"
+    "startFirstExercise": "Start je eerste oefening om je activiteit hier te zien!",
+    "quickActions": "Snelle Acties",
+    "adminFallback": "Je bent ingelogd als beheerder.",
+    "teacherFallback": "Je bent ingelogd als leerkracht.",
+    "studyTime": "Studietijd"
   },
   "settings": {
     "language": "Taal",
@@ -266,6 +270,9 @@
     "averageScore": "Gemiddelde score",
     "noExercises": "Nog geen oefeningen beschikbaar",
     "checkBack": "Kom binnenkort terug voor nieuwe oefeningen!",
+    "noExercisesInCategory": "Geen oefeningen beschikbaar in deze categorie",
+    "checkBackCategory": "Kom binnenkort terug voor nieuwe oefeningen!",
+    "enrollFirst": "Schrijf je in bij een klas om oefeningen te zien.",
     "categoryDescriptions": {
       "reading": "Verbeter je Arabische leesvaardigheden",
       "writing": "Oefen schrijven in het Arabisch",
@@ -729,7 +736,12 @@
     "category": "Categorie",
     "date": "Datum",
     "timeSpentMin": "Tijd (min)",
-    "totalLessons": "totaal lessen"
+    "totalLessons": "totaal lessen",
+    "published": "Gepubliceerd",
+    "draft": "Concept",
+    "publish": "Publiceren",
+    "unpublish": "Depubliceren",
+    "saveChanges": "Wijzigingen opslaan"
   },
   "finalExam": {
     "title": "Eindtoets",

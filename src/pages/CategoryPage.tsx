@@ -22,7 +22,7 @@ export default function CategoryPage() {
   const { category } = useParams<{ category: string }>();
   const { user, role } = useAuth();
   
-  const showManagementCTA = role === 'admin' || role === 'teacher';
+  const isStaff = role === 'admin' || role === 'teacher';
 
   // Fetch category info
   const { data: categoryInfo } = useQuery({
@@ -39,13 +39,28 @@ export default function CategoryPage() {
     enabled: !!category,
   });
 
-  // Fetch exercises for this category
+  // Fetch student's enrolled class IDs (only for students)
+  const { data: enrolledClassIds } = useQuery({
+    queryKey: ["my-enrolled-classes", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("class_enrollments")
+        .select("class_id")
+        .eq("student_id", user!.id)
+        .eq("status", "enrolled");
+      if (error) throw error;
+      return data?.map(e => e.class_id) || [];
+    },
+    enabled: !!user && role === 'student',
+  });
+
+  // Fetch exercises for this category, filtered by student's class
   const { data: exercises, isLoading } = useQuery({
-    queryKey: ["exercises", category],
+    queryKey: ["exercises", category, enrolledClassIds, isStaff],
     queryFn: async () => {
       if (!categoryInfo) return [];
       
-      const { data, error } = await supabase
+      let query = supabase
         .from("exercises")
         .select("*")
         .eq("category_id", categoryInfo.id)
@@ -53,10 +68,18 @@ export default function CategoryPage() {
         .lte("release_date", new Date().toISOString())
         .order("release_date", { ascending: false });
       
+      // Students only see exercises from their enrolled classes
+      if (!isStaff && enrolledClassIds && enrolledClassIds.length > 0) {
+        query = query.in("class_id", enrolledClassIds);
+      } else if (!isStaff && (!enrolledClassIds || enrolledClassIds.length === 0)) {
+        return []; // Student not enrolled in any class
+      }
+      
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
-    enabled: !!categoryInfo,
+    enabled: !!categoryInfo && (isStaff || (enrolledClassIds !== undefined)),
   });
 
   // Fetch user's attempts for these exercises
@@ -73,7 +96,6 @@ export default function CategoryPage() {
       
       if (error) throw error;
       
-      // Group by exercise_id
       const attemptsMap: Record<string, { completed: boolean; score: number; attempts: number }> = {};
       data?.forEach((a) => {
         if (!attemptsMap[a.exercise_id] || a.attempt_number > attemptsMap[a.exercise_id].attempts) {
@@ -106,7 +128,6 @@ export default function CategoryPage() {
   return (
     <MainLayout>
       <div className="container py-8">
-        {/* Breadcrumb */}
         <Breadcrumb className="mb-6">
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -121,7 +142,6 @@ export default function CategoryPage() {
           </BreadcrumbList>
         </Breadcrumb>
 
-        {/* Header */}
         <div className="mb-8 flex items-center gap-4">
           <Link to="/self-study">
             <Button variant="ghost" size="icon">
@@ -129,16 +149,11 @@ export default function CategoryPage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              {getLocalizedName()}
-            </h1>
-            <p className="text-muted-foreground">
-              {categoryInfo?.description}
-            </p>
+            <h1 className="text-3xl font-bold text-foreground">{getLocalizedName()}</h1>
+            <p className="text-muted-foreground">{categoryInfo?.description}</p>
           </div>
         </div>
 
-        {/* Exercises List */}
         {isLoading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -160,13 +175,8 @@ export default function CategoryPage() {
                         {isCompleted && (
                           <Badge variant={isPassed ? "default" : "destructive"} className={isPassed ? "bg-green-600" : ""}>
                             {isPassed ? (
-                              <>
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                                {t("exercises.passed", "Passed")}
-                              </>
-                            ) : (
-                              t("exercises.notPassed", "Not Passed")
-                            )}
+                              <><CheckCircle className="h-3 w-3 mr-1" />{t("exercises.passed", "Passed")}</>
+                            ) : t("exercises.notPassed", "Not Passed")}
                           </Badge>
                         )}
                       </div>
@@ -185,25 +195,13 @@ export default function CategoryPage() {
                         </span>
                       )}
                       <Link to={`/self-study/${category}/${exercise.id}`}>
-                        <Button
-                          variant={isCompleted ? "outline" : "default"}
-                          disabled={!canAttempt && isCompleted}
-                        >
+                        <Button variant={isCompleted ? "outline" : "default"} disabled={!canAttempt && isCompleted}>
                           {!canAttempt && isCompleted ? (
-                            <>
-                              <Lock className="h-4 w-4 mr-2" />
-                              {t("exercises.maxAttempts", "Max attempts reached")}
-                            </>
+                            <><Lock className="h-4 w-4 mr-2" />{t("exercises.maxAttempts", "Max attempts reached")}</>
                           ) : isCompleted ? (
-                            <>
-                              <PlayCircle className="h-4 w-4 mr-2" />
-                              {t("exercises.retry", "Retry")}
-                            </>
+                            <><PlayCircle className="h-4 w-4 mr-2" />{t("exercises.retry", "Retry")}</>
                           ) : (
-                            <>
-                              <PlayCircle className="h-4 w-4 mr-2" />
-                              {t("exercises.start", "Start")}
-                            </>
+                            <><PlayCircle className="h-4 w-4 mr-2" />{t("exercises.start", "Start")}</>
                           )}
                         </Button>
                       </Link>
@@ -227,11 +225,12 @@ export default function CategoryPage() {
                 {t("selfStudy.noExercisesInCategory", "No exercises available in this category")}
               </h3>
               <p className="text-muted-foreground mb-4">
-                {t("selfStudy.checkBackCategory", "Check back soon for new exercises!")}
+                {!isStaff && (!enrolledClassIds || enrolledClassIds.length === 0)
+                  ? t("selfStudy.enrollFirst", "Enroll in a class to see exercises.")
+                  : t("selfStudy.checkBackCategory", "Check back soon for new exercises!")}
               </p>
               
-              {/* CTA buttons for admin/teacher - always visible when empty */}
-              {showManagementCTA ? (
+              {isStaff ? (
                 <div className="flex flex-col sm:flex-row gap-3 mt-2">
                   <Button asChild data-testid="create-exercise-cta">
                     <Link to="/teacher/exercises">

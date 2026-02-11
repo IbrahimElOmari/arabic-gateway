@@ -4,15 +4,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { BookOpen, Calendar, TrendingUp, Flame, Trophy, MessageCircle } from 'lucide-react';
+import { BookOpen, Calendar, TrendingUp, Flame, Trophy, MessageCircle, Shield, Palette } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 export default function StudentDashboard() {
   const { t } = useTranslation();
   const { user, profile, role } = useAuth();
+
+  const isStaff = role === 'admin' || role === 'teacher';
 
   const { data: attempts } = useQuery({
     queryKey: ['my-attempts', user?.id],
@@ -53,6 +56,32 @@ export default function StudentDashboard() {
           <h1 className="text-3xl font-bold">{t('dashboard.welcome')}, {profile?.full_name?.split(' ')[0]}!</h1>
           <p className="text-muted-foreground mt-1">{role && t(`roles.${role}`)}</p>
         </div>
+
+        {/* Admin/Teacher fallback: show quick links to management panels */}
+        {isStaff && (
+          <Alert className="mb-6 border-primary/20 bg-primary/5">
+            <Shield className="h-4 w-4" />
+            <AlertDescription className="flex flex-wrap items-center gap-3">
+              <span>
+                {role === 'admin'
+                  ? t('dashboard.adminFallback', 'Je bent ingelogd als beheerder.')
+                  : t('dashboard.teacherFallback', 'Je bent ingelogd als leerkracht.')}
+              </span>
+              <Button size="sm" asChild>
+                <Link to={role === 'admin' ? '/admin' : '/teacher'}>
+                  <Shield className="h-4 w-4 mr-1" />
+                  {role === 'admin' ? t('nav.adminPanel', 'Beheerderspaneel') : t('teacher.dashboard', 'Docenten Dashboard')}
+                </Link>
+              </Button>
+              <Button size="sm" variant="outline" asChild>
+                <Link to="/teacher/content-studio">
+                  <Palette className="h-4 w-4 mr-1" />
+                  {t('nav.contentStudio', 'Content Studio')}
+                </Link>
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card>
