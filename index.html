@@ -28,6 +28,15 @@
   </head>
 
   <body>
+    <script>
+      // Inline SW cleanup - runs before any bundled JS loads
+      if('serviceWorker' in navigator){
+        navigator.serviceWorker.getRegistrations()
+          .then(function(r){r.forEach(function(reg){reg.unregister()})});
+        if('caches' in window) caches.keys()
+          .then(function(n){n.forEach(function(name){caches.delete(name)})});
+      }
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
