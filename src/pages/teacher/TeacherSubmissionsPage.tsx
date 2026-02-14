@@ -17,21 +17,24 @@ import { Badge } from "@/components/ui/badge";
 
 export default function TeacherSubmissionsPage() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [feedback, setFeedback] = useState("");
   const [score, setScore] = useState("");
 
-  // Get teacher's classes
+  // Get teacher's classes (admin sees all)
   const { data: classes } = useQuery({
-    queryKey: ["teacher-classes", user?.id],
+    queryKey: ["teacher-classes", user?.id, isAdmin],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("classes")
-        .select("id")
-        .eq("teacher_id", user!.id);
+      let query = supabase.from("classes").select("id");
+      if (isAdmin) {
+        query = query.eq("is_active", true);
+      } else {
+        query = query.eq("teacher_id", user!.id);
+      }
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
