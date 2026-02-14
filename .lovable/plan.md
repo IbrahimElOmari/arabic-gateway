@@ -1,190 +1,234 @@
 
-# Definitieve Analyse: Admin/Teacher Ziet StudentDashboard
+# Volledig Statusrapport: HVA Platform
 
-## Grondige Analyse: De 3 Fundamentele Oorzaken
+## Samenvatting
 
-### Oorzaak 1: Oude Service Worker Serveert Gecachte index.html (HOOFDOORZAAK)
+Het platform is een blended learning SPA (React/TypeScript/Vite) met een Lovable Cloud backend. De codebase bevat 40+ pagina's, 3 rollen (admin/teacher/student), 3 talen (NL/EN/AR), en 50+ database tabellen. De meeste kernmodules zijn code-compleet, maar er zijn functionele hiaten die gebruikers zullen tegenkomen.
 
-De PWA plugin (`vite-plugin-pwa`) is correct verwijderd uit `vite.config.ts` en `package.json`. Er staat ook SW-unregister code in `src/main.tsx`. MAAR: die unregister code zit in gebundeld JavaScript. Het probleem is een kip-en-ei situatie:
+---
+
+## WAT WERKT (Functioneel)
+
+### Authenticatie & Rollen
+- Registratie met e-mailverificatie (student standaard)
+- Login met post-login redirect naar /dashboard
+- Rol-gebaseerde routing: admin naar /admin, teacher naar /teacher, student naar StudentDashboard
+- 2FA setup (TOTP) via SettingsPage
+- AdminLayout en TeacherLayout met 5-seconden roleCheckTimeout (defense in depth)
+- Service Worker volledig uitgeschakeld + zelfvernietigende SW + inline cache cleanup
+
+### Zelfstudie-module
+- 5 categorieen (lezen, schrijven, luisteren, spreken, grammatica)
+- Oefeningen met meerkeuze, checkbox, open tekst, audio/video-opname, bestandsupload
+- Automatische nakijking van objectieve vragen
+- Timer met auto-submit
+- Score-berekening en pass/fail feedback
+- Student class filter: studenten zien alleen oefeningen van hun ingeschreven klassen
+- Staff (admin/teacher) zien alle oefeningen
+
+### Leerkracht-omgeving
+- Dashboard met statistieken (studenten, klassen, pending reviews, opnames)
+- Oefeningen aanmaken met class selector (admin ziet alle klassen, teacher ziet eigen klassen)
+- Exercise Builder met vraag-editor
+- Release Settings dialog per oefening (publicatiedatum, deadline, publiceren/ontpubliceren)
+- Lessen plannen (CRUD) met Google Meet link
+- Opnames beheren
+- Inzendingen beoordelen (correct/incorrect met feedback en deelscore)
+- Content Studio als centraal overzicht
+
+### Beheerdersomgeving
+- Dashboard met platform-statistieken
+- Gebruikersbeheer
+- Klassen beheren
+- Niveaus beheren (CRUD)
+- Leerkracht-goedkeuringen
+- Plaatsingstoetsen (CRUD, planning, beoordeling, niveau toewijzen)
+- Kortingscodes
+- FAQ/Kennisbank beheer
+- Contentmeldingen
+- Uitnodigingen voor admin/teacher rollen
+- Eindexamens beheren
+- Analytics pagina
+
+### Community
+- Forum met kamers, posts, reacties, likes
+- Klas-chat met realtime berichten, emoji-reacties, content rapporteren
+
+### Overige modules
+- Kalender met evenementen (aanmaken, bekijken, verwijderen per type)
+- Gamification dashboard (punten, streaks, badges, leaderboard)
+- Helpdesk met tickets, prioriteiten, statussen, staff-reacties, interne notities
+- Voortgangsrapport met grafieken (wekelijks, per categorie) en export (CSV/PDF)
+- Kennisbank (FAQ) met zoeken, categorieen, feedback (duim omhoog/omlaag)
+- Installatiepagina
+- Thema-instellingen (licht/donker/systeem + professioneel/speels)
+- Taalwisselaar (NL/EN/AR)
+- i18n volledig voor alle 3 talen inclusief nav, dashboard, gamification, enrollFirst, adminFallback, etc.
+
+---
+
+## WAT NIET WERKT / ONTBREEKT
+
+### 1. SettingsPage: Profiel opslaan doet niets
+**Ernst: Hoog**
+De "Wijzigingen opslaan" knop op de profielpagina heeft GEEN onClick handler. Het formulier toont de gegevens maar slaat niets op. Wachtwoord wijzigen en notificatie-instellingen zijn ook niet-functioneel (geen mutations).
+
+**Oplossing:** Voeg `useMutation` toe die `supabase.from('profiles').update(...)` aanroept. Voeg ook wachtwoord wijzigen via `supabase.auth.updateUser({ password })` toe.
+
+### 2. Avatar uploaden doet niets
+**Ernst: Middel**
+De "Avatar wijzigen" knop op SettingsPage is niet gekoppeld aan Supabase Storage upload.
+
+**Oplossing:** File input toevoegen, uploaden naar een storage bucket, en avatar_url in profiel updaten.
+
+### 3. Notificatie-instellingen zijn niet-functioneel
+**Ernst: Laag**
+De checkboxes op de notificaties-tab van SettingsPage zijn statisch HTML (`<input type="checkbox" defaultChecked />`) zonder state of persistentie.
+
+**Oplossing:** Notificatie-voorkeuren opslaan in het profiel of een aparte tabel.
+
+### 4. Betalingen: Stripe niet geconfigureerd
+**Ernst: Middel (bewust uitgesteld)**
+De PaymentsPage toont een "Coming Soon" placeholder. Stripe API key is niet ingesteld. Handmatige betalingen zijn deels geimplementeerd via edge function.
+
+**Actie:** Handmatige actie - Stripe API key toevoegen. De edge functions `stripe-checkout` en `stripe-webhook` bestaan al.
+
+### 5. E-mail verzending: Resend niet geconfigureerd
+**Ernst: Middel (bewust uitgesteld)**
+De `send-email` en `send-lesson-reminders` edge functions bestaan maar Resend API key ontbreekt.
+
+**Actie:** Handmatige actie - Resend API key toevoegen.
+
+### 6. Recordings: geen class-filter voor studenten
+**Ernst: Laag**
+RecordingsPage haalt ALLE opnames op ongeacht de klasse van de student. Er is geen enrollment-filter zoals bij exercises en lessons.
+
+**Oplossing:** Zelfde pattern als LiveLessonsPage: eerst enrolledClassIds ophalen, dan filteren via de lesson's class_id.
+
+### 7. TeacherLessonsPage: Admin ziet geen klassen
+**Ernst: Middel**
+TeacherLessonsPage filtert klassen op `teacher_id = user.id`. Een admin die geen leerkracht is van een klas, ziet geen klassen en kan geen lessen aanmaken.
+
+**Oplossing:** Zelfde fix als TeacherExercisesPage: admin ziet alle actieve klassen.
+
+### 8. TeacherSubmissionsPage: Admin ziet geen submissions
+**Ernst: Middel**  
+Zelfde probleem - filtert op `teacher_id` in plaats van admin-check.
+
+**Oplossing:** Admin-check toevoegen aan de class query.
+
+### 9. TeacherRecordingsPage/TeacherMaterialsPage: Admin-toegang niet gecontroleerd
+**Ernst: Middel**
+Waarschijnlijk zelfde issue als LessonsPage (classes filteren op teacher_id).
+
+### 10. pg_cron/pg_net extensies niet actief
+**Ernst: Laag (bewust uitgesteld)**
+Automatische oefening-release (elke 2 dagen) via `release-exercises` edge function vereist pg_cron scheduling.
+
+**Actie:** Handmatige actie in database-instellingen.
+
+---
+
+## VOORSTEL: Alles 100% Functioneel Maken
+
+### Fase 1: Kritieke functionaliteit (SettingsPage)
+
+| Taak | Bestand | Complexiteit |
+|------|---------|-------------|
+| Profiel opslaan (naam, telefoon, adres) | `SettingsPage.tsx` | Laag |
+| Wachtwoord wijzigen | `SettingsPage.tsx` | Laag |
+| Avatar uploaden naar Storage | `SettingsPage.tsx` | Middel |
+| Notificatie-voorkeuren opslaan | `SettingsPage.tsx` + migratie | Middel |
+
+### Fase 2: Admin-toegang consistentie
+
+| Taak | Bestand | Complexiteit |
+|------|---------|-------------|
+| Admin ziet alle klassen in TeacherLessonsPage | `TeacherLessonsPage.tsx` | Laag |
+| Admin ziet alle klassen in TeacherSubmissionsPage | `TeacherSubmissionsPage.tsx` | Laag |
+| Admin ziet alle klassen in TeacherRecordingsPage | `TeacherRecordingsPage.tsx` | Laag |
+| Admin ziet alle klassen in TeacherMaterialsPage | `TeacherMaterialsPage.tsx` | Laag |
+
+### Fase 3: Student content filtering
+
+| Taak | Bestand | Complexiteit |
+|------|---------|-------------|
+| RecordingsPage filteren op enrolled classes | `RecordingsPage.tsx` | Laag |
+
+### Fase 4: UI polish en edge cases
+
+| Taak | Bestand | Complexiteit |
+|------|---------|-------------|
+| ForumPostPage: breadcrumb verbeteren | `ForumPostPage.tsx` | Laag |
+| HelpdeskPage: wrappen in MainLayout | `HelpdeskPage.tsx` | Laag |
+
+### Handmatige acties (buiten scope)
+
+| Actie | Waar |
+|-------|------|
+| Stripe API key toevoegen | Backend secrets |
+| Resend API key toevoegen | Backend secrets |
+| pg_cron/pg_net extensies inschakelen | Database instellingen |
+
+---
+
+## Technische Details per Fase
+
+### Fase 1: SettingsPage opslaan
+
+Het huidige formulier gebruikt `defaultValue` (ongecontroleerd). Dit moet worden omgezet naar controlled state met een save-mutation:
 
 ```text
-Stap 1: Browser laadt pagina
-Stap 2: Oude Service Worker onderschept het verzoek
-Stap 3: Oude SW serveert GECACHTE index.html (de OUDE versie)
-Stap 4: Oude index.html verwijst naar OUDE JS-bestanden (met oude hashes)
-Stap 5: Oude SW serveert die OUDE JS-bestanden uit cache
-Stap 6: OUDE main.tsx wordt uitgevoerd (zonder unregister code!)
-Stap 7: Gebruiker ziet de OUDE UI (zonder admin-links, zonder rol-badge)
+// Nieuwe flow:
+1. useState voor elk veld, geinitialiseerd vanuit profile
+2. Button onClick -> useMutation die profiles tabel update
+3. Wachtwoord: supabase.auth.updateUser({ password: newPassword })
+4. Avatar: <input type="file"> -> supabase.storage.upload() -> profiles.avatar_url update
 ```
 
-De unregister code in de NIEUWE main.tsx wordt **nooit bereikt** omdat de oude SW de oude versie van alles serveert.
+### Fase 2: Admin-toegang
 
-**Bewijs**: Er is geen `public/sw.js` bestand aanwezig. De oude SW kan daarom niet worden vervangen door een zelfvernietigende versie. De browser zoekt periodiek (elke 24 uur) naar updates van het SW-bestand, maar krijgt een 404. Niet alle browsers behandelen een 404 als signaal om de SW te deactiveren.
+Zelfde pattern als TeacherExercisesPage (reeds gefixt):
 
-### Oorzaak 2: Geen Navigatie na Succesvolle Login
+```text
+// Huidige code (fout):
+.eq("teacher_id", user!.id)
 
-In `src/components/auth/LoginForm.tsx` (regel 49-53):
-```typescript
-const onSubmit = async (data: LoginFormValues) => {
-  setIsLoading(true);
-  await signIn(data.email, data.password);
-  setIsLoading(false);
-  // GEEN navigate() hier!
-};
-```
-
-Na succesvol inloggen:
-- De gebruiker BLIJFT op de loginpagina
-- Ze moeten HANDMATIG navigeren naar /dashboard of /admin
-- Als ze naar /dashboard gaan, moet de useEffect in DashboardPage de redirect afhandelen
-- Tussen het moment van inloggen en het moment dat `fetchUserData` compleet is (via onAuthStateChange SIGNED_IN handler), is er een window waar `role === null`
-- Als de gebruiker PRECIES in dit window navigeert, zien ze een loader, dan (correct) de redirect
-
-Dit is geen directe oorzaak van het StudentDashboard-probleem, maar het vergroot de verwarring en maakt de flow fragiel.
-
-### Oorzaak 3: Token-verloop Kan Role Ophalen Breken
-
-Wanneer de Supabase sessie-token verloopt en de browser de pagina herlaadt:
-
-1. `getSession()` retourneert de sessie uit localStorage (inclusief verlopen access_token)
-2. `fetchRole` maakt een query naar `user_roles` met het verlopen token
-3. De RLS policy `auth.uid() = user_id` geeft `null` terug voor `auth.uid()` bij een verlopen token
-4. De query retourneert 0 rijen -> `maybeSingle()` geeft `data = null`
-5. `role` wordt `null`
-6. AdminLayout toont een loader (5 seconden), dan retry-knop
-
-Dit verklaart waarom het probleem SOMS optreedt (na "een tijdje") maar niet altijd. Supabase's auto-refresh mechanisme lost dit meestal op, maar er is een race window.
-
-## De 3 Fundamentele Oplossingen
-
-### Oplossing 1: Zelfvernietigende Service Worker (lost het caching-probleem definitief op)
-
-Maak een `public/sw.js` bestand aan dat zichzelf onmiddellijk vernietigt:
-
-```javascript
-// Self-destructing service worker
-// When the browser checks for SW updates, it finds this file,
-// installs it, and this SW immediately unregisters itself.
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then(names => 
-      Promise.all(names.map(name => caches.delete(name)))
-    ).then(() => self.registration.unregister())
-    .then(() => self.clients.matchAll())
-    .then(clients => clients.forEach(c => c.navigate(c.url)))
-  );
-});
-```
-
-Hoe dit werkt:
-- De browser controleert periodiek (elke 24u of bij navigatie) of het SW-bestand is gewijzigd
-- De browser vindt dit NIEUWE sw.js (in plaats van 404)
-- De nieuwe SW installeert zich met `skipWaiting` (neemt onmiddellijk over)
-- Bij activatie: wist ALLE caches en unregistert zichzelf
-- Herlaadt alle open tabs met frisse code
-
-Daarnaast: voeg inline SW-cleanup code toe aan `index.html` als extra vangnet (voor het geval de nieuwe HTML WEL geladen wordt):
-
-```html
-<script>
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.getRegistrations()
-    .then(r=>r.forEach(reg=>reg.unregister()));
-  if('caches' in window) caches.keys()
-    .then(n=>n.forEach(name=>caches.delete(name)));
+// Correcte code:
+if (isAdmin) {
+  .eq("is_active", true)  // admin ziet alles
+} else {
+  .eq("teacher_id", user!.id)  // teacher ziet eigen klassen
 }
-</script>
 ```
 
-### Oplossing 2: Post-login Navigatie Toevoegen
+Dit moet worden toegepast in 4 bestanden.
 
-Wijzig `LoginForm.tsx` om na succesvolle login automatisch te navigeren:
+### Fase 3: RecordingsPage filter
 
-```typescript
-const onSubmit = async (data: LoginFormValues) => {
-  setIsLoading(true);
-  const { error } = await signIn(data.email, data.password);
-  setIsLoading(false);
-  if (!error) {
-    navigate('/dashboard');
-  }
-};
+```text
+// Toevoegen: enrolled class IDs ophalen (voor studenten)
+// Dan: filteren via lesson -> class_id IN enrolledClassIds
+// Admin/teacher: geen filter (ziet alles)
 ```
 
-DashboardPage handelt de rest af:
-- admin -> redirect naar /admin
-- teacher -> redirect naar /teacher
-- student -> toon StudentDashboard
+---
 
-Dit elimineert de manuele navigatie-stap en voorkomt dat gebruikers in een tussentijdse state terechtkomen.
+## Conclusie
 
-### Oplossing 3: AuthContext Token-Refresh Resilientie
+| Categorie | Status |
+|-----------|--------|
+| Auth & Routing | 100% compleet |
+| Service Worker / Cache | 100% opgelost |
+| i18n (NL/EN/AR) | 100% compleet |
+| Zelfstudie-module | 100% compleet |
+| Exercise Builder | 100% compleet |
+| Release Settings | 100% compleet |
+| Student Class Filter | 95% (recordings mist filter) |
+| Admin-toegang consistentie | 70% (4 teacher-pages missen admin-check) |
+| SettingsPage functionaliteit | 30% (UI bestaat, save/password/avatar niet-functioneel) |
+| Betalingen (Stripe) | 0% functioneel (wacht op API key) |
+| E-mail (Resend) | 0% functioneel (wacht op API key) |
+| Automatische release (pg_cron) | 0% functioneel (wacht op extensie) |
 
-Verbeter `fetchRole` in AuthContext om token-refresh problemen op te vangen:
-
-1. Voeg een retry-mechanisme toe aan `fetchRole`: als de eerste poging faalt, wacht 1 seconde (laat Supabase het token refreshen), probeer opnieuw
-2. Bewaar de laatst bekende role in een ref, zodat bij een tijdelijke fetch-fout de vorige role behouden blijft (in plaats van null te zetten)
-
-```typescript
-const lastKnownRole = useRef<AppRole | null>(null);
-
-const fetchRole = async (userId: string) => {
-  try {
-    const { data, error } = await supabase
-      .from('user_roles').select('role')
-      .eq('user_id', userId).maybeSingle();
-    if (error) throw error;
-    const fetchedRole = (data?.role as AppRole) || null;
-    if (fetchedRole) lastKnownRole.current = fetchedRole;
-    setRole(fetchedRole);
-    return fetchedRole;
-  } catch (error) {
-    console.error('Error fetching role:', error);
-    // Retry once after delay (token might be refreshing)
-    await new Promise(r => setTimeout(r, 1000));
-    try {
-      const { data } = await supabase
-        .from('user_roles').select('role')
-        .eq('user_id', userId).maybeSingle();
-      const retryRole = (data?.role as AppRole) || lastKnownRole.current;
-      setRole(retryRole);
-      return retryRole;
-    } catch {
-      // Use last known role as fallback
-      setRole(lastKnownRole.current);
-      return lastKnownRole.current;
-    }
-  }
-};
-```
-
-## Implementatieoverzicht
-
-| Bestand | Wijziging |
-|---------|-----------|
-| `public/sw.js` | NIEUW - zelfvernietigende Service Worker |
-| `index.html` | Inline SW cleanup script toevoegen voor de bundled JS |
-| `src/components/auth/LoginForm.tsx` | Navigate naar /dashboard na succesvolle login |
-| `src/contexts/AuthContext.tsx` | Retry-mechanisme + lastKnownRole fallback in fetchRole |
-| `src/main.tsx` | Bestaande SW cleanup code behouden (extra vangnet) |
-
-## Waarom Dit 100% Definitief Is
-
-1. **Zelfvernietigende SW**: Ongeacht welke oude SW actief is, de browser zal ALTIJD het nieuwe sw.js bestand ophalen bij de volgende update-check. Dit bestand vernietigt de oude SW en wist alle caches. Er is geen ontsnapping mogelijk.
-
-2. **Inline cleanup in HTML**: Voor gebruikers die WEL de nieuwe HTML laden (bijv. na hard refresh, incognito), wordt de SW onmiddellijk verwijderd voordat enige gebundelde JS laadt.
-
-3. **Post-login navigatie**: Elimineert het handmatige navigatie-window waar timing-problemen kunnen optreden.
-
-4. **Role retry + fallback**: Zelfs bij netwerk/token-problemen wordt de role niet onnodig op null gezet, wat voorkomt dat AdminLayout redirect naar /dashboard.
-
-## Test & Bewijs Plan
-
-Na implementatie test ik met de browser-tool:
-1. Navigeren naar /login
-2. Inloggen als admin
-3. Verifieren dat automatische redirect naar /admin plaatsvindt
-4. Verifieren dat admin sidebar en content zichtbaar zijn
-5. Pagina refreshen - verifieren dat admin UI behouden blijft
-6. Screenshots nemen van elk stap als bewijs
+**Totaal geschatte implementatietijd voor Fasen 1-4: circa 3-4 berichten.**
