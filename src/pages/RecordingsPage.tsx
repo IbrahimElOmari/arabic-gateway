@@ -9,19 +9,43 @@ import { Button } from "@/components/ui/button";
 
 export default function RecordingsPage() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, isAdmin, isTeacher } = useAuth();
+  const isStaff = isAdmin || isTeacher;
 
-  const { data: recordings, isLoading } = useQuery({
-    queryKey: ["lesson-recordings", user?.id],
+  // Get enrolled class IDs for students
+  const { data: enrolledClassIds } = useQuery({
+    queryKey: ["enrolled-class-ids", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
+        .from("class_enrollments")
+        .select("class_id")
+        .eq("student_id", user!.id)
+        .eq("status", "enrolled");
+      if (error) throw error;
+      return data.map((e) => e.class_id);
+    },
+    enabled: !!user && !isStaff,
+  });
+
+  const { data: recordings, isLoading } = useQuery({
+    queryKey: ["lesson-recordings", user?.id, isStaff, enrolledClassIds],
+    queryFn: async () => {
+      // Staff sees all recordings; students see only enrolled class recordings
+      // RLS already enforces this, but we add explicit filtering for clarity
+      const { data, error } = await supabase
         .from("lesson_recordings")
-        .select("*, lesson:lessons(title, description)")
+        .select("*, lesson:lessons(title, description, class_id)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+
+      if (isStaff) return data;
+
+      // Filter by enrolled classes
+      return data.filter((r: any) =>
+        enrolledClassIds?.includes(r.lesson?.class_id)
+      );
     },
-    enabled: !!user,
+    enabled: !!user && (isStaff || (enrolledClassIds !== undefined)),
   });
 
   return (

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -9,13 +9,116 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Shield, User, Bell, Palette, Sun, Moon, Monitor, Briefcase, Sparkles } from 'lucide-react';
+import { Shield, User, Bell, Palette, Sun, Moon, Monitor, Briefcase, Sparkles, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SettingsPage() {
   const { t } = useTranslation();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const { theme, setTheme, themeStyle, setThemeStyle } = useTheme();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Profile form state
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+
+  // Password form state
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Notification state
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [lessonReminders, setLessonReminders] = useState(true);
+  const [exerciseNotifications, setExerciseNotifications] = useState(true);
+
+  // Initialize form from profile
+  useEffect(() => {
+    if (profile) {
+      setFullName(profile.full_name || '');
+      setPhone(profile.phone || '');
+      setAddress(profile.address || '');
+    }
+  }, [profile]);
+
+  // Save profile mutation
+  const saveProfileMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error('Not authenticated');
+      const { error } = await supabase
+        .from('profiles')
+        .update({ full_name: fullName, phone, address })
+        .eq('user_id', user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      toast({ title: t('settings.profileSaved', 'Profile saved successfully') });
+    },
+    onError: () => {
+      toast({ title: t('common.error'), variant: 'destructive' });
+    },
+  });
+
+  // Change password mutation
+  const changePasswordMutation = useMutation({
+    mutationFn: async () => {
+      if (newPassword !== confirmPassword) throw new Error('Passwords do not match');
+      if (newPassword.length < 6) throw new Error('Password must be at least 6 characters');
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setNewPassword('');
+      setConfirmPassword('');
+      toast({ title: t('settings.passwordUpdated', 'Password updated successfully') });
+    },
+    onError: (error: Error) => {
+      toast({ title: error.message, variant: 'destructive' });
+    },
+  });
+
+  // Avatar upload
+  const avatarUploadMutation = useMutation({
+    mutationFn: async (file: File) => {
+      if (!user) throw new Error('Not authenticated');
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: urlData.publicUrl })
+        .eq('user_id', user.id);
+      if (updateError) throw updateError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      toast({ title: t('settings.avatarUpdated', 'Avatar updated') });
+    },
+    onError: () => {
+      toast({ title: t('common.error'), variant: 'destructive' });
+    },
+  });
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) avatarUploadMutation.mutate(file);
+  };
 
   return (
     <MainLayout>
@@ -56,13 +159,27 @@ export default function SettingsPage() {
                       {profile?.full_name?.charAt(0) || '?'}
                     </AvatarFallback>
                   </Avatar>
-                  <Button variant="outline">{t('settings.changeAvatar')}</Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={avatarUploadMutation.isPending}
+                  >
+                    {avatarUploadMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                    {t('settings.changeAvatar')}
+                  </Button>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label>{t('settings.fullName')}</Label>
-                    <Input defaultValue={profile?.full_name || ''} />
+                    <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
                   </div>
                   <div className="space-y-2">
                     <Label>{t('settings.email')}</Label>
@@ -70,15 +187,21 @@ export default function SettingsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>{t('settings.phone')}</Label>
-                    <Input defaultValue={profile?.phone || ''} />
+                    <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
                   </div>
                   <div className="space-y-2">
                     <Label>{t('settings.address')}</Label>
-                    <Input defaultValue={profile?.address || ''} />
+                    <Input value={address} onChange={(e) => setAddress(e.target.value)} />
                   </div>
                 </div>
 
-                <Button>{t('settings.saveChanges')}</Button>
+                <Button
+                  onClick={() => saveProfileMutation.mutate()}
+                  disabled={saveProfileMutation.isPending}
+                >
+                  {saveProfileMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                  {t('settings.saveChanges')}
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -93,18 +216,20 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>{t('settings.currentPassword')}</Label>
-                  <Input type="password" />
-                </div>
-                <div className="space-y-2">
                   <Label>{t('settings.newPassword')}</Label>
-                  <Input type="password" />
+                  <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <Label>{t('settings.confirmPassword')}</Label>
-                  <Input type="password" />
+                  <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                 </div>
-                <Button>{t('settings.updatePassword')}</Button>
+                <Button
+                  onClick={() => changePasswordMutation.mutate()}
+                  disabled={changePasswordMutation.isPending || !newPassword || !confirmPassword}
+                >
+                  {changePasswordMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                  {t('settings.updatePassword')}
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -123,7 +248,7 @@ export default function SettingsPage() {
                       {t('settings.emailNotificationsDescription')}
                     </p>
                   </div>
-                  <input type="checkbox" defaultChecked className="rounded" />
+                  <Switch checked={emailNotifications} onCheckedChange={setEmailNotifications} />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
@@ -132,7 +257,7 @@ export default function SettingsPage() {
                       {t('settings.lessonRemindersDescription')}
                     </p>
                   </div>
-                  <input type="checkbox" defaultChecked className="rounded" />
+                  <Switch checked={lessonReminders} onCheckedChange={setLessonReminders} />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
@@ -141,7 +266,7 @@ export default function SettingsPage() {
                       {t('settings.exerciseNotificationsDescription')}
                     </p>
                   </div>
-                  <input type="checkbox" defaultChecked className="rounded" />
+                  <Switch checked={exerciseNotifications} onCheckedChange={setExerciseNotifications} />
                 </div>
               </CardContent>
             </Card>
