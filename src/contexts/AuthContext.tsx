@@ -74,6 +74,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const lastKnownRole = useRef<AppRole | null>(null);
+
   const fetchRole = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -84,12 +86,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
       const fetchedRole = (data?.role as AppRole) || null;
+      if (fetchedRole) lastKnownRole.current = fetchedRole;
       setRole(fetchedRole);
       return fetchedRole;
     } catch (error) {
-      console.error('Error fetching role:', error);
-      setRole(null);
-      return null;
+      console.error('Error fetching role (attempt 1):', error);
+      // Retry once after delay (token might be refreshing)
+      await new Promise(r => setTimeout(r, 1000));
+      try {
+        const { data } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .maybeSingle();
+        const retryRole = (data?.role as AppRole) || lastKnownRole.current;
+        if (retryRole) lastKnownRole.current = retryRole;
+        setRole(retryRole);
+        return retryRole;
+      } catch (retryError) {
+        console.error('Error fetching role (attempt 2):', retryError);
+        // Use last known role as fallback
+        setRole(lastKnownRole.current);
+        return lastKnownRole.current;
+      }
     }
   };
 
