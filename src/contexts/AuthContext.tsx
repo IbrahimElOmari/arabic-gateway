@@ -181,6 +181,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (currentSession?.user) {
             await fetchUserData(currentSession.user.id);
           }
+          setLoading(false); // Only after role is fetched
         }
       }
     );
@@ -235,12 +236,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
+      setLoading(true); // Prevent navigation before role is loaded
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        setLoading(false);
+        throw error;
+      }
 
       toast({
         title: t('auth.loginSuccess'),
@@ -248,6 +253,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return { error: null };
     } catch (error) {
+      setLoading(false);
       toast({
         variant: 'destructive',
         title: t('auth.invalidCredentials'),
