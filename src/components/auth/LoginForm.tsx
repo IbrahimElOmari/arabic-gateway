@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -34,10 +34,11 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const { t } = useTranslation();
-  const { signIn } = useAuth();
+  const { user, role, loading, signIn } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loginPending, setLoginPending] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -47,12 +48,21 @@ export function LoginForm() {
     },
   });
 
+  // Wait for role to be loaded before navigating
+  useEffect(() => {
+    if (loginPending && !loading && user && role) {
+      console.log('[LoginForm] Role loaded, navigating to /dashboard. Role:', role);
+      navigate('/dashboard');
+      setLoginPending(false);
+    }
+  }, [loginPending, loading, user, role, navigate]);
+
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     const { error } = await signIn(data.email, data.password);
     setIsLoading(false);
     if (!error) {
-      navigate('/dashboard');
+      setLoginPending(true); // Wait for role via useEffect
     }
   };
 
@@ -119,9 +129,9 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {t('auth.login')}
+            <Button type="submit" className="w-full" disabled={isLoading || loginPending}>
+              {(isLoading || loginPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {loginPending ? t('common.loading') : t('auth.login')}
             </Button>
           </form>
         </Form>
