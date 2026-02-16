@@ -9,31 +9,39 @@ const storedVersion = localStorage.getItem('app_version');
 if (storedVersion !== BUILD_VERSION) {
   localStorage.setItem('app_version', BUILD_VERSION);
 
-  // Unregister all Service Workers
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(registrations => {
-      registrations.forEach(reg => reg.unregister());
-    });
-  }
+  // Await full cleanup before reload
+  const cleanup = async () => {
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+      }
+      if ('caches' in window) {
+        const names = await caches.keys();
+        await Promise.all(names.map(n => caches.delete(n)));
+      }
+    } catch (e) { /* ignore */ }
+  };
 
-  // Clear all caches
-  if ('caches' in window) {
-    caches.keys().then(names => {
-      names.forEach(name => caches.delete(name));
-    });
-  }
-
-  // Force reload with fresh assets (only if not the very first visit)
   if (storedVersion !== null) {
-    window.location.reload();
+    // Existing user with outdated version: cleanup then cache-busting reload
+    cleanup().finally(() => {
+      window.location.href = window.location.pathname + '?_v=' + Date.now();
+    });
+  } else {
+    // First visit: just render
+    cleanup().finally(() => {
+      renderApp();
+    });
   }
 } else {
-  // Still clean up any lingering SWs
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(registrations => {
-      registrations.forEach(reg => reg.unregister());
-    });
+  // Remove cache-buster param if present
+  if (window.location.search.includes('_v=')) {
+    window.history.replaceState({}, '', window.location.pathname + window.location.hash);
   }
+  renderApp();
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+function renderApp() {
+  createRoot(document.getElementById("root")!).render(<App />);
+}

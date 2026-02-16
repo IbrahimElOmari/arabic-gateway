@@ -127,7 +127,7 @@ const App = () => (
               <Route path="/install" element={<InstallPage />} />
               
               {/* Teacher routes */}
-              <Route path="/teacher" element={<TeacherLayout />}>
+              <Route path="/teacher" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><TeacherLayout /></ProtectedRoute>}>
                 <Route index element={<TeacherDashboard />} />
                 <Route path="content-studio" element={<ContentStudioPage />} />
                 <Route path="lessons" element={<TeacherLessonsPage />} />
@@ -141,7 +141,7 @@ const App = () => (
               <Route path="/faq" element={<KnowledgeBasePage />} />
               
               {/* Admin routes */}
-              <Route path="/admin" element={<AdminLayout />}>
+              <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminLayout /></ProtectedRoute>}>
                 <Route index element={<AdminDashboard />} />
                 <Route path="users" element={<UsersPage />} />
                 <Route path="teachers" element={<TeacherApprovalsPage />} />
