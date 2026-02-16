@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { Search, UserCog, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
 
 type AppRole = "admin" | "teacher" | "student";
 
@@ -42,6 +43,12 @@ interface UserWithRole {
   role?: AppRole;
 }
 
+interface ClassOption {
+  id: string;
+  name: string;
+  level_name?: string;
+}
+
 export default function UsersPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -49,6 +56,7 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [newRole, setNewRole] = useState<AppRole>("student");
+  const [selectedClassId, setSelectedClassId] = useState<string>("none");
 
   // Fetch users with their roles
   const { data: users, isLoading } = useQuery({
@@ -66,7 +74,6 @@ export default function UsersPage() {
       const { data: profiles, error } = await query;
       if (error) throw error;
 
-      // Fetch roles for each user
       const usersWithRoles = await Promise.all(
         (profiles || []).map(async (profile) => {
           const { data: roleData } = await supabase
@@ -82,7 +89,6 @@ export default function UsersPage() {
         })
       );
 
-      // Filter by role if specified
       if (roleFilter !== "all") {
         return usersWithRoles.filter((u) => u.role === roleFilter);
       }
@@ -91,18 +97,54 @@ export default function UsersPage() {
     },
   });
 
-  // Update user role mutation
-  const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
-      // First, delete existing role
-      await supabase.from("user_roles").delete().eq("user_id", userId);
+  // Fetch active classes for class assignment
+  const { data: classes = [] } = useQuery<ClassOption[]>({
+    queryKey: ["admin-classes-for-assignment"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("classes")
+        .select("id, name, level:levels(name)")
+        .eq("is_active", true)
+        .order("name");
+      if (error) throw error;
+      return (data || []).map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        level_name: c.level?.name,
+      }));
+    },
+  });
 
-      // Then insert new role
+  // Update user role + optional class enrollment
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ userId, role, classId }: { userId: string; role: AppRole; classId?: string }) => {
+      // Update role
+      await supabase.from("user_roles").delete().eq("user_id", userId);
       const { error } = await supabase
         .from("user_roles")
         .insert({ user_id: userId, role });
-
       if (error) throw error;
+
+      // Optionally enroll in class
+      if (classId && (role === "teacher" || role === "student")) {
+        if (role === "teacher") {
+          // Assign as teacher of the class
+          const { error: classError } = await supabase
+            .from("classes")
+            .update({ teacher_id: userId })
+            .eq("id", classId);
+          if (classError) throw classError;
+        } else {
+          // Enroll as student
+          const { error: enrollError } = await supabase
+            .from("class_enrollments")
+            .upsert(
+              { student_id: userId, class_id: classId, status: "enrolled" },
+              { onConflict: "student_id,class_id" }
+            );
+          if (enrollError) throw enrollError;
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
@@ -111,6 +153,7 @@ export default function UsersPage() {
         description: t("admin.roleUpdatedDescription", "User role has been updated successfully."),
       });
       setSelectedUser(null);
+      setSelectedClassId("none");
     },
     onError: () => {
       toast({
@@ -123,7 +166,11 @@ export default function UsersPage() {
 
   const handleRoleChange = () => {
     if (selectedUser) {
-      updateRoleMutation.mutate({ userId: selectedUser.user_id, role: newRole });
+      updateRoleMutation.mutate({
+        userId: selectedUser.user_id,
+        role: newRole,
+        classId: selectedClassId !== "none" ? selectedClassId : undefined,
+      });
     }
   };
 
@@ -137,6 +184,8 @@ export default function UsersPage() {
         return "secondary";
     }
   };
+
+  const showClassSelector = newRole === "teacher" || newRole === "student";
 
   return (
     <div className="space-y-6">
@@ -213,6 +262,7 @@ export default function UsersPage() {
                       onClick={() => {
                         setSelectedUser(user);
                         setNewRole(user.role || "student");
+                        setSelectedClassId("none");
                       }}
                     >
                       <UserCog className="h-4 w-4 mr-2" />
@@ -233,7 +283,7 @@ export default function UsersPage() {
       </div>
 
       {/* Edit Role Dialog */}
-      <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
+      <Dialog open={!!selectedUser} onOpenChange={() => { setSelectedUser(null); setSelectedClassId("none"); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("admin.editUserRole", "Edit User Role")}</DialogTitle>
@@ -241,20 +291,51 @@ export default function UsersPage() {
               {t("admin.editUserRoleDescription", "Change the role for")} {selectedUser?.full_name}
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Select value={newRole} onValueChange={(v) => setNewRole(v as AppRole)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="student">{t("admin.student", "Student")}</SelectItem>
-                <SelectItem value="teacher">{t("admin.teacher", "Teacher")}</SelectItem>
-                <SelectItem value="admin">{t("admin.admin", "Admin")}</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>{t("admin.role", "Role")}</Label>
+              <Select value={newRole} onValueChange={(v) => { setNewRole(v as AppRole); setSelectedClassId("none"); }}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="student">{t("admin.student", "Student")}</SelectItem>
+                  <SelectItem value="teacher">{t("admin.teacher", "Teacher")}</SelectItem>
+                  <SelectItem value="admin">{t("admin.admin", "Admin")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {showClassSelector && (
+              <div className="space-y-2">
+                <Label>
+                  {newRole === "teacher"
+                    ? t("admin.assignToClass", "Assign to class (optional)")
+                    : t("admin.enrollInClass", "Enroll in class (optional)")}
+                </Label>
+                <Select value={selectedClassId} onValueChange={setSelectedClassId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("admin.selectClass", "Select a class...")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">{t("admin.noClass", "No class")}</SelectItem>
+                    {classes.map((cls) => (
+                      <SelectItem key={cls.id} value={cls.id}>
+                        {cls.name}{cls.level_name ? ` (${cls.level_name})` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {newRole === "teacher"
+                    ? t("admin.assignToClassHelp", "The teacher will be assigned as the instructor of this class.")
+                    : t("admin.enrollInClassHelp", "The student will be enrolled in this class.")}
+                </p>
+              </div>
+            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSelectedUser(null)}>
+            <Button variant="outline" onClick={() => { setSelectedUser(null); setSelectedClassId("none"); }}>
               {t("common.cancel", "Cancel")}
             </Button>
             <Button
