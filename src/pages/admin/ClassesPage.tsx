@@ -676,12 +676,12 @@ export default function ClassesPage() {
               <div className="space-y-2">
                 <Label>{t("admin.assignTeacher", "Assign Teacher")}</Label>
                 <Select
-                  value={assignDialogClass?.teacher_id || ""}
+                  value={assignDialogClass?.teacher_id || "none"}
                   onValueChange={(v) => {
                     if (assignDialogClass) {
                       assignTeacherMutation.mutate({
                         classId: assignDialogClass.id,
-                        teacherId: v || null,
+                        teacherId: v === "none" ? null : v,
                       });
                     }
                   }}
@@ -690,7 +690,7 @@ export default function ClassesPage() {
                     <SelectValue placeholder={t("admin.selectTeacher", "Select teacher")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">{t("admin.noTeacher", "No teacher")}</SelectItem>
+                    <SelectItem value="none">{t("admin.noTeacher", "No teacher")}</SelectItem>
                     {teachers?.map((teacher) => (
                       <SelectItem key={teacher.user_id} value={teacher.user_id}>
                         {teacher.full_name} ({teacher.email})
