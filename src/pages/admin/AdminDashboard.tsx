@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { formatDate } from "@/lib/date-utils";
 import { StatsCard } from "@/components/admin/StatsCard";
 import {
   Users,
@@ -120,7 +121,7 @@ export default function AdminDashboard() {
                       </p>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(activity.created_at).toLocaleDateString()}
+                      {formatDate(activity.created_at, "PPP")}
                     </p>
                   </div>
                 ))}

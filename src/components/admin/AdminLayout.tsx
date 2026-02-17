@@ -6,10 +6,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export function AdminLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { user, role, loading, refreshProfile } = useAuth();
+  const { t } = useTranslation();
   const roleChecked = useRef(false);
   const [roleTimeout, setRoleTimeout] = useState(false);
 
@@ -22,7 +25,6 @@ export function AdminLayout() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Still loading auth
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -35,7 +37,6 @@ export function AdminLayout() {
     return <Navigate to="/login" replace />;
   }
 
-  // Role is null: either still loading or failed
   if (role === null) {
     if (!roleTimeout) {
       return (
@@ -44,20 +45,18 @@ export function AdminLayout() {
         </div>
       );
     }
-    // Timeout reached - show error with retry
     console.warn('[AdminLayout] Role check timed out - role is still null after 5s');
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-        <p className="text-muted-foreground">Rol kon niet geladen worden.</p>
+        <p className="text-muted-foreground">{t('auth.roleLoadFailed', 'Rol kon niet geladen worden.')}</p>
         <Button onClick={() => { setRoleTimeout(false); refreshProfile(); }} variant="outline">
           <RefreshCw className="mr-2 h-4 w-4" />
-          Opnieuw proberen
+          {t('common.retry', 'Opnieuw proberen')}
         </Button>
       </div>
     );
   }
 
-  // Role loaded but not admin - only redirect if role was actually checked
   if (role !== "admin") {
     console.warn(`[AdminLayout] Redirecting: role="${role}" is not admin`);
     return <Navigate to="/dashboard" replace />;
@@ -73,11 +72,13 @@ export function AdminLayout() {
       <main
         className={cn(
           "min-h-screen transition-all duration-300",
-          sidebarCollapsed ? "ml-16" : "ml-64"
+          sidebarCollapsed ? "ms-16" : "ms-64"
         )}
       >
         <div className="container py-6">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </div>
       </main>
     </div>

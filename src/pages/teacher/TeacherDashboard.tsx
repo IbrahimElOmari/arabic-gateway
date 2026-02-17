@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Calendar, Users, Video, FileCheck, BookOpen, Clock } from "lucide-react";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date-utils";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -146,10 +146,10 @@ export default function TeacherDashboard() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium">
-                        {format(new Date(lesson.scheduled_at), "MMM d, yyyy")}
+                        {formatDate(lesson.scheduled_at, "MMM d, yyyy")}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {format(new Date(lesson.scheduled_at), "HH:mm")}
+                        {formatDate(lesson.scheduled_at, "HH:mm")}
                       </p>
                     </div>
                   </div>

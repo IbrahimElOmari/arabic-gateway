@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/table";
 import { Plus, Edit, Trash2, Eye, EyeOff, Loader2, Calendar } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date-utils";
 import { ExerciseBuilder } from "@/components/teacher/ExerciseBuilder";
 import { ExerciseReleaseSettings } from "@/components/exercises/ExerciseReleaseSettings";
 
@@ -247,7 +247,7 @@ export default function TeacherExercisesPage() {
                         {exercise.is_published ? t("common.published", "Published") : t("common.draft", "Draft")}
                       </Badge>
                     </TableCell>
-                    <TableCell>{format(new Date(exercise.created_at), "MMM d, yyyy")}</TableCell>
+                    <TableCell>{formatDate(exercise.created_at, "MMM d, yyyy")}</TableCell>
                     <TableCell className="text-right space-x-1">
                       <Button
                         variant="ghost"

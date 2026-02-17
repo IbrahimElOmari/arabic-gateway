@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/table";
 import { UserPlus, Copy, Trash2, Loader2, Mail, CheckCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date-utils";
 
 function generateToken() {
   return Array.from(crypto.getRandomValues(new Uint8Array(32)))
@@ -177,7 +177,7 @@ export default function AdminInvitationsPage() {
                     </TableCell>
                     <TableCell>{getStatusBadge(invitation)}</TableCell>
                     <TableCell>
-                      {format(new Date(invitation.expires_at), "MMM d, yyyy")}
+                      {formatDate(invitation.expires_at, "MMM d, yyyy")}
                     </TableCell>
                     <TableCell className="text-right space-x-2">
                       {!invitation.accepted_at && new Date(invitation.expires_at) > new Date() && (

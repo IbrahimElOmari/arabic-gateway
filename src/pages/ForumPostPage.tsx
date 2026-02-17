@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { formatDistanceToNow } from "date-fns";
+import { formatRelative } from "@/lib/date-utils";
 import { ReportContentDialog } from "@/components/moderation/ReportContentDialog";
 
 export default function ForumPostPage() {
@@ -162,7 +162,7 @@ export default function ForumPostPage() {
                     {post.is_locked && <Lock className="h-4 w-4 text-muted-foreground" />}
                   </CardTitle>
                   <CardDescription>
-                    {post.author?.full_name} · {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                    {post.author?.full_name} · {formatRelative(post.created_at)}
                   </CardDescription>
                 </div>
               </div>
@@ -246,7 +246,7 @@ export default function ForumPostPage() {
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-sm">{comment.author?.full_name}</span>
                             <span className="text-xs text-muted-foreground">
-                              {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                              {formatRelative(comment.created_at)}
                             </span>
                           </div>
                           <p className="text-sm mt-1">{comment.content}</p>
