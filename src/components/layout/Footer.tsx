@@ -54,23 +54,13 @@ export function Footer() {
             <h3 className="font-semibold mb-3">{t('nav.home')}</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <Link to="/about" className="hover:text-foreground">
-                  {t('footer.about')}
+                <Link to="/faq" className="hover:text-foreground">
+                  {t('nav.knowledgeBase', 'Knowledge Base')}
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="hover:text-foreground">
-                  {t('footer.contact')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/privacy" className="hover:text-foreground">
-                  {t('footer.privacyPolicy')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/terms" className="hover:text-foreground">
-                  {t('footer.termsOfService')}
+                <Link to="/helpdesk" className="hover:text-foreground">
+                  {t('nav.helpdesk', 'Helpdesk')}
                 </Link>
               </li>
             </ul>

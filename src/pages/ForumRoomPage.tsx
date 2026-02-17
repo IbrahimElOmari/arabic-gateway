@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { formatDistanceToNow } from "date-fns";
+import { formatRelative } from "@/lib/date-utils";
 import { ReportContentDialog } from "@/components/moderation/ReportContentDialog";
 
 export default function ForumRoomPage() {
@@ -203,7 +203,7 @@ export default function ForumRoomPage() {
                             {post.is_locked && <Lock className="h-4 w-4 text-muted-foreground" />}
                           </CardTitle>
                           <CardDescription>
-                            {post.author?.full_name} · {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                            {post.author?.full_name} · {formatRelative(post.created_at)}
                           </CardDescription>
                         </div>
                       </div>

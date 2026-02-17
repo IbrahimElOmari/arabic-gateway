@@ -8,8 +8,8 @@ import { MessageCircle, Send, Smile, Loader2, Flag } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState, useEffect, useRef } from "react";
-import { formatDistanceToNow } from "date-fns";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { formatRelative } from "@/lib/date-utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ReportContentDialog } from "@/components/moderation/ReportContentDialog";
 
@@ -53,10 +53,12 @@ export default function ChatPage() {
     enabled: !!user,
   });
 
-  const allClasses = [
-    ...(enrollments?.map(e => e.class) || []),
-    ...(teacherClasses || []),
-  ].filter((c, i, arr) => arr.findIndex(x => x?.id === c?.id) === i);
+  const allClasses = useMemo(() => {
+    return [
+      ...(enrollments?.map(e => e.class) || []),
+      ...(teacherClasses || []),
+    ].filter((c, i, arr) => arr.findIndex(x => x?.id === c?.id) === i);
+  }, [enrollments, teacherClasses]);
 
   useEffect(() => {
     if (allClasses.length > 0 && !selectedClass) {
@@ -269,6 +271,7 @@ export default function ChatPage() {
                               key={emoji}
                               onClick={() => addReactionMutation.mutate({ messageId: message.id, emoji })}
                               className="text-xs bg-muted rounded-full px-2 py-0.5 hover:bg-muted/80"
+                              aria-label={t("chat.toggleReaction", "Toggle {{emoji}} reaction", { emoji })}
                             >
                               {emoji} {count as number}
                             </button>
@@ -276,7 +279,10 @@ export default function ChatPage() {
                           
                           <Popover>
                             <PopoverTrigger asChild>
-                              <button className="text-muted-foreground hover:text-foreground p-1">
+                              <button
+                                className="text-muted-foreground hover:text-foreground p-1"
+                                aria-label={t("chat.addReaction", "Add reaction")}
+                              >
                                 <Smile className="h-3 w-3" />
                               </button>
                             </PopoverTrigger>
@@ -287,6 +293,7 @@ export default function ChatPage() {
                                     key={emoji}
                                     onClick={() => addReactionMutation.mutate({ messageId: message.id, emoji })}
                                     className="text-lg hover:bg-muted rounded p-1"
+                                    aria-label={t("chat.reactWith", "React with {{emoji}}", { emoji })}
                                   >
                                     {emoji}
                                   </button>
@@ -302,13 +309,13 @@ export default function ChatPage() {
                               setReportDialogOpen(true);
                             }}
                             className="text-muted-foreground hover:text-destructive p-1"
-                            title={t("moderation.reportContent", "Report content")}
+                            aria-label={t("moderation.reportContent", "Report content")}
                           >
                             <Flag className="h-3 w-3" />
                           </button>
                           
                           <span className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+                            {formatRelative(message.created_at)}
                           </span>
                         </div>
                       </div>

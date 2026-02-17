@@ -42,7 +42,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Flag, CheckCircle, XCircle, Eye, Loader2, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date-utils";
 
 export default function ContentReportsPage() {
   const { t } = useTranslation();
@@ -237,7 +237,7 @@ export default function ContentReportsPage() {
                       <Badge variant="outline">{getReasonLabel(report.reason)}</Badge>
                     </TableCell>
                     <TableCell>{getStatusBadge(report.status)}</TableCell>
-                    <TableCell>{format(new Date(report.created_at), "MMM d, yyyy HH:mm")}</TableCell>
+                    <TableCell>{formatDate(report.created_at, "MMM d, yyyy HH:mm")}</TableCell>
                     <TableCell className="text-right space-x-1">
                       <Button
                         variant="ghost"

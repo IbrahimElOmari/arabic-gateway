@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date-utils";
 import { Progress } from "@/components/ui/progress";
 
 export default function TeacherRecordingsPage() {
@@ -219,7 +219,7 @@ export default function TeacherRecordingsPage() {
               <CardHeader>
                 <CardTitle className="text-lg">{recording.lesson?.title}</CardTitle>
                 <CardDescription>
-                  {recording.lesson?.class?.name} · {format(new Date(recording.created_at), "PPP")}
+                  {recording.lesson?.class?.name} · {formatDate(recording.created_at, "PPP")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
