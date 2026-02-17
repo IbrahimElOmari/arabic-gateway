@@ -1,181 +1,135 @@
 
+# Grootschalig Verbeterplan: Structurele Fixes & Kwaliteitsborging
 
-# Definitieve Fix: Admin/Teacher Ziet StudentDashboard
-
-## Analyse: De 3 Fundamentele Oorzaken
-
-### Oorzaak 1: Oude Service Worker Cache - Het Kip-en-Ei Probleem (BEWEZEN)
-
-De code-fixes zijn correct. De database-rollen zijn correct (admin=admin, teacher=teacher). Maar de gebruiker ziet nog steeds de oude UI.
-
-Het probleem: de zelfvernietigende `public/sw.js` en de inline cleanup in `index.html` werken ALLEEN als de browser:
-- Een SW update check uitvoert (elke 24u of bij navigatie), OF
-- De NIEUWE `index.html` laadt (maar de oude SW serveert de GECACHTE oude `index.html`)
-
-Als de browser nog geen update check heeft gedaan, blijft de oude SW de oude code serveren. De nieuwe cleanup-code wordt nooit bereikt.
-
-Bewijs: de inline cleanup in `index.html` staat op regel 31-38, maar de oude gecachte `index.html` heeft dit script niet. De oude SW serveert de oude HTML.
-
-### Oorzaak 2: Login Navigeert Voordat Role Geladen Is
-
-Na succesvolle login:
-1. `signIn()` resolves (no error)
-2. `onAuthStateChange` SIGNED_IN handler: `setUser()` + start `fetchUserData()` (async)
-3. LoginForm doet onmiddellijk `navigate('/dashboard')` 
-4. `loading` is `false` (nooit teruggezet naar `true` tijdens login)
-5. DashboardPage rendert met user=set, role=null
-
-De huidige code vangt dit op met `(user && role === null)` check die een loader toont. Maar `loading` wordt NOOIT teruggezet naar `true` na de initiele load. Dit betekent dat ProtectedRoute de navigatie doorlaat terwijl de role nog null is, waardoor er een afhankelijkheid is van de correcte werking van de `(user && role === null)` check in DashboardPage.
-
-### Oorzaak 3: Geen Versiebeheer - Geen Manier om Cache te Forceren
-
-Er is geen app-versiemechanisme. De gebruiker weet niet dat er een nieuwe versie is. Er is geen manier om de browser te dwingen de cache te verlaten en nieuwe code te laden.
+Dit plan pakt de genoemde tekortkomingen systematisch aan in 8 werkpakketten.
 
 ---
 
-## De 3 Oplossingen
+## Werkpakket 1: Toast-systeem unificeren
 
-### Oplossing 1: App Versie Check met Force Reload
+Het project heeft twee toast-systemen actief: shadcn `<Toaster>` (gebruikt door 30+ bestanden) en Sonner `<Sonner>` (nergens daadwerkelijk aangeroepen via `toast()` uit sonner). Sonner is puur overhead.
 
-Voeg een BUILD_VERSION toe aan de app. Bij elke nieuwe build wordt dit automatisch bijgewerkt. Bij app-start vergelijkt de code de huidige versie met een opgeslagen versie in localStorage. Bij mismatch: force hard reload + clear alle caches.
-
-Bestanden:
-- `src/main.tsx`: Voeg versie-check toe VOOR React mount
-- Gebruik `Date.now()` als build timestamp (uniek per build)
-
-```text
-Logica:
-1. const BUILD_VERSION = "__BUILD_TIMESTAMP__" (vervangen door Vite define)
-2. const storedVersion = localStorage.getItem('app_version')
-3. Als storedVersion !== BUILD_VERSION:
-   a. localStorage.setItem('app_version', BUILD_VERSION)
-   b. Unregister alle SW's
-   c. Clear alle caches
-   d. window.location.reload() (force fresh load)
-4. Anders: render app normaal
-```
-
-Vite config wijziging:
-```text
-define: {
-  '__BUILD_TIMESTAMP__': JSON.stringify(Date.now().toString())
-}
-```
-
-Dit lost het cache-probleem 100% op voor ALLE gebruikers bij de eerstvolgende page load.
-
-### Oplossing 2: Login Wacht op Role Voordat Navigatie Plaatsvindt
-
-Probleem: LoginForm navigeert onmiddellijk na `signIn()`. De role is op dat moment nog niet geladen.
-
-Oplossing: Laat LoginForm wachten tot de role beschikbaar is via een useEffect, in plaats van direct na signIn te navigeren.
-
-Bestanden:
-- `src/components/auth/LoginForm.tsx`
-- `src/contexts/AuthContext.tsx` (signIn moet loading=true zetten)
-
-```text
-// AuthContext.tsx - signIn functie:
-const signIn = async (...) => {
-  setLoading(true);  // <-- NIEUW: voorkomt dat ProtectedRoute doorlaat
-  const { error } = await supabase.auth.signInWithPassword(...)
-  if (error) {
-    setLoading(false);  // Reset bij fout
-    return { error };
-  }
-  // loading wordt false gezet wanneer fetchUserData compleet is 
-  // (via SIGNED_IN handler)
-  return { error: null };
-};
-
-// LoginForm.tsx - wacht op role via useEffect:
-const [loginPending, setLoginPending] = useState(false);
-const { user, role, loading, signIn } = useAuth();
-
-useEffect(() => {
-  if (loginPending && !loading && user && role) {
-    // Role is geladen, navigeer naar dashboard
-    navigate('/dashboard');
-    setLoginPending(false);
-  }
-}, [loginPending, loading, user, role, navigate]);
-
-const onSubmit = async (data) => {
-  setIsLoading(true);
-  const { error } = await signIn(data.email, data.password);
-  setIsLoading(false);
-  if (!error) {
-    setLoginPending(true); // Wacht op role via useEffect
-  }
-};
-```
-
-En in de SIGNED_IN handler van AuthContext:
-```text
-if (event === 'SIGNED_IN') {
-  setSession(currentSession);
-  setUser(currentSession?.user ?? null);
-  if (currentSession?.user) {
-    await fetchUserData(currentSession.user.id);
-  }
-  setLoading(false); // <-- NIEUW: pas NA fetchUserData
-}
-```
-
-### Oplossing 3: DashboardPage Dubbele Guard + Debug Logging
-
-Voeg extra beveiliging toe aan DashboardPage:
-1. Log de huidige state bij elke render (voor debugging)
-2. Voeg een expliciete guard toe die voorkomt dat StudentDashboard rendert als role niet 'student' is
-3. Zorg dat de redirect useEffect ook voor null-role niet oneindig wacht
-
-Bestand: `src/pages/DashboardPage.tsx`
-
-```text
-// Render guards:
-console.log('[DashboardPage] render:', { loading, user: !!user, role, isAdmin, isTeacher });
-
-// Guard 1: nog aan het laden
-if (loading) return <Loader />;
-
-// Guard 2: role nog niet geladen maar user wel
-if (user && role === null) return <Loader />;
-
-// Guard 3: geen user
-if (!user) return <Navigate to="/login" />;
-
-// Guard 4: admin/teacher - redirect (ook in render, niet alleen in useEffect)
-if (role === 'admin') return <Navigate to="/admin" replace />;
-if (role === 'teacher') return <Navigate to="/teacher" replace />;
-
-// Guard 5: alleen studenten zien StudentDashboard
-if (role === 'student') return <StudentDashboard />;
-
-// Fallback: onbekende rol
-return <Loader />;
-```
-
-De key verandering: in plaats van alleen useEffect voor redirects, gebruik ook `<Navigate>` componenten in de render. Dit is SYNCHRONE routing en voorkomt timing-issues met useEffect.
+**Aanpak:**
+- Verwijder `<Sonner />` uit `App.tsx`
+- Verwijder `src/components/ui/sonner.tsx`
+- Behoud het shadcn toast-systeem (`@/hooks/use-toast`) dat overal gebruikt wordt
+- Sonner dependency blijft in `package.json` (geen build-breuk; wordt gewoon niet geladen)
 
 ---
 
-## Implementatieoverzicht
+## Werkpakket 2: RTL-ondersteuning voor Admin/Teacher Sidebars
 
-| # | Bestand | Wijziging | Lost op |
-|---|---------|-----------|---------|
-| 1 | `vite.config.ts` | `define: { '__BUILD_TIMESTAMP__': ... }` | Cache versioning |
-| 2 | `src/main.tsx` | Versie-check + force reload bij mismatch | Oude SW cache |
-| 3 | `src/contexts/AuthContext.tsx` | `setLoading(true)` in signIn + `setLoading(false)` in SIGNED_IN handler | Race condition |
-| 4 | `src/components/auth/LoginForm.tsx` | Wacht op role via useEffect | Login timing |
-| 5 | `src/pages/DashboardPage.tsx` | Navigate componenten i.p.v. useEffect | Synchrone routing |
+De sidebars gebruiken hardcoded `left-0` en `ml-16`/`ml-64`. In RTL (Arabisch) moeten deze gespiegeld worden.
 
-## Testplan
+**Aanpak:**
+- `AdminSidebar.tsx`: Vervang `left-0` door `start-0` (Tailwind logische property)
+- `AdminLayout.tsx`: Vervang `ml-16`/`ml-64` door `ms-16`/`ms-64` (margin-inline-start)
+- `TeacherSidebar.tsx`: Zelfde wijziging als AdminSidebar
+- `TeacherLayout.tsx`: Zelfde wijziging als AdminLayout
 
-Na implementatie:
-1. Navigeer naar /login in de browser tool
-2. Log in als admin
-3. Verifieer dat de app wacht op role loading
-4. Verifieer dat redirect naar /admin plaatsvindt
-5. Verifieer dat AdminSidebar + admin content zichtbaar is
-6. Neem screenshots als bewijs bij elke stap
+---
 
+## Werkpakket 3: Hardcoded strings vervangen door i18n-keys
+
+**Bestanden en strings:**
+- `AdminLayout.tsx` regel 51: `"Rol kon niet geladen worden."` wordt `t('auth.roleLoadFailed', 'Rol kon niet geladen worden.')`
+- `AdminLayout.tsx` regel 53: `"Opnieuw proberen"` wordt `t('common.retry', 'Opnieuw proberen')`
+- `TeacherLayout.tsx` regel 48-49: Identieke hardcoded strings, zelfde fix
+- `Footer.tsx` regels 82-84: Taalnamen in de footer (acceptabel als statisch, maar koppelen aan taalwisselaar of verwijderen)
+
+---
+
+## Werkpakket 4: Datum-lokalisatie helper
+
+Alle `formatDistanceToNow()` en `format()` calls gebruiken standaard Engels.
+
+**Aanpak:**
+- Maak `src/lib/date-utils.ts` met:
+  - `getDateLocale()`: retourneert `nl`/`enUS`/`ar` locale op basis van `i18n.language`
+  - `formatRelative(date)`: wrapper rond `formatDistanceToNow` met correcte locale
+  - `formatDate(date, pattern)`: wrapper rond `format` met correcte locale
+- Update de volgende bestanden om de helpers te gebruiken:
+  - `ChatPage.tsx` (regel 311)
+  - `ForumPostPage.tsx`
+  - `ForumRoomPage.tsx`
+  - `TeacherDashboard.tsx`
+  - `TeacherExercisesPage.tsx`
+  - `TeacherRecordingsPage.tsx`
+  - `AdminInvitationsPage.tsx`
+  - `ContentReportsPage.tsx`
+  - `AdminDashboard.tsx` (regel 122: `toLocaleDateString()`)
+
+---
+
+## Werkpakket 5: Globale ErrorBoundary
+
+**Aanpak:**
+- Maak `src/components/ErrorBoundary.tsx`: een React class component met `componentDidCatch`
+  - Toont een gebruikersvriendelijke fallback-UI met "Er ging iets mis" + retry-knop
+  - Logt de error naar console (voorbereid voor toekomstige Sentry-integratie)
+- Wrap in `App.tsx` de `<Routes>` in een `<ErrorBoundary>`
+- Voeg sectie-specifieke boundaries toe in `AdminLayout` en `TeacherLayout` rond `<Outlet>`
+
+---
+
+## Werkpakket 6: Code splitting met React.lazy()
+
+**Aanpak:**
+- Vervang alle 40+ synchrone imports in `App.tsx` door `React.lazy()`
+- Voeg een `<Suspense fallback={<FullPageLoader />}>` wrapper toe rond `<Routes>`
+- Maak `src/components/FullPageLoader.tsx` als gedeelde loading component
+
+Dit reduceert de initiele bundel significant voor studenten die nooit admin/teacher pagina's bezoeken.
+
+---
+
+## Werkpakket 7: Footer links + dode code opruimen
+
+**Aanpak:**
+- Verwijder de links naar `/about`, `/contact`, `/privacy`, `/terms` uit `Footer.tsx` (deze pagina's bestaan niet)
+- Verwijder `src/pages/DashboardRouter.tsx` (ongebruikt, dode code)
+- Verwijder `src/pages/admin/LevelsManagementPage.tsx` (duplicaat van `LevelsPage.tsx`)
+
+---
+
+## Werkpakket 8: ChatPage infinite loop fix + accessibility
+
+**ChatPage.tsx:**
+- `allClasses` (regel 56-59) wordt bij elke render opnieuw berekend als nieuw array. Dit veroorzaakt een infinite loop in de `useEffect` op regel 61-65. Fix: wrap in `useMemo`.
+- Voeg `aria-label` toe aan emoji-reactieknoppen (regel 268-274)
+- Voeg `aria-label` toe aan de rapporteerknop (regel 299-308)
+- Voeg `aria-label` toe aan de smile-popover trigger (regel 278-281)
+
+---
+
+## Technische Details per Bestand
+
+| Bestand | Wijziging |
+|---------|-----------|
+| `src/App.tsx` | Verwijder Sonner import/component, voeg React.lazy + Suspense + ErrorBoundary |
+| `src/components/ui/sonner.tsx` | Verwijderen |
+| `src/components/ErrorBoundary.tsx` | Nieuw: globale error boundary |
+| `src/components/FullPageLoader.tsx` | Nieuw: gedeelde loader |
+| `src/lib/date-utils.ts` | Nieuw: `getDateLocale()`, `formatRelative()`, `formatDate()` |
+| `src/components/admin/AdminSidebar.tsx` | `left-0` naar `start-0` |
+| `src/components/admin/AdminLayout.tsx` | `ml-*` naar `ms-*`, hardcoded strings naar i18n |
+| `src/components/teacher/TeacherSidebar.tsx` | `left-0` naar `start-0` |
+| `src/components/teacher/TeacherLayout.tsx` | `ml-*` naar `ms-*`, hardcoded strings naar i18n |
+| `src/components/layout/Footer.tsx` | Verwijder dode links (/about, /contact, etc.) |
+| `src/pages/ChatPage.tsx` | `useMemo` voor allClasses, aria-labels |
+| `src/pages/DashboardRouter.tsx` | Verwijderen |
+| `src/pages/admin/LevelsManagementPage.tsx` | Verwijderen |
+| 9 pagina's met datum-calls | Migreren naar `date-utils.ts` helpers |
+
+---
+
+## Volgorde van Implementatie
+
+1. **ErrorBoundary + FullPageLoader** (veiligheidsnet voor alle volgende wijzigingen)
+2. **Toast unificatie** (verwijder Sonner)
+3. **Code splitting** (React.lazy in App.tsx)
+4. **RTL sidebar fixes** (4 bestanden)
+5. **i18n hardcoded strings** (4 bestanden)
+6. **Datum-lokalisatie helper + migratie** (1 nieuw + 9 bestaande bestanden)
+7. **ChatPage fixes** (useMemo + aria)
+8. **Dode code opruimen** (3 bestanden verwijderen)
