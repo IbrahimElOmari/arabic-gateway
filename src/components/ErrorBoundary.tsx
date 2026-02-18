@@ -6,6 +6,7 @@ interface Props {
   children: ReactNode;
   fallbackTitle?: string;
   fallbackDescription?: string;
+  fallbackButtonText?: string;
 }
 
 interface State {
@@ -52,7 +53,7 @@ export class ErrorBoundary extends Component<Props, State> {
           )}
           <Button onClick={this.handleRetry} variant="outline">
             <RefreshCw className="mr-2 h-4 w-4" />
-            Opnieuw proberen
+            {this.props.fallbackButtonText || "Opnieuw proberen"}
           </Button>
         </div>
       );

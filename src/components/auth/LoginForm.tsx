@@ -48,14 +48,25 @@ export function LoginForm() {
     },
   });
 
-  // Wait for role to be loaded before navigating
+  // Navigate when user is authenticated (don't wait for role - DashboardPage handles it)
   useEffect(() => {
-    if (loginPending && !loading && user && role) {
-      console.log('[LoginForm] Role loaded, navigating to /dashboard. Role:', role);
+    if (loginPending && !loading && user) {
+      console.log('[LoginForm] User authenticated, navigating to /dashboard. Role:', role);
       navigate('/dashboard');
       setLoginPending(false);
     }
   }, [loginPending, loading, user, role, navigate]);
+
+  // Fallback timeout: navigate after 10s even if loading is stuck
+  useEffect(() => {
+    if (!loginPending) return;
+    const timer = setTimeout(() => {
+      console.warn('[LoginForm] Timeout reached, forcing navigation to /dashboard');
+      navigate('/dashboard');
+      setLoginPending(false);
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [loginPending, navigate]);
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);

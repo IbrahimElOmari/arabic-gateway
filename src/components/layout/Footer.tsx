@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 import { Link } from 'react-router-dom';
 
 export function Footer() {
@@ -68,10 +69,37 @@ export function Footer() {
 
           <div>
             <h3 className="font-semibold mb-3">{t('settings.language')}</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>🇳🇱 Nederlands</li>
-              <li>🇬🇧 English</li>
-              <li>🇸🇦 العربية</li>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <button
+                  type="button"
+                  onClick={() => i18n.changeLanguage('nl')}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Wissel naar Nederlands"
+                >
+                  🇳🇱 Nederlands
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => i18n.changeLanguage('en')}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Switch to English"
+                >
+                  🇬🇧 English
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => i18n.changeLanguage('ar')}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="التبديل إلى العربية"
+                >
+                  🇸🇦 العربية
+                </button>
+              </li>
             </ul>
           </div>
         </div>

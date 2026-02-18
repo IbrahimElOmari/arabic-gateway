@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { formatDate, formatDateTime } from "@/lib/date-utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -344,7 +345,7 @@ export default function PlacementsPage() {
                 <CardContent className="space-y-4">
                   <p className="text-xs text-muted-foreground">
                     {t("admin.registeredOn", "Registered on")}{" "}
-                    {new Date(placement.created_at).toLocaleDateString()}
+                    {formatDate(placement.created_at, "PP")}
                   </p>
                   <Button
                     size="sm"
@@ -402,7 +403,7 @@ export default function PlacementsPage() {
                   <div>
                     <p className="text-sm font-medium">{t("admin.scheduledFor", "Scheduled for")}</p>
                     <p className="text-sm text-muted-foreground">
-                      {placement.scheduled_at && new Date(placement.scheduled_at).toLocaleString()}
+                      {placement.scheduled_at && formatDateTime(placement.scheduled_at, "PPpp")}
                     </p>
                   </div>
                   {placement.meet_link && (

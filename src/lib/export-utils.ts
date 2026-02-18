@@ -1,3 +1,5 @@
+import { formatDate } from "@/lib/date-utils";
+
 // CSV Export Utility
 export function exportToCSV(data: Record<string, any>[], filename: string, headers?: Record<string, string>) {
   if (data.length === 0) return;
@@ -76,7 +78,7 @@ export function generatePDFTable(
 
   return `
     <h1 style="margin-bottom: 20px;">${title}</h1>
-    <p style="color: #666; margin-bottom: 20px;">Generated on ${new Date().toLocaleDateString()}</p>
+    <p style="color: #666; margin-bottom: 20px;">Generated on ${formatDate(new Date(), "PP")}</p>
     <table>
       <thead>
         <tr>

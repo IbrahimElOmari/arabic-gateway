@@ -7,7 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ClassProvider } from "@/contexts/ClassContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import TranslatedErrorBoundary from "@/components/TranslatedErrorBoundary";
 import { FullPageLoader } from "@/components/FullPageLoader";
 
 // Import i18n
@@ -85,7 +85,7 @@ const App = () => (
           <TooltipProvider>
             <Toaster />
             <BrowserRouter>
-              <ErrorBoundary>
+              <TranslatedErrorBoundary>
                 <Suspense fallback={<FullPageLoader />}>
                   <Routes>
                     {/* Public routes */}
@@ -163,7 +163,7 @@ const App = () => (
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>
-              </ErrorBoundary>
+              </TranslatedErrorBoundary>
             </BrowserRouter>
           </TooltipProvider>
         </ClassProvider>

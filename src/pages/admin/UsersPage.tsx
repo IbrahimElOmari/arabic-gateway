@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDate } from "@/lib/date-utils";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -253,7 +254,7 @@ export default function UsersPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {new Date(user.created_at).toLocaleDateString()}
+                    {formatDate(user.created_at, "PP")}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button
