@@ -333,7 +333,11 @@ export default function ChatPage() {
 
           <div className="p-4 border-t">
             <div className="flex gap-2">
+              <label htmlFor="chat-input" className="sr-only">
+                {t("chat.typeMessage", "Type a message...")}
+              </label>
               <Input
+                id="chat-input"
                 placeholder={t("chat.typeMessage", "Type a message...")}
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}

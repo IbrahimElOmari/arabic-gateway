@@ -18,3 +18,7 @@ export function formatDate(date: Date | string, pattern: string = "PPP"): string
   const d = typeof date === "string" ? new Date(date) : date;
   return format(d, pattern, { locale: getDateLocale() });
 }
+
+export function formatDateTime(dateString: string, pattern: string = "PPp"): string {
+  return format(new Date(dateString), pattern, { locale: getDateLocale() });
+}

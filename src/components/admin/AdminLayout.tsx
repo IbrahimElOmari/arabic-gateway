@@ -7,7 +7,7 @@ import { Navigate } from "react-router-dom";
 import { Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import TranslatedErrorBoundary from "@/components/TranslatedErrorBoundary";
 
 export function AdminLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -21,9 +21,10 @@ export function AdminLayout() {
   }, [role]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setRoleTimeout(true), 5000);
+    if (role !== null) return;
+    const timer = setTimeout(() => setRoleTimeout(true), 15000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [role, loading]);
 
   if (loading) {
     return (
@@ -76,9 +77,9 @@ export function AdminLayout() {
         )}
       >
         <div className="container py-6">
-          <ErrorBoundary>
+          <TranslatedErrorBoundary>
             <Outlet />
-          </ErrorBoundary>
+          </TranslatedErrorBoundary>
         </div>
       </main>
     </div>

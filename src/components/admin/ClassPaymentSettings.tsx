@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDate } from "@/lib/date-utils";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -256,7 +257,7 @@ export function ClassPaymentSettings({ classId, className, currentPrice, currenc
                     </TableCell>
                     <TableCell>
                       {discount.valid_until 
-                        ? new Date(discount.valid_until).toLocaleDateString()
+                        ? formatDate(discount.valid_until, "PP")
                         : t("admin.noExpiry", "No expiry")}
                     </TableCell>
                     <TableCell>

@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { formatDate } from "@/lib/date-utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -238,7 +239,7 @@ export default function TeacherApprovalsPage() {
                   )}
                   <p className="text-xs text-muted-foreground">
                     {t("admin.appliedOn", "Applied on")}{" "}
-                    {new Date(app.created_at).toLocaleDateString()}
+                    {formatDate(app.created_at, "PP")}
                   </p>
                   <div className="flex gap-2">
                     <Button

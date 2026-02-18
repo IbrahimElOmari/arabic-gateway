@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDate } from "@/lib/date-utils";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -366,8 +367,8 @@ export default function DiscountCodesPage() {
                     {code.current_uses}/{code.max_uses || "∞"}
                   </TableCell>
                   <TableCell className="text-sm">
-                    {new Date(code.valid_from).toLocaleDateString()}
-                    {code.valid_until && ` - ${new Date(code.valid_until).toLocaleDateString()}`}
+                    {formatDate(code.valid_from, "PP")}
+                    {code.valid_until && ` - ${formatDate(code.valid_until, "PP")}`}
                   </TableCell>
                   <TableCell>
                     <Switch
