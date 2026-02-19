@@ -46,7 +46,7 @@ export function AdminLayout() {
         </div>
       );
     }
-    console.warn('[AdminLayout] Role check timed out - role is still null after 5s');
+    console.warn('[AdminLayout] Role check timed out - role is still null after 15s');
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4">
         <p className="text-muted-foreground">{t('auth.roleLoadFailed', 'Rol kon niet geladen worden.')}</p>
