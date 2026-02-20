@@ -34,11 +34,10 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const { t } = useTranslation();
-  const { user, role, loading, signIn } = useAuth();
+  const { user, loading, signIn } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [loginPending, setLoginPending] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -48,33 +47,17 @@ export function LoginForm() {
     },
   });
 
-  // Navigate when user is authenticated (don't wait for role - DashboardPage handles it)
+  // Single effect: if user is authenticated, go to dashboard
   useEffect(() => {
-    if (loginPending && !loading && user) {
-      console.log('[LoginForm] User authenticated, navigating to /dashboard. Role:', role);
+    if (user && !loading) {
       navigate('/dashboard');
-      setLoginPending(false);
     }
-  }, [loginPending, loading, user, role, navigate]);
-
-  // Fallback timeout: navigate after 10s even if loading is stuck
-  useEffect(() => {
-    if (!loginPending) return;
-    const timer = setTimeout(() => {
-      console.warn('[LoginForm] Timeout reached, forcing navigation to /dashboard');
-      navigate('/dashboard');
-      setLoginPending(false);
-    }, 10000);
-    return () => clearTimeout(timer);
-  }, [loginPending, navigate]);
+  }, [user, loading, navigate]);
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
-    const { error } = await signIn(data.email, data.password);
+    await signIn(data.email, data.password);
     setIsLoading(false);
-    if (!error) {
-      setLoginPending(true); // Wait for role via useEffect
-    }
   };
 
   return (
@@ -140,9 +123,9 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isLoading || loginPending}>
-              {(isLoading || loginPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {loginPending ? t('common.loading') : t('auth.login')}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t('auth.login')}
             </Button>
           </form>
         </Form>
