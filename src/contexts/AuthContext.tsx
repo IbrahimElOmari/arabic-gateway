@@ -154,22 +154,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // 2. Subsequent changes via onAuthStateChange
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
+      (event, currentSession) => {
         if (!mounted) return;
-
-        // Skip events during initial load - getSession handles that
-        if (!initialLoadDone.current) return;
 
         if (event === 'SIGNED_OUT') {
           setSession(null);
           setUser(null);
           setProfile(null);
           setRole(null);
+          setLoading(false);
           return;
         }
 
         if (event === 'TOKEN_REFRESHED') {
-          // Only update session/user, do NOT refetch role (prevents race condition)
           setSession(currentSession);
           setUser(currentSession?.user ?? null);
           return;
@@ -179,9 +176,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSession(currentSession);
           setUser(currentSession?.user ?? null);
           if (currentSession?.user) {
-            await fetchUserData(currentSession.user.id);
+            // Defer Supabase calls to avoid deadlock during signInWithPassword
+            setTimeout(async () => {
+              if (!mounted) return;
+              await fetchUserData(currentSession.user.id);
+              if (mounted) setLoading(false);
+            }, 0);
+          } else {
+            setLoading(false);
           }
-          setLoading(false); // Only after role is fetched
         }
       }
     );
@@ -236,16 +239,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      setLoading(true); // Prevent navigation before role is loaded
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) {
-        setLoading(false);
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: t('auth.loginSuccess'),
@@ -253,7 +252,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return { error: null };
     } catch (error) {
-      setLoading(false);
       toast({
         variant: 'destructive',
         title: t('auth.invalidCredentials'),
