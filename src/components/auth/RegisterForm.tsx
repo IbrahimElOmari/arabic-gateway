@@ -33,23 +33,16 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-const registerSchema = z
-  .object({
-    fullName: z.string().min(2, 'Naam moet minimaal 2 karakters zijn').max(100),
-    email: z.string().email('Ongeldig e-mailadres'),
-    phone: z.string().max(20).optional().or(z.literal('')),
-    address: z.string().max(200).optional().or(z.literal('')),
-    dateOfBirth: z.string().optional().or(z.literal('')),
-    studyLevel: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
-    password: z.string().min(8, 'Wachtwoord moet minimaal 8 karakters zijn'),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Wachtwoorden komen niet overeen',
-    path: ['confirmPassword'],
-  });
-
-type RegisterFormValues = z.infer<typeof registerSchema>;
+type RegisterFormValues = {
+  fullName: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  dateOfBirth?: string;
+  studyLevel?: 'beginner' | 'intermediate' | 'advanced';
+  password: string;
+  confirmPassword: string;
+};
 
 export function RegisterForm() {
   const { t } = useTranslation();
@@ -57,6 +50,22 @@ export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const registerSchema = z
+    .object({
+      fullName: z.string().min(2, t('validation.nameMin', 'Name must be at least 2 characters')).max(100),
+      email: z.string().email(t('validation.invalidEmail', 'Invalid email address')),
+      phone: z.string().max(20).optional().or(z.literal('')),
+      address: z.string().max(200).optional().or(z.literal('')),
+      dateOfBirth: z.string().optional().or(z.literal('')),
+      studyLevel: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
+      password: z.string().min(8, t('validation.passwordMin', 'Password must be at least 8 characters')),
+      confirmPassword: z.string(),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t('validation.passwordMismatch', 'Passwords do not match'),
+      path: ['confirmPassword'],
+    });
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -107,7 +116,7 @@ export function RegisterForm() {
                   <FormLabel>{t('auth.fullName')}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="John Doe"
+                      placeholder={t('auth.namePlaceholder', 'John Doe')}
                       autoComplete="name"
                       {...field}
                     />
@@ -160,7 +169,7 @@ export function RegisterForm() {
                   <FormLabel>{t('auth.address')}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Straat, huisnummer, postcode, stad"
+                      placeholder={t('auth.addressPlaceholder', 'Street, number, postal code, city')}
                       autoComplete="street-address"
                       rows={2}
                       {...field}

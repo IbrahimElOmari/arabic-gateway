@@ -16,7 +16,7 @@ const languages = [
 ];
 
 export function LanguageSwitcher() {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
 
   const currentLanguage = languages.find((lang) => lang.code === i18n.language) || languages[0];
 
@@ -25,7 +25,7 @@ export function LanguageSwitcher() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Globe className="h-5 w-5" />
-          <span className="sr-only">Switch language</span>
+          <span className="sr-only">{t('accessibility.switchLanguage', 'Switch language')}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

@@ -15,6 +15,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
+import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
+import { ThemeSwitcher } from "@/components/layout/ThemeSwitcher";
 
 interface TeacherSidebarProps {
   collapsed: boolean;
@@ -75,7 +77,13 @@ export function TeacherSidebar({ collapsed, onToggle }: TeacherSidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="border-t p-4">
+        <div className="border-t p-4 space-y-2">
+          {!collapsed && (
+            <div className="flex items-center gap-1 px-3 py-1">
+              <LanguageSwitcher />
+              <ThemeSwitcher />
+            </div>
+          )}
           <NavLink
             to="/dashboard"
             className={cn(
