@@ -54,6 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
   const initialLoadDone = useRef(false);
+  const signedInHandled = useRef(false);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -133,6 +134,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const { data: { session: existingSession } } = await supabase.auth.getSession();
         if (!mounted) return;
+        // Don't overwrite if SIGNED_IN already set the user
+        if (signedInHandled.current) return;
 
         setSession(existingSession);
         setUser(existingSession?.user ?? null);
@@ -175,15 +178,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (event === 'SIGNED_IN') {
           setSession(currentSession);
           setUser(currentSession?.user ?? null);
+          setLoading(false); // Immediate -- LoginForm can navigate now
+          signedInHandled.current = true;
           if (currentSession?.user) {
             // Defer Supabase calls to avoid deadlock during signInWithPassword
             setTimeout(async () => {
               if (!mounted) return;
               await fetchUserData(currentSession.user.id);
-              if (mounted) setLoading(false);
             }, 0);
-          } else {
-            setLoading(false);
           }
         }
       }
