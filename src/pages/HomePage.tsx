@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -18,7 +18,12 @@ import {
 
 export default function HomePage() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  // Redirect authenticated users to their dashboard
+  if (!loading && user) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const features = [
     {
