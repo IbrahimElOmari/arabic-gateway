@@ -17,6 +17,8 @@ import "@/i18n";
 const HomePage = React.lazy(() => import("./pages/HomePage"));
 const LoginPage = React.lazy(() => import("./pages/LoginPage"));
 const RegisterPage = React.lazy(() => import("./pages/RegisterPage"));
+const ForgotPasswordPage = React.lazy(() => import("./pages/ForgotPasswordPage"));
+const ResetPasswordPage = React.lazy(() => import("./pages/ResetPasswordPage"));
 const DashboardPage = React.lazy(() => import("./pages/DashboardPage"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
 
@@ -92,6 +94,8 @@ const App = () => (
                     <Route path="/" element={<HomePage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                    <Route path="/reset-password" element={<ResetPasswordPage />} />
                     
                     {/* Protected routes */}
                     <Route
