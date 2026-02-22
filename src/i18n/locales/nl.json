@@ -819,6 +819,52 @@
     "closeMenu": "Menu sluiten",
     "toggleTheme": "Thema wisselen",
     "switchLanguage": "Taal wisselen",
-    "loading": "Laden, even geduld"
+    "loading": "Laden, even geduld",
+    "switchToNL": "Wissel naar Nederlands",
+    "switchToEN": "Wissel naar Engels",
+    "switchToAR": "Wissel naar Arabisch"
+  },
+  "privacy": {
+    "title": "Privacybeleid",
+    "intro": "Bij Huis van het Arabisch respecteren wij uw privacy. Dit beleid beschrijft hoe wij uw persoonsgegevens verzamelen, gebruiken en beschermen.",
+    "dataCollection": "Gegevensverzameling",
+    "dataCollectionText": "Wij verzamelen gegevens die u rechtstreeks aan ons verstrekt bij het aanmaken van een account, waaronder uw naam, e-mailadres, telefoonnummer en adres. Daarnaast verzamelen wij automatisch gegevens over uw gebruik van het platform.",
+    "dataUse": "Gebruik van gegevens",
+    "dataUseText": "Wij gebruiken uw gegevens om onze diensten te verlenen en te verbeteren, uw leervoortgang bij te houden, u te informeren over leswijzigingen en om te voldoen aan wettelijke verplichtingen.",
+    "dataRetention": "Bewaring van gegevens",
+    "dataRetentionText": "Uw gegevens worden bewaard zolang u een actief account heeft. Na uitschrijving worden uw gegevens binnen 12 maanden geanonimiseerd of verwijderd, conform de AVG.",
+    "rights": "Uw rechten",
+    "rightsText": "U heeft het recht op inzage, rectificatie, verwijdering en overdraagbaarheid van uw persoonsgegevens. U kunt uw gegevens exporteren via de instellingenpagina.",
+    "contact": "Contact",
+    "contactText": "Voor vragen over ons privacybeleid kunt u contact opnemen via het helpdesksysteem.",
+    "lastUpdated": "Laatst bijgewerkt: februari 2026"
+  },
+  "terms": {
+    "title": "Gebruiksvoorwaarden",
+    "intro": "Door gebruik te maken van het platform van Huis van het Arabisch gaat u akkoord met deze voorwaarden.",
+    "accountRules": "Accountregels",
+    "accountRulesText": "U bent verantwoordelijk voor het geheim houden van uw inloggegevens. Elk misbruik van uw account moet direct gemeld worden.",
+    "acceptableUse": "Aanvaardbaar gebruik",
+    "acceptableUseText": "U mag het platform uitsluitend gebruiken voor educatieve doeleinden. Het delen van lesmaterialen, opnames of oefeningen buiten het platform is niet toegestaan.",
+    "payments": "Betalingen",
+    "paymentsText": "Betalingen voor klassen zijn verschuldigd volgens het gekozen betalingsplan. Bij wanbetaling kan de toegang tot het platform worden geblokkeerd.",
+    "intellectualProperty": "Intellectueel eigendom",
+    "intellectualPropertyText": "Alle lesmaterialen, oefeningen en opnames zijn eigendom van Huis van het Arabisch en mogen niet worden gereproduceerd zonder toestemming.",
+    "termination": "Beëindiging",
+    "terminationText": "Wij behouden ons het recht voor om accounts te beëindigen die in strijd handelen met deze voorwaarden.",
+    "lastUpdated": "Laatst bijgewerkt: februari 2026"
+  },
+  "cookie": {
+    "title": "Cookievoorkeuren",
+    "description": "Wij gebruiken cookies om uw ervaring te verbeteren en het gebruik van het platform te analyseren.",
+    "accept": "Alles accepteren",
+    "reject": "Alleen noodzakelijke",
+    "learnMore": "Meer informatie in ons"
+  },
+  "auth2": {
+    "checkEmail": "Controleer uw e-mail om uw account te bevestigen.",
+    "registrationComplete": "Registratie voltooid",
+    "acceptTerms": "Ik ga akkoord met de",
+    "termsRequired": "U moet akkoord gaan met de voorwaarden"
   }
 }

@@ -70,7 +70,7 @@ export default function SettingsPage() {
   const changePasswordMutation = useMutation({
     mutationFn: async () => {
       if (newPassword !== confirmPassword) throw new Error('Passwords do not match');
-      if (newPassword.length < 6) throw new Error('Password must be at least 6 characters');
+      if (newPassword.length < 8) throw new Error(t('validation.passwordMin', 'Password must be at least 8 characters'));
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
     },

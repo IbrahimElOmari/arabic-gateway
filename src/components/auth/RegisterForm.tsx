@@ -44,7 +44,7 @@ type RegisterFormValues = {
   confirmPassword: string;
 };
 
-export function RegisterForm() {
+export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
   const { t } = useTranslation();
   const { signUp } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
@@ -83,7 +83,7 @@ export function RegisterForm() {
 
   const onSubmit = async (data: RegisterFormValues) => {
     setIsLoading(true);
-    await signUp(
+    const result = await signUp(
       data.email, 
       data.password, 
       data.fullName,
@@ -93,6 +93,9 @@ export function RegisterForm() {
       data.studyLevel || null
     );
     setIsLoading(false);
+    if (!result.error && onSuccess) {
+      onSuccess();
+    }
   };
 
   return (
