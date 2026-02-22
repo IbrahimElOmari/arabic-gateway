@@ -868,5 +868,18 @@
     "registrationComplete": "Registratie voltooid",
     "acceptTerms": "Ik ga akkoord met de",
     "termsRequired": "U moet akkoord gaan met de voorwaarden"
+  },
+  "pricing": {
+    "title": "Prijzen & Cursussen",
+    "subtitle": "Kies de cursus die bij je past en begin vandaag nog met Arabisch leren.",
+    "free": "Gratis",
+    "maxStudents": "Max {{count}} studenten",
+    "enroll": "Inschrijven",
+    "noClasses": "Er zijn momenteel geen actieve cursussen."
+  },
+  "help": {
+    "faq": "FAQ / Kennisbank",
+    "support": "Contact Support",
+    "toggle": "Help openen"
   }
 }

@@ -1,0 +1,115 @@
+import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { MainLayout } from "@/components/layout/MainLayout";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, GraduationCap, Users, Calendar } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+export default function PricingPage() {
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+
+  const { data: classes, isLoading } = useQuery({
+    queryKey: ["pricing-classes"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("classes")
+        .select(`
+          id, name, description, price, currency, max_students, start_date, end_date, is_active,
+          levels (name_nl, name_en, name_ar)
+        `)
+        .eq("is_active", true)
+        .order("price", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const getLevelName = (levels: any) => {
+    if (!levels) return "";
+    const lang = i18n.language;
+    return lang === "ar" ? levels.name_ar : lang === "en" ? levels.name_en : levels.name_nl;
+  };
+
+  const formatPrice = (price: number | null, currency: string | null) => {
+    if (!price) return t("pricing.free", "Gratis");
+    return new Intl.NumberFormat(i18n.language === "ar" ? "ar-SA" : i18n.language === "en" ? "en-US" : "nl-NL", {
+      style: "currency",
+      currency: currency || "EUR",
+    }).format(price);
+  };
+
+  return (
+    <MainLayout>
+      <div className="container py-12">
+        <div className="mx-auto max-w-3xl text-center mb-10">
+          <h1 className="text-3xl font-bold tracking-tight mb-3">
+            {t("pricing.title", "Prijzen & Cursussen")}
+          </h1>
+          <p className="text-muted-foreground text-lg">
+            {t("pricing.subtitle", "Kies de cursus die bij je past en begin vandaag nog met Arabisch leren.")}
+          </p>
+        </div>
+
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : classes && classes.length > 0 ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {classes.map((cls) => (
+              <Card key={cls.id} className="flex flex-col">
+                <CardHeader>
+                  <div className="flex items-center justify-between mb-1">
+                    <Badge variant="secondary">
+                      {getLevelName(cls.levels)}
+                    </Badge>
+                  </div>
+                  <CardTitle className="text-xl">{cls.name}</CardTitle>
+                  {cls.description && (
+                    <CardDescription>{cls.description}</CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent className="flex flex-1 flex-col justify-between gap-4">
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      {t("pricing.maxStudents", "Max {{count}} studenten", { count: cls.max_students || 50 })}
+                    </div>
+                    {cls.start_date && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        {new Date(cls.start_date).toLocaleDateString(
+                          i18n.language === "ar" ? "ar-SA" : i18n.language === "en" ? "en-US" : "nl-NL"
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold mb-3">
+                      {formatPrice(cls.price, cls.currency)}
+                    </p>
+                    <Button className="w-full" onClick={() => navigate("/register")}>
+                      <GraduationCap className="h-4 w-4 mr-2" />
+                      {t("pricing.enroll", "Inschrijven")}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <GraduationCap className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground">
+              {t("pricing.noClasses", "Er zijn momenteel geen actieve cursussen.")}
+            </p>
+          </div>
+        )}
+      </div>
+    </MainLayout>
+  );
+}

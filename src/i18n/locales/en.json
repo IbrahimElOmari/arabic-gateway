@@ -868,5 +868,18 @@
     "registrationComplete": "Registration complete",
     "acceptTerms": "I agree to the",
     "termsRequired": "You must agree to the terms"
+  },
+  "pricing": {
+    "title": "Pricing & Courses",
+    "subtitle": "Choose the course that suits you and start learning Arabic today.",
+    "free": "Free",
+    "maxStudents": "Max {{count}} students",
+    "enroll": "Enroll",
+    "noClasses": "There are currently no active courses."
+  },
+  "help": {
+    "faq": "FAQ / Knowledge Base",
+    "support": "Contact Support",
+    "toggle": "Open help"
   }
 }

@@ -1398,6 +1398,7 @@ export type Database = {
           id: string
           lesson_id: string
           thumbnail_url: string | null
+          transcript: string | null
           uploaded_by: string
           video_url: string
         }
@@ -1407,6 +1408,7 @@ export type Database = {
           id?: string
           lesson_id: string
           thumbnail_url?: string | null
+          transcript?: string | null
           uploaded_by: string
           video_url: string
         }
@@ -1416,6 +1418,7 @@ export type Database = {
           id?: string
           lesson_id?: string
           thumbnail_url?: string | null
+          transcript?: string | null
           uploaded_by?: string
           video_url?: string
         }
