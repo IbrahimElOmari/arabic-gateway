@@ -819,6 +819,52 @@
     "closeMenu": "Close menu",
     "toggleTheme": "Toggle theme",
     "switchLanguage": "Switch language",
-    "loading": "Loading, please wait"
+    "loading": "Loading, please wait",
+    "switchToNL": "Switch to Dutch",
+    "switchToEN": "Switch to English",
+    "switchToAR": "Switch to Arabic"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "intro": "At House of Arabic, we respect your privacy. This policy describes how we collect, use, and protect your personal data.",
+    "dataCollection": "Data Collection",
+    "dataCollectionText": "We collect data that you directly provide to us when creating an account, including your name, email address, phone number, and address. We also automatically collect data about your use of the platform.",
+    "dataUse": "Use of Data",
+    "dataUseText": "We use your data to provide and improve our services, track your learning progress, inform you about lesson changes, and comply with legal obligations.",
+    "dataRetention": "Data Retention",
+    "dataRetentionText": "Your data is retained as long as you have an active account. After unenrollment, your data will be anonymized or deleted within 12 months, in compliance with GDPR.",
+    "rights": "Your Rights",
+    "rightsText": "You have the right to access, rectify, delete, and port your personal data. You can export your data via the settings page.",
+    "contact": "Contact",
+    "contactText": "For questions about our privacy policy, please contact us through the helpdesk system.",
+    "lastUpdated": "Last updated: February 2026"
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "intro": "By using the House of Arabic platform, you agree to these terms.",
+    "accountRules": "Account Rules",
+    "accountRulesText": "You are responsible for keeping your login credentials confidential. Any misuse of your account must be reported immediately.",
+    "acceptableUse": "Acceptable Use",
+    "acceptableUseText": "You may only use the platform for educational purposes. Sharing lesson materials, recordings, or exercises outside the platform is not permitted.",
+    "payments": "Payments",
+    "paymentsText": "Payments for classes are due according to the chosen payment plan. Access to the platform may be blocked in case of non-payment.",
+    "intellectualProperty": "Intellectual Property",
+    "intellectualPropertyText": "All lesson materials, exercises, and recordings are the property of House of Arabic and may not be reproduced without permission.",
+    "termination": "Termination",
+    "terminationText": "We reserve the right to terminate accounts that violate these terms.",
+    "lastUpdated": "Last updated: February 2026"
+  },
+  "cookie": {
+    "title": "Cookie Preferences",
+    "description": "We use cookies to improve your experience and analyze platform usage.",
+    "accept": "Accept All",
+    "reject": "Essential Only",
+    "learnMore": "Learn more in our"
+  },
+  "auth2": {
+    "checkEmail": "Check your email to verify your account.",
+    "registrationComplete": "Registration complete",
+    "acceptTerms": "I agree to the",
+    "termsRequired": "You must agree to the terms"
   }
 }

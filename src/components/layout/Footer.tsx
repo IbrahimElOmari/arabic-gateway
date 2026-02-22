@@ -75,7 +75,7 @@ export function Footer() {
                   type="button"
                   onClick={() => i18n.changeLanguage('nl')}
                   className="text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label="Wissel naar Nederlands"
+                  aria-label={t('accessibility.switchToNL', 'Wissel naar Nederlands')}
                 >
                   🇳🇱 Nederlands
                 </button>
@@ -85,7 +85,7 @@ export function Footer() {
                   type="button"
                   onClick={() => i18n.changeLanguage('en')}
                   className="text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label="Switch to English"
+                  aria-label={t('accessibility.switchToEN', 'Switch to English')}
                 >
                   🇬🇧 English
                 </button>
@@ -95,7 +95,7 @@ export function Footer() {
                   type="button"
                   onClick={() => i18n.changeLanguage('ar')}
                   className="text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label="التبديل إلى العربية"
+                  aria-label={t('accessibility.switchToAR', 'التبديل إلى العربية')}
                 >
                   🇸🇦 العربية
                 </button>

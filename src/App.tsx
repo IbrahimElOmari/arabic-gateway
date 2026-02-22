@@ -9,6 +9,7 @@ import { ClassProvider } from "@/contexts/ClassContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import TranslatedErrorBoundary from "@/components/TranslatedErrorBoundary";
 import { FullPageLoader } from "@/components/FullPageLoader";
+import { CookieConsent } from "@/components/CookieConsent";
 
 // Import i18n
 import "@/i18n";
@@ -21,6 +22,8 @@ const ForgotPasswordPage = React.lazy(() => import("./pages/ForgotPasswordPage")
 const ResetPasswordPage = React.lazy(() => import("./pages/ResetPasswordPage"));
 const DashboardPage = React.lazy(() => import("./pages/DashboardPage"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
+const PrivacyPage = React.lazy(() => import("./pages/PrivacyPage"));
+const TermsPage = React.lazy(() => import("./pages/TermsPage"));
 
 // Admin pages
 const AdminLayout = React.lazy(() => import("./components/admin/AdminLayout").then(m => ({ default: m.AdminLayout })));
@@ -96,6 +99,8 @@ const App = () => (
                     <Route path="/register" element={<RegisterPage />} />
                     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                     <Route path="/reset-password" element={<ResetPasswordPage />} />
+                    <Route path="/privacy" element={<PrivacyPage />} />
+                    <Route path="/terms" element={<TermsPage />} />
                     
                     {/* Protected routes */}
                     <Route
@@ -166,6 +171,7 @@ const App = () => (
                     {/* Catch-all */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
+                  <CookieConsent />
                 </Suspense>
               </TranslatedErrorBoundary>
             </BrowserRouter>

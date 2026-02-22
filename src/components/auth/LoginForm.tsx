@@ -25,15 +25,18 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
+type LoginFormValues = {
+  email: string;
+  password: string;
+};
 
 export function LoginForm() {
   const { t } = useTranslation();
+
+  const loginSchema = z.object({
+    email: z.string().email(t('validation.invalidEmail', 'Invalid email address')),
+    password: z.string().min(8, t('validation.passwordMin', 'Password must be at least 8 characters')),
+  });
   const { user, loading, signIn } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);

@@ -225,10 +225,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
 
       toast({
-        title: t('auth.registerSuccess'),
+        title: t('auth2.registrationComplete'),
+        description: t('auth2.checkEmail'),
       });
 
-      return { error: null };
+      return { error: null, success: true };
     } catch (error) {
       toast({
         variant: 'destructive',
