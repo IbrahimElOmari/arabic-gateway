@@ -134,9 +134,9 @@ export default function HomePage() {
           
           <div className="grid gap-8 md:grid-cols-3">
             {[
-              { key: 'beginner', color: 'bg-green-500' },
-              { key: 'intermediate', color: 'bg-blue-500' },
-              { key: 'advanced', color: 'bg-purple-500' },
+              { key: 'beginner', color: 'bg-success' },
+              { key: 'intermediate', color: 'bg-accent' },
+              { key: 'advanced', color: 'bg-primary' },
             ].map((level) => (
               <Card key={level.key} className="text-center">
                 <CardHeader>
