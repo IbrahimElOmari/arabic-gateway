@@ -10,6 +10,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import TranslatedErrorBoundary from "@/components/TranslatedErrorBoundary";
 import { FullPageLoader } from "@/components/FullPageLoader";
 import { CookieConsent } from "@/components/CookieConsent";
+import { HelpWidget } from "@/components/HelpWidget";
 
 // Import i18n
 import "@/i18n";
@@ -24,6 +25,7 @@ const DashboardPage = React.lazy(() => import("./pages/DashboardPage"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
 const PrivacyPage = React.lazy(() => import("./pages/PrivacyPage"));
 const TermsPage = React.lazy(() => import("./pages/TermsPage"));
+const PricingPage = React.lazy(() => import("./pages/PricingPage"));
 
 // Admin pages
 const AdminLayout = React.lazy(() => import("./components/admin/AdminLayout").then(m => ({ default: m.AdminLayout })));
@@ -101,6 +103,7 @@ const App = () => (
                     <Route path="/reset-password" element={<ResetPasswordPage />} />
                     <Route path="/privacy" element={<PrivacyPage />} />
                     <Route path="/terms" element={<TermsPage />} />
+                    <Route path="/pricing" element={<PricingPage />} />
                     
                     {/* Protected routes */}
                     <Route
@@ -172,6 +175,7 @@ const App = () => (
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                   <CookieConsent />
+                  <HelpWidget />
                 </Suspense>
               </TranslatedErrorBoundary>
             </BrowserRouter>

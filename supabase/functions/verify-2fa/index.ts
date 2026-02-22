@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import * as OTPAuth from "https://esm.sh/otpauth@9.2.1";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,6 +30,7 @@ interface UseBackupRequest {
 type TwoFactorRequest = SetupRequest | VerifyRequest | DisableRequest | UseBackupRequest;
 
 serve(async (req) => {
+  const logger = createLogger("verify-2fa", req);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -296,7 +298,7 @@ serve(async (req) => {
         );
     }
   } catch (error) {
-    console.error("2FA error:", error);
+    logger.error("2FA error", { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

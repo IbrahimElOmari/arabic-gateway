@@ -21,7 +21,7 @@ export function MainLayout({ children, showFooter = true }: MainLayoutProps) {
         {t('accessibility.skipToMain', 'Skip to main content')}
       </a>
       <Header />
-      <main id="main-content" className="flex-1" tabIndex={-1}>
+      <main id="main-content" className="flex-1 scroll-mt-20" tabIndex={-1}>
         {children}
       </main>
       {showFooter && <Footer />}

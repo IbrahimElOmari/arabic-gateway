@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -40,6 +41,7 @@ interface UpdateDailyStatsRequest {
 type AnalyticsRequest = TrackEventRequest | GetDashboardRequest | GetStudentAnalyticsRequest | UpdateDailyStatsRequest;
 
 serve(async (req) => {
+  const logger = createLogger("analytics", req);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -348,7 +350,7 @@ serve(async (req) => {
         );
     }
   } catch (error) {
-    console.error("Analytics error:", error);
+    logger.error("Analytics error", { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
       JSON.stringify({ error: "Internal server error", details: errorMessage }),
