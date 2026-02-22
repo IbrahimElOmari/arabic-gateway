@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Shield, User, Bell, Palette, Sun, Moon, Monitor, Briefcase, Sparkles, Loader2 } from 'lucide-react';
+import { Shield, User, Bell, Palette, Sun, Moon, Monitor, Briefcase, Sparkles, Loader2, Download } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -44,6 +44,10 @@ export default function SettingsPage() {
       setFullName(profile.full_name || '');
       setPhone(profile.phone || '');
       setAddress(profile.address || '');
+      // Load notification preferences from profile
+      setEmailNotifications((profile as any).email_notifications ?? true);
+      setLessonReminders((profile as any).lesson_reminders ?? true);
+      setExerciseNotifications((profile as any).exercise_notifications ?? true);
     }
   }, [profile]);
 
@@ -84,6 +88,31 @@ export default function SettingsPage() {
     },
   });
 
+  // Notification toggle mutation
+  const updateNotificationMutation = useMutation({
+    mutationFn: async (updates: { email_notifications?: boolean; lesson_reminders?: boolean; exercise_notifications?: boolean }) => {
+      if (!user) throw new Error('Not authenticated');
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('user_id', user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    },
+    onError: () => {
+      toast({ title: t('common.error'), variant: 'destructive' });
+    },
+  });
+
+  const handleNotificationToggle = (key: 'email_notifications' | 'lesson_reminders' | 'exercise_notifications', value: boolean) => {
+    if (key === 'email_notifications') setEmailNotifications(value);
+    if (key === 'lesson_reminders') setLessonReminders(value);
+    if (key === 'exercise_notifications') setExerciseNotifications(value);
+    updateNotificationMutation.mutate({ [key]: value });
+  };
+
   // Avatar upload
   const avatarUploadMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -109,6 +138,34 @@ export default function SettingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       toast({ title: t('settings.avatarUpdated', 'Avatar updated') });
+    },
+    onError: () => {
+      toast({ title: t('common.error'), variant: 'destructive' });
+    },
+  });
+
+  // GDPR Data Export
+  const exportDataMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error('Not authenticated');
+      const { data: sessionData } = await supabase.auth.getSession();
+      const response = await supabase.functions.invoke('export-user-data', {
+        headers: {
+          Authorization: `Bearer ${sessionData.session?.access_token}`,
+        },
+      });
+      if (response.error) throw response.error;
+      return response.data;
+    },
+    onSuccess: (data) => {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `my-data-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: t('settings.dataExported', 'Your data has been exported') });
     },
     onError: () => {
       toast({ title: t('common.error'), variant: 'destructive' });
@@ -195,13 +252,23 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <Button
-                  onClick={() => saveProfileMutation.mutate()}
-                  disabled={saveProfileMutation.isPending}
-                >
-                  {saveProfileMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                  {t('settings.saveChanges')}
-                </Button>
+                <div className="flex items-center gap-4">
+                  <Button
+                    onClick={() => saveProfileMutation.mutate()}
+                    disabled={saveProfileMutation.isPending}
+                  >
+                    {saveProfileMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                    {t('settings.saveChanges')}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => exportDataMutation.mutate()}
+                    disabled={exportDataMutation.isPending}
+                  >
+                    {exportDataMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
+                    {t('settings.exportMyData', 'Export my data')}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -248,7 +315,7 @@ export default function SettingsPage() {
                       {t('settings.emailNotificationsDescription')}
                     </p>
                   </div>
-                  <Switch checked={emailNotifications} onCheckedChange={setEmailNotifications} />
+                  <Switch checked={emailNotifications} onCheckedChange={(v) => handleNotificationToggle('email_notifications', v)} />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
@@ -257,7 +324,7 @@ export default function SettingsPage() {
                       {t('settings.lessonRemindersDescription')}
                     </p>
                   </div>
-                  <Switch checked={lessonReminders} onCheckedChange={setLessonReminders} />
+                  <Switch checked={lessonReminders} onCheckedChange={(v) => handleNotificationToggle('lesson_reminders', v)} />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
@@ -266,7 +333,7 @@ export default function SettingsPage() {
                       {t('settings.exerciseNotificationsDescription')}
                     </p>
                   </div>
-                  <Switch checked={exerciseNotifications} onCheckedChange={setExerciseNotifications} />
+                  <Switch checked={exerciseNotifications} onCheckedChange={(v) => handleNotificationToggle('exercise_notifications', v)} />
                 </div>
               </CardContent>
             </Card>

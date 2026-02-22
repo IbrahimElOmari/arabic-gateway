@@ -182,7 +182,9 @@
     "styleThemeDescription": "اختر بين مظهر احترافي نظيف أو تصميم أكثر مرحاً",
     "professionalDescription": "واجهة نظيفة وبسيطة",
     "playfulDescription": "تصميم ملون ومستدير",
-    "avatarUpdated": "تم تحديث الصورة الرمزية"
+    "avatarUpdated": "تم تحديث الصورة الرمزية",
+    "exportMyData": "تصدير بياناتي",
+    "dataExported": "تم تصدير بياناتك"
   },
   "install": {
     "title": "تثبيت التطبيق",

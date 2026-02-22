@@ -7,21 +7,21 @@
 |---|--------|--------|---|---------------------------|
 | 1 | Architectuur & Serviceontwerp | Gedeeltelijk | 70% | Geen centraal error-handling punt; geen wrapper-service voor API-calls |
 | 2 | Observability & Fault-tolerance | Niet geimplementeerd | 20% | Geen structured logging, monitoring, alerts, health-checks |
-| 3 | Database, DBA & Performance | Gedeeltelijk | 85% | Indexen onbekend; use-gamification N+1 queries |
+| 3 | Database, DBA & Performance | ✅ Verbeterd | 95% | Indexen toegevoegd; use-gamification gerefactord naar TanStack Query |
 | 4 | RLS & Autorisatie | Voltooid (structureel) | 90% | Geen geautomatiseerde policy-tests |
-| 5 | Caching & Async verwerking | Gedeeltelijk | 60% | use-gamification buiten TanStack Query; pg_cron niet actief |
+| 5 | Caching & Async verwerking | ✅ Verbeterd | 80% | use-gamification nu TanStack Query; pg_cron nog niet actief |
 | 6 | Front-end, PWA & Mobiel | Gedeeltelijk | 70% | Offline uitgeschakeld; geen noscript fallback |
-| 7 | UX-consistentie & Ontwerp | Gedeeltelijk | 85% | 6 hardcoded kleuren; Footer aria-labels statisch |
-| 8 | Testing & QA | Gedeeltelijk | 50% | Ontbrekende tests voor SettingsPage, ForgotPassword, ResetPassword, edge functions |
+| 7 | UX-consistentie & Ontwerp | ✅ Verbeterd | 95% | Hardcoded kleuren vervangen; Footer aria-labels via i18n |
+| 8 | Testing & QA | ✅ Verbeterd | 65% | Tests toegevoegd voor SettingsPage, ForgotPassword, ResetPassword |
 | 9 | Toegankelijkheid | Gedeeltelijk | 60% | Focus-obscuring door sticky header; geen font-size aanpassing |
 | 10 | Instructional Design | Gedeeltelijk | 75% | Geen transcripties; geen adaptief leren |
-| 11 | i18n & Lokalisatie | Gedeeltelijk | 92% | LoginForm Zod standaard EN; Footer aria-labels niet via t() |
-| 12 | Beveiliging & DevSecOps | Bug + gedeeltelijk | 75% | SettingsPage.tsx:73 min 6 i.p.v. 8; geen CSP; geen dependency scanning |
-| 13 | DevOps & CI/CD | Gedeeltelijk | 40% | 15+ boilerplate workflows; geen feature flags |
+| 11 | i18n & Lokalisatie | ✅ Voltooid | 98% | LoginForm Zod gefixt; Footer aria-labels via t(); data export keys |
+| 12 | Beveiliging & DevSecOps | ✅ Bug gefixt | 80% | Wachtwoord min 8 overal; geen CSP; geen dependency scanning |
+| 13 | DevOps & CI/CD | ✅ Verbeterd | 70% | Boilerplate workflows verwijderd; geen feature flags |
 | 14 | Billing & Pricing | Gedeeltelijk | 30% | STRIPE_SECRET_KEY niet geconfigureerd; geen pricing-pagina |
 | 15 | Support & Community | Voltooid (structureel) | 85% | Geen persistente help-widget |
-| 16 | Analytics & Data Science | Gedeeltelijk | 70% | Geen privacy-vriendelijke analytics; geen A/B testing |
-| 17 | Legal & Privacy | Niet geimplementeerd | 0% | Geen privacyverklaring, gebruiksvoorwaarden, cookie consent |
+| 16 | Analytics & Data Science | ✅ Verbeterd | 75% | GDPR data export toegevoegd; geen A/B testing |
+| 17 | Legal & Privacy | ✅ Basis | 60% | Privacyverklaring, voorwaarden en cookie consent geïmplementeerd |
 | 18 | Business Development | Niet geimplementeerd | 0% | Geen white-label; geen certificering |
 
 ---

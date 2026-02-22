@@ -188,7 +188,9 @@
     "styleThemeDescription": "Choose between a clean professional look or a more playful design",
     "professionalDescription": "Clean, minimal interface",
     "playfulDescription": "Rounded, colorful design",
-    "avatarUpdated": "Avatar updated"
+    "avatarUpdated": "Avatar updated",
+    "exportMyData": "Export my data",
+    "dataExported": "Your data has been exported"
   },
   "install": {
     "title": "Install the App",

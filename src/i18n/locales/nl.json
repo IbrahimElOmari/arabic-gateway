@@ -188,7 +188,9 @@
     "styleThemeDescription": "Kies tussen een strak professioneel uiterlijk of een speels ontwerp",
     "professionalDescription": "Strak, minimaal ontwerp",
     "playfulDescription": "Afgerond, kleurrijk ontwerp",
-    "avatarUpdated": "Avatar bijgewerkt"
+    "avatarUpdated": "Avatar bijgewerkt",
+    "exportMyData": "Mijn gegevens exporteren",
+    "dataExported": "Je gegevens zijn geëxporteerd"
   },
   "install": {
     "title": "Installeer de App",
