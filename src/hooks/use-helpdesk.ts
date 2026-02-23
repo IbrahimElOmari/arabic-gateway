@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiInvoke } from '@/lib/supabase-api';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Ticket {
@@ -56,156 +57,102 @@ interface CreateTicketData {
 
 export function useHelpdesk() {
   const { user, isAdmin, isTeacher } = useAuth();
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [labels, setLabels] = useState<Array<{ id: string; name: string; color: string }>>([]);
-
+  const queryClient = useQueryClient();
   const isStaff = isAdmin || isTeacher;
 
-  const fetchTickets = useCallback(async (filters?: {
-    status?: string;
-    assignedToMe?: boolean;
-  }) => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-      const { data: sessionData } = await supabase.auth.getSession();
-      const response = await supabase.functions.invoke('helpdesk', {
-        body: {
-          action: 'get_tickets',
-          ...filters,
-        },
-        headers: {
-          Authorization: `Bearer ${sessionData.session?.access_token}`,
-        },
+  const { data: tickets = [], isLoading: loadingTickets } = useQuery({
+    queryKey: ['helpdesk', 'tickets', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const response = await apiInvoke<{ tickets: Ticket[] }>('helpdesk', {
+        action: 'get_tickets',
       });
+      return response.tickets || [];
+    },
+    enabled: !!user,
+  });
 
-      if (response.data?.tickets) {
-        setTickets(response.data.tickets);
-      }
-    } catch (error) {
-      console.error('Error fetching tickets:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
+  const { data: labels = [], isLoading: loadingLabels } = useQuery({
+    queryKey: ['helpdesk', 'labels'],
+    queryFn: async () => {
+      // For labels we can use apiQuery if it was a table, but here it seems tickets/labels are handled via function or table?
+      // The original code used supabase.from('ticket_labels')... so let's stick to apiQuery if possible, 
+      // but apiQuery wrapper I wrote takes a table string.
+      // Wait, original code: supabase.from('ticket_labels').select('*').order('name')
+      // Let's use apiInvoke if we want consistency or apiQuery. 
+      // Let's use apiQuery for direct table access as per 6.1 description for "apiQuery"
+      // But wait, I need to import apiQuery.
+      const { apiQuery } = await import('@/lib/supabase-api');
+      return apiQuery<Array<{ id: string; name: string; color: string }>>('ticket_labels', (q) => 
+        q.select('*').order('name')
+      );
+    },
+  });
 
-  const fetchLabels = useCallback(async () => {
-    try {
-      const { data } = await supabase
-        .from('ticket_labels')
-        .select('*')
-        .order('name');
-      
-      setLabels(data || []);
-    } catch (error) {
-      console.error('Error fetching labels:', error);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchTickets();
-    fetchLabels();
-  }, [fetchTickets, fetchLabels]);
-
-  const createTicket = async (ticketData: CreateTicketData): Promise<Ticket | null> => {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const response = await supabase.functions.invoke('helpdesk', {
-        body: {
-          action: 'create_ticket',
-          ...ticketData,
-        },
-        headers: {
-          Authorization: `Bearer ${sessionData.session?.access_token}`,
-        },
+  const createTicketMutation = useMutation({
+    mutationFn: async (ticketData: CreateTicketData) => {
+      const response = await apiInvoke<{ ticket: Ticket }>('helpdesk', {
+        action: 'create_ticket',
+        ...ticketData,
       });
+      return response.ticket;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['helpdesk', 'tickets'] });
+    },
+  });
 
-      if (response.data?.ticket) {
-        await fetchTickets();
-        return response.data.ticket;
-      }
-      return null;
-    } catch (error) {
-      console.error('Error creating ticket:', error);
-      return null;
-    }
-  };
-
-  const getTicketDetails = async (ticketId: string): Promise<TicketWithResponses | null> => {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const response = await supabase.functions.invoke('helpdesk', {
-        body: {
-          action: 'get_ticket_details',
-          ticketId,
-        },
-        headers: {
-          Authorization: `Bearer ${sessionData.session?.access_token}`,
-        },
+  const updateTicketMutation = useMutation({
+    mutationFn: async ({ ticketId, updates }: { ticketId: string, updates: { status?: string; priority?: string; assignedTo?: string } }) => {
+      const response = await apiInvoke<{ success: boolean }>('helpdesk', {
+        action: 'update_ticket',
+        ticketId,
+        ...updates,
       });
+      return response.success;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['helpdesk', 'tickets'] });
+    },
+  });
 
-      return response.data?.ticket || null;
+  const addResponseMutation = useMutation({
+    mutationFn: async ({ ticketId, content, isInternal }: { ticketId: string, content: string, isInternal: boolean }) => {
+      const response = await apiInvoke<{ success: boolean }>('helpdesk', {
+        action: 'add_response',
+        ticketId,
+        content,
+        isInternal,
+      });
+      return response.success;
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate specific ticket details if we had a query for that
+      // For now just general tickets might be enough or if we have a detail view
+      queryClient.invalidateQueries({ queryKey: ['helpdesk', 'tickets'] });
+    },
+  });
+
+  const getTicketDetails = useCallback(async (ticketId: string): Promise<TicketWithResponses | null> => {
+    try {
+      const response = await apiInvoke<{ ticket: TicketWithResponses }>('helpdesk', {
+        action: 'get_ticket_details',
+        ticketId,
+      });
+      return response.ticket;
     } catch (error) {
       console.error('Error getting ticket details:', error);
       return null;
     }
-  };
+  }, []);
 
-  const updateTicket = async (
-    ticketId: string,
-    updates: { status?: string; priority?: string; assignedTo?: string }
-  ): Promise<boolean> => {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const response = await supabase.functions.invoke('helpdesk', {
-        body: {
-          action: 'update_ticket',
-          ticketId,
-          ...updates,
-        },
-        headers: {
-          Authorization: `Bearer ${sessionData.session?.access_token}`,
-        },
-      });
+  const createTicket = (data: CreateTicketData) => createTicketMutation.mutateAsync(data);
+  const updateTicket = (ticketId: string, updates: any) => updateTicketMutation.mutateAsync({ ticketId, updates });
+  const addResponse = (ticketId: string, content: string, isInternal: boolean = false) => addResponseMutation.mutateAsync({ ticketId, content, isInternal });
 
-      if (response.data?.success) {
-        await fetchTickets();
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Error updating ticket:', error);
-      return false;
-    }
-  };
-
-  const addResponse = async (
-    ticketId: string,
-    content: string,
-    isInternal: boolean = false
-  ): Promise<boolean> => {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const response = await supabase.functions.invoke('helpdesk', {
-        body: {
-          action: 'add_response',
-          ticketId,
-          content,
-          isInternal,
-        },
-        headers: {
-          Authorization: `Bearer ${sessionData.session?.access_token}`,
-        },
-      });
-
-      return response.data?.success || false;
-    } catch (error) {
-      console.error('Error adding response:', error);
-      return false;
-    }
-  };
+  const fetchTickets = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['helpdesk', 'tickets'] });
+  }, [queryClient]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -242,13 +189,13 @@ export function useHelpdesk() {
   return {
     tickets,
     labels,
-    loading,
+    loading: loadingTickets || loadingLabels,
     isStaff,
     createTicket,
     getTicketDetails,
     updateTicket,
     addResponse,
-    fetchTickets,
+    fetchTickets, // Kept for compatibility but effectively refetches via invalidation
     getStatusColor,
     getPriorityColor,
   };

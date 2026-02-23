@@ -1,75 +1,25 @@
 import { useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { apiQuery, apiInvoke } from '@/lib/supabase-api';
 import { useAuth } from '@/contexts/AuthContext';
-
-interface Badge {
-  id: string;
-  badge_type: string;
-  name_nl: string;
-  name_en: string;
-  name_ar: string;
-  description_nl: string;
-  description_en: string;
-  description_ar: string;
-  icon: string;
-  rarity: 'common' | 'rare' | 'epic' | 'legendary';
-  points_value: number;
-  requirement_value: number | null;
-}
-
-interface UserBadge {
-  id: string;
-  badge_id: string;
-  earned_at: string;
-  is_displayed: boolean;
-  badge: Badge;
-}
-
-interface UserPoints {
-  total_points: number;
-  current_streak: number;
-  longest_streak: number;
-  last_activity_date: string | null;
-  exercises_completed: number;
-  lessons_attended: number;
-  perfect_scores: number;
-}
-
-interface LeaderboardEntry {
-  user_id: string;
-  points: number;
-  rank: number;
-  profiles: {
-    full_name: string;
-    avatar_url: string | null;
-  };
-}
+import { UserPoints, UserBadge, Badge, LeaderboardEntry } from '@/types/gamification';
 
 async function fetchPoints(userId: string): Promise<UserPoints | null> {
-  const { data } = await supabase
-    .from('user_points')
-    .select('*')
-    .eq('user_id', userId)
-    .maybeSingle();
-  return data;
+  return apiQuery<UserPoints | null>('user_points', (q) => 
+    q.select('*').eq('user_id', userId).maybeSingle()
+  );
 }
 
 async function fetchUserBadges(userId: string): Promise<UserBadge[]> {
-  const { data } = await supabase
-    .from('user_badges')
-    .select(`*, badge:badges (*)`)
-    .eq('user_id', userId)
-    .order('earned_at', { ascending: false });
-  return data || [];
+  return apiQuery<UserBadge[]>('user_badges', (q) =>
+    q.select(`*, badge:badges (*)`).eq('user_id', userId).order('earned_at', { ascending: false })
+  );
 }
 
 async function fetchAllBadges(): Promise<Badge[]> {
-  const { data } = await supabase
-    .from('badges')
-    .select('*')
-    .order('points_value', { ascending: true });
-  return data || [];
+  return apiQuery<Badge[]>('badges', (q) => 
+    q.select('*').order('points_value', { ascending: true })
+  );
 }
 
 async function fetchLeaderboardData(
@@ -77,19 +27,16 @@ async function fetchLeaderboardData(
   limit: number
 ): Promise<LeaderboardEntry[]> {
   if (period === 'all_time') {
-    const { data: pointsData } = await supabase
-      .from('user_points')
-      .select('user_id, total_points')
-      .order('total_points', { ascending: false })
-      .limit(limit);
+    const pointsData = await apiQuery<Array<{ user_id: string; total_points: number }>>('user_points', (q) =>
+      q.select('user_id, total_points').order('total_points', { ascending: false }).limit(limit)
+    );
 
-    if (!pointsData) return [];
+    if (!pointsData.length) return [];
 
     const userIds = pointsData.map(p => p.user_id);
-    const { data: profilesData } = await supabase
-      .from('profiles')
-      .select('user_id, full_name, avatar_url')
-      .in('user_id', userIds);
+    const profilesData = await apiQuery<Array<{ user_id: string; full_name: string; avatar_url: string | null }>>('profiles', (q) =>
+      q.select('user_id, full_name, avatar_url').in('user_id', userIds)
+    );
 
     const profilesMap = new Map(
       (profilesData || []).map(p => [p.user_id, { full_name: p.full_name, avatar_url: p.avatar_url }])
@@ -103,20 +50,16 @@ async function fetchLeaderboardData(
     }));
   }
 
-  const { data: leaderboardRaw } = await supabase
-    .from('leaderboards')
-    .select('user_id, points, rank')
-    .eq('period', period)
-    .order('points', { ascending: false })
-    .limit(limit);
+  const leaderboardRaw = await apiQuery<Array<{ user_id: string; points: number; rank: number }>>('leaderboards', (q) =>
+    q.select('user_id, points, rank').eq('period', period).order('points', { ascending: false }).limit(limit)
+  );
 
-  if (!leaderboardRaw) return [];
+  if (!leaderboardRaw.length) return [];
 
   const userIds = leaderboardRaw.map(p => p.user_id);
-  const { data: profilesData } = await supabase
-    .from('profiles')
-    .select('user_id, full_name, avatar_url')
-    .in('user_id', userIds);
+  const profilesData = await apiQuery<Array<{ user_id: string; full_name: string; avatar_url: string | null }>>('profiles', (q) =>
+    q.select('user_id, full_name, avatar_url').in('user_id', userIds)
+  );
 
   const profilesMap = new Map(
     (profilesData || []).map(p => [p.user_id, { full_name: p.full_name, avatar_url: p.avatar_url }])
@@ -169,11 +112,7 @@ export function useGamification() {
   const updateStreakMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('Not authenticated');
-      const { data: sessionData } = await supabase.auth.getSession();
-      await supabase.functions.invoke('gamification', {
-        body: { action: 'update_streak', userId: user.id },
-        headers: { Authorization: `Bearer ${sessionData.session?.access_token}` },
-      });
+      await apiInvoke('gamification', { action: 'update_streak', userId: user.id });
     },
     onSuccess: invalidateAll,
   });
@@ -181,19 +120,15 @@ export function useGamification() {
   const awardPointsMutation = useMutation({
     mutationFn: async (params: { action: string; pointsAmount: number; referenceId?: string; referenceType?: string }) => {
       if (!user) throw new Error('Not authenticated');
-      const { data: sessionData } = await supabase.auth.getSession();
-      const response = await supabase.functions.invoke('gamification', {
-        body: {
-          action: 'award_points',
-          userId: user.id,
-          pointsAction: params.action,
-          points: params.pointsAmount,
-          referenceId: params.referenceId,
-          referenceType: params.referenceType,
-        },
-        headers: { Authorization: `Bearer ${sessionData.session?.access_token}` },
+      const response = await apiInvoke<{ success: boolean }>('gamification', {
+        action: 'award_points',
+        userId: user.id,
+        pointsAction: params.action,
+        points: params.pointsAmount,
+        referenceId: params.referenceId,
+        referenceType: params.referenceType,
       });
-      return response.data;
+      return response;
     },
     onSuccess: (data) => {
       if (data?.success) invalidateAll();
@@ -203,12 +138,11 @@ export function useGamification() {
   const checkBadgesMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('Not authenticated');
-      const { data: sessionData } = await supabase.auth.getSession();
-      const response = await supabase.functions.invoke('gamification', {
-        body: { action: 'check_badges', userId: user.id },
-        headers: { Authorization: `Bearer ${sessionData.session?.access_token}` },
+      const response = await apiInvoke<{ newBadges: any[] }>('gamification', {
+        action: 'check_badges', 
+        userId: user.id 
       });
-      return response.data?.newBadges || [];
+      return response.newBadges || [];
     },
     onSuccess: (newBadges) => {
       if (newBadges?.length > 0) invalidateAll();
