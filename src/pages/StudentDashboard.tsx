@@ -2,14 +2,15 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { BookOpen, Calendar, TrendingUp, Flame, Trophy, MessageCircle, Shield, Palette } from 'lucide-react';
+import { BookOpen, Calendar, TrendingUp, Flame, Trophy, MessageCircle, Shield, Palette, Lightbulb } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { getRecommendedExercise } from '@/lib/learning-recommendations';
 
 export default function StudentDashboard() {
   const { t } = useTranslation();
@@ -44,6 +45,55 @@ export default function StudentDashboard() {
     enabled: !!user,
   });
 
+  const { data: analytics } = useQuery({
+    queryKey: ['my-analytics', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('student_analytics')
+        .select('*')
+        .eq('user_id', user!.id)
+        .order('week_start', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const { data: exercises } = useQuery({
+    queryKey: ['available-exercises', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('exercises')
+        .select(`
+          id, 
+          title, 
+          category_id, 
+          category:exercise_categories(name)
+        `)
+        .eq('is_published', true);
+      if (error) throw error;
+      
+      // Transform data to match required interface
+      return data.map((e: any) => ({
+        id: e.id,
+        title: e.title,
+        category_id: e.category_id,
+        category_name: e.category?.name
+      }));
+    },
+    enabled: !!user,
+  });
+
+  const recommendedExercise = attempts && exercises 
+    ? getRecommendedExercise(
+        analytics || { weakest_category: null, strongest_category: null, exercises_attempted: 0 },
+        exercises,
+        attempts.filter(a => a.passed).map(a => a.id)
+      )
+    : null;
+
   const totalExercises = attempts?.length || 0;
   const passedExercises = attempts?.filter(a => a.passed)?.length || 0;
   const overallProgress = totalExercises > 0 ? Math.round((passedExercises / totalExercises) * 100) : 0;
@@ -57,7 +107,7 @@ export default function StudentDashboard() {
           <p className="text-muted-foreground mt-1">{role && t(`roles.${role}`)}</p>
         </div>
 
-        {/* Admin/Teacher fallback: show quick links to management panels */}
+        {/* Admin/Teacher fallback */}
         {isStaff && (
           <Alert className="mb-6 border-primary/20 bg-primary/5">
             <Shield className="h-4 w-4" />
@@ -83,7 +133,32 @@ export default function StudentDashboard() {
           </Alert>
         )}
 
+        {/* Recommended Exercise */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {recommendedExercise && (
+            <Card className="col-span-full bg-primary/5 border-primary/20">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <div className="flex items-center gap-2">
+                  <Palette className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-lg">{t('dashboard.recommendedExercise', 'Recommended Exercise')}</CardTitle>
+                </div>
+                <Button size="sm" asChild>
+                  <Link to={`/self-study/all/${recommendedExercise.id}`}>
+                    {t('common.start', 'Start')}
+                  </Link>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="font-medium">{recommendedExercise.title}</div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {recommendedExercise.reason === 'weakest_category' 
+                    ? t('dashboard.basedOnProgress', 'Based on your recent progress') 
+                    : t('dashboard.nextUp', 'Next up in your learning path')}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">{t('dashboard.overallProgress')}</CardTitle>

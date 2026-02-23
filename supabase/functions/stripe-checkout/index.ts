@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.14.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { createLogger } from "../_shared/logger.ts";
+import { requireEnv } from "../_shared/validate-env.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,7 +26,7 @@ serve(async (req: Request) => {
   }
 
   try {
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    const stripeKey = requireEnv("STRIPE_SECRET_KEY");
     
     // Check if Stripe is configured
     if (!stripeKey) {

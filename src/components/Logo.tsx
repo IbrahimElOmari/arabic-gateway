@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import config from "@/lib/app-config";
 
 interface LogoProps {
   className?: string;
@@ -70,10 +71,10 @@ export function Logo({ className, size = "md", showText = true }: LogoProps) {
       {showText && (
         <div className="flex flex-col">
           <span className={cn("font-bold text-foreground leading-tight", textSizeClasses[size])}>
-            Huis van het
+            {config.appName.split(" ").slice(0, -1).join(" ")}
           </span>
           <span className={cn("font-bold text-primary leading-tight", textSizeClasses[size])}>
-            Arabisch
+            {config.appName.split(" ").slice(-1)[0]}
           </span>
         </div>
       )}

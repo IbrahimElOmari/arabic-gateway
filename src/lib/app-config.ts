@@ -2,6 +2,8 @@
  * White-label / app configuration
  * Centralises brand-specific values so they can be changed without code edits.
  * In a multi-tenant setup this could be loaded from the database instead.
+ *
+ * NOTE: manifest.json should be kept in sync with these values manually.
  */
 
 export interface AppConfig {
@@ -22,6 +24,11 @@ export interface AppConfig {
   };
   /** Primary theme color (hex) used in manifest, meta tags, etc. */
   themeColor: string;
+  /** Help widget configuration */
+  helpWidget: {
+    enabled: boolean;
+    position: "bottom-right" | "bottom-left";
+  };
 }
 
 const config: AppConfig = {
@@ -39,6 +46,10 @@ const config: AppConfig = {
     instagram: "huisvanhetarabisch",
   },
   themeColor: "#3d8c6e",
+  helpWidget: {
+    enabled: true,
+    position: "bottom-right",
+  },
 };
 
 export default config;
