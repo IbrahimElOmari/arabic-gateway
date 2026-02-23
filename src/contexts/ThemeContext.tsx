@@ -3,6 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 
 type Theme = 'light' | 'dark' | 'system';
 type ThemeStyle = 'professional' | 'playful';
+export type FontSize = 'normal' | 'large' | 'extra-large';
+
+const FONT_SIZE_MAP: Record<FontSize, string> = {
+  normal: '100%',
+  large: '112.5%',
+  'extra-large': '125%',
+};
 
 interface ThemeContextType {
   theme: Theme;
@@ -10,6 +17,8 @@ interface ThemeContextType {
   resolvedTheme: 'light' | 'dark';
   themeStyle: ThemeStyle;
   setThemeStyle: (style: ThemeStyle) => void;
+  fontSize: FontSize;
+  setFontSize: (size: FontSize) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -29,6 +38,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       return (localStorage.getItem('themeStyle') as ThemeStyle) || 'professional';
     }
     return 'professional';
+  });
+
+  const [fontSize, setFontSizeState] = useState<FontSize>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('fontSize') as FontSize) || 'normal';
+    }
+    return 'normal';
   });
 
   useEffect(() => {
@@ -52,7 +68,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     updateTheme();
 
-    // Listen for system theme changes
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => {
       if (theme === 'system') {
@@ -71,6 +86,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.classList.add(`theme-${themeStyle}`);
   }, [themeStyle]);
 
+  // Apply font size
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.style.fontSize = FONT_SIZE_MAP[fontSize];
+    root.classList.remove('font-normal', 'font-large', 'font-extra-large');
+    root.classList.add(`font-${fontSize}`);
+  }, [fontSize]);
+
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
     localStorage.setItem('theme', newTheme);
@@ -80,7 +103,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setThemeStyleState(newStyle);
     localStorage.setItem('themeStyle', newStyle);
     
-    // Sync to database if user is logged in
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -94,8 +116,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const setFontSize = (newSize: FontSize) => {
+    setFontSizeState(newSize);
+    localStorage.setItem('fontSize', newSize);
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, resolvedTheme, themeStyle, setThemeStyle }}>
+    <ThemeContext.Provider value={{ theme, setTheme, resolvedTheme, themeStyle, setThemeStyle, fontSize, setFontSize }}>
       {children}
     </ThemeContext.Provider>
   );

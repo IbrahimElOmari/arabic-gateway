@@ -192,7 +192,11 @@
     "playfulDescription": "Rounded, colorful design",
     "avatarUpdated": "Avatar updated",
     "exportMyData": "Export my data",
-    "dataExported": "Your data has been exported"
+    "dataExported": "Your data has been exported",
+    "fontSize": "Font Size",
+    "fontSize_normal": "Normal",
+    "fontSize_large": "Large", 
+    "fontSize_extra-large": "Extra Large"
   },
   "install": {
     "title": "Install the App",
@@ -237,7 +241,11 @@
     "noClasses": "No classes yet",
     "enrollFirst": "Enroll in a class to join the chat",
     "noMessages": "No messages yet. Start the conversation!",
-    "typeMessage": "Type a message..."
+    "typeMessage": "Type a message...",
+    "messageInput": "Message input",
+    "addReaction": "Add reaction",
+    "toggleReaction": "Toggle {{emoji}} reaction",
+    "reactWith": "React with {{emoji}}"
   },
   "teacher": {
     "dashboard": "Teacher Dashboard",

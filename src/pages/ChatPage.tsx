@@ -338,6 +338,7 @@ export default function ChatPage() {
               </label>
               <Input
                 id="chat-input"
+                aria-label={t("chat.messageInput", "Message input")}
                 placeholder={t("chat.typeMessage", "Type a message...")}
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}

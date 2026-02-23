@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useTheme, type FontSize } from '@/contexts/ThemeContext';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { TwoFactorSetup } from '@/components/security/TwoFactorSetup';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Shield, User, Bell, Palette, Sun, Moon, Monitor, Briefcase, Sparkles, Loader2, Download } from 'lucide-react';
+import { Shield, User, Bell, Palette, Sun, Moon, Monitor, Briefcase, Sparkles, Loader2, Download, Type } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 export default function SettingsPage() {
   const { t } = useTranslation();
   const { profile, user } = useAuth();
-  const { theme, setTheme, themeStyle, setThemeStyle } = useTheme();
+  const { theme, setTheme, themeStyle, setThemeStyle, fontSize, setFontSize } = useTheme();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -424,6 +424,24 @@ export default function SettingsPage() {
                         </div>
                       </div>
                     </Card>
+                  </div>
+                </div>
+
+                {/* Font Size */}
+                <div className="space-y-3">
+                  <Label>{t('settings.fontSize', 'Font Size')}</Label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {(['normal', 'large', 'extra-large'] as FontSize[]).map((size) => (
+                      <Button
+                        key={size}
+                        variant={fontSize === size ? 'default' : 'outline'}
+                        onClick={() => setFontSize(size)}
+                        className="flex items-center gap-2"
+                      >
+                        <Type className="h-4 w-4" />
+                        {t(`settings.fontSize_${size}`, size === 'normal' ? 'Normal' : size === 'large' ? 'Large' : 'Extra Large')}
+                      </Button>
+                    ))}
                   </div>
                 </div>
               </CardContent>
