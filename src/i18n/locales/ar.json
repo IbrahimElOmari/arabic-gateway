@@ -186,7 +186,11 @@
     "playfulDescription": "تصميم ملون ومستدير",
     "avatarUpdated": "تم تحديث الصورة الرمزية",
     "exportMyData": "تصدير بياناتي",
-    "dataExported": "تم تصدير بياناتك"
+    "dataExported": "تم تصدير بياناتك",
+    "fontSize": "حجم الخط",
+    "fontSize_normal": "عادي",
+    "fontSize_large": "كبير",
+    "fontSize_extra-large": "كبير جداً"
   },
   "install": {
     "title": "تثبيت التطبيق",
