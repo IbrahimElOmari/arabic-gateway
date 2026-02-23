@@ -7,7 +7,7 @@
     <meta name="description" content="Huis van het Arabisch (HVA) - Leer Arabisch met passie en toewijding. Learn Arabic with passion and dedication." />
     <meta name="author" content="Huis van het Arabisch" />
     <meta name="theme-color" content="#3d8c6e" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self' https://checkout.stripe.com;" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self' https://checkout.stripe.com;" />
     
     <link rel="icon" href="/favicon.ico" />
 
@@ -29,6 +29,13 @@
   </head>
 
   <body>
+    <noscript>
+      <div style="padding:2rem;text-align:center;font-family:sans-serif;">
+        <h1>JavaScript is vereist</h1>
+        <p>Huis van het Arabisch vereist JavaScript om te functioneren. Schakel JavaScript in of gebruik een moderne browser.</p>
+        <p>Neem contact op via <a href="mailto:support@huisvanhetarabisch.nl">support@huisvanhetarabisch.nl</a>.</p>
+      </div>
+    </noscript>
     <div id="root"></div>
     <script>
       // BLOCKING cache purge: app scripts only load AFTER SW + cache cleanup completes

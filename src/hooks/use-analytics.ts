@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { apiInvoke } from '@/lib/supabase-api';
+import { hasAnalyticsConsent } from '@/lib/cookie-consent';
 
 interface TrackEventOptions {
   eventType?: string;
@@ -44,26 +45,20 @@ export function useAnalytics() {
   }, []);
 
   const trackEvent = useCallback(async (options: TrackEventOptions) => {
+    if (!hasAnalyticsConsent()) return;
     try {
       const { deviceType, browser, os } = getDeviceInfo();
       
-      const { data: sessionData } = await supabase.auth.getSession();
-      
-      await supabase.functions.invoke('analytics', {
-        body: {
-          action: 'track_event',
-          eventType: options.eventType || 'feature_use',
-          eventName: options.eventName,
-          pagePath: options.pagePath || window.location.pathname,
-          referrer: options.referrer || document.referrer,
-          properties: options.properties || {},
-          deviceType,
-          browser,
-          os,
-        },
-        headers: sessionData.session?.access_token
-          ? { Authorization: `Bearer ${sessionData.session.access_token}` }
-          : {},
+      await apiInvoke('analytics', {
+        action: 'track_event',
+        eventType: options.eventType || 'feature_use',
+        eventName: options.eventName,
+        pagePath: options.pagePath || window.location.pathname,
+        referrer: options.referrer || document.referrer,
+        properties: options.properties || {},
+        deviceType,
+        browser,
+        os,
       });
     } catch (error) {
       // Silently fail - analytics should not break the app
@@ -72,6 +67,7 @@ export function useAnalytics() {
   }, [getDeviceInfo]);
 
   const trackPageView = useCallback((pagePath?: string) => {
+    if (!hasAnalyticsConsent()) return;
     const path = pagePath || window.location.pathname;
     
     // Prevent duplicate page views

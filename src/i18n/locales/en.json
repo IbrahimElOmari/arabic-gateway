@@ -80,13 +80,15 @@
     "passwordResetSuccess": "Password has been reset successfully",
     "namePlaceholder": "John Doe",
     "addressPlaceholder": "Street, number, postal code, city",
-    "roleLoadFailed": "Could not load role."
+    "roleLoadFailed": "Could not load role.",
+    "agreeTerms": "I agree to the"
   },
   "validation": {
     "nameMin": "Name must be at least 2 characters",
     "invalidEmail": "Invalid email address",
     "passwordMin": "Password must be at least 8 characters",
-    "passwordMismatch": "Passwords do not match"
+    "passwordMismatch": "Passwords do not match",
+    "agreeTermsRequired": "You must agree to the terms and conditions"
   },
   "notFound": {
     "message": "Oops! Page not found",

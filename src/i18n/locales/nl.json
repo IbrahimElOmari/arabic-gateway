@@ -80,13 +80,15 @@
     "passwordResetSuccess": "Wachtwoord is succesvol gewijzigd",
     "namePlaceholder": "Jan Jansen",
     "addressPlaceholder": "Straat, huisnummer, postcode, stad",
-    "roleLoadFailed": "Rol kon niet geladen worden."
+    "roleLoadFailed": "Rol kon niet geladen worden.",
+    "agreeTerms": "Ik ga akkoord met de"
   },
   "validation": {
     "nameMin": "Naam moet minimaal 2 karakters zijn",
     "invalidEmail": "Ongeldig e-mailadres",
     "passwordMin": "Wachtwoord moet minimaal 8 karakters zijn",
-    "passwordMismatch": "Wachtwoorden komen niet overeen"
+    "passwordMismatch": "Wachtwoorden komen niet overeen",
+    "agreeTermsRequired": "Je moet akkoord gaan met de voorwaarden"
   },
   "notFound": {
     "message": "Oeps! Pagina niet gevonden",

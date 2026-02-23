@@ -74,13 +74,15 @@
     "passwordResetSuccess": "تم إعادة تعيين كلمة المرور بنجاح",
     "namePlaceholder": "الاسم الكامل",
     "addressPlaceholder": "الشارع، الرقم، الرمز البريدي، المدينة",
-    "roleLoadFailed": "تعذر تحميل الدور."
+    "roleLoadFailed": "تعذر تحميل الدور.",
+    "agreeTerms": "أوافق على"
   },
   "validation": {
     "nameMin": "يجب أن يتكون الاسم من حرفين على الأقل",
     "invalidEmail": "بريد إلكتروني غير صالح",
     "passwordMin": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل",
-    "passwordMismatch": "كلمات المرور غير متطابقة"
+    "passwordMismatch": "كلمات المرور غير متطابقة",
+    "agreeTermsRequired": "يجب عليك الموافقة على الشروط والأحكام"
   },
   "notFound": {
     "message": "عفواً! الصفحة غير موجودة",

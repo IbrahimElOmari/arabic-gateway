@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -42,6 +43,7 @@ type RegisterFormValues = {
   studyLevel?: 'beginner' | 'intermediate' | 'advanced';
   password: string;
   confirmPassword: string;
+  agreeTerms: boolean;
 };
 
 export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
@@ -61,6 +63,9 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
       studyLevel: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
       password: z.string().min(8, t('validation.passwordMin', 'Password must be at least 8 characters')),
       confirmPassword: z.string(),
+      agreeTerms: z.literal(true, {
+        errorMap: () => ({ message: t('validation.agreeTermsRequired', 'You must agree to the terms and conditions') }),
+      }),
     })
     .refine((data) => data.password === data.confirmPassword, {
       message: t('validation.passwordMismatch', 'Passwords do not match'),
@@ -78,6 +83,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
       studyLevel: undefined,
       password: '',
       confirmPassword: '',
+      agreeTerms: false as unknown as boolean,
     },
   });
 
@@ -282,6 +288,33 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
                     </div>
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="agreeTerms"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className="text-sm font-normal">
+                      {t('auth.agreeTerms', 'I agree to the')}{' '}
+                      <Link to="/terms" className="text-primary hover:underline" target="_blank">
+                        {t('footer.termsOfService')}
+                      </Link>{' '}
+                      {t('common.and')}{' '}
+                      <Link to="/privacy" className="text-primary hover:underline" target="_blank">
+                        {t('footer.privacyPolicy')}
+                      </Link>
+                    </FormLabel>
+                    <FormMessage />
+                  </div>
                 </FormItem>
               )}
             />

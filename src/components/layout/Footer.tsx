@@ -64,6 +64,16 @@ export function Footer() {
                   {t('nav.helpdesk', 'Helpdesk')}
                 </Link>
               </li>
+              <li>
+                <Link to="/privacy" className="hover:text-foreground">
+                  {t('footer.privacyPolicy')}
+                </Link>
+              </li>
+              <li>
+                <Link to="/terms" className="hover:text-foreground">
+                  {t('footer.termsOfService')}
+                </Link>
+              </li>
             </ul>
           </div>
 
