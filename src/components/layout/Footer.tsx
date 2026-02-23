@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { Link } from 'react-router-dom';
+import config from '@/lib/app-config';
 
 export function Footer() {
   const { t } = useTranslation();
@@ -13,7 +14,7 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center space-x-2">
-              <span className="text-xl font-bold text-primary">HVA</span>
+              <span className="text-xl font-bold text-primary">{config.appNameShort}</span>
             </Link>
             <p className="mt-2 text-sm text-muted-foreground">
               {t('app.tagline')}

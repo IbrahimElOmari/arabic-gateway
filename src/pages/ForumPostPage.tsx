@@ -12,6 +12,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { formatRelative } from "@/lib/date-utils";
 import { ReportContentDialog } from "@/components/moderation/ReportContentDialog";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export default function ForumPostPage() {
   const { roomName, postId } = useParams();
@@ -193,7 +194,10 @@ export default function ForumPostPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="whitespace-pre-wrap">{post.content}</p>
+            <div 
+              className="whitespace-pre-wrap"
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }} 
+            />
             <div className="flex items-center gap-4 mt-4 pt-4 border-t">
               <span className="text-muted-foreground flex items-center gap-1">
                 <ThumbsUp className="h-4 w-4" />

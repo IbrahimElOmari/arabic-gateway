@@ -19,6 +19,9 @@ export default defineConfig({
         'src/main.tsx',
         'src/vite-env.d.ts',
         'src/integrations/supabase/types.ts',
+        'postcss.config.js',
+        'tailwind.config.ts',
+        'eslint.config.js',
       ],
       thresholds: {
         lines: 60,

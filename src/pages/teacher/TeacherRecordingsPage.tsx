@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -13,6 +12,7 @@ import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/date-utils";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function TeacherRecordingsPage() {
   const { t } = useTranslation();
@@ -21,6 +21,7 @@ export default function TeacherRecordingsPage() {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState("");
+  const [transcriptText, setTranscriptText] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -91,7 +92,7 @@ export default function TeacherRecordingsPage() {
         setUploadProgress((prev) => Math.min(prev + 10, 90));
       }, 200);
 
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from("lesson-recordings")
         .upload(fileName, file);
 
@@ -109,6 +110,7 @@ export default function TeacherRecordingsPage() {
         video_url: urlData.publicUrl,
         uploaded_by: user!.id,
         duration_seconds: null, // Could be extracted from video metadata
+        transcript: transcriptText || null,
       });
 
       if (recordError) throw recordError;
@@ -117,6 +119,7 @@ export default function TeacherRecordingsPage() {
       queryClient.invalidateQueries({ queryKey: ["teacher-recordings"] });
       setIsDialogOpen(false);
       setSelectedLesson("");
+      setTranscriptText("");
       toast({ title: t("teacher.recordingUploaded", "Recording uploaded successfully") });
     } catch (error) {
       console.error("Upload error:", error);
@@ -171,6 +174,16 @@ export default function TeacherRecordingsPage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div>
+                <Label>{t("teacher.transcript", "Transcript")}</Label>
+                <Textarea 
+                  value={transcriptText} 
+                  onChange={(e) => setTranscriptText(e.target.value)} 
+                  placeholder={t("teacher.transcriptPlaceholder", "Enter lesson transcript...")}
+                  className="h-32"
+                />
               </div>
 
               <div>

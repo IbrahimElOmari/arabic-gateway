@@ -1,11 +1,37 @@
 import { useTranslation } from "react-i18next";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Video, Loader2, Play } from "lucide-react";
+import { Video, Loader2, Play, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useState } from "react";
+
+function TranscriptViewer({ transcript }: { transcript: string }) {
+  const { t } = useTranslation();
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full space-y-2">
+      <CollapsibleTrigger asChild>
+        <Button variant="outline" className="w-full justify-between">
+          <span className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            {t("recordings.showTranscript", "Show Transcript")}
+          </span>
+          {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </Button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="space-y-2">
+        <div className="rounded-md border p-4 text-sm text-muted-foreground bg-muted/50 max-h-[300px] overflow-y-auto whitespace-pre-wrap">
+          {transcript}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
 
 export default function RecordingsPage() {
   const { t } = useTranslation();
@@ -73,12 +99,18 @@ export default function RecordingsPage() {
                   <CardDescription>{recording.lesson?.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full" asChild>
-                    <a href={recording.video_url} target="_blank" rel="noopener noreferrer">
-                      <Play className="h-4 w-4 mr-2" />
-                      {t("lessons.watchRecording", "Watch Recording")}
-                    </a>
-                  </Button>
+                  <div className="space-y-4">
+                    <Button className="w-full" asChild>
+                      <a href={recording.video_url} target="_blank" rel="noopener noreferrer">
+                        <Play className="h-4 w-4 mr-2" />
+                        {t("lessons.watchRecording", "Watch Recording")}
+                      </a>
+                    </Button>
+                    
+                    {recording.transcript && (
+                      <TranscriptViewer transcript={recording.transcript} />
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             ))}

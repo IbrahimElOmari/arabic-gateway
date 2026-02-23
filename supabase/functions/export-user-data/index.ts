@@ -37,6 +37,35 @@ Deno.serve(async (req) => {
 
     const userId = user.id;
 
+    // Rate Limiting Check
+    const { data: recentLogs } = await supabase
+      .from("admin_activity_log") // Using admin_activity_log as a generic log for now, or use a dedicated table if available. Plan mentioned 'data_retention_log' but that might be specific. Let's use a simpler check or create a rate limit table if needed. The plan mentioned query a table `data_retention_log`.
+      .select("created_at")
+      .eq("target_id", userId)
+      .eq("action", "data_export")
+      .gt("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .limit(1);
+
+    // Ideally we should have a `user_activity_log` or similar. 
+    // Given the constraints, let's use `data_retention_log` if it exists and fits, or `admin_activity_log` (less ideal as it's for admins).
+    // The plan said: Query a table `data_retention_log`. Let's check if we can insert there.
+    
+    // Actually, let's use `data_retention_log` as instructed.
+    const { data: recentExports } = await supabase
+      .from("data_retention_log")
+      .select("created_at")
+      .eq("user_id", userId)
+      .eq("action", "data_export")
+      .gt("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .limit(1);
+
+    if (recentExports && recentExports.length > 0) {
+      return new Response(
+        JSON.stringify({ error: "Rate limit exceeded. You can only export data once every 24 hours." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Fetch all user data in parallel
     const [
       profileRes,
@@ -55,6 +84,13 @@ Deno.serve(async (req) => {
       supabase.from("lesson_attendance").select("lesson_id, attended, joined_at").eq("student_id", userId).limit(100),
       supabase.from("student_analytics").select("*").eq("user_id", userId).order("week_start", { ascending: false }).limit(52),
     ]);
+
+    // Log the export
+    await supabase.from("data_retention_log").insert({
+      user_id: userId,
+      action: "data_export",
+      details: { ip: req.headers.get("x-forwarded-for") || "unknown" },
+    });
 
     const exportData = {
       exported_at: new Date().toISOString(),

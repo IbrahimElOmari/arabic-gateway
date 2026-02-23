@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
+import config from '@/lib/app-config';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { Button } from '@/components/ui/button';
@@ -113,7 +114,7 @@ export function Header() {
         </div>
 
         <Link to="/" className="flex items-center space-x-2">
-          <span className="text-xl font-bold text-primary">HVA</span>
+          <span className="text-xl font-bold text-primary">{config.appNameShort}</span>
           <span className="hidden sm:inline-block text-sm font-medium">
             {t('app.name')}
           </span>
