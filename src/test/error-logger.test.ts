@@ -6,6 +6,9 @@ vi.mock('@/lib/cookie-consent', () => ({
 }));
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
+    auth: {
+      getSession: vi.fn(() => Promise.resolve({ data: { session: null } })),
+    },
     functions: {
       invoke: vi.fn(() => Promise.resolve({ data: null, error: null })),
     },
@@ -19,20 +22,18 @@ import { supabase } from '@/integrations/supabase/client';
 describe('logError', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Reset rate limiter by mocking Date.now
-    vi.useFakeTimers();
   });
 
-  it('calls analytics when consent is given', () => {
+  it('calls analytics when consent is given', async () => {
     const error = new Error('test error');
-    logError(error, { source: 'test' });
+    await logError(error, { source: 'test' });
     expect(supabase.functions.invoke).toHaveBeenCalled();
   });
 
-  it('does not call analytics when consent is denied', () => {
+  it('does not call analytics when consent is denied', async () => {
     (hasAnalyticsConsent as any).mockReturnValue(false);
     const error = new Error('test error');
-    logError(error, { source: 'test' });
+    await logError(error, { source: 'test' });
     expect(supabase.functions.invoke).not.toHaveBeenCalled();
   });
 });

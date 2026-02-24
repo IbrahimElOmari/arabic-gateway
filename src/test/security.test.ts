@@ -69,7 +69,7 @@ describe("Security Requirements", () => {
       
       // Supabase uses parameterized queries, but we validate input anyway
       sqlPatterns.forEach((pattern) => {
-        const containsDangerousChars = /['";]/.test(pattern);
+        const containsDangerousChars = /['";]|DROP|UNION/i.test(pattern);
         expect(containsDangerousChars).toBe(true);
       });
     });

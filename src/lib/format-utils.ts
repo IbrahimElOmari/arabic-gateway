@@ -26,5 +26,5 @@ export function formatPercent(value: number, locale?: string): string {
     style: 'percent',
     minimumFractionDigits: 0,
     maximumFractionDigits: 1,
-  }).format(value / 100);
+  }).format(value);
 }
