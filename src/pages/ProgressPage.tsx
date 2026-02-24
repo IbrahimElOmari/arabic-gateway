@@ -3,14 +3,31 @@ import { useTranslation } from "react-i18next";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { BookOpenCheck, GraduationCap } from "lucide-react";
+import { BookOpenCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import config from "@/lib/app-config";
-import { featureFlags } from "@/lib/feature-flags";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import { generateCertificateHtml } from "@/lib/certificate-utils";
+
+interface AttemptRow {
+  exercise_id: string;
+  passed: boolean | null;
+  exercises: {
+    title: string;
+    class_id: string;
+    classes: {
+      level_id: string;
+      levels: {
+        name_nl: string;
+        name_en: string;
+        name_ar: string;
+      } | null;
+    } | null;
+  } | null;
+}
 
 export default function ProgressPage() {
   const { t } = useTranslation();
@@ -27,11 +44,14 @@ export default function ProgressPage() {
           passed,
           exercises (
             title,
-            level_id,
-            levels (
-              name_nl,
-              name_en,
-              name_ar
+            class_id,
+            classes (
+              level_id,
+              levels (
+                name_nl,
+                name_en,
+                name_ar
+              )
             )
           )
         `
@@ -40,24 +60,22 @@ export default function ProgressPage() {
         .order("submitted_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as unknown as AttemptRow[];
     },
     enabled: !!user,
   });
 
   const downloadCertificate = (levelId: string, levelName: string) => {
-    if (!featureFlags.CERTIFICATE_GENERATION) return;
-    
-    // Placeholder logic for certificate generation
-    // In a real app, this would likely call an edge function or use a PDF library
+    if (!isFeatureEnabled("CERTIFICATE_GENERATION")) return;
+
     const html = generateCertificateHtml({
       studentName: user?.user_metadata?.full_name || "Student",
-      levelName: levelName,
+      levelName,
       completionDate: new Date().toLocaleDateString(),
       institutionName: config.appName,
-      certificateId: `CERT-${levelId}-${Date.now()}`
+      certificateId: `CERT-${levelId}-${Date.now()}`,
     });
-    
+
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -66,6 +84,12 @@ export default function ProgressPage() {
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  const getLevelName = (attempt: AttemptRow) =>
+    attempt.exercises?.classes?.levels?.name_nl ?? "";
+
+  const getLevelId = (attempt: AttemptRow) =>
+    attempt.exercises?.classes?.level_id ?? "";
 
   return (
     <MainLayout>
@@ -93,64 +117,55 @@ export default function ProgressPage() {
               </div>
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {/* Assuming there's a place where levels are listed, we add the button there if completed. */}
-                {/* For now, let's add it near the top if the user has completed any level. */}
-                
-                {/* (We need to fetch completed levels first to know when to show the button. 
-                The current query attempts-detailed gives us exercises, but promotion happens via `final_exam_attempts` or manual promotion.
-                For simplicity in this batch, I'll add a section for Certificates if we detect completion.) */}
-
-                {attemptsDetailed && attemptsDetailed.length > 0 && (
-                  <Card className="col-span-full">
-                    <CardHeader>
-                      <CardTitle>{t("progress.certificates", "Certificaten")}</CardTitle>
-                      <CardDescription>
-                        {t("progress.downloadCertificates", "Download hier je behaalde certificaten.")}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {/* Placeholder: Replace with actual logic to determine completed levels */}
-                      {/* For now, show a button if any level has been attempted */}
-                      {attemptsDetailed.map((attempt, index) => {
-                        if (!attempt.exercises?.levels) return null;
-                        return (
-                          <div key={index} className="mb-4">
-                            <p>
-                              {t("progress.level", "Niveau")}:{" "}
-                              {attempt.exercises.levels.name_nl}
-                            </p>
-                            {featureFlags.CERTIFICATE_GENERATION && (
-                              <button onClick={() => downloadCertificate(attempt.exercises.level_id, attempt.exercises.levels.name_nl)}>
-                                {t("progress.downloadCertificate", "Download Certificaat")}
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </CardContent>
-                  </Card>
-                )}
-
-                {attemptsDetailed?.map((attempt) => {
-                  return (
-                    <Card key={attempt.exercise_id}>
+                {isFeatureEnabled("CERTIFICATE_GENERATION") &&
+                  attemptsDetailed &&
+                  attemptsDetailed.length > 0 && (
+                    <Card className="col-span-full">
                       <CardHeader>
-                        <CardTitle>{attempt.exercises?.title}</CardTitle>
+                        <CardTitle>{t("progress.certificates", "Certificaten")}</CardTitle>
                         <CardDescription>
-                          {t("progress.level", "Niveau")}: {attempt.exercises?.levels?.name_nl}
+                          {t("progress.downloadCertificates", "Download hier je behaalde certificaten.")}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <Progress value={attempt.passed ? 100 : 0} />
-                        <p className="mt-2">
-                          {attempt.passed
-                            ? t("progress.passed", "Geslaagd")
-                            : t("progress.failed", "Gefaald")}
-                        </p>
+                        {attemptsDetailed.map((attempt, index) => {
+                          const levelName = getLevelName(attempt);
+                          if (!levelName) return null;
+                          return (
+                            <div key={index} className="mb-4">
+                              <p>
+                                {t("progress.level", "Niveau")}: {levelName}
+                              </p>
+                              <button
+                                onClick={() => downloadCertificate(getLevelId(attempt), levelName)}
+                              >
+                                {t("progress.downloadCertificate", "Download Certificaat")}
+                              </button>
+                            </div>
+                          );
+                        })}
                       </CardContent>
                     </Card>
-                  );
-                })}
+                  )}
+
+                {attemptsDetailed?.map((attempt) => (
+                  <Card key={attempt.exercise_id}>
+                    <CardHeader>
+                      <CardTitle>{attempt.exercises?.title}</CardTitle>
+                      <CardDescription>
+                        {t("progress.level", "Niveau")}: {getLevelName(attempt)}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Progress value={attempt.passed ? 100 : 0} />
+                      <p className="mt-2">
+                        {attempt.passed
+                          ? t("progress.passed", "Geslaagd")
+                          : t("progress.failed", "Gefaald")}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             )}
           </>

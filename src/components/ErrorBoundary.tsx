@@ -1,3 +1,10 @@
+/**
+ * @internal
+ * This component is an internal implementation detail.
+ * DO NOT import this directly in application code.
+ * Use `TranslatedErrorBoundary` instead, which wraps this
+ * component with i18n-translated fallback messages.
+ */
 import React, { Component, ErrorInfo, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw } from "lucide-react";

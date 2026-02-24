@@ -7,6 +7,7 @@ vi.mock('react-i18next', () => ({
     t: (key: string, fallback?: string) => fallback || key,
     i18n: { language: 'nl' },
   }),
+  initReactI18next: { type: '3rdParty', init: () => {} },
 }));
 vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),
@@ -22,6 +23,7 @@ let mockData: any[] | undefined = undefined;
 
 vi.mock('@tanstack/react-query', () => ({
   useQuery: () => ({ data: mockData, isLoading: mockLoading }),
+  useMutation: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { from: () => ({ select: () => ({ eq: () => ({ order: () => Promise.resolve({ data: [], error: null }) }) }) }) },
@@ -41,7 +43,6 @@ describe('PricingPage', () => {
     mockLoading = true;
     mockData = undefined;
     render(<PricingPage />);
-    // Loader2 renders with animate-spin class
     expect(document.querySelector('.animate-spin')).toBeInTheDocument();
   });
 
