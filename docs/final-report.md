@@ -57,9 +57,10 @@
 ## Verification Summary
 
 - **No `unsafe-eval`** in CSP – confirmed via grep
+- **`style-src 'unsafe-inline'`** is required by Vite's runtime CSS injection and Tailwind; cannot be removed without a full CSS extraction build step (documented as accepted trade-off)
 - **No direct `ErrorBoundary` imports** – only `TranslatedErrorBoundary` used in app code
 - **`isFeatureEnabled()`** correctly used in ProgressPage, StudentDashboard
-- **`app-config.ts`** used in Header, Footer, Logo – no hardcoded brand strings
+- **`app-config.ts`** used in Header, Footer, Logo, `syncMetadata()`, and manifest generation – no hardcoded brand strings
 - **`sanitizeHtml()`** applied in ForumPostPage (`dangerouslySetInnerHTML`)
 - **Rate limiting** enforced in export-user-data (24h via `data_retention_log`)
 - **CI pipeline** includes: lint, typecheck, color-lint, npm audit, unit tests w/ coverage, E2E (Playwright), Lighthouse CI
@@ -67,6 +68,14 @@
 - **Coverage thresholds** set at 60% (lines/functions/statements), 50% (branches)
 - **i18n keys** present for NL, EN, AR across all new features
 
+## Post-Blueprint Refinements (addendum)
+
+| # | Refinement | Status | Key Files |
+|---|-----------|--------|-----------|
+| R1 | Static meta-tags replaced with runtime `syncMetadata()` | ✅ | `index.html`, `src/lib/sync-metadata.ts`, `src/main.tsx` |
+| R2 | CSP `unsafe-inline` for style-src analysed — required by Vite/Tailwind runtime | ✅ Documented | `index.html` (no `unsafe-eval`) |
+| R3 | Manifest generation automated from app-config | ✅ | `scripts/generate-manifest.ts`, `src/lib/app-config.ts` |
+
 ## Conclusion
 
-All 40 tasks from Blueprint v2 are **100% voltooid** according to the strict Definition of Done.
+All 40 tasks from Blueprint v2 are **100% voltooid** according to the strict Definition of Done, plus 3 additional refinements for extra robustness.
