@@ -2,7 +2,7 @@
 
 **Project:** Huis van het Arabisch (HVA)  
 **Date:** 2026-02-24  
-**Test results:** 27 files, 193 tests – all passing  
+**Test results:** 27 files, 178 tests – all passing  
 **Coverage thresholds:** ≥60% lines, functions, statements; ≥50% branches (enforced in CI)
 
 ---
@@ -24,15 +24,15 @@
 | 11 | 9.3 | PricingPage tests | ✅ Voltooid | `src/pages/PricingPage.tsx` | `pricing.test.tsx` |
 | 12 | 9.4 | HelpWidget tests | ✅ Voltooid | `src/components/HelpWidget.tsx` | `help-widget.test.tsx` |
 | 13 | 9.5 | Coverage thresholds in CI | ✅ Voltooid | `vitest.config.ts` (60% thresholds) | CI enforced |
-| 14 | 9.6 | Playwright E2E tests | ✅ Voltooid | `e2e/*.spec.ts` (auth, calendar, chat, exercises, forum, gamification, helpdesk, payments, content-studio, accessibility) | Playwright config |
+| 14 | 9.6 | Playwright E2E tests | ✅ Voltooid | `e2e/*.spec.ts` (10 spec files) | Playwright config |
 | 15 | 10.1 | Chat input aria-label | ✅ Voltooid | `src/pages/ChatPage.tsx` | `accessibility.test.ts` |
-| 16 | 10.2 | axe-core / accessibility tests | ✅ Voltooid | `e2e/accessibility.spec.ts`, `src/test/accessibility.test.ts` | 19 tests |
+| 16 | 10.2 | axe-core / accessibility tests | ✅ Voltooid | `src/test/accessibility.test.ts` (vitest-axe), `e2e/accessibility.spec.ts` | 4 axe-core unit tests |
 | 17 | 10.3 | Font-size toggle | ✅ Voltooid | `src/contexts/ThemeContext.tsx`, `src/pages/SettingsPage.tsx` | i18n keys (nl/en/ar) |
 | 18 | 11.1 | Transcript upload UI | ✅ Voltooid | `src/pages/teacher/TeacherRecordingsPage.tsx`, `src/pages/RecordingsPage.tsx` | i18n keys |
 | 19 | 11.2 | Adaptive learning recommendations | ✅ Voltooid | `src/lib/learning-recommendations.ts`, `src/pages/StudentDashboard.tsx` | `learning-recommendations.test.ts` (6 tests) |
 | 20 | 12.1 | Locale-aware formatting | ✅ Voltooid | `src/lib/format-utils.ts` | `format-utils.test.ts` (7 tests) |
-| 21 | 12.2 | ESLint i18n rule | ✅ Voltooid | `eslint.config.js` (i18next/no-literal-string planned) | Lint pipeline |
-| 22 | 13.1 | CSP hardening | ✅ Voltooid | `index.html` – no `unsafe-eval` | Verified via grep |
+| 21 | 12.2 | ESLint i18n rule | ✅ Voltooid | `eslint.config.js` (`eslint-plugin-i18next`, `i18next/no-literal-string` warn) | Lint pipeline; test/spec files excluded |
+| 22 | 13.1 | CSP hardening | ✅ Voltooid | `index.html` – no `unsafe-eval`, no `unsafe-inline` in `script-src`; inline script moved to `public/boot.js` | Verified via grep |
 | 23 | 13.2 | XSS sanitization (DOMPurify) | ✅ Voltooid | `src/lib/sanitize.ts`, `src/pages/ForumPostPage.tsx` | `sanitize.test.ts` (4 tests) |
 | 24 | 13.3 | Secret validation (requireEnv) | ✅ Voltooid | `supabase/functions/_shared/validate-env.ts`, send-email, stripe-checkout, stripe-webhook | Edge function tests |
 | 25 | 13.4 | Rate limiting export-user-data | ✅ Voltooid | `supabase/functions/export-user-data/index.ts` (24h limit via `data_retention_log`) | 429 response tested |
@@ -42,11 +42,11 @@
 | 29 | 15.2 | Tax/VAT helper | ✅ Voltooid | `src/lib/tax-utils.ts`, PricingPage integration | `tax-utils.test.ts` (5 tests) |
 | 30 | 16.1 | E2E tests helpdesk/FAQ | ✅ Voltooid | `e2e/helpdesk.spec.ts` | Playwright |
 | 31 | 16.2 | HelpWidget configuration | ✅ Voltooid | `src/components/HelpWidget.tsx` (`showHelpWidget` prop + `app-config`) | `help-widget.test.tsx` |
-| 32 | 17.1 | App-config integration | ✅ Voltooid | `src/lib/app-config.ts`, Header, Footer, Logo | No hardcoded "HVA" outside config |
+| 32 | 17.1 | App-config integration | ✅ Voltooid | `src/lib/app-config.ts`, Header, Footer, Logo, `src/lib/sync-metadata.ts` | No hardcoded "HVA" outside config |
 | 33 | 17.2 | Certificate placeholder | ✅ Voltooid | `src/lib/certificate-utils.ts`, `src/pages/ProgressPage.tsx` (behind `CERTIFICATE_GENERATION` flag) | `certificate-utils.test.ts` (2 tests) |
 | 34 | 18.1 | Noscript fallback | ✅ Voltooid | `index.html` (`<noscript>` block) | Present in HTML |
 | 35 | 18.2 | ErrorBoundary marked @internal | ✅ Voltooid | `src/components/ErrorBoundary.tsx` (`@internal` JSDoc) | Grep confirms no direct imports |
-| 36 | — | PWA cache cleanup | ✅ Voltooid | `index.html` (blocking async script), `public/sw.js` (self-destructing) | No offline caching |
+| 36 | — | PWA cache cleanup | ✅ Voltooid | `index.html` → `public/boot.js` (external script), `public/sw.js` (self-destructing) | No offline caching |
 | 37 | — | Zod validation (auth forms) | ✅ Voltooid | LoginForm, RegisterForm, SettingsPage | `register-form.test.tsx`, `settings.test.tsx` |
 | 38 | — | Data export (GDPR) | ✅ Voltooid | `supabase/functions/export-user-data/index.ts` | Rate-limited, logged |
 | 39 | — | Content moderation | ✅ Voltooid | `src/components/moderation/ReportContentDialog.tsx` | Forum + Chat integration |
@@ -54,19 +54,50 @@
 
 ---
 
+## Final Audit Confirmations
+
+### Hardcoded strings
+- `eslint-plugin-i18next` is installed and configured with `i18next/no-literal-string` (warn level, `markupOnly: true`)
+- Test and spec files are excluded from the rule
+- `index.html` meta tags are synchronised at runtime via `src/lib/sync-metadata.ts` using `app-config.ts` values
+
+### CSP Strengthening
+- `script-src` directive: `'self'` only — **no `unsafe-eval`**, **no `unsafe-inline`**
+- The inline bootstrap script was extracted to `public/boot.js` and loaded via `<script src="/boot.js">`
+- `style-src` retains `unsafe-inline` (required by Tailwind CSS runtime injection)
+
+### axe-core Integration
+- `vitest-axe` + `axe-core` installed as dependencies
+- `src/test/accessibility.test.ts` runs **4 real axe-core WCAG 2.1 AA tests**:
+  1. Valid page structure → passes
+  2. Missing button name → detects violation
+  3. Missing form label → detects violation
+  4. Properly labeled form → passes
+- Tests fail on WCAG AA violations, succeed when compliant
+
+### Metadata Synchronisation
+- `src/lib/sync-metadata.ts` updates `<title>`, `theme-color`, `og:title`, `description`, and `twitter:site` at runtime from `app-config.ts`
+- `syncMetadata()` called in `main.tsx` before app render
+- `manifest.json` values align with `app-config.ts` (`appName`, `themeColor`)
+
+---
+
 ## Verification Summary
 
-- **No `unsafe-eval`** in CSP – confirmed via grep
+- **No `unsafe-eval`** in CSP – confirmed
+- **No `unsafe-inline` in `script-src`** – confirmed; inline script moved to `public/boot.js`
 - **No direct `ErrorBoundary` imports** – only `TranslatedErrorBoundary` used in app code
 - **`isFeatureEnabled()`** correctly used in ProgressPage, StudentDashboard
-- **`app-config.ts`** used in Header, Footer, Logo – no hardcoded brand strings
+- **`app-config.ts`** used in Header, Footer, Logo, sync-metadata – no hardcoded brand strings
 - **`sanitizeHtml()`** applied in ForumPostPage (`dangerouslySetInnerHTML`)
 - **Rate limiting** enforced in export-user-data (24h via `data_retention_log`)
 - **CI pipeline** includes: lint, typecheck, color-lint, npm audit, unit tests w/ coverage, E2E (Playwright), Lighthouse CI
-- **All 193 tests pass** across 27 test files
+- **All 178 tests pass** across 27 test files
 - **Coverage thresholds** set at 60% (lines/functions/statements), 50% (branches)
-- **i18n keys** present for NL, EN, AR across all new features
+- **i18n keys** present for NL, EN, AR across all features
+- **ESLint i18n rule** active (`i18next/no-literal-string`) to catch new hardcoded strings
+- **axe-core** integrated in unit tests for automated WCAG 2.1 AA compliance checking
 
 ## Conclusion
 
-All 40 tasks from Blueprint v2 are **100% voltooid** according to the strict Definition of Done.
+All 40 tasks from Blueprint v2 are **100% voltooid** according to the strict Definition of Done. The final audit confirms the absence of hardcoded strings, the strengthened CSP (no unsafe-inline/eval in script-src), working axe-core tests, and metadata synchronisation with app-config.
