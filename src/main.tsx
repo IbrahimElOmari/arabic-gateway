@@ -1,7 +1,6 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import { syncMetadata } from "./lib/sync-metadata";
 
 // Build version check - forces reload when new version is deployed
 const BUILD_VERSION = '__BUILD_TIMESTAMP__';
@@ -44,6 +43,5 @@ if (storedVersion !== BUILD_VERSION) {
 }
 
 function renderApp() {
-  syncMetadata();
   createRoot(document.getElementById("root")!).render(<App />);
 }
