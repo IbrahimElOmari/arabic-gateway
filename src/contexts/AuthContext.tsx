@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
   const initialLoadDone = useRef(false);
-  const signedInHandled = useRef(false);
+  const isFetching = useRef(false);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -92,7 +92,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return fetchedRole;
     } catch (error) {
       console.error('Error fetching role (attempt 1):', error);
-      // Retry once after delay (token might be refreshing)
       await new Promise(r => setTimeout(r, 1000));
       try {
         const { data } = await supabase
@@ -106,7 +105,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return retryRole;
       } catch (retryError) {
         console.error('Error fetching role (attempt 2):', retryError);
-        // Use last known role as fallback
         setRole(lastKnownRole.current);
         return lastKnownRole.current;
       }
@@ -114,10 +112,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const fetchUserData = async (userId: string) => {
-    await Promise.all([
-      fetchProfile(userId),
-      fetchRole(userId),
-    ]);
+    if (isFetching.current) return;
+    isFetching.current = true;
+    try {
+      await Promise.all([
+        fetchProfile(userId),
+        fetchRole(userId),
+      ]);
+    } finally {
+      isFetching.current = false;
+    }
   };
 
   const refreshProfile = async () => {
@@ -132,10 +136,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 1. Initial load via getSession - single source of truth
     const initializeAuth = async () => {
       try {
+        // Wait a tick for INITIAL_SESSION to potentially handle things
+        await new Promise(r => setTimeout(r, 100));
+        if (!mounted || initialLoadDone.current) return;
+
         const { data: { session: existingSession } } = await supabase.auth.getSession();
-        if (!mounted) return;
-        // Don't overwrite if SIGNED_IN already set the user
-        if (signedInHandled.current) return;
+        if (!mounted || initialLoadDone.current) return;
 
         setSession(existingSession);
         setUser(existingSession?.user ?? null);
@@ -146,7 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.error('Error initializing auth:', error);
       } finally {
-        if (mounted) {
+        if (mounted && !initialLoadDone.current) {
           setLoading(false);
           initialLoadDone.current = true;
         }
@@ -155,10 +161,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initializeAuth();
 
-    // 2. Subsequent changes via onAuthStateChange
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
+      async (event, currentSession) => {
         if (!mounted) return;
+
+        if (event === 'INITIAL_SESSION') {
+          setSession(currentSession);
+          setUser(currentSession?.user ?? null);
+          if (currentSession?.user) {
+            await fetchUserData(currentSession.user.id);
+          }
+          setLoading(false);
+          initialLoadDone.current = true;
+          return;
+        }
 
         if (event === 'SIGNED_OUT') {
           setSession(null);
@@ -178,15 +194,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (event === 'SIGNED_IN') {
           setSession(currentSession);
           setUser(currentSession?.user ?? null);
-          setLoading(false); // Immediate -- LoginForm can navigate now
-          signedInHandled.current = true;
           if (currentSession?.user) {
-            // Defer Supabase calls to avoid deadlock during signInWithPassword
-            setTimeout(async () => {
-              if (!mounted) return;
-              await fetchUserData(currentSession.user.id);
-            }, 0);
+            await fetchUserData(currentSession.user.id);
           }
+          setLoading(false);
+          initialLoadDone.current = true;
         }
       }
     );
