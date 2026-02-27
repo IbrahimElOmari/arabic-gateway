@@ -216,6 +216,30 @@ serve(async (req) => {
       }
 
       case "get_student_analytics": {
+        // Authorization: must be authenticated
+        if (!userId) {
+          return new Response(
+            JSON.stringify({ error: "Unauthorized" }),
+            { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Users can view their own data; admins/teachers can view any student
+        if (body.userId !== userId) {
+          const { data: callerRole } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", userId)
+            .single();
+
+          if (!callerRole || (callerRole.role !== "admin" && callerRole.role !== "teacher")) {
+            return new Response(
+              JSON.stringify({ error: "Forbidden" }),
+              { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+        }
+
         const weeks = body.weeks || 4;
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - (weeks * 7));
