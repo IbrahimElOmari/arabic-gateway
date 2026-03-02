@@ -20,6 +20,7 @@ export interface RecommendedExercise {
   id: string;
   title: string;
   reason: string;
+  category_name?: string;
 }
 
 /**
@@ -47,6 +48,7 @@ export function getRecommendedExercise(
         id: weakExercise.id,
         title: weakExercise.title,
         reason: 'weakest_category',
+        category_name: weakExercise.category_name,
       };
     }
   }
@@ -56,5 +58,6 @@ export function getRecommendedExercise(
     id: remaining[0].id,
     title: remaining[0].title,
     reason: 'next_available',
+    category_name: remaining[0].category_name,
   };
 }

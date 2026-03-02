@@ -143,7 +143,7 @@ export default function StudentDashboard() {
                   <CardTitle className="text-lg">{t('dashboard.recommendedExercise', 'Recommended Exercise')}</CardTitle>
                 </div>
                 <Button size="sm" asChild>
-                  <Link to={`/self-study/all/${recommendedExercise.id}`}>
+                  <Link to={`/self-study/${recommendedExercise.category_name || 'reading'}/${recommendedExercise.id}`}>
                     {t('common.start', 'Start')}
                   </Link>
                 </Button>

@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { Link } from 'react-router-dom';
 import config from '@/lib/app-config';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function Footer() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const currentYear = new Date().getFullYear();
 
   return (
@@ -60,11 +62,13 @@ export function Footer() {
                   {t('nav.knowledgeBase', 'Knowledge Base')}
                 </Link>
               </li>
-              <li>
-                <Link to="/helpdesk" className="hover:text-foreground">
-                  {t('nav.helpdesk', 'Helpdesk')}
-                </Link>
-              </li>
+              {user && (
+                <li>
+                  <Link to="/helpdesk" className="hover:text-foreground">
+                    {t('nav.helpdesk', 'Helpdesk')}
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link to="/privacy" className="hover:text-foreground">
                   {t('footer.privacyPolicy')}
