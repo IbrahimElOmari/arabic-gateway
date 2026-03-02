@@ -1,23 +1,26 @@
 
 
-# Plan: Verificatiesectie consistentie-fix
+# Plan: Fix reload-loop in main.tsx
 
 ## Probleem
-Regel 67 in `docs/final-report.md` vermeldt nog "All 193 tests pass across 27 test files", terwijl de header (regel 5) correct "29 files, 200 tests" vermeldt. Dit is een restant dat niet is bijgewerkt.
 
-## Wijziging
+In `src/main.tsx` wordt `__BUILD_TIMESTAMP__` bij elke build/HMR-update door Vite vervangen door een nieuwe waarde. Dit triggert elke keer:
+1. `storedVersion !== BUILD_VERSION` → true
+2. `storedVersion !== null` → true (want vorige build had al een waarde opgeslagen)
+3. `cleanup().finally(() => window.location.href = ...)` → **volledige pagina-reload**
 
-**Bestand:** `docs/final-report.md`, regel 67
+In de Lovable preview veroorzaakt dit een zichtbare reload-loop/spinner bij elke codewijziging.
 
-Huidige tekst:
-```
-- **All 193 tests pass** across 27 test files
-```
+## Oplossing
 
-Nieuwe tekst:
-```
-- **All 200 tests pass** across 29 test files
-```
+Vereenvoudig `main.tsx`: skip de versiecheck in development-modus (`import.meta.env.DEV`). In productie blijft de logica behouden.
 
-Dat is de enige wijziging. De overige opmerkingen van de gebruiker (service-worker biedt geen echte offline-functionaliteit, periodieke controle van ongebruikte flags) zijn observaties/aanbevelingen — geen actiepunten die nu code-wijzigingen vereisen.
+**Bestand:** `src/main.tsx`
+
+Wijzigingen:
+- Wrap de hele versiecheck in `if (!import.meta.env.DEV)` zodat development builds direct renderen
+- In productie werkt de cache-busting reload nog steeds zoals bedoeld
+- Verwijder de onnodige async cleanup die de render vertraagt bij first visit
+
+Dit is een eenregelige guard die het hele probleem oplost zonder productie-functionaliteit te verliezen.
 
