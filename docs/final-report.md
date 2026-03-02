@@ -64,7 +64,7 @@
 - **`sanitizeHtml()`** applied in ForumPostPage (`dangerouslySetInnerHTML`)
 - **Rate limiting** enforced in export-user-data (24h via `data_retention_log`)
 - **CI pipeline** includes: lint, typecheck, color-lint, npm audit, unit tests w/ coverage, E2E (Playwright), Lighthouse CI
-- **All 193 tests pass** across 27 test files
+- **All 200 tests pass** across 29 test files
 - **Coverage thresholds** set at 60% (lines/functions/statements), 50% (branches)
 - **i18n keys** present for NL, EN, AR across all new features
 
