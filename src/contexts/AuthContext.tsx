@@ -133,10 +133,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    // 1. Initial load via getSession - single source of truth
+    // Safety timeout: force loading=false after 5s to prevent infinite spinner
+    const safetyTimeout = setTimeout(() => {
+      if (mounted && !initialLoadDone.current) {
+        console.warn('Auth initialization timed out after 5s – forcing loaded state');
+        setLoading(false);
+        initialLoadDone.current = true;
+      }
+    }, 5000);
+
     const initializeAuth = async () => {
       try {
-        // Wait a tick for INITIAL_SESSION to potentially handle things
         await new Promise(r => setTimeout(r, 100));
         if (!mounted || initialLoadDone.current) return;
 
@@ -205,6 +212,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       mounted = false;
+      clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
   }, []);
