@@ -3,43 +3,36 @@ import App from "./App.tsx";
 import "./index.css";
 import { syncMetadata } from "./lib/sync-metadata";
 
-if (import.meta.env.DEV) {
-  // Skip version check in development to prevent reload loops
+const isPreviewEnvironment =
+  import.meta.env.DEV ||
+  window.location.hostname.includes("lovableproject.com") ||
+  window.location.hostname.includes("lovable.app");
+
+if (isPreviewEnvironment) {
+  // Never block rendering in preview/dev
   renderApp();
 } else {
-  // Build version check - forces reload when new version is deployed
-  const BUILD_VERSION = '__BUILD_TIMESTAMP__';
-  const storedVersion = localStorage.getItem('app_version');
+  // Production-only build version check
+  const BUILD_VERSION = __BUILD_TIMESTAMP__;
+  const storedVersion = localStorage.getItem("app_version");
 
-  if (storedVersion !== BUILD_VERSION) {
-    localStorage.setItem('app_version', BUILD_VERSION);
+  if (storedVersion && storedVersion !== BUILD_VERSION) {
+    localStorage.setItem("app_version", BUILD_VERSION);
 
-    const cleanup = async () => {
-      try {
-        if ('serviceWorker' in navigator) {
-          const regs = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(regs.map(r => r.unregister()));
-        }
-        if ('caches' in window) {
-          const names = await caches.keys();
-          await Promise.all(names.map(n => caches.delete(n)));
-        }
-      } catch (e) { /* ignore */ }
-    };
-
-    if (storedVersion !== null) {
-      cleanup().finally(() => {
-        window.location.href = window.location.pathname + '?_v=' + Date.now();
-      });
-    } else {
-      cleanup().finally(() => {
-        renderApp();
-      });
-    }
+    const url = new URL(window.location.href);
+    url.searchParams.set("_v", Date.now().toString());
+    window.location.replace(`${url.pathname}${url.search}${url.hash}`);
   } else {
-    if (window.location.search.includes('_v=')) {
-      window.history.replaceState({}, '', window.location.pathname + window.location.hash);
+    if (!storedVersion) {
+      localStorage.setItem("app_version", BUILD_VERSION);
     }
+
+    if (window.location.search.includes("_v=")) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("_v");
+      window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+    }
+
     renderApp();
   }
 }
