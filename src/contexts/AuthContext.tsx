@@ -55,6 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { t, i18n } = useTranslation();
   const initialLoadDone = useRef(false);
   const isFetching = useRef(false);
+  const roleRecoveryAttemptedFor = useRef<string | null>(null);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -75,38 +76,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const lastKnownRole = useRef<AppRole | null>(null);
+  const resolveEffectiveRole = (
+    roleRows: Array<{ role: string }> | null
+  ): AppRole | null => {
+    if (!roleRows || roleRows.length === 0) return null;
+
+    const roles = roleRows.map((row) => row.role);
+
+    if (roles.includes('admin')) return 'admin';
+    if (roles.includes('teacher')) return 'teacher';
+    if (roles.includes('student')) return 'student';
+
+    return null;
+  };
 
   const fetchRole = async (userId: string) => {
-    try {
+    const readRole = async (): Promise<AppRole | null> => {
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', userId)
-        .maybeSingle();
+        .eq('user_id', userId);
 
       if (error) throw error;
-      const fetchedRole = (data?.role as AppRole) || null;
-      if (fetchedRole) lastKnownRole.current = fetchedRole;
+      return resolveEffectiveRole(data as Array<{ role: string }> | null);
+    };
+
+    try {
+      const fetchedRole = await readRole();
       setRole(fetchedRole);
       return fetchedRole;
     } catch (error) {
       console.error('Error fetching role (attempt 1):', error);
-      await new Promise(r => setTimeout(r, 1000));
+      await new Promise((r) => setTimeout(r, 500));
       try {
-        const { data } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', userId)
-          .maybeSingle();
-        const retryRole = (data?.role as AppRole) || lastKnownRole.current;
-        if (retryRole) lastKnownRole.current = retryRole;
+        const retryRole = await readRole();
         setRole(retryRole);
         return retryRole;
       } catch (retryError) {
         console.error('Error fetching role (attempt 2):', retryError);
-        setRole(lastKnownRole.current);
-        return lastKnownRole.current;
+        setRole(null);
+        return null;
       }
     }
   };
@@ -154,7 +163,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(existingSession?.user ?? null);
 
         if (existingSession?.user) {
+          setProfile(null);
+          setRole(null);
           await fetchUserData(existingSession.user.id);
+        } else {
+          setProfile(null);
+          setRole(null);
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
@@ -173,11 +187,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!mounted) return;
 
         if (event === 'INITIAL_SESSION') {
+          setLoading(true);
           setSession(currentSession);
           setUser(currentSession?.user ?? null);
+          setProfile(null);
+          setRole(null);
+
           if (currentSession?.user) {
             await fetchUserData(currentSession.user.id);
           }
+
           setLoading(false);
           initialLoadDone.current = true;
           return;
@@ -195,15 +214,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (event === 'TOKEN_REFRESHED') {
           setSession(currentSession);
           setUser(currentSession?.user ?? null);
+
+          if (currentSession?.user) {
+            await fetchUserData(currentSession.user.id);
+          } else {
+            setProfile(null);
+            setRole(null);
+          }
+
           return;
         }
 
         if (event === 'SIGNED_IN') {
+          setLoading(true);
           setSession(currentSession);
           setUser(currentSession?.user ?? null);
+          setProfile(null);
+          setRole(null);
+
           if (currentSession?.user) {
             await fetchUserData(currentSession.user.id);
           }
+
           setLoading(false);
           initialLoadDone.current = true;
         }
@@ -216,6 +248,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (loading || !user || role !== null) {
+      roleRecoveryAttemptedFor.current = null;
+      return;
+    }
+
+    if (roleRecoveryAttemptedFor.current === user.id) return;
+    roleRecoveryAttemptedFor.current = user.id;
+    void fetchUserData(user.id);
+  }, [loading, user, role]);
 
   const signUp = async (
     email: string, 
