@@ -2,7 +2,7 @@
 
 **Project:** Huis van het Arabisch (HVA)  
 **Date:** 2026-02-24  
-**Test results:** 27 files, 193 tests – all passing  
+**Test results:** 29 files, 200 tests – all passing  
 **Coverage thresholds:** ≥60% lines, functions, statements; ≥50% branches (enforced in CI)
 
 ---
@@ -75,7 +75,11 @@
 | R1 | Static meta-tags replaced with runtime `syncMetadata()` | ✅ | `index.html`, `src/lib/sync-metadata.ts`, `src/main.tsx` |
 | R2 | CSP `unsafe-inline` for style-src analysed — required by Vite/Tailwind runtime | ✅ Documented | `index.html` (no `unsafe-eval`) |
 | R3 | Manifest generation automated from app-config | ✅ | `scripts/generate-manifest.ts`, `src/lib/app-config.ts` |
+| R4 | OFFLINE_MODE feature flag geïmplementeerd met OfflineBanner component | ✅ | `src/components/OfflineBanner.tsx`, `src/components/layout/MainLayout.tsx`, `src/test/offline-banner.test.tsx` (3 tests) |
+| R5 | Self-study route gerepareerd: `/self-study/all/` vervangen door `/self-study/${category_name}/` | ✅ | `src/pages/StudentDashboard.tsx`, `src/lib/learning-recommendations.ts`, `src/test/recommendations-route.test.ts` (4 tests) |
+| R6 | Helpdesk-link in footer verborgen voor niet-ingelogde gebruikers | ✅ | `src/components/layout/Footer.tsx` (conditioneel op `useAuth().user`) |
+| R7 | Feature-flag tests en route-validatietests toegevoegd | ✅ | `src/test/offline-banner.test.tsx`, `src/test/recommendations-route.test.ts` (7 tests totaal) |
 
 ## Conclusion
 
-All 40 tasks from Blueprint v2 are **100% voltooid** according to the strict Definition of Done, plus 3 additional refinements for extra robustness.
+All 40 tasks from Blueprint v2 are **100% voltooid** according to the strict Definition of Done, plus 7 additional refinements for extra robustness.
