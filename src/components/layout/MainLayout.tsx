@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Header } from './Header';
 import { Footer } from './Footer';
+import { OfflineBanner } from '@/components/OfflineBanner';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -20,6 +21,7 @@ export function MainLayout({ children, showFooter = true }: MainLayoutProps) {
       >
         {t('accessibility.skipToMain', 'Skip to main content')}
       </a>
+      <OfflineBanner />
       <Header />
       <main id="main-content" className="flex-1 scroll-mt-20" tabIndex={-1}>
         {children}
