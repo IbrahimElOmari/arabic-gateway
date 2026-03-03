@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MainLayout } from '@/components/layout/MainLayout';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -90,7 +90,7 @@ export default function InstallPage() {
   const DeviceIcon = deviceType === 'mobile' ? Smartphone : deviceType === 'tablet' ? Tablet : Monitor;
 
   return (
-    <MainLayout>
+    <>
       <div className="container max-w-2xl py-12 space-y-8">
         <div className="text-center space-y-4">
           <div className="inline-flex items-center justify-center p-4 bg-primary/10 rounded-full mb-4">
@@ -318,6 +318,6 @@ export default function InstallPage() {
           </CardContent>
         </Card>
       </div>
-    </MainLayout>
+    </>
   );
 }

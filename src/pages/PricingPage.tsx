@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { MainLayout } from "@/components/layout/MainLayout";
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -107,7 +107,7 @@ export default function PricingPage() {
   };
 
   return (
-    <MainLayout>
+    <>
       <div className="container py-12">
         <div className="mx-auto max-w-3xl text-center mb-10">
           <h1 className="text-3xl font-bold tracking-tight mb-3">
@@ -231,6 +231,6 @@ export default function PricingPage() {
           </div>
         )}
       </div>
-    </MainLayout>
+    </>
   );
 }

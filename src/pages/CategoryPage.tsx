@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "react-router-dom";
-import { MainLayout } from "@/components/layout/MainLayout";
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -126,7 +126,7 @@ export default function CategoryPage() {
   };
 
   return (
-    <MainLayout>
+    <>
       <div className="container py-8">
         <Breadcrumb className="mb-6">
           <BreadcrumbList>
@@ -257,6 +257,6 @@ export default function CategoryPage() {
           </Card>
         )}
       </div>
-    </MainLayout>
+    </>
   );
 }

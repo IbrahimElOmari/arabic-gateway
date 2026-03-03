@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "react-router-dom";
-import { MainLayout } from "@/components/layout/MainLayout";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -130,7 +130,7 @@ export default function ForumRoomPage() {
   const isLoading = roomLoading || postsLoading;
 
   return (
-    <MainLayout>
+    <>
       <div className="container py-8">
         <div className="mb-6">
           <Link to="/forum" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4">
@@ -264,6 +264,6 @@ export default function ForumRoomPage() {
           />
         )}
       </div>
-    </MainLayout>
+    </>
   );
 }

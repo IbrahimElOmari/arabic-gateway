@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme, type FontSize } from '@/contexts/ThemeContext';
-import { MainLayout } from '@/components/layout/MainLayout';
+
 import { TwoFactorSetup } from '@/components/security/TwoFactorSetup';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -178,7 +178,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <MainLayout>
+    <>
       <div className="container py-6 max-w-4xl">
         <h1 className="text-2xl font-bold mb-6">{t('settings.title')}</h1>
 
@@ -449,6 +449,6 @@ export default function SettingsPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </MainLayout>
+    </>
   );
 }

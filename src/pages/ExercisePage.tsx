@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { MainLayout } from "@/components/layout/MainLayout";
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -271,17 +271,17 @@ export default function ExercisePage() {
 
   if (questionsLoading) {
     return (
-      <MainLayout>
+      <>
         <div className="flex min-h-[50vh] items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </MainLayout>
+      </>
     );
   }
 
   if (isCompleted && results) {
     return (
-      <MainLayout>
+      <>
         <div className="container py-8">
           <Card className="max-w-lg mx-auto">
             <CardHeader className="text-center">
@@ -327,12 +327,12 @@ export default function ExercisePage() {
             </CardContent>
           </Card>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
   return (
-    <MainLayout>
+    <>
       <div className="container py-8">
         {/* Breadcrumb */}
         <Breadcrumb className="mb-6">
@@ -465,6 +465,6 @@ export default function ExercisePage() {
           )}
         </div>
       </div>
-    </MainLayout>
+    </>
   );
 }

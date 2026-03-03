@@ -15,7 +15,7 @@ import {
   parseISO
 } from 'date-fns';
 import { nl, enUS, ar } from 'date-fns/locale';
-import { MainLayout } from '@/components/layout/MainLayout';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -230,7 +230,7 @@ export default function CalendarPage() {
   };
 
   return (
-    <MainLayout>
+    <>
       <div className="container py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -481,6 +481,6 @@ export default function CalendarPage() {
           </Card>
         </div>
       </div>
-    </MainLayout>
+    </>
   );
 }

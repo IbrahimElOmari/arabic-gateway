@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { MainLayout } from "@/components/layout/MainLayout";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -180,32 +180,28 @@ export default function ChatPage() {
 
   if (enrollmentsLoading) {
     return (
-      <MainLayout>
+      <>
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </MainLayout>
+      </>
     );
   }
 
   if (allClasses.length === 0) {
     return (
-      <MainLayout>
+      <>
         <div className="container py-8">
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <MessageCircle className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold">{t("chat.noClasses", "No classes yet")}</h3>
-              <p className="text-muted-foreground">{t("chat.enrollFirst", "Enroll in a class to join the chat")}</p>
-            </CardContent>
+...
           </Card>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
   return (
-    <MainLayout showFooter={false}>
+    <>
       <div className="container py-4 h-[calc(100vh-4rem)] flex flex-col">
         <div className="mb-4">
           <h1 className="text-2xl font-bold text-foreground">{t("chat.title", "Class Chat")}</h1>
@@ -361,6 +357,6 @@ export default function ChatPage() {
           />
         )}
       </div>
-    </MainLayout>
+    </>
   );
 }

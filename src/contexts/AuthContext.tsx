@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -45,6 +45,17 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const resolveEffectiveRole = (
+  roleRows: Array<{ role: string }> | null
+): AppRole | null => {
+  if (!roleRows || roleRows.length === 0) return null;
+  const roles = roleRows.map((row) => row.role);
+  if (roles.includes('admin')) return 'admin';
+  if (roles.includes('teacher')) return 'teacher';
+  if (roles.includes('student')) return 'student';
+  return null;
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -53,11 +64,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
-  const initialLoadDone = useRef(false);
-  const isFetching = useRef(false);
-  const roleRecoveryAttemptedFor = useRef<string | null>(null);
+  const fetchIdRef = useRef(0); // Abort mechanism: newer fetch wins
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = useCallback(async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -74,133 +83,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error fetching profile:', error);
     }
-  };
+  }, [i18n]);
 
-  const resolveEffectiveRole = (
-    roleRows: Array<{ role: string }> | null
-  ): AppRole | null => {
-    if (!roleRows || roleRows.length === 0) return null;
-
-    const roles = roleRows.map((row) => row.role);
-
-    if (roles.includes('admin')) return 'admin';
-    if (roles.includes('teacher')) return 'teacher';
-    if (roles.includes('student')) return 'student';
-
-    return null;
-  };
-
-  const fetchRole = async (userId: string) => {
+  const fetchRole = useCallback(async (userId: string): Promise<AppRole | null> => {
     const readRole = async (): Promise<AppRole | null> => {
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId);
-
       if (error) throw error;
       return resolveEffectiveRole(data as Array<{ role: string }> | null);
     };
 
     try {
-      const fetchedRole = await readRole();
-      setRole(fetchedRole);
-      return fetchedRole;
+      return await readRole();
     } catch (error) {
       console.error('Error fetching role (attempt 1):', error);
       await new Promise((r) => setTimeout(r, 500));
       try {
-        const retryRole = await readRole();
-        setRole(retryRole);
-        return retryRole;
+        return await readRole();
       } catch (retryError) {
         console.error('Error fetching role (attempt 2):', retryError);
-        setRole(null);
         return null;
       }
     }
-  };
+  }, []);
 
-  const fetchUserData = async (userId: string) => {
-    if (isFetching.current) return;
-    isFetching.current = true;
-    try {
-      await Promise.all([
-        fetchProfile(userId),
-        fetchRole(userId),
-      ]);
-    } finally {
-      isFetching.current = false;
+  const fetchUserData = useCallback(async (userId: string) => {
+    const currentFetchId = ++fetchIdRef.current;
+    
+    const [, fetchedRole] = await Promise.all([
+      fetchProfile(userId),
+      fetchRole(userId),
+    ]);
+
+    // Only apply if this is still the latest fetch
+    if (currentFetchId === fetchIdRef.current) {
+      setRole(fetchedRole);
     }
-  };
+  }, [fetchProfile, fetchRole]);
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (user) {
       await fetchUserData(user.id);
     }
-  };
+  }, [user, fetchUserData]);
 
+  // Single initialization path: onAuthStateChange only
   useEffect(() => {
     let mounted = true;
-
-    // Safety timeout: force loading=false after 5s to prevent infinite spinner
-    const safetyTimeout = setTimeout(() => {
-      if (mounted && !initialLoadDone.current) {
-        console.warn('Auth initialization timed out after 5s – forcing loaded state');
-        setLoading(false);
-        initialLoadDone.current = true;
-      }
-    }, 5000);
-
-    const initializeAuth = async () => {
-      try {
-        await new Promise(r => setTimeout(r, 100));
-        if (!mounted || initialLoadDone.current) return;
-
-        const { data: { session: existingSession } } = await supabase.auth.getSession();
-        if (!mounted || initialLoadDone.current) return;
-
-        setSession(existingSession);
-        setUser(existingSession?.user ?? null);
-
-        if (existingSession?.user) {
-          setProfile(null);
-          setRole(null);
-          await fetchUserData(existingSession.user.id);
-        } else {
-          setProfile(null);
-          setRole(null);
-        }
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-      } finally {
-        if (mounted && !initialLoadDone.current) {
-          setLoading(false);
-          initialLoadDone.current = true;
-        }
-      }
-    };
-
-    initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         if (!mounted) return;
 
-        if (event === 'INITIAL_SESSION') {
-          setLoading(true);
-          setSession(currentSession);
-          setUser(currentSession?.user ?? null);
-          setProfile(null);
-          setRole(null);
-
-          if (currentSession?.user) {
-            await fetchUserData(currentSession.user.id);
-          }
-
-          setLoading(false);
-          initialLoadDone.current = true;
-          return;
-        }
+        console.log('[Auth] event:', event, 'user:', !!currentSession?.user);
 
         if (event === 'SIGNED_OUT') {
           setSession(null);
@@ -214,53 +151,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (event === 'TOKEN_REFRESHED') {
           setSession(currentSession);
           setUser(currentSession?.user ?? null);
-
+          // Don't reset role/profile, just refresh in background
           if (currentSession?.user) {
-            await fetchUserData(currentSession.user.id);
-          } else {
-            setProfile(null);
-            setRole(null);
+            fetchUserData(currentSession.user.id);
           }
-
           return;
         }
 
-        if (event === 'SIGNED_IN') {
-          setLoading(true);
-          setSession(currentSession);
-          setUser(currentSession?.user ?? null);
+        // INITIAL_SESSION or SIGNED_IN
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+
+        if (currentSession?.user) {
+          await fetchUserData(currentSession.user.id);
+        } else {
           setProfile(null);
           setRole(null);
+        }
 
-          if (currentSession?.user) {
-            await fetchUserData(currentSession.user.id);
-          }
-
+        if (mounted) {
           setLoading(false);
-          initialLoadDone.current = true;
         }
       }
     );
+
+    // Safety timeout: force loading=false after 5s
+    const safetyTimeout = setTimeout(() => {
+      if (mounted) {
+        console.warn('Auth initialization timed out after 5s – forcing loaded state');
+        setLoading(false);
+      }
+    }, 5000);
 
     return () => {
       mounted = false;
       clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchUserData]);
 
+  // Recovery: if user exists but role is null after loading, retry once
   useEffect(() => {
-    if (loading || !user || role !== null) {
-      roleRecoveryAttemptedFor.current = null;
-      return;
-    }
+    if (loading || !user || role !== null) return;
 
-    if (roleRecoveryAttemptedFor.current === user.id) return;
-    roleRecoveryAttemptedFor.current = user.id;
-    void fetchUserData(user.id);
-  }, [loading, user, role]);
+    const timer = setTimeout(() => {
+      console.log('[Auth] Role recovery attempt for', user.id);
+      fetchUserData(user.id);
+    }, 300);
 
-  const signUp = async (
+    return () => clearTimeout(timer);
+  }, [loading, user, role, fetchUserData]);
+
+  const signUp = useCallback(async (
     email: string, 
     password: string, 
     fullName: string,
@@ -301,9 +243,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       return { error: error as Error };
     }
-  };
+  }, [toast, t]);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -325,9 +267,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       return { error: error as Error };
     }
-  };
+  }, [toast, t]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
       await supabase.auth.signOut();
       setProfile(null);
@@ -338,7 +280,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error signing out:', error);
     }
-  };
+  }, [toast, t]);
 
   const value = {
     user,

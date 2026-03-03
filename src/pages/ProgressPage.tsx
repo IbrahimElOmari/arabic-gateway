@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { MainLayout } from "@/components/layout/MainLayout";
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { BookOpenCheck } from "lucide-react";
@@ -92,7 +92,7 @@ export default function ProgressPage() {
     attempt.exercises?.classes?.level_id ?? "";
 
   return (
-    <MainLayout>
+    <>
       <div className="container py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold">{t("progress.title", "Mijn Voortgang")}</h1>
@@ -171,6 +171,6 @@ export default function ProgressPage() {
           </>
         )}
       </div>
-    </MainLayout>
+    </>
   );
 }

@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { MainLayout } from "@/components/layout/MainLayout";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle, BookOpen, Users, Sparkles, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -72,7 +72,7 @@ export default function ForumPage() {
   };
 
   return (
-    <MainLayout>
+    <>
       <div className="container py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">
@@ -121,6 +121,6 @@ export default function ForumPage() {
           </div>
         )}
       </div>
-    </MainLayout>
+    </>
   );
 }

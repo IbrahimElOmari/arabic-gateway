@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { MainLayout } from "@/components/layout/MainLayout";
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -70,7 +70,7 @@ export default function SelfStudyPage() {
   };
 
   return (
-    <MainLayout>
+    <>
       <div className="container py-8">
         {/* Header */}
         <div className="mb-8">
@@ -154,6 +154,6 @@ export default function SelfStudyPage() {
           </Card>
         )}
       </div>
-    </MainLayout>
+    </>
   );
 }
