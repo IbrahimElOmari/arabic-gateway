@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { MainLayout } from '@/components/layout/MainLayout';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -59,7 +59,7 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <MainLayout showFooter={false}>
+    <>
       <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center p-4">
         <Card className="w-full max-w-md mx-auto">
           <CardHeader className="space-y-1">
@@ -117,6 +117,6 @@ export default function ResetPasswordPage() {
           </CardContent>
         </Card>
       </div>
-    </MainLayout>
+    </>
   );
 }

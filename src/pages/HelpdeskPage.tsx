@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MainLayout } from '@/components/layout/MainLayout';
+
 import { useTranslation } from 'react-i18next';
 import { useHelpdesk } from '@/hooks/use-helpdesk';
 import { Button } from '@/components/ui/button';
@@ -137,7 +137,7 @@ export function HelpdeskPage() {
     : tickets.filter(t => t.status === statusFilter);
 
   return (
-    <MainLayout>
+    <>
     <div className="container py-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -440,7 +440,7 @@ export function HelpdeskPage() {
         </Card>
       </div>
     </div>
-    </MainLayout>
+    </>
   );
 }
 

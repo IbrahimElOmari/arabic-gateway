@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { MainLayout } from "@/components/layout/MainLayout";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -121,26 +121,26 @@ export default function ForumPostPage() {
 
   if (isLoading) {
     return (
-      <MainLayout>
+      <>
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </MainLayout>
+      </>
     );
   }
 
   if (!post) {
     return (
-      <MainLayout>
+      <>
         <div className="container py-8 text-center">
           <p>{t("forum.postNotFound", "Post not found")}</p>
         </div>
-      </MainLayout>
+      </>
     );
   }
 
   return (
-    <MainLayout>
+    <>
       <div className="container py-8 max-w-3xl">
         <Link to={`/forum/${roomName}`} className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6">
           <ArrowLeft className="h-4 w-4" />
@@ -302,6 +302,6 @@ export default function ForumPostPage() {
           />
         )}
       </div>
-    </MainLayout>
+    </>
   );
 }

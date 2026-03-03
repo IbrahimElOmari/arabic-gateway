@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { MainLayout } from "@/components/layout/MainLayout";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -122,7 +122,7 @@ export default function KnowledgeBasePage() {
   const isLoading = categoriesLoading || articlesLoading;
 
   return (
-    <MainLayout>
+    <>
       <div className="container py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">
@@ -248,6 +248,6 @@ export default function KnowledgeBasePage() {
           </CardContent>
         </Card>
       </div>
-    </MainLayout>
+    </>
   );
 }

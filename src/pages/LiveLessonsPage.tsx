@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { MainLayout } from "@/components/layout/MainLayout";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Video, Loader2, Plus, Palette } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -55,7 +55,7 @@ export default function LiveLessonsPage() {
   });
 
   return (
-    <MainLayout>
+    <>
       <div className="container py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">{t("lessons.liveClasses")}</h1>
@@ -128,6 +128,6 @@ export default function LiveLessonsPage() {
           </Card>
         )}
       </div>
-    </MainLayout>
+    </>
   );
 }

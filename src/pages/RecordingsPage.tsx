@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { MainLayout } from "@/components/layout/MainLayout";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Video, Loader2, Play, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -75,7 +75,7 @@ export default function RecordingsPage() {
   });
 
   return (
-    <MainLayout>
+    <>
       <div className="container py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">
@@ -125,6 +125,6 @@ export default function RecordingsPage() {
           </Card>
         )}
       </div>
-    </MainLayout>
+    </>
   );
 }
