@@ -51,7 +51,7 @@ interface NavItem {
 
 export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const { t } = useTranslation();
-  const { user, role } = useAuth();
+  const { user, role, roleStatus } = useAuth();
 
   const publicItems: NavItem[] = [
     { to: '/', icon: Home, label: t('nav.home'), end: true },
@@ -64,8 +64,15 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
     { to: '/register', icon: UserPlus, label: t('auth.register') },
   ];
 
+  // Dynamic dashboard link based on role
+  const getDashboardLink = (): NavItem => {
+    if (role === 'admin') return { to: '/admin', icon: LayoutDashboard, label: t('nav.dashboard'), end: true };
+    if (role === 'teacher') return { to: '/teacher', icon: LayoutDashboard, label: t('nav.dashboard'), end: true };
+    return { to: '/dashboard', icon: LayoutDashboard, label: t('nav.dashboard'), end: true };
+  };
+
   const studentItems: NavItem[] = [
-    { to: '/dashboard', icon: LayoutDashboard, label: t('nav.dashboard') },
+    getDashboardLink(),
     { to: '/self-study', icon: BookOpen, label: t('nav.selfStudy') },
     { to: '/live-lessons', icon: Video, label: t('nav.liveLessons') },
     { to: '/recordings', icon: Video, label: t('nav.recordings', 'Recordings') },
@@ -105,7 +112,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   ];
 
   const renderSection = (title: string, items: NavItem[]) => (
-    <div className="mb-2">
+    <div className="mb-2" key={title}>
       {!collapsed && (
         <p className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           {title}
@@ -128,6 +135,9 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
       ))}
     </div>
   );
+
+  // Determine which sections to show based on role (strictly)
+  const isRoleResolved = roleStatus === 'ready' && role !== null;
 
   return (
     <aside
@@ -155,14 +165,31 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
 
         {!user && renderSection(t('nav.account', 'Account'), guestItems)}
 
-        {user && renderSection(t('nav.learning', 'Learning'), studentItems)}
-
-        {user && (role === 'teacher' || role === 'admin') && (
-          renderSection(t('nav.teaching', 'Teaching'), teacherItems)
+        {/* Only show role-specific sections when role is resolved */}
+        {user && isRoleResolved && role === 'student' && (
+          renderSection(t('nav.learning', 'Learning'), studentItems)
         )}
 
-        {user && role === 'admin' && (
-          renderSection(t('nav.administration', 'Administration'), adminItems)
+        {user && isRoleResolved && role === 'teacher' && (
+          <>
+            {renderSection(t('nav.learning', 'Learning'), studentItems)}
+            {renderSection(t('nav.teaching', 'Teaching'), teacherItems)}
+          </>
+        )}
+
+        {user && isRoleResolved && role === 'admin' && (
+          <>
+            {renderSection(t('nav.learning', 'Learning'), studentItems)}
+            {renderSection(t('nav.teaching', 'Teaching'), teacherItems)}
+            {renderSection(t('nav.administration', 'Administration'), adminItems)}
+          </>
+        )}
+
+        {/* User logged in but role not yet resolved — show minimal nav */}
+        {user && !isRoleResolved && (
+          renderSection(t('nav.account', 'Account'), [
+            { to: '/settings', icon: Settings, label: t('nav.settings') },
+          ])
         )}
       </nav>
 
