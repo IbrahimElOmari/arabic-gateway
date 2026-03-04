@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
+import type { User } from '@supabase/supabase-js';
 
 const STORAGE_KEY = 'hva_active_class_id';
 
@@ -24,7 +25,18 @@ interface ClassContextType {
 const ClassContext = createContext<ClassContextType | undefined>(undefined);
 
 export function ClassProvider({ children }: { children: React.ReactNode }) {
-  const { user, isAdmin, isTeacher } = useAuth();
+  // Use a safe wrapper — if AuthProvider hasn't mounted yet, fall back to nulls
+  let user: User | null = null;
+  let isAdmin = false;
+  let isTeacher = false;
+  try {
+    const auth = useAuth();
+    user = auth.user;
+    isAdmin = auth.isAdmin;
+    isTeacher = auth.isTeacher;
+  } catch {
+    // AuthProvider not yet available — render with empty state
+  }
   const [activeClassId, setActiveClassIdState] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem(STORAGE_KEY);
