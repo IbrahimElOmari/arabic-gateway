@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './AuthContext';
-import type { User } from '@supabase/supabase-js';
+import { useAuth } from '@/contexts/AuthContext';
 
 const STORAGE_KEY = 'hva_active_class_id';
 
@@ -25,18 +24,8 @@ interface ClassContextType {
 const ClassContext = createContext<ClassContextType | undefined>(undefined);
 
 export function ClassProvider({ children }: { children: React.ReactNode }) {
-  // Use a safe wrapper — if AuthProvider hasn't mounted yet, fall back to nulls
-  let user: User | null = null;
-  let isAdmin = false;
-  let isTeacher = false;
-  try {
-    const auth = useAuth();
-    user = auth.user;
-    isAdmin = auth.isAdmin;
-    isTeacher = auth.isTeacher;
-  } catch {
-    // AuthProvider not yet available — render with empty state
-  }
+  const { user, isAdmin, isTeacher } = useAuth();
+
   const [activeClassId, setActiveClassIdState] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem(STORAGE_KEY);
@@ -51,7 +40,6 @@ export function ClassProvider({ children }: { children: React.ReactNode }) {
       if (!user) return [];
       
       if (isAdmin) {
-        // Admin can access ALL active classes
         const { data, error } = await supabase
           .from('classes')
           .select('id, name, level:levels(name)')
@@ -60,7 +48,6 @@ export function ClassProvider({ children }: { children: React.ReactNode }) {
         if (error) throw error;
         return data || [];
       } else if (isTeacher) {
-        // Teacher can only access assigned classes
         const { data, error } = await supabase
           .from('classes')
           .select('id, name, level:levels(name)')

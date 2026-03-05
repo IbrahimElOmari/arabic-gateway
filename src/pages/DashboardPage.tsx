@@ -28,16 +28,14 @@ export default function DashboardPage() {
 
   if (!user) return <Navigate to="/login" replace />;
 
-  // Role still loading
-  if (roleStatus === 'loading') {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+  // Role resolved — deterministic routing
+  if (roleStatus === 'ready') {
+    if (role === 'admin') return <Navigate to="/admin" replace />;
+    if (role === 'teacher') return <Navigate to="/teacher" replace />;
+    if (role === 'student') return <StudentDashboard />;
   }
 
-  // Role fetch failed — recovery UI
+  // Role fetch failed — recovery UI (covers both 'error' and 'loading' that exceeded timeout)
   if (roleStatus === 'error') {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -60,12 +58,7 @@ export default function DashboardPage() {
     );
   }
 
-  // Deterministic routing
-  if (role === 'admin') return <Navigate to="/admin" replace />;
-  if (role === 'teacher') return <Navigate to="/teacher" replace />;
-  if (role === 'student') return <StudentDashboard />;
-
-  // Fallback (should not happen)
+  // Role still loading (bounded by 3s timeout in AuthContext)
   return (
     <div className="flex min-h-screen items-center justify-center">
       <Loader2 className="h-8 w-8 animate-spin text-primary" />

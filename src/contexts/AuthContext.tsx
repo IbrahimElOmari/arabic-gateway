@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 
 type AppRole = 'admin' | 'teacher' | 'student';
-type RoleStatus = 'idle' | 'loading' | 'ready' | 'error';
+type RoleStatus = 'loading' | 'ready' | 'error';
 
 interface Profile {
   id: string;
@@ -29,8 +29,8 @@ interface AuthContextType {
   roleStatus: RoleStatus;
   loading: boolean;
   signUp: (
-    email: string, 
-    password: string, 
+    email: string,
+    password: string,
     fullName: string,
     phone?: string | null,
     address?: string | null,
@@ -53,11 +53,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
-  const [roleStatus, setRoleStatus] = useState<RoleStatus>('idle');
+  const [roleStatus, setRoleStatus] = useState<RoleStatus>('loading');
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
+
+  // Monotonic request ID to implement latest-wins for concurrent fetches
   const fetchIdRef = useRef(0);
+  // Refs to avoid stale closures in callbacks
+  const roleRef = useRef<AppRole | null>(null);
+  const roleStatusRef = useRef<RoleStatus>('loading');
+
+  const updateRole = useCallback((newRole: AppRole | null, newStatus: RoleStatus) => {
+    roleRef.current = newRole;
+    roleStatusRef.current = newStatus;
+    setRole(newRole);
+    setRoleStatus(newStatus);
+  }, []);
 
   const fetchProfile = useCallback(async (userId: string) => {
     try {
@@ -78,8 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [i18n]);
 
-  const fetchRole = useCallback(async (userId: string): Promise<AppRole | null> => {
-    // Use RPC get_user_role for atomic, server-side role resolution
+  const fetchRoleWithTimeout = useCallback(async (userId: string): Promise<AppRole | null> => {
     const attempt = async (): Promise<AppRole | null> => {
       const { data, error } = await supabase.rpc('get_user_role', { _user_id: userId });
       if (error) throw error;
@@ -87,13 +98,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     try {
-      return await attempt();
+      // Race against a 3s timeout
+      const result = await Promise.race([
+        attempt(),
+        new Promise<null>((_, reject) =>
+          setTimeout(() => reject(new Error('Role fetch timeout')), 3000)
+        ),
+      ]);
+      return result;
     } catch (error) {
       console.error('Role fetch attempt 1 failed:', error);
-      // Retry once after 500ms
+      // Single retry after 500ms
       await new Promise((r) => setTimeout(r, 500));
       try {
-        return await attempt();
+        return await Promise.race([
+          attempt(),
+          new Promise<null>((_, reject) =>
+            setTimeout(() => reject(new Error('Role retry timeout')), 3000)
+          ),
+        ]);
       } catch (retryError) {
         console.error('Role fetch attempt 2 failed:', retryError);
         return null;
@@ -101,45 +124,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const fetchUserData = useCallback(async (userId: string, preserveExistingRole = false) => {
+  /**
+   * Fetch profile + role for a user. Uses fetchIdRef for latest-wins semantics.
+   * @param preserveExistingRole - if true and fetch fails, keep current role instead of going to error
+   */
+  const resolveUserData = useCallback(async (userId: string, preserveExistingRole = false) => {
     const currentFetchId = ++fetchIdRef.current;
 
     if (!preserveExistingRole) {
-      setRoleStatus('loading');
+      updateRole(roleRef.current, 'loading');
     }
 
     const [, fetchedRole] = await Promise.all([
       fetchProfile(userId),
-      fetchRole(userId),
+      fetchRoleWithTimeout(userId),
     ]);
 
     // Only apply if this is still the latest fetch
     if (currentFetchId !== fetchIdRef.current) return;
 
     if (fetchedRole !== null) {
-      setRole(fetchedRole);
-      setRoleStatus('ready');
-    } else if (!preserveExistingRole) {
-      // Only set error if we don't have an existing valid role
-      setRoleStatus(role !== null ? 'ready' : 'error');
+      updateRole(fetchedRole, 'ready');
+    } else if (preserveExistingRole && roleRef.current !== null) {
+      // Keep existing role, don't change status
+      console.log('[Auth] Role refresh failed, keeping existing role:', roleRef.current);
+    } else {
+      // No role found and nothing to preserve — error
+      updateRole(null, 'error');
     }
-    // If preserveExistingRole=true and fetchedRole=null, keep existing role & status
-  }, [fetchProfile, fetchRole, role]);
+  }, [fetchProfile, fetchRoleWithTimeout, updateRole]);
 
   const retryRoleResolution = useCallback(() => {
     if (user) {
-      setRoleStatus('loading');
-      fetchUserData(user.id);
+      updateRole(null, 'loading');
+      resolveUserData(user.id);
     }
-  }, [user, fetchUserData]);
+  }, [user, resolveUserData, updateRole]);
 
   const refreshProfile = useCallback(async () => {
     if (user) {
-      await fetchUserData(user.id, true);
+      await resolveUserData(user.id, true);
     }
-  }, [user, fetchUserData]);
+  }, [user, resolveUserData]);
 
-  // Single initialization path: onAuthStateChange only
+  // Single initialization: onAuthStateChange only
   useEffect(() => {
     let mounted = true;
 
@@ -153,8 +181,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSession(null);
           setUser(null);
           setProfile(null);
-          setRole(null);
-          setRoleStatus('idle');
+          updateRole(null, 'loading');
           setLoading(false);
           return;
         }
@@ -162,9 +189,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (event === 'TOKEN_REFRESHED') {
           setSession(currentSession);
           setUser(currentSession?.user ?? null);
-          // Preserve existing role, just refresh in background
+          // Background refresh — preserve existing role
           if (currentSession?.user) {
-            fetchUserData(currentSession.user.id, true);
+            resolveUserData(currentSession.user.id, true);
           }
           return;
         }
@@ -174,11 +201,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(currentSession?.user ?? null);
 
         if (currentSession?.user) {
-          await fetchUserData(currentSession.user.id);
+          await resolveUserData(currentSession.user.id);
         } else {
           setProfile(null);
-          setRole(null);
-          setRoleStatus('idle');
+          updateRole(null, 'loading');
         }
 
         if (mounted) {
@@ -187,17 +213,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
-    // Safety timeout: force loading=false after 5s
+    // Safety: if onAuthStateChange never fires (e.g. no session at all),
+    // force loading=false after 4s. Use refs to avoid stale closure.
     const safetyTimeout = setTimeout(() => {
       if (mounted) {
-        console.warn('Auth initialization timed out after 5s – forcing loaded state');
+        console.warn('[Auth] Safety timeout after 4s – forcing loaded state');
         setLoading(false);
-        // If we have a user but role didn't resolve, mark error
-        if (role === null && roleStatus === 'loading') {
-          setRoleStatus('error');
+        // If role is still loading (not ready/error), mark as error
+        if (roleStatusRef.current === 'loading' && roleRef.current === null) {
+          updateRole(null, 'error');
         }
       }
-    }, 5000);
+    }, 4000);
 
     return () => {
       mounted = false;
@@ -206,22 +233,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Recovery: if user exists but role failed, retry once after 300ms
-  useEffect(() => {
-    if (loading || !user || roleStatus !== 'error') return;
-
-    const timer = setTimeout(() => {
-      console.log('[Auth] Role recovery attempt for', user.id);
-      setRoleStatus('loading');
-      fetchUserData(user.id);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [loading, user, roleStatus]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const signUp = useCallback(async (
-    email: string, 
-    password: string, 
+    email: string,
+    password: string,
     fullName: string,
     phone?: string | null,
     address?: string | null,
@@ -290,17 +304,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await supabase.auth.signOut();
       setProfile(null);
-      setRole(null);
-      setRoleStatus('idle');
+      updateRole(null, 'loading');
       toast({
         title: t('auth.logoutSuccess'),
       });
     } catch (error) {
       console.error('Error signing out:', error);
     }
-  }, [toast, t]);
+  }, [toast, t, updateRole]);
 
-  const value = {
+  const value: AuthContextType = {
     user,
     session,
     profile,
