@@ -1,0 +1,21 @@
+-- Performance indexes for frequently queried columns
+CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON public.profiles (user_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_class_id ON public.chat_messages (class_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_created_at ON public.chat_messages (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_exercises_class_id ON public.exercises (class_id);
+CREATE INDEX IF NOT EXISTS idx_exercises_category_id ON public.exercises (category_id);
+CREATE INDEX IF NOT EXISTS idx_class_enrollments_student_id ON public.class_enrollments (student_id);
+CREATE INDEX IF NOT EXISTS idx_class_enrollments_class_id ON public.class_enrollments (class_id);
+CREATE INDEX IF NOT EXISTS idx_lessons_class_id ON public.lessons (class_id);
+CREATE INDEX IF NOT EXISTS idx_lessons_scheduled_at ON public.lessons (scheduled_at);
+CREATE INDEX IF NOT EXISTS idx_exercise_attempts_student_id ON public.exercise_attempts (student_id);
+CREATE INDEX IF NOT EXISTS idx_exercise_attempts_exercise_id ON public.exercise_attempts (exercise_id);
+CREATE INDEX IF NOT EXISTS idx_forum_posts_room_id ON public.forum_posts (room_id);
+CREATE INDEX IF NOT EXISTS idx_forum_comments_post_id ON public.forum_comments (post_id);
+CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON public.user_roles (user_id);
+CREATE INDEX IF NOT EXISTS idx_points_transactions_user_id ON public.points_transactions (user_id);
+CREATE INDEX IF NOT EXISTS idx_user_badges_user_id ON public.user_badges (user_id);
+CREATE INDEX IF NOT EXISTS idx_leaderboards_period ON public.leaderboards (period, points DESC);
+CREATE INDEX IF NOT EXISTS idx_payments_user_id ON public.payments (user_id);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_created_at ON public.analytics_events (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_event_type ON public.analytics_events (event_type);
