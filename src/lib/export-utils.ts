@@ -1,5 +1,12 @@
 import { formatDate } from "@/lib/date-utils";
 
+// HTML escape utility to prevent XSS in PDF exports
+function escapeHtml(text: string): string {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 // CSV Export Utility
 export function exportToCSV(data: Record<string, any>[], filename: string, headers?: Record<string, string>) {
   if (data.length === 0) return;
