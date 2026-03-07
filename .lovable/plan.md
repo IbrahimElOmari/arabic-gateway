@@ -1,75 +1,93 @@
+# Stand van Zaken — HVA Platform (7 maart 2026)
 
-Doel: de laadlus definitief elimineren, rol-routing deterministisch maken, en sidebar permanent zichtbaar houden op alle pagina’s.
+---
 
-1) Echte onderliggende oorzaak (fundamenteel)
-- De huidige auth-flow laat ongeldige toestanden toe:
-  - `user !== null` terwijl `roleStatus` op `idle` of eindeloos `loading` blijft.
-- In `AuthContext` zit een race/stale-closure probleem:
-  - `onAuthStateChange`-callback gebruikt verouderde closure (effect met lege deps + disabled lint).
-  - safety-timeout kijkt naar oude `roleStatus` en zet niet betrouwbaar naar `error`.
-  - `TOKEN_REFRESHED` met `preserveExistingRole=true` kan `roleStatus` in `idle` laten hangen als rol nog niet eerder resolved was.
-- `DashboardPage` heeft nog een “onmogelijke fallback” spinner (bij `roleStatus='idle'`), waardoor de app visueel blijft laden.
-- De quick-fix in `ClassContext` (`try/catch` rond `useAuth`) maskeert contextfouten i.p.v. architecturaal op te lossen.
+## 1. Huidige Status per Domein
 
-2) Oplossingsontwerp (definitief)
-A. Auth als strikte state machine (src/contexts/AuthContext.tsx)
-- Vervang losse states door expliciete flow:
-  - `booting -> unauthenticated | authenticated(role_loading) -> authenticated(role_ready) | authenticated(role_error)`.
-- Verwijder safety-timeout met stale closure; vervang door per-request timeout + `finally` die altijd terminal state zet.
-- Maak rolresolutie cancelable/idempotent (latest-request-wins) met monotone request-id + hard timeout (bv. 3s).
-- Zorg dat bij ingelogde gebruiker `roleStatus` nooit op `idle` blijft.
-- `TOKEN_REFRESHED`:
-  - als rol al bekend: behoud rol + stille refresh;
-  - als rol onbekend: forceer role-resolution met timeout.
-- Verwijder automatische error->retry-loop; alleen expliciete retry via knop.
 
-B. Guard- en dashboardgedrag hard maken
-- `ProtectedRoute`:
-  - auth-only routes: render zodra sessie bekend is;
-  - role-routes: alleen `loading` met bounded duur; daarna `error`-herstelpaneel.
-- `DashboardPage`:
-  - geen generieke fallback-spinner meer;
-  - alleen 4 uitkomsten: login redirect / admin redirect / teacher redirect / student dashboard / error-herstel.
-  - `idle` wordt behandeld als bug-state => direct retry-trigger of error-view.
+| Domein                      | Status          | Toelichting                                                                                                                                                                |
+| --------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Architectuur**            | 70%             | Monolithische SPA + Supabase BaaS. Functioneel maar geen formele domeinscheiding.                                                                                          |
+| **Auth & Routing**          | 85%             | State machine met `roleStatus` (loading/ready/error), recovery UI bij fouten. Sidebar permanent zichtbaar. Werkt, maar er was recent een laadlus-probleem dat is gepatcht. |
+| **Database (30+ tabellen)** | 85%             | Genormaliseerd, RLS op alle tabellen, `has_role()` security definer. Indexen niet geverifieerd.                                                                            |
+| **i18n (NL/EN/AR + RTL)**   | 92%             | 3 vertaalbestanden, dynamische taalwissel, RTL-ondersteuning. Enkele hardcoded strings over.                                                                               |
+| **Beveiliging**             | 80%             | 2FA, XSS-sanitatie, CSP (geen unsafe-eval), requireEnv() voor secrets, gamification endpoint nu beveiligd. Wachtwoord-minimum inconsistentie (6 vs 8) nog open.            |
+| **Testing**                 | 55%             | 200 unit tests, 10 E2E specs, 60% coverage threshold. Geen RLS-policy tests, geen load tests.                                                                              |
+| **Betalingen (Stripe)**     | 30%             | DB-schema compleet, edge functions bestaan, maar **STRIPE_SECRET_KEY niet geconfigureerd** → niet operationeel.                                                            |
+| **E-mail**                  | 0% operationeel | Edge functions bestaan, maar **RESEND_API_KEY niet geconfigureerd** → alle e-mailfuncties dood.                                                                            |
+| **Observability**           | 20%             | Geen structured logging, geen monitoring, geen alerting, geen error tracking (Sentry).                                                                                     |
+| **PWA/Offline**             | 10%             | Service worker is self-destructing. Geen offline functionaliteit.                                                                                                          |
+| **Analytics**               | 70%             | DB-tabellen en admin dashboard aanwezig. Geen privacy-vriendelijk alternatief.                                                                                             |
+| **Legal/Privacy**           | 90%             | Privacy- en terms-pagina's bestaan. Cookie consent banner aanwezig. GDPR export functie met rate limiting.                                                                 |
+| **Gamification**            | 90%             | Punten, badges, streaks, leaderboards. Endpoint nu beveiligd met JWT + autorisatie.                                                                                        |
+| **Community**               | 95%             | Forum (kamers, posts, comments, likes), realtime chat, content rapportering.                                                                                               |
+| **Helpdesk/FAQ**            | 95%             | Ticket systeem, knowledge base, admin CRUD, HelpWidget.                                                                                                                    |
 
-C. ClassContext structureel corrigeren (src/contexts/ClassContext.tsx)
-- Verwijder `try/catch` rond `useAuth` (geen masking).
-- Gebruik consistente import van AuthContext via alias (`@/contexts/AuthContext`) om module-identiteit/HMR-dubbeling te vermijden.
-- Fail-fast alleen in echte provider-misconfiguratie; niet stilzwijgend degraderen.
 
-D. Sidebar permanent en stabiel houden
-- `AppLayout` blijft globale wrapper voor alle routes.
-- `AppSidebar` blijft altijd gemount; bij rol-onzekerheid toont basisnavigatie + account-links i.p.v. lege/verdwijnende staat.
-- Dashboard-link blijft rol-afhankelijk maar alleen na role-ready.
+### Console Warnings (live)
 
-3) Testplan (tot bewezen stabiel)
-A. Unit/integration
-- AuthContext scenario-matrix:
-  1) INITIAL_SESSION -> role success
-  2) TOKEN_REFRESHED eerst -> role success
-  3) role timeout -> `role_error` (geen infinite loading)
-  4) retry vanuit error -> ready
-- ProtectedRoute tests:
-  - auth-only route werkt zonder rol
-  - role-route toont error-paneel na timeout, geen spinner-lus
-- Dashboard tests:
-  - admin/teacher/student redirect exact
-  - geen fallback-spinner op `idle`
+- `GamificationDashboard`: Badge component krijgt een ref maar is geen forwardRef → React warning.
 
-B. E2E smoke (Playwright)
-- Admin login: Home -> /dashboard -> /admin binnen bounded tijd.
-- Teacher login: Home -> /dashboard -> /teacher binnen bounded tijd.
-- Student login: /dashboard toont student dashboard.
-- `/settings` opent zonder laadlus.
-- Sidebar zichtbaar op: `/`, `/login`, `/dashboard`, `/admin`, `/teacher`, `/settings`.
+### Security Scan Resultaten
 
-C. Acceptatiecriteria (hard)
-- Geen pad waar spinner > 5s zonder error/retry UI.
-- Geen toestand `user && roleStatus=idle` na boot.
-- Geen automatische redirect-lussen.
-- Sidebar DOM-element aanwezig op alle routes.
+- **Alle "error"-level findings zijn opgelost** (gamification endpoint beveiligd).
+- Open "warn": HTML injection in PDF export (`export-utils.ts`) — niet gesaniteerd.
+- Open "warn": Leaked password protection uitgeschakeld in auth config.
 
-Technische details
-- Geen databasewijzigingen nodig; issue zit in frontend auth-orchestratie.
-- Fix focust op state-machine-correctheid, event-order robuustheid, en expliciete terminal states (niet op tijdelijke patches).
-- De huidige `ClassContext`-patch wordt verwijderd omdat die symptomen maskeert en root-cause debugging verhindert.
+---
+
+## 2. Kritieke Openstaande Issues
+
+
+| #   | Issue                                              | Impact                                                                     | Ernst        |
+| --- | -------------------------------------------------- | -------------------------------------------------------------------------- | ------------ |
+| 1   | **RESEND_API_KEY ontbreekt**                       | Alle e-mail non-functioneel (verificatie, wachtwoord-reset, herinneringen) | Blokkerend   |
+| 2   | **STRIPE_SECRET_KEY ontbreekt**                    | Betalingen volledig non-functioneel                                        | Blokkerend   |
+| 3   | **Wachtwoord min 6 in SettingsPage** (moet 8 zijn) | Inconsistente beveiligingseis                                              | Bug          |
+| 4   | **LoginForm Zod-schema buiten component**          | Foutmeldingen altijd Engels                                                | Bug          |
+| 5   | **PDF export XSS**                                 | HTML-injectie mogelijk bij export                                          | Beveiliging  |
+| 6   | **Geen error tracking (Sentry/LogRocket)**         | Productiefouten onzichtbaar                                                | Operationeel |
+| 7   | **pg_cron niet geconfigureerd**                    | Automatische herinneringen en exercise release werken niet                 | Functioneel  |
+| 8   | **Badge component ref warning**                    | Console vervuiling, potentieel geheugenlek                                 | Code quality |
+
+
+---
+
+## 3. Aanbevelingen voor Wereld-/Profniveau
+
+### A. Onmiddellijk (blokkerend voor productie)
+
+1. **Wachtwoord-minimum fixen**: SettingsPage `< 6` → `< 8`.
+2. **LoginForm Zod i18n**: Schema naar binnen component verplaatsen met `t()` calls.
+3. **PDF export sanitatie**: `escapeHtml()` toepassen op alle user data in `export-utils.ts`.
+  &nbsp;
+
+### B. Kort termijn (professionalisering)
+
+6. **Error tracking integreren**: Sentry of vergelijkbaar. Zonder dit ben je blind in productie. Implementeer via een edge function + client-side `error-logger.ts` integratie.
+7. **use-gamification refactoren naar TanStack Query**: Elimineert handmatige useState/useEffect, voegt caching en deduplicatie toe.
+8. **Badge forwardRef fixen**: `GamificationDashboard` geeft ref aan Badge component die geen forwardRef is.
+9. **Notificatie-voorkeuren persistent maken**: DB-kolommen toevoegen aan profiles, load/save in SettingsPage.
+10. **Boilerplate GitHub workflows opruimen**: 15+ irrelevante workflow-bestanden verwijderen.
+
+### C. Middellang termijn (schaalbaar & robuust)
+
+11. **Structured logging**: JSON-formaat in edge functions (al deels via `_shared/logger.ts`), maar client-side logging naar een service routeren.
+12. **Database indexen auditen**: `EXPLAIN ANALYZE` op veelgebruikte queries (profiles.user_id, exercises.class_id, chat_messages.class_id).
+13. **Rate limiting op client-side API calls**: Debounce/throttle op veelgebruikte endpoints.
+14. **Load testing**: k6 of Artillery voor kritieke paden (login, dashboard, exercise submit).
+15. **Offline-first strategie**: Workbox met cache-first voor statische assets, network-first voor API.
+
+### D. Lange termijn (wereld-niveau differentiators)
+
+16. **Adaptieve leerroutes**: AI-driven moeilijkheidsaanpassing op basis van student_analytics data. Kan met Lovable AI (Gemini/GPT) zonder externe API key.
+17. **Real-time collaboration**: Docent kan live mee-kijken met student-oefeningen.
+18. **Certificaatgeneratie**: PDF-certificaten bij niveau-promotie (feature flag `CERTIFICATE_GENERATION` bestaat al).
+19. **iDEAL/Bancontact**: Lokale betaalmethoden via Stripe voor NL/BE doelgroep.
+20. **A/B testing framework**: Feature flags uitbreiden met percentage-based rollout en analytics-koppeling.
+
+---
+
+## Samenvatting
+
+Het platform is functioneel compleet op ~80% van de features. De architectuur is solide (React + Supabase + RLS + i18n + gamification). De grootste gaten zijn **observability** (geen error tracking of monitoring). Los die op en je hebt een productieklaar platform. De lange-termijn aanbevelingen (adaptief leren, certificaten, lokale betaalmethoden) zijn wat het platform van "goed" naar "wereld-niveau" tillen.
