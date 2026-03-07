@@ -11,57 +11,60 @@ export default function DashboardPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  // Programmatic redirect for admin/teacher
+  // Programmatic redirect for admin/teacher once role is ready
   useEffect(() => {
     if (loading || !user || roleStatus !== 'ready') return;
     if (role === 'admin') navigate('/admin', { replace: true });
     else if (role === 'teacher') navigate('/teacher', { replace: true });
   }, [loading, user, role, roleStatus, navigate]);
 
+  // Auth still loading
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
+  // Not logged in
   if (!user) return <Navigate to="/login" replace />;
 
-  // Role resolved — deterministic routing
+  // Role resolved
   if (roleStatus === 'ready') {
     if (role === 'admin') return <Navigate to="/admin" replace />;
     if (role === 'teacher') return <Navigate to="/teacher" replace />;
     if (role === 'student') return <StudentDashboard />;
+    // role is null but status is ready — should not happen, show recovery
   }
 
-  // Role fetch failed — recovery UI (covers both 'error' and 'loading' that exceeded timeout)
-  if (roleStatus === 'error') {
+  // Role loading (bounded by 5s timeout in AuthContext)
+  if (roleStatus === 'loading') {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center space-y-4 max-w-sm">
-          <p className="text-muted-foreground">
-            {t('common.roleLoadError', 'Er ging iets mis bij het laden van je rol. Probeer het opnieuw.')}
-          </p>
-          <div className="flex gap-2 justify-center">
-            <Button onClick={retryRoleResolution} variant="default" size="sm">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              {t('common.retry', 'Opnieuw proberen')}
-            </Button>
-            <Button onClick={signOut} variant="outline" size="sm">
-              <LogOut className="h-4 w-4 mr-2" />
-              {t('auth.logout', 'Uitloggen')}
-            </Button>
-          </div>
-        </div>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  // Role still loading (bounded by 3s timeout in AuthContext)
+  // Role error — always show recovery UI, never hang
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="text-center space-y-4 max-w-sm">
+        <p className="text-muted-foreground">
+          {t('common.roleLoadError', 'Er ging iets mis bij het laden van je rol. Probeer het opnieuw.')}
+        </p>
+        <div className="flex gap-2 justify-center">
+          <Button onClick={retryRoleResolution} variant="default" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            {t('common.retry', 'Opnieuw proberen')}
+          </Button>
+          <Button onClick={signOut} variant="outline" size="sm">
+            <LogOut className="h-4 w-4 mr-2" />
+            {t('auth.logout', 'Uitloggen')}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
