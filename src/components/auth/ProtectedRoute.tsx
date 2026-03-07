@@ -25,7 +25,7 @@ export function ProtectedRoute({
   // Still loading auth session
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -44,16 +44,16 @@ export function ProtectedRoute({
   // Role-specific route: check roleStatus
   if (roleStatus === 'loading') {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  // Role fetch failed — show recovery UI instead of infinite spinner
+  // Role fetch failed — show recovery UI
   if (roleStatus === 'error') {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center space-y-4 max-w-sm">
           <p className="text-muted-foreground">
             {t('common.roleLoadError', 'Er ging iets mis bij het laden van je rol. Probeer het opnieuw.')}

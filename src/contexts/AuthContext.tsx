@@ -58,121 +58,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
 
-  // Monotonic request ID to implement latest-wins for concurrent fetches
-  const fetchIdRef = useRef(0);
-  // Refs to avoid stale closures in callbacks
+  // Refs for latest-wins and stale-closure avoidance
+  const roleRequestId = useRef(0);
   const roleRef = useRef<AppRole | null>(null);
-  const roleStatusRef = useRef<RoleStatus>('loading');
 
   const updateRole = useCallback((newRole: AppRole | null, newStatus: RoleStatus) => {
     roleRef.current = newRole;
-    roleStatusRef.current = newStatus;
     setRole(newRole);
     setRoleStatus(newStatus);
   }, []);
 
-  const fetchProfile = useCallback(async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (error) throw error;
-      setProfile(data);
-
-      if (data?.preferred_language && data.preferred_language !== i18n.language) {
-        i18n.changeLanguage(data.preferred_language);
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    }
-  }, [i18n]);
-
-  const fetchRoleWithTimeout = useCallback(async (userId: string): Promise<AppRole | null> => {
-    const attempt = async (): Promise<AppRole | null> => {
-      const { data, error } = await supabase.rpc('get_user_role', { _user_id: userId });
-      if (error) throw error;
-      return (data as AppRole) || null;
-    };
-
-    try {
-      // Race against a 3s timeout
-      const result = await Promise.race([
-        attempt(),
-        new Promise<null>((_, reject) =>
-          setTimeout(() => reject(new Error('Role fetch timeout')), 3000)
-        ),
-      ]);
-      return result;
-    } catch (error) {
-      console.error('Role fetch attempt 1 failed:', error);
-      // Single retry after 500ms
-      await new Promise((r) => setTimeout(r, 500));
-      try {
-        return await Promise.race([
-          attempt(),
-          new Promise<null>((_, reject) =>
-            setTimeout(() => reject(new Error('Role retry timeout')), 3000)
-          ),
-        ]);
-      } catch (retryError) {
-        console.error('Role fetch attempt 2 failed:', retryError);
-        return null;
-      }
-    }
-  }, []);
-
-  /**
-   * Fetch profile + role for a user. Uses fetchIdRef for latest-wins semantics.
-   * @param preserveExistingRole - if true and fetch fails, keep current role instead of going to error
-   */
-  const resolveUserData = useCallback(async (userId: string, preserveExistingRole = false) => {
-    const currentFetchId = ++fetchIdRef.current;
-
-    if (!preserveExistingRole) {
-      updateRole(roleRef.current, 'loading');
-    }
-
-    const [, fetchedRole] = await Promise.all([
-      fetchProfile(userId),
-      fetchRoleWithTimeout(userId),
-    ]);
-
-    // Only apply if this is still the latest fetch
-    if (currentFetchId !== fetchIdRef.current) return;
-
-    if (fetchedRole !== null) {
-      updateRole(fetchedRole, 'ready');
-    } else if (preserveExistingRole && roleRef.current !== null) {
-      // Keep existing role, don't change status
-      console.log('[Auth] Role refresh failed, keeping existing role:', roleRef.current);
-    } else {
-      // No role found and nothing to preserve — error
-      updateRole(null, 'error');
-    }
-  }, [fetchProfile, fetchRoleWithTimeout, updateRole]);
-
-  const retryRoleResolution = useCallback(() => {
-    if (user) {
-      updateRole(null, 'loading');
-      resolveUserData(user.id);
-    }
-  }, [user, resolveUserData, updateRole]);
-
-  const refreshProfile = useCallback(async () => {
-    if (user) {
-      await resolveUserData(user.id, true);
-    }
-  }, [user, resolveUserData]);
-
-  // Single initialization: onAuthStateChange only
+  // ── Effect A: Auth listener (SYNCHRONOUS — no await inside callback) ──
   useEffect(() => {
     let mounted = true;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
+      (event, currentSession) => {
         if (!mounted) return;
 
         console.log('[Auth] event:', event, 'user:', !!currentSession?.user);
@@ -186,45 +87,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        if (event === 'TOKEN_REFRESHED') {
-          setSession(currentSession);
-          setUser(currentSession?.user ?? null);
-          // Background refresh — preserve existing role
-          if (currentSession?.user) {
-            resolveUserData(currentSession.user.id, true);
-          }
-          return;
-        }
-
-        // INITIAL_SESSION or SIGNED_IN
+        // For ALL other events: just sync session/user synchronously
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
 
-        if (currentSession?.user) {
-          await resolveUserData(currentSession.user.id);
-        } else {
+        if (!currentSession?.user) {
           setProfile(null);
           updateRole(null, 'loading');
         }
 
-        if (mounted) {
+        // For INITIAL_SESSION and SIGNED_IN, mark auth as loaded
+        // (role resolution happens in Effect B via user dependency)
+        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
           setLoading(false);
         }
+        // TOKEN_REFRESHED: don't touch loading, don't touch role
       }
     );
 
-    // Safety: if onAuthStateChange never fires (e.g. no session at all),
-    // force loading=false after 4s. Use refs to avoid stale closure.
+    // Safety: if INITIAL_SESSION never fires (no session), force loaded after 3s
     const safetyTimeout = setTimeout(() => {
       if (mounted) {
-        console.warn('[Auth] Safety timeout after 4s – forcing loaded state');
+        console.warn('[Auth] Safety timeout – forcing loaded');
         setLoading(false);
-        // If role is still loading (not ready/error), mark as error
-        if (roleStatusRef.current === 'loading' && roleRef.current === null) {
-          updateRole(null, 'error');
-        }
       }
-    }, 4000);
+    }, 3000);
 
     return () => {
       mounted = false;
@@ -232,6 +119,149 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Effect B: Role resolution (fires when user.id changes) ──
+  useEffect(() => {
+    if (!user) {
+      // No user → reset role
+      updateRole(null, 'loading');
+      return;
+    }
+
+    // If role already resolved for this user, don't re-fetch
+    // (handles TOKEN_REFRESHED which updates user object but same id)
+    if (roleRef.current !== null) {
+      return;
+    }
+
+    const currentRequestId = ++roleRequestId.current;
+    updateRole(null, 'loading');
+
+    let cancelled = false;
+    const timeoutId = setTimeout(() => {
+      if (!cancelled && currentRequestId === roleRequestId.current) {
+        console.error('[Auth] Role resolution timeout');
+        updateRole(null, 'error');
+      }
+    }, 5000);
+
+    (async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_user_role', { _user_id: user.id });
+        if (cancelled || currentRequestId !== roleRequestId.current) return;
+
+        clearTimeout(timeoutId);
+
+        if (error) {
+          console.error('[Auth] Role RPC error:', error);
+          updateRole(null, 'error');
+          return;
+        }
+
+        const fetchedRole = (data as AppRole) || null;
+        if (fetchedRole) {
+          updateRole(fetchedRole, 'ready');
+        } else {
+          // User exists but has no role — treat as error for recovery UI
+          console.warn('[Auth] No role found for user');
+          updateRole(null, 'error');
+        }
+      } catch (err) {
+        if (cancelled || currentRequestId !== roleRequestId.current) return;
+        clearTimeout(timeoutId);
+        console.error('[Auth] Role fetch exception:', err);
+        updateRole(null, 'error');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Effect C: Profile loading (non-blocking, independent of role) ──
+  useEffect(() => {
+    if (!user) {
+      setProfile(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (cancelled) return;
+        if (error) {
+          console.error('[Auth] Profile fetch error:', error);
+          return;
+        }
+
+        setProfile(data);
+
+        if (data?.preferred_language && data.preferred_language !== i18n.language) {
+          i18n.changeLanguage(data.preferred_language);
+        }
+      } catch (err) {
+        if (!cancelled) console.error('[Auth] Profile fetch exception:', err);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const retryRoleResolution = useCallback(() => {
+    if (!user) return;
+    // Force re-fetch by clearing current role and bumping request id
+    roleRef.current = null;
+    const currentRequestId = ++roleRequestId.current;
+    updateRole(null, 'loading');
+
+    const timeoutId = setTimeout(() => {
+      if (currentRequestId === roleRequestId.current) {
+        updateRole(null, 'error');
+      }
+    }, 5000);
+
+    (async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_user_role', { _user_id: user.id });
+        if (currentRequestId !== roleRequestId.current) return;
+        clearTimeout(timeoutId);
+
+        if (error || !data) {
+          updateRole(null, 'error');
+          return;
+        }
+        updateRole(data as AppRole, 'ready');
+      } catch {
+        if (currentRequestId === roleRequestId.current) {
+          clearTimeout(timeoutId);
+          updateRole(null, 'error');
+        }
+      }
+    })();
+  }, [user, updateRole]);
+
+  const refreshProfile = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (!error && data) setProfile(data);
+    } catch (err) {
+      console.error('[Auth] refreshProfile error:', err);
+    }
+  }, [user]);
 
   const signUp = useCallback(async (
     email: string,
@@ -285,10 +315,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
 
-      toast({
-        title: t('auth.loginSuccess'),
-      });
-
+      toast({ title: t('auth.loginSuccess') });
       return { error: null };
     } catch (error) {
       toast({
@@ -302,12 +329,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
-      await supabase.auth.signOut();
-      setProfile(null);
+      // Reset role before sign-out so UI doesn't flash stale data
+      roleRef.current = null;
       updateRole(null, 'loading');
-      toast({
-        title: t('auth.logoutSuccess'),
-      });
+      setProfile(null);
+      await supabase.auth.signOut();
+      toast({ title: t('auth.logoutSuccess') });
     } catch (error) {
       console.error('Error signing out:', error);
     }

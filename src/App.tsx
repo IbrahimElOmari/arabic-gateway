@@ -92,8 +92,9 @@ const App = () => (
             <Toaster />
             <BrowserRouter>
               <TranslatedErrorBoundary>
-                <Suspense fallback={<FullPageLoader />}>
-                  <AppLayout>
+                {/* AppLayout is OUTSIDE Suspense so sidebar never unmounts */}
+                <AppLayout>
+                  <Suspense fallback={<FullPageLoader />}>
                     <Routes>
                       {/* Public routes */}
                       <Route path="/" element={<HomePage />} />
@@ -140,7 +141,7 @@ const App = () => (
                       <Route path="/gamification" element={<ProtectedRoute><GamificationPage /></ProtectedRoute>} />
                       <Route path="/install" element={<InstallPage />} />
                       
-                      {/* Teacher routes - flat, no nested layout */}
+                      {/* Teacher routes */}
                       <Route path="/teacher" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><TeacherDashboard /></ProtectedRoute>} />
                       <Route path="/teacher/content-studio" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><ContentStudioPage /></ProtectedRoute>} />
                       <Route path="/teacher/lessons" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><TeacherLessonsPage /></ProtectedRoute>} />
@@ -152,7 +153,7 @@ const App = () => (
                       {/* Knowledge base */}
                       <Route path="/faq" element={<KnowledgeBasePage />} />
                       
-                      {/* Admin routes - flat, no nested layout */}
+                      {/* Admin routes */}
                       <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
                       <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><UsersPage /></ProtectedRoute>} />
                       <Route path="/admin/teachers" element={<ProtectedRoute requiredRole="admin"><TeacherApprovalsPage /></ProtectedRoute>} />
@@ -170,10 +171,10 @@ const App = () => (
                       {/* Catch-all */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
-                  </AppLayout>
-                  <CookieConsent />
-                  <HelpWidget />
-                </Suspense>
+                  </Suspense>
+                </AppLayout>
+                <CookieConsent />
+                <HelpWidget />
               </TranslatedErrorBoundary>
             </BrowserRouter>
           </TooltipProvider>
