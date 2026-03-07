@@ -2,6 +2,21 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { syncMetadata } from "./lib/sync-metadata";
+import { logError } from "./lib/error-logger";
+
+// Global error handlers for unhandled errors & promise rejections
+window.addEventListener("error", (event) => {
+  logError(event.error ?? event.message, {
+    source: "window.onerror",
+    filename: event.filename,
+    lineno: event.lineno,
+    colno: event.colno,
+  });
+});
+
+window.addEventListener("unhandledrejection", (event) => {
+  logError(event.reason, { source: "unhandledrejection" });
+});
 
 const isPreviewEnvironment =
   import.meta.env.DEV ||
