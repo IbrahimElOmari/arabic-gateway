@@ -1,5 +1,12 @@
 import { formatDate } from "@/lib/date-utils";
 
+// HTML escape utility to prevent XSS in PDF exports
+function escapeHtml(text: string): string {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 // CSV Export Utility
 export function exportToCSV(data: Record<string, any>[], filename: string, headers?: Record<string, string>) {
   if (data.length === 0) return;
@@ -76,13 +83,15 @@ export function generatePDFTable(
 ): string {
   const keys = Object.keys(headers);
 
+  const escapedTitle = escapeHtml(title);
+
   return `
-    <h1 style="margin-bottom: 20px;">${title}</h1>
-    <p style="color: #666; margin-bottom: 20px;">Generated on ${formatDate(new Date(), "PP")}</p>
+    <h1 style="margin-bottom: 20px;">${escapedTitle}</h1>
+    <p style="color: #666; margin-bottom: 20px;">Generated on ${escapeHtml(formatDate(new Date(), "PP"))}</p>
     <table>
       <thead>
         <tr>
-          ${keys.map((key) => `<th>${headers[key]}</th>`).join("")}
+          ${keys.map((key) => `<th>${escapeHtml(headers[key])}</th>`).join("")}
         </tr>
       </thead>
       <tbody>
@@ -90,7 +99,7 @@ export function generatePDFTable(
           .map(
             (row) =>
               `<tr>${keys
-                .map((key) => `<td>${row[key] ?? ""}</td>`)
+                .map((key) => `<td>${escapeHtml(String(row[key] ?? ""))}</td>`)
                 .join("")}</tr>`
           )
           .join("")}
