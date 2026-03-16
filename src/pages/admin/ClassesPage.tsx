@@ -276,8 +276,9 @@ export default function ClassesPage() {
       const { error } = await supabase.from("classes").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["admin-classes"] });
+      if (user) logAdminAction(user.id, "delete_class", "classes", id);
       toast({
         title: t("admin.classDeleted", "Class Deleted"),
       });
