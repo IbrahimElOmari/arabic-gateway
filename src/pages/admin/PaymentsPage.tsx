@@ -55,13 +55,13 @@ export default function PaymentsPage() {
 
   // Compute stats
   const stats = useMemo(() => {
-    if (!payments) return { total: 0, completed: 0, pending: 0, revenue: 0 };
+    if (!payments) return { total: 0, succeeded: 0, pending: 0, revenue: 0 };
     return {
       total: payments.length,
-      completed: payments.filter((p) => p.status === "completed").length,
+      succeeded: payments.filter((p) => p.status === "succeeded").length,
       pending: payments.filter((p) => p.status === "pending").length,
       revenue: payments
-        .filter((p) => p.status === "completed")
+        .filter((p) => p.status === "succeeded")
         .reduce((sum, p) => sum + p.amount, 0),
     };
   }, [payments]);
