@@ -242,9 +242,23 @@ export default function ForumRoomPage() {
                             likeMutation.mutate(post.id);
                           }}
                           className={userLikes?.includes(post.id) ? "text-primary" : "text-muted-foreground"}
+                          aria-label={t("forum.likePost", "Like post")}
                         >
                           <ThumbsUp className="h-4 w-4 mr-1" />
                           {post.likes_count}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          className="text-muted-foreground"
+                          aria-label={t("forum.comments", "Comments")}
+                        >
+                          <MessageCircle className="h-4 w-4 mr-1" />
+                          {(post as any).comments_count}
                         </Button>
                         <Button
                           variant="ghost"
@@ -256,7 +270,7 @@ export default function ForumRoomPage() {
                             setReportDialogOpen(true);
                           }}
                           className="text-muted-foreground hover:text-destructive"
-                          title={t("moderation.reportContent", "Report content")}
+                          aria-label={t("moderation.reportContent", "Report content")}
                         >
                           <Flag className="h-4 w-4" />
                         </Button>

@@ -4,16 +4,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageCircle, Send, Smile, Loader2, Flag } from "lucide-react";
+import { MessageCircle, Send, Smile, Loader2, Flag, ChevronUp } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { formatRelative } from "@/lib/date-utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ReportContentDialog } from "@/components/moderation/ReportContentDialog";
 
 const EMOJIS = ["👍", "❤️", "😊", "🎉", "👏", "🙏", "💪", "✨"];
+const MESSAGES_PER_PAGE = 50;
+const SEND_COOLDOWN_MS = 1000;
 
 export default function ChatPage() {
   const { t } = useTranslation();
@@ -24,6 +26,10 @@ export default function ChatPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [reportMessageId, setReportMessageId] = useState<string | null>(null);
+  const [olderMessages, setOlderMessages] = useState<any[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [sendCooldown, setSendCooldown] = useState(false);
 
   // Get user's enrolled classes
   const { data: enrollments, isLoading: enrollmentsLoading } = useQuery({
@@ -66,33 +72,95 @@ export default function ChatPage() {
     }
   }, [allClasses, selectedClass]);
 
-  // Get messages for selected class
-  const { data: messages, isLoading: messagesLoading } = useQuery({
+  // Reset older messages when class changes
+  useEffect(() => {
+    setOlderMessages([]);
+    setHasMore(true);
+  }, [selectedClass]);
+
+  // Get messages for selected class (latest page)
+  const { data: recentMessages, isLoading: messagesLoading } = useQuery({
     queryKey: ["chat-messages", selectedClass],
     queryFn: async () => {
       const { data: messagesData, error } = await supabase
         .from("chat_messages")
         .select("*, reactions:chat_reactions(id, emoji, user_id)")
         .eq("class_id", selectedClass!)
-        .order("created_at", { ascending: true })
-        .limit(100);
+        .order("created_at", { ascending: false })
+        .limit(MESSAGES_PER_PAGE);
       if (error) throw error;
       
+      // Reverse so oldest first
+      const sorted = [...messagesData].reverse();
+      
       // Fetch sender profiles
-      const senderIds = [...new Set(messagesData.map(m => m.sender_id))];
+      const senderIds = [...new Set(sorted.map(m => m.sender_id))];
       const { data: profiles } = await supabase
         .from("profiles")
         .select("user_id, full_name, avatar_url")
         .in("user_id", senderIds);
       
       const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
-      return messagesData.map(msg => ({
+      const enriched = sorted.map(msg => ({
         ...msg,
         sender: profileMap.get(msg.sender_id) || null,
       }));
+
+      setHasMore(messagesData.length >= MESSAGES_PER_PAGE);
+      return enriched;
     },
     enabled: !!selectedClass,
   });
+
+  // Combine older + recent messages
+  const messages = useMemo(() => {
+    return [...olderMessages, ...(recentMessages || [])];
+  }, [olderMessages, recentMessages]);
+
+  const loadOlderMessages = useCallback(async () => {
+    if (!selectedClass || loadingMore || !hasMore) return;
+    setLoadingMore(true);
+
+    const oldestMessage = messages[0];
+    if (!oldestMessage) {
+      setLoadingMore(false);
+      return;
+    }
+
+    try {
+      const { data: olderData, error } = await supabase
+        .from("chat_messages")
+        .select("*, reactions:chat_reactions(id, emoji, user_id)")
+        .eq("class_id", selectedClass)
+        .lt("created_at", oldestMessage.created_at)
+        .order("created_at", { ascending: false })
+        .limit(MESSAGES_PER_PAGE);
+
+      if (error) throw error;
+
+      const sorted = [...olderData].reverse();
+
+      // Fetch sender profiles
+      const senderIds = [...new Set(sorted.map(m => m.sender_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, avatar_url")
+        .in("user_id", senderIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+      const enriched = sorted.map(msg => ({
+        ...msg,
+        sender: profileMap.get(msg.sender_id) || null,
+      }));
+
+      setOlderMessages(prev => [...enriched, ...prev]);
+      setHasMore(olderData.length >= MESSAGES_PER_PAGE);
+    } catch {
+      // silently fail
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [selectedClass, loadingMore, hasMore, messages]);
 
   // Real-time subscription
   useEffect(() => {
@@ -130,12 +198,12 @@ export default function ChatPage() {
     };
   }, [selectedClass, queryClient]);
 
-  // Scroll to bottom on new messages
+  // Scroll to bottom on new messages (only for recent)
   useEffect(() => {
-    if (scrollRef.current) {
+    if (scrollRef.current && recentMessages) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [recentMessages]);
 
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
@@ -148,12 +216,16 @@ export default function ChatPage() {
     },
     onSuccess: () => {
       setNewMessage("");
+      // Start cooldown
+      setSendCooldown(true);
+      setTimeout(() => setSendCooldown(false), SEND_COOLDOWN_MS);
     },
   });
 
   const addReactionMutation = useMutation({
     mutationFn: async ({ messageId, emoji }: { messageId: string; emoji: string }) => {
-      const existing = messages?.find(m => m.id === messageId)?.reactions?.find(
+      const msg = messages?.find(m => m.id === messageId);
+      const existing = msg?.reactions?.find(
         (r: any) => r.user_id === user!.id && r.emoji === emoji
       );
       
@@ -173,7 +245,7 @@ export default function ChatPage() {
   });
 
   const handleSend = () => {
-    if (newMessage.trim()) {
+    if (newMessage.trim() && !sendCooldown) {
       sendMessageMutation.mutate(newMessage);
     }
   };
@@ -193,7 +265,11 @@ export default function ChatPage() {
       <>
         <div className="container py-8">
           <Card>
-...
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <MessageCircle className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold">{t("chat.noClasses", "No classes")}</h3>
+              <p className="text-muted-foreground">{t("chat.noClassesDescription", "You need to be enrolled in a class to use chat.")}</p>
+            </CardContent>
           </Card>
         </div>
       </>
@@ -233,6 +309,26 @@ export default function ChatPage() {
               </div>
             ) : messages && messages.length > 0 ? (
               <div className="space-y-4">
+                {/* Load older messages button */}
+                {hasMore && (
+                  <div className="flex justify-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={loadOlderMessages}
+                      disabled={loadingMore}
+                      aria-label={t("chat.loadOlder", "Load older messages")}
+                    >
+                      {loadingMore ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <ChevronUp className="h-4 w-4 mr-2" />
+                      )}
+                      {t("chat.loadOlder", "Load older messages")}
+                    </Button>
+                  </div>
+                )}
+
                 {messages.map((message) => {
                   const isOwn = message.sender_id === user?.id;
                   const reactionGroups = message.reactions?.reduce((acc: Record<string, number>, r: any) => {
@@ -340,7 +436,11 @@ export default function ChatPage() {
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
               />
-              <Button onClick={handleSend} disabled={!newMessage.trim() || sendMessageMutation.isPending}>
+              <Button
+                onClick={handleSend}
+                disabled={!newMessage.trim() || sendMessageMutation.isPending || sendCooldown}
+                aria-label={t("chat.sendMessage", "Send message")}
+              >
                 <Send className="h-4 w-4" />
               </Button>
             </div>

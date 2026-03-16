@@ -12,9 +12,6 @@ import { useState, useMemo, useCallback } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatDate } from "@/lib/date-utils";
 import { exportToCSV } from "@/lib/export-utils";
-import { ExportButtons } from "@/components/export/ExportButtons";
-
-type PaymentStatus = "pending" | "completed" | "failed" | "refunded";
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
@@ -23,65 +20,89 @@ const STATUS_COLORS: Record<string, string> = {
   refunded: "bg-muted text-muted-foreground",
 };
 
+const PAGE_SIZE = 25;
+
 export default function PaymentsPage() {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [methodFilter, setMethodFilter] = useState<string>("all");
+  const [page, setPage] = useState(0);
 
-  // Fetch all payments with user profiles
-  const { data: payments, isLoading } = useQuery({
-    queryKey: ["admin-payments"],
+  // Fetch payments with server-side pagination
+  const { data: paymentsData, isLoading } = useQuery({
+    queryKey: ["admin-payments", statusFilter, methodFilter, page],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("payments")
-        .select("*")
+        .select("*", { count: "exact" })
         .order("created_at", { ascending: false });
+
+      if (statusFilter !== "all") {
+        query = query.eq("status", statusFilter as any);
+      }
+      if (methodFilter !== "all") {
+        query = query.eq("payment_method", methodFilter as any);
+      }
+
+      const from = page * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      query = query.range(from, to);
+
+      const { data, error, count } = await query;
       if (error) throw error;
 
       // Fetch user profiles
       const userIds = [...new Set(data.map((p) => p.user_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, email")
-        .in("user_id", userIds);
+      const { data: profiles } = userIds.length
+        ? await supabase.from("profiles").select("user_id, full_name, email").in("user_id", userIds)
+        : { data: [] };
 
       const profileMap = new Map(profiles?.map((p) => [p.user_id, p]) || []);
-      return data.map((payment) => ({
+      const payments = data.map((payment) => ({
         ...payment,
         profile: profileMap.get(payment.user_id) || null,
       }));
+
+      return { payments, totalCount: count ?? 0 };
     },
   });
 
-  // Compute stats
-  const stats = useMemo(() => {
-    if (!payments) return { total: 0, succeeded: 0, pending: 0, revenue: 0 };
-    return {
-      total: payments.length,
-      succeeded: payments.filter((p) => p.status === "succeeded").length,
-      pending: payments.filter((p) => p.status === "pending").length,
-      revenue: payments
-        .filter((p) => p.status === "succeeded")
-        .reduce((sum, p) => sum + p.amount, 0),
-    };
-  }, [payments]);
+  const payments = paymentsData?.payments;
+  const totalPages = paymentsData ? Math.ceil(paymentsData.totalCount / PAGE_SIZE) : 0;
 
-  // Filter payments
+  // Compute stats from current page (for display — stats are approximate)
+  const { data: statsData } = useQuery({
+    queryKey: ["admin-payments-stats"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("payments").select("status, amount");
+      if (error) throw error;
+      return {
+        total: data.length,
+        succeeded: data.filter((p) => p.status === "succeeded").length,
+        pending: data.filter((p) => p.status === "pending").length,
+        revenue: data
+          .filter((p) => p.status === "succeeded")
+          .reduce((sum, p) => sum + p.amount, 0),
+      };
+    },
+  });
+
+  const stats = statsData || { total: 0, succeeded: 0, pending: 0, revenue: 0 };
+
+  // Client-side search filter on current page
   const filtered = useMemo(() => {
     if (!payments) return [];
+    if (!debouncedSearch) return payments;
     return payments.filter((p) => {
-      const matchesSearch =
-        !debouncedSearch ||
+      return (
         p.profile?.full_name?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
         p.profile?.email?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        p.stripe_payment_intent_id?.toLowerCase().includes(debouncedSearch.toLowerCase());
-      const matchesStatus = statusFilter === "all" || p.status === statusFilter;
-      const matchesMethod = methodFilter === "all" || p.payment_method === methodFilter;
-      return matchesSearch && matchesStatus && matchesMethod;
+        p.stripe_payment_intent_id?.toLowerCase().includes(debouncedSearch.toLowerCase())
+      );
     });
-  }, [payments, debouncedSearch, statusFilter, methodFilter]);
+  }, [payments, debouncedSearch]);
 
   const handleExport = useCallback(() => {
     if (!filtered.length) return;
@@ -182,7 +203,7 @@ export default function PaymentsPage() {
                 className="pl-10"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(0); }}>
               <SelectTrigger className="w-[160px]">
                 <SelectValue placeholder={t("admin.filterStatus", "Status")} />
               </SelectTrigger>
@@ -194,7 +215,7 @@ export default function PaymentsPage() {
                 <SelectItem value="refunded">{t("admin.statusRefunded", "Refunded")}</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={methodFilter} onValueChange={setMethodFilter}>
+            <Select value={methodFilter} onValueChange={(v) => { setMethodFilter(v); setPage(0); }}>
               <SelectTrigger className="w-[160px]">
                 <SelectValue placeholder={t("admin.filterMethod", "Method")} />
               </SelectTrigger>
@@ -218,59 +239,85 @@ export default function PaymentsPage() {
                 {t("admin.noPayments", "No payments found")}
               </h3>
               <p className="text-muted-foreground">
-                {payments?.length === 0
+                {paymentsData?.totalCount === 0
                   ? t("admin.noPaymentsYet", "No payment transactions have been recorded yet.")
                   : t("admin.noPaymentsFilter", "Try adjusting your filters.")}
               </p>
             </div>
           ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("admin.date", "Date")}</TableHead>
-                    <TableHead>{t("admin.student", "Student")}</TableHead>
-                    <TableHead>{t("admin.amount", "Amount")}</TableHead>
-                    <TableHead>{t("admin.method", "Method")}</TableHead>
-                    <TableHead>{t("admin.status", "Status")}</TableHead>
-                    <TableHead>{t("admin.notes", "Notes")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((payment) => (
-                    <TableRow key={payment.id}>
-                      <TableCell className="text-sm">
-                        {formatDate(payment.created_at)}
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium text-sm">{payment.profile?.full_name || "-"}</p>
-                          <p className="text-xs text-muted-foreground">{payment.profile?.email || "-"}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {formatAmount(payment.amount, payment.currency)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="capitalize">
-                          {payment.payment_method === "bank_transfer"
-                            ? t("admin.bankTransfer", "Bank Transfer")
-                            : payment.payment_method}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${STATUS_COLORS[payment.status] || ""}`}>
-                          {t(`admin.status${payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}`, payment.status)}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
-                        {payment.notes || "-"}
-                      </TableCell>
+            <>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t("admin.date", "Date")}</TableHead>
+                      <TableHead>{t("admin.student", "Student")}</TableHead>
+                      <TableHead>{t("admin.amount", "Amount")}</TableHead>
+                      <TableHead>{t("admin.method", "Method")}</TableHead>
+                      <TableHead>{t("admin.status", "Status")}</TableHead>
+                      <TableHead>{t("admin.notes", "Notes")}</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map((payment) => (
+                      <TableRow key={payment.id}>
+                        <TableCell className="text-sm">
+                          {formatDate(payment.created_at)}
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium text-sm">{payment.profile?.full_name || "-"}</p>
+                            <p className="text-xs text-muted-foreground">{payment.profile?.email || "-"}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {formatAmount(payment.amount, payment.currency)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="capitalize">
+                            {payment.payment_method === "bank_transfer"
+                              ? t("admin.bankTransfer", "Bank Transfer")
+                              : payment.payment_method}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${STATUS_COLORS[payment.status] || ""}`}>
+                            {t(`admin.status${payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}`, payment.status)}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
+                          {payment.notes || "-"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 pt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page === 0}
+                    onClick={() => setPage(p => p - 1)}
+                  >
+                    {t("common.previous", "Previous")}
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    {t("common.pageOf", "Page {{current}} of {{total}}", { current: page + 1, total: totalPages })}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page >= totalPages - 1}
+                    onClick={() => setPage(p => p + 1)}
+                  >
+                    {t("common.next", "Next")}
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

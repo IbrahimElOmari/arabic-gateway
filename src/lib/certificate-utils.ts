@@ -1,5 +1,5 @@
 /**
- * Certificate generation placeholder.
+ * Certificate generation with XSS protection.
  * Generates HTML for a completion certificate.
  */
 
@@ -11,16 +11,34 @@ export interface CertificateData {
   certificateId: string;
 }
 
+/** Escape user-provided strings for safe HTML interpolation. */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 /**
  * Generate an HTML string for a certificate of completion.
- * This is a placeholder for future PDF rendering integration.
+ * All user data is HTML-escaped to prevent XSS.
  */
 export function generateCertificateHtml(data: CertificateData): string {
+  const safe = {
+    studentName: escapeHtml(data.studentName),
+    levelName: escapeHtml(data.levelName),
+    completionDate: escapeHtml(data.completionDate),
+    institutionName: escapeHtml(data.institutionName),
+    certificateId: escapeHtml(data.certificateId),
+  };
+
   return `<!DOCTYPE html>
 <html lang="nl">
 <head>
   <meta charset="UTF-8">
-  <title>Certificaat - ${data.studentName}</title>
+  <title>Certificaat - ${safe.studentName}</title>
   <style>
     body { font-family: 'Georgia', serif; text-align: center; padding: 60px; background: #fafaf8; }
     .certificate { border: 3px double #3d8c6e; padding: 60px; max-width: 800px; margin: 0 auto; background: white; }
@@ -38,12 +56,12 @@ export function generateCertificateHtml(data: CertificateData): string {
     <div class="title">Certificaat van Voltooiing</div>
     <div class="subtitle">Certificate of Completion</div>
     <p>Hierbij verklaren wij dat</p>
-    <div class="student-name">${data.studentName}</div>
+    <div class="student-name">${safe.studentName}</div>
     <p>het volgende niveau succesvol heeft afgerond:</p>
-    <div class="level">${data.levelName}</div>
-    <div class="institution">${data.institutionName}</div>
-    <div class="date">Datum: ${data.completionDate}</div>
-    <div class="id">Certificaat ID: ${data.certificateId}</div>
+    <div class="level">${safe.levelName}</div>
+    <div class="institution">${safe.institutionName}</div>
+    <div class="date">Datum: ${safe.completionDate}</div>
+    <div class="id">Certificaat ID: ${safe.certificateId}</div>
   </div>
 </body>
 </html>`;
