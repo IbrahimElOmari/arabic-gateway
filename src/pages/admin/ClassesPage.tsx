@@ -251,8 +251,9 @@ export default function ClassesPage() {
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-classes"] });
+      if (user) logAdminAction(user.id, "update_class", "classes", variables.id);
       toast({
         title: t("admin.classUpdated", "Class Updated"),
         description: t("admin.classUpdatedDescription", "The class has been updated successfully."),
