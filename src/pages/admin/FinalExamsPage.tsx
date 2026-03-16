@@ -114,6 +114,7 @@ export default function FinalExamsPage() {
       queryClient.invalidateQueries({ queryKey: ["final-exams"] });
       setShowDialog(false);
       resetForm();
+      if (user) logAdminAction(user.id, "create_exam", "final_exams", undefined, { title: formData.title });
       toast({ title: t("admin.examCreated", "Exam Created") });
     },
     onError: () => {
