@@ -133,8 +133,9 @@ export default function ContentReportsPage() {
         .eq("id", report.id);
       if (updateError) throw updateError;
     },
-    onSuccess: () => {
+    onSuccess: (_, report) => {
       queryClient.invalidateQueries({ queryKey: ["content-reports"] });
+      if (user) logAdminAction(user.id, "delete_reported_content", "content_reports", report.id, { content_type: report.content_type, content_id: report.content_id });
       setDeleteDialogOpen(false);
       setReportToDelete(null);
       toast({

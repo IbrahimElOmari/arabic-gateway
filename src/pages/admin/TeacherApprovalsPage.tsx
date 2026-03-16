@@ -115,6 +115,7 @@ export default function TeacherApprovalsPage() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["teacher-applications"] });
       queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+      if (user) logAdminAction(user.id, `${variables.status}_teacher`, "teacher_applications", variables.applicationId, { user_id: variables.userId });
       toast({
         title:
           variables.status === "approved"

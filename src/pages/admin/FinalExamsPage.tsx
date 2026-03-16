@@ -142,8 +142,9 @@ export default function FinalExamsPage() {
       const { error } = await supabase.from("final_exams").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["final-exams"] });
+      if (user) logAdminAction(user.id, "delete_exam", "final_exams", id);
       toast({ title: t("admin.examDeleted", "Exam Deleted") });
     },
   });

@@ -182,8 +182,9 @@ export default function PlacementsPage() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["placement-tests"] });
+      if (user) logAdminAction(user.id, "complete_placement", "placement_tests", variables.placementId, { level_id: variables.levelId });
       toast({
         title: t("admin.placementCompleted", "Placement Test Completed"),
         description: t("admin.placementCompletedDescription", "Level has been assigned."),

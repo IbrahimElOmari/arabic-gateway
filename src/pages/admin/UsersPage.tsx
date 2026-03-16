@@ -150,8 +150,9 @@ export default function UsersPage() {
         }
       }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      if (adminUser) logAdminAction(adminUser.id, "update_role", "user_roles", variables.userId, { role: variables.role, class_id: variables.classId });
       toast({
         title: t("admin.roleUpdated", "Role Updated"),
         description: t("admin.roleUpdatedDescription", "User role has been updated successfully."),

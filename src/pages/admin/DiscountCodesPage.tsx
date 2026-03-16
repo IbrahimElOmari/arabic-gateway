@@ -140,8 +140,9 @@ export default function DiscountCodesPage() {
       const { error } = await supabase.from("discount_codes").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["admin-discount-codes"] });
+      if (user) logAdminAction(user.id, "delete_discount", "discount_codes", id);
       toast({
         title: t("admin.discountDeleted", "Discount Code Deleted"),
       });
