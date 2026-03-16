@@ -101,6 +101,7 @@ export default function DiscountCodesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-discount-codes"] });
+      if (user) logAdminAction(user.id, "create_discount", "discount_codes", undefined, { code: formData.code });
       toast({
         title: t("admin.discountCreated", "Discount Code Created"),
       });
