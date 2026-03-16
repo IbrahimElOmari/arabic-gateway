@@ -43,32 +43,39 @@ export default function ForumRoomPage() {
     enabled: !!roomName,
   });
 
-  const { data: posts, isLoading: postsLoading } = useQuery({
-    queryKey: ["forum-posts", room?.id],
+  const { data: postsData, isLoading: postsLoading } = useQuery({
+    queryKey: ["forum-posts", room?.id, page],
     queryFn: async () => {
-      const { data: postsData, error } = await supabase
+      const from = page * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      const { data: postsResult, error, count } = await supabase
         .from("forum_posts")
-        .select("*")
+        .select("*", { count: "exact" })
         .eq("room_id", room!.id)
         .order("is_pinned", { ascending: false })
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(from, to);
       if (error) throw error;
       
       // Fetch author profiles separately
-      const authorIds = [...new Set(postsData.map(p => p.author_id))];
+      const authorIds = [...new Set(postsResult.map(p => p.author_id))];
       const { data: profiles } = await supabase
         .from("profiles")
         .select("user_id, full_name, avatar_url")
         .in("user_id", authorIds);
       
       const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
-      return postsData.map(post => ({
+      const posts = postsResult.map(post => ({
         ...post,
         author: profileMap.get(post.author_id) || null,
       }));
+      return { posts, totalCount: count ?? 0 };
     },
     enabled: !!room?.id,
   });
+
+  const posts = postsData?.posts;
+  const totalPages = postsData ? Math.ceil(postsData.totalCount / PAGE_SIZE) : 0;
 
   const { data: userLikes } = useQuery({
     queryKey: ["forum-user-likes", user?.id],
