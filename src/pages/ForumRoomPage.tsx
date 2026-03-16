@@ -252,6 +252,30 @@ export default function ForumRoomPage() {
                 </Card>
               </Link>
             ))}
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page === 0}
+                  onClick={() => setPage(p => p - 1)}
+                >
+                  {t("common.previous", "Previous")}
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  {t("common.pageOf", "Page {{current}} of {{total}}", { current: page + 1, total: totalPages })}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages - 1}
+                  onClick={() => setPage(p => p + 1)}
+                >
+                  {t("common.next", "Next")}
+                </Button>
+              </div>
+            )}
           </div>
         ) : (
           <Card>
