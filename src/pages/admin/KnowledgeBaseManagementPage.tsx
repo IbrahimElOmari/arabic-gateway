@@ -111,8 +111,9 @@ export default function KnowledgeBaseManagementPage() {
       const { error } = await supabase.from("faq_articles").update(form).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-faq-articles"] });
+      if (user) logAdminAction(user.id, "faq_article_updated", "faq_articles", variables.id);
       setShowArticleDialog(false);
       setEditingArticle(null);
       resetForm();
