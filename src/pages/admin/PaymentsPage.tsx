@@ -55,11 +55,18 @@ export default function PaymentsPage() {
 
       // Fetch user profiles
       const userIds = [...new Set(data.map((p) => p.user_id))];
-      const { data: profiles } = userIds.length
-        ? await supabase.from("profiles").select("user_id, full_name, email").in("user_id", userIds)
-        : { data: [] };
+      let profiles: { user_id: string; full_name: string; email: string }[] = [];
+      if (userIds.length > 0) {
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("user_id, full_name, email")
+          .in("user_id", userIds);
+        profiles = profileData || [];
+      }
 
-      const profileMap = new Map(profiles?.map((p) => [p.user_id, p]) || []);
+      const profileMap = new Map<string, { user_id: string; full_name: string; email: string }>(
+        profiles.map((p) => [p.user_id, p])
+      );
       const payments = data.map((payment) => ({
         ...payment,
         profile: profileMap.get(payment.user_id) || null,
