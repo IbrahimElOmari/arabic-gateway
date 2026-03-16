@@ -6,7 +6,7 @@
 export const FLAGS = {
   OFFLINE_MODE: false,
   ADAPTIVE_LEARNING: true,
-  CERTIFICATE_GENERATION: false,
+  CERTIFICATE_GENERATION: true,
 } as const;
 
 export type FeatureFlag = keyof typeof FLAGS;
