@@ -32,6 +32,8 @@ import {
 import { Search, UserCog, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
+import { logAdminAction } from "@/lib/admin-log";
+import { useAuth } from "@/contexts/AuthContext";
 
 type AppRole = "admin" | "teacher" | "student";
 
