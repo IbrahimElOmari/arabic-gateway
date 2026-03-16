@@ -138,8 +138,9 @@ export default function LevelsPage() {
       const { error } = await supabase.from("levels").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, levelId) => {
       queryClient.invalidateQueries({ queryKey: ["admin-levels"] });
+      if (user) logAdminAction(user.id, "level_deleted", "levels", levelId);
       toast({
         title: t("admin.levelDeleted", "Level Deleted"),
       });
