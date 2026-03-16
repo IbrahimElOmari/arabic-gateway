@@ -129,8 +129,9 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
           )}
           activeClassName="bg-primary/10 text-primary font-medium"
         >
-          <item.icon className="h-5 w-5 shrink-0" />
+          <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
           {!collapsed && <span className="truncate">{item.label}</span>}
+          {collapsed && <span className="sr-only">{item.label}</span>}
         </NavLink>
       ))}
     </div>
