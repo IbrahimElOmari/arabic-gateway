@@ -87,8 +87,9 @@ export default function ContentReportsPage() {
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["content-reports"] });
+      if (user) logAdminAction(user.id, "update_report", "content_reports", variables.id, { status: variables.status });
       setSelectedReport(null);
       setReviewNotes("");
       toast({
