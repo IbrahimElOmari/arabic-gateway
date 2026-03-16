@@ -142,8 +142,9 @@ export default function PlacementsPage() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["placement-tests"] });
+      if (user) logAdminAction(user.id, "schedule_placement", "placement_tests", undefined, { user_id: variables.userId });
       toast({
         title: t("admin.placementScheduled", "Placement Test Scheduled"),
         description: t("admin.placementScheduledDescription", "The student has been notified."),
