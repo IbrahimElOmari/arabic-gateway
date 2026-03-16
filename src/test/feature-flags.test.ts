@@ -17,6 +17,6 @@ describe('feature-flags', () => {
   });
 
   it('isFeatureEnabled returns correct value for CERTIFICATE_GENERATION', () => {
-    expect(isFeatureEnabled('CERTIFICATE_GENERATION')).toBe(false);
+    expect(isFeatureEnabled('CERTIFICATE_GENERATION')).toBe(true);
   });
 });

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useDebounce } from "@/hooks/use-debounce";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,6 +37,7 @@ const iconMap: Record<string, React.ElementType> = {
 export default function KnowledgeBasePage() {
   const { t, i18n } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const { data: categories, isLoading: categoriesLoading } = useQuery({
@@ -52,7 +54,7 @@ export default function KnowledgeBasePage() {
   });
 
   const { data: articles, isLoading: articlesLoading } = useQuery({
-    queryKey: ["faq-articles", selectedCategory, searchQuery],
+    queryKey: ["faq-articles", selectedCategory, debouncedSearch],
     queryFn: async () => {
       let query = supabase
         .from("faq_articles")
@@ -68,9 +70,9 @@ export default function KnowledgeBasePage() {
       if (error) throw error;
 
       // Filter by search query
-      if (searchQuery) {
+      if (debouncedSearch) {
         const lang = i18n.language;
-        const searchLower = searchQuery.toLowerCase();
+        const searchLower = debouncedSearch.toLowerCase();
         return data.filter((article) => {
           const title = lang === "nl" ? article.title_nl : lang === "ar" ? article.title_ar : article.title_en;
           const content = lang === "nl" ? article.content_nl : lang === "ar" ? article.content_ar : article.content_en;

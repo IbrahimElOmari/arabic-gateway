@@ -129,8 +129,9 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
           )}
           activeClassName="bg-primary/10 text-primary font-medium"
         >
-          <item.icon className="h-5 w-5 shrink-0" />
+          <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
           {!collapsed && <span className="truncate">{item.label}</span>}
+          {collapsed && <span className="sr-only">{item.label}</span>}
         </NavLink>
       ))}
     </div>
@@ -154,8 +155,9 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
           size="icon"
           onClick={onToggle}
           className={cn('shrink-0', collapsed && 'mx-auto')}
+          aria-label={collapsed ? t('accessibility.expandSidebar', 'Expand sidebar') : t('accessibility.collapseSidebar', 'Collapse sidebar')}
         >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          {collapsed ? <ChevronRight className="h-4 w-4" aria-hidden="true" /> : <ChevronLeft className="h-4 w-4" aria-hidden="true" />}
         </Button>
       </div>
 

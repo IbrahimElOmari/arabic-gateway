@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { logAdminAction } from "@/lib/admin-log";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -88,6 +89,7 @@ export default function KnowledgeBaseManagementPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-faq-articles"] });
+      if (user) logAdminAction(user.id, "faq_article_created", "faq_articles", undefined, { title: articleForm.title_en });
       setShowArticleDialog(false);
       resetForm();
       toast({
@@ -109,8 +111,9 @@ export default function KnowledgeBaseManagementPage() {
       const { error } = await supabase.from("faq_articles").update(form).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-faq-articles"] });
+      if (user) logAdminAction(user.id, "faq_article_updated", "faq_articles", variables.id);
       setShowArticleDialog(false);
       setEditingArticle(null);
       resetForm();
@@ -125,8 +128,9 @@ export default function KnowledgeBaseManagementPage() {
       const { error } = await supabase.from("faq_articles").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, articleId) => {
       queryClient.invalidateQueries({ queryKey: ["admin-faq-articles"] });
+      if (user) logAdminAction(user.id, "faq_article_deleted", "faq_articles", articleId);
       toast({
         title: t("admin.articleDeleted", "Article Deleted"),
       });

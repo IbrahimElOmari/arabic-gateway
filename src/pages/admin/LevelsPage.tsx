@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { logAdminAction } from "@/lib/admin-log";
 import {
   Table,
   TableBody,
@@ -38,6 +40,7 @@ interface Level {
 
 export default function LevelsPage() {
   const { t, i18n } = useTranslation();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingLevel, setEditingLevel] = useState<Level | null>(null);
@@ -80,6 +83,7 @@ export default function LevelsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-levels"] });
+      if (user) logAdminAction(user.id, "level_created", "levels", undefined, { name: formData.name });
       toast({
         title: t("admin.levelCreated", "Level Created"),
       });
@@ -110,8 +114,9 @@ export default function LevelsPage() {
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-levels"] });
+      if (user) logAdminAction(user.id, "level_updated", "levels", variables.id, { name: variables.data.name });
       toast({
         title: t("admin.levelUpdated", "Level Updated"),
       });
@@ -133,8 +138,9 @@ export default function LevelsPage() {
       const { error } = await supabase.from("levels").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, levelId) => {
       queryClient.invalidateQueries({ queryKey: ["admin-levels"] });
+      if (user) logAdminAction(user.id, "level_deleted", "levels", levelId);
       toast({
         title: t("admin.levelDeleted", "Level Deleted"),
       });

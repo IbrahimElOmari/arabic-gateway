@@ -11,7 +11,7 @@ import { MessageCircle, Plus, ThumbsUp, Pin, Lock, Loader2, ArrowLeft, Flag } fr
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { formatRelative } from "@/lib/date-utils";
 import { ReportContentDialog } from "@/components/moderation/ReportContentDialog";
@@ -26,6 +26,8 @@ export default function ForumRoomPage() {
   const [newPost, setNewPost] = useState({ title: "", content: "" });
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [reportTarget, setReportTarget] = useState<{ type: "forum_post"; id: string } | null>(null);
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 20;
 
   const { data: room, isLoading: roomLoading } = useQuery({
     queryKey: ["forum-room", roomName],
@@ -41,32 +43,39 @@ export default function ForumRoomPage() {
     enabled: !!roomName,
   });
 
-  const { data: posts, isLoading: postsLoading } = useQuery({
-    queryKey: ["forum-posts", room?.id],
+  const { data: postsData, isLoading: postsLoading } = useQuery({
+    queryKey: ["forum-posts", room?.id, page],
     queryFn: async () => {
-      const { data: postsData, error } = await supabase
+      const from = page * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      const { data: postsResult, error, count } = await supabase
         .from("forum_posts")
-        .select("*")
+        .select("*", { count: "exact" })
         .eq("room_id", room!.id)
         .order("is_pinned", { ascending: false })
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(from, to);
       if (error) throw error;
       
       // Fetch author profiles separately
-      const authorIds = [...new Set(postsData.map(p => p.author_id))];
+      const authorIds = [...new Set(postsResult.map(p => p.author_id))];
       const { data: profiles } = await supabase
         .from("profiles")
         .select("user_id, full_name, avatar_url")
         .in("user_id", authorIds);
       
       const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
-      return postsData.map(post => ({
+      const posts = postsResult.map(post => ({
         ...post,
         author: profileMap.get(post.author_id) || null,
       }));
+      return { posts, totalCount: count ?? 0 };
     },
     enabled: !!room?.id,
   });
+
+  const posts = postsData?.posts;
+  const totalPages = postsData ? Math.ceil(postsData.totalCount / PAGE_SIZE) : 0;
 
   const { data: userLikes } = useQuery({
     queryKey: ["forum-user-likes", user?.id],
@@ -243,6 +252,30 @@ export default function ForumRoomPage() {
                 </Card>
               </Link>
             ))}
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page === 0}
+                  onClick={() => setPage(p => p - 1)}
+                >
+                  {t("common.previous", "Previous")}
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  {t("common.pageOf", "Page {{current}} of {{total}}", { current: page + 1, total: totalPages })}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages - 1}
+                  onClick={() => setPage(p => p + 1)}
+                >
+                  {t("common.next", "Next")}
+                </Button>
+              </div>
+            )}
           </div>
         ) : (
           <Card>
