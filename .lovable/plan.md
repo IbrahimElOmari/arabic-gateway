@@ -1,37 +1,116 @@
 
-# Uitgebreid Platformrapport — HVA (16 maart 2026)
 
-## Laatst uitgevoerde verbeteringen
+# Plan: Alle 7 verbeterpunten naar 100%
 
-### Batch 1 (7 maart)
-- XSS sanitatie in PDF export (`escapeHtml` in export-utils.ts)
-- Badge component refactored naar forwardRef
-- Database: 20 performance indexen toegevoegd
-- Global error tracking in main.tsx
+De 7 punten die in Batch 2 zijn verbeterd maar niet 100% bereikten:
 
-### Batch 2 (16 maart)
-- **Certificaatgeneratie geactiveerd** — feature flag `CERTIFICATE_GENERATION` = true
-- **PaymentsPage volledig gebouwd** — transactieoverzicht, stats cards, zoek/filter (status+methode), CSV export, debounced search
-- **Forum paginering** — ForumRoomPage gebruikt nu `.range()` met 20 posts per pagina + navigatieknoppen
-- **Debounce** — FAQ search en PaymentsPage search gebruiken `useDebounce(300ms)` hook
-- **A11y** — aria-labels op collapsed sidebar buttons, sr-only labels, skip-to-content link (reeds aanwezig)
-- **Admin activity logging** — `logAdminAction()` utility; geïntegreerd in LevelsPage (create/update/delete) en KnowledgeBaseManagementPage (create/update/delete)
+---
 
-## Openstaande verbeterpunten (bijgewerkt)
+## 1. PaymentsPage (90% → 100%)
 
-| # | Punt | Huidig % | Vorige % |
-|---|------|----------|----------|
-| 1 | RESEND_API_KEY configureren | 0% | 0% |
-| 2 | STRIPE_SECRET_KEY configureren | 10% | 10% |
-| 3 | pg_cron activeren | 0% | 0% |
-| 4 | PaymentsPage | **90%** | 20% |
-| 5 | Enrollment workflow | 40% | 40% |
-| 6 | PWA offline modus | 15% | 15% |
-| 7 | Certificaatgeneratie | **90%** | 60% |
-| 9 | Error tracking (Sentry) | 30% | 30% |
-| 11 | Chat paginering | 80% | 75% |
-| 12 | Forum paginering | **90%** | 70% |
-| 14 | Hardcoded strings | 85% | 85% |
-| 17 | Admin activity logging | **65%** | 40% |
-| 19 | A11y gaps | **80%** | 70% |
-| 22 | Rate limiting/debounce | **70%** | 40% |
+**Ontbrekend:**
+- Ongebruikte imports: `PaymentStatus` type en `ExportButtons` component
+- Geen paginering bij grote datasets (haalt alles op in 1 query)
+
+**Aanpak:**
+- Verwijder `PaymentStatus` type (lijn 17) en `ExportButtons` import (lijn 15)
+- Voeg server-side paginering toe via `.range()` met 25 rijen per pagina + navigatieknoppen (identiek patroon als ForumRoomPage)
+
+---
+
+## 2. Certificaatgeneratie (90% → 100%)
+
+**Ontbrekend:**
+- XSS in `certificate-utils.ts`: `data.studentName`, `data.levelName`, `data.institutionName` worden ongeëscaped in HTML geïnterpoleerd
+- `ProgressPage` toont een certificaat per attempt in plaats van per uniek voltooid niveau (duplicaten)
+
+**Aanpak:**
+- `escapeHtml()` toevoegen in `certificate-utils.ts` voor alle user data in de template
+- In `ProgressPage`: de-dupliceren op `level_id` en alleen geslaagde attempts tonen als certificaat
+
+---
+
+## 3. Forum paginering (90% → 100%)
+
+**Ontbrekend:**
+- Geen commentaar-count per post in de lijstweergave (gebruiker weet niet hoeveel reacties er zijn)
+
+**Aanpak:**
+- Voeg een count-query toe voor `forum_comments` per post_id, of voeg een `comments_count` display toe naast likes
+
+---
+
+## 4. Admin activity logging (65% → 100%)
+
+**Ontbrekend:** `logAdminAction` is alleen geïntegreerd in LevelsPage en KnowledgeBaseManagementPage. 6 admin pagina's missen het:
+
+| Pagina | Mutaties die logging nodig hebben |
+|--------|----------------------------------|
+| ClassesPage | create, update, delete, assignTeacher, enrollStudent |
+| DiscountCodesPage | create, toggleActive, delete |
+| FinalExamsPage | create, update, delete |
+| UsersPage | updateRole |
+| TeacherApprovalsPage | processApplication (approve/reject) |
+| ContentReportsPage | updateReport, deleteContent |
+| PlacementsPage | schedule, complete |
+
+**Aanpak:**
+- Import `logAdminAction` + `useAuth` in elke pagina
+- Voeg `logAdminAction()` toe in elke `onSuccess` callback
+
+---
+
+## 5. A11y gaps (80% → 100%)
+
+**Ontbrekend:**
+- Collapsed sidebar toont geen taal-/themawisselaars (footer is leeg in collapsed state)
+- Sommige icon-only knoppen missen `aria-label` (report flags, emoji buttons in chat, like buttons)
+
+**Aanpak:**
+- In `AppSidebar`: toon compacte icon-only versies van `LanguageSwitcher` en `ThemeSwitcher` in collapsed state
+- Voeg `aria-label` toe aan Flag/emoji/like knoppen in ForumRoomPage en ChatPage
+
+---
+
+## 6. Rate limiting/debounce (70% → 100%)
+
+**Ontbrekend:**
+- Chat berichten hebben geen throttle (gebruiker kan spam-snel berichten sturen)
+- Forum post aanmaak heeft geen dubbel-submit bescherming (behalve `isPending`)
+
+**Aanpak:**
+- Voeg een cooldown state toe in ChatPage: na verzending 1s wachten voor volgende bericht (disable send button)
+- Forum `createPostMutation.isPending` is al actief — bevestig dat dit voldoende is (het is)
+
+---
+
+## 7. Chat paginering (80% → 100%)
+
+**Ontbrekend:**
+- Haalt nu `.limit(100)` berichten op zonder "load more" UI
+- Gebruiker kan oudere berichten niet zien
+
+**Aanpak:**
+- Voeg "Load older messages" knop toe bovenaan de berichtenlijst
+- Implementeer cursor-based paginering: laad 50 berichten, bij klik op "Load more" voeg de volgende 50 toe
+
+---
+
+## Bestanden die worden gewijzigd
+
+| Bestand | Wijzigingen |
+|---------|-------------|
+| `src/pages/admin/PaymentsPage.tsx` | Verwijder ongebruikte imports, voeg paginering toe |
+| `src/lib/certificate-utils.ts` | escapeHtml op alle user data |
+| `src/pages/ProgressPage.tsx` | De-dupliceer certificaten op level_id |
+| `src/pages/ForumRoomPage.tsx` | Comment count per post tonen |
+| `src/pages/admin/ClassesPage.tsx` | logAdminAction toevoegen |
+| `src/pages/admin/DiscountCodesPage.tsx` | logAdminAction toevoegen |
+| `src/pages/admin/FinalExamsPage.tsx` | logAdminAction toevoegen |
+| `src/pages/admin/UsersPage.tsx` | logAdminAction toevoegen |
+| `src/pages/admin/TeacherApprovalsPage.tsx` | logAdminAction toevoegen |
+| `src/pages/admin/ContentReportsPage.tsx` | logAdminAction toevoegen |
+| `src/pages/admin/PlacementsPage.tsx` | logAdminAction toevoegen |
+| `src/components/layout/AppSidebar.tsx` | Collapsed footer taal/thema icons |
+| `src/pages/ChatPage.tsx` | Load more paginering + send cooldown |
+
