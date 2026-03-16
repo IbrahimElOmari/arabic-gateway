@@ -43,6 +43,7 @@ import {
 import { Flag, CheckCircle, XCircle, Eye, Loader2, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/date-utils";
+import { logAdminAction } from "@/lib/admin-log";
 
 export default function ContentReportsPage() {
   const { t } = useTranslation();
