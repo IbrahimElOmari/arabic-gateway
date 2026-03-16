@@ -73,15 +73,15 @@ export default function PaymentsPage() {
     if (!payments) return [];
     return payments.filter((p) => {
       const matchesSearch =
-        !searchQuery ||
-        p.profile?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.profile?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.stripe_payment_intent_id?.toLowerCase().includes(searchQuery.toLowerCase());
+        !debouncedSearch ||
+        p.profile?.full_name?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        p.profile?.email?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        p.stripe_payment_intent_id?.toLowerCase().includes(debouncedSearch.toLowerCase());
       const matchesStatus = statusFilter === "all" || p.status === statusFilter;
       const matchesMethod = methodFilter === "all" || p.payment_method === methodFilter;
       return matchesSearch && matchesStatus && matchesMethod;
     });
-  }, [payments, searchQuery, statusFilter, methodFilter]);
+  }, [payments, debouncedSearch, statusFilter, methodFilter]);
 
   const handleExport = useCallback(() => {
     if (!filtered.length) return;

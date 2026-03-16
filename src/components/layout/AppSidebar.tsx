@@ -155,8 +155,9 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
           size="icon"
           onClick={onToggle}
           className={cn('shrink-0', collapsed && 'mx-auto')}
+          aria-label={collapsed ? t('accessibility.expandSidebar', 'Expand sidebar') : t('accessibility.collapseSidebar', 'Collapse sidebar')}
         >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          {collapsed ? <ChevronRight className="h-4 w-4" aria-hidden="true" /> : <ChevronLeft className="h-4 w-4" aria-hidden="true" />}
         </Button>
       </div>
 
