@@ -54,7 +54,7 @@ export default function KnowledgeBasePage() {
   });
 
   const { data: articles, isLoading: articlesLoading } = useQuery({
-    queryKey: ["faq-articles", selectedCategory, searchQuery],
+    queryKey: ["faq-articles", selectedCategory, debouncedSearch],
     queryFn: async () => {
       let query = supabase
         .from("faq_articles")
