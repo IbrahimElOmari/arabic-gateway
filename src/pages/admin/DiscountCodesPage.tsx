@@ -128,8 +128,9 @@ export default function DiscountCodesPage() {
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-discount-codes"] });
+      if (user) logAdminAction(user.id, "toggle_discount", "discount_codes", variables.id, { is_active: variables.is_active });
     },
   });
 
