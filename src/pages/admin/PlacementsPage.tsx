@@ -26,6 +26,8 @@ import {
 import { Calendar, CheckCircle, Clock, Loader2, User, Video, GraduationCap } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { logAdminAction } from "@/lib/admin-log";
 
 interface PlacementTest {
   id: string;
