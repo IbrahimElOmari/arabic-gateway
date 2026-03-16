@@ -26,6 +26,8 @@ export default function ForumRoomPage() {
   const [newPost, setNewPost] = useState({ title: "", content: "" });
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [reportTarget, setReportTarget] = useState<{ type: "forum_post"; id: string } | null>(null);
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 20;
 
   const { data: room, isLoading: roomLoading } = useQuery({
     queryKey: ["forum-room", roomName],
