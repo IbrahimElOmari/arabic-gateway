@@ -187,7 +187,7 @@ export default function PaymentsPage() {
               <SelectContent>
                 <SelectItem value="all">{t("common.all", "All")}</SelectItem>
                 <SelectItem value="pending">{t("admin.statusPending", "Pending")}</SelectItem>
-                <SelectItem value="completed">{t("admin.statusCompleted", "Completed")}</SelectItem>
+                <SelectItem value="succeeded">{t("admin.statusSucceeded", "Succeeded")}</SelectItem>
                 <SelectItem value="failed">{t("admin.statusFailed", "Failed")}</SelectItem>
                 <SelectItem value="refunded">{t("admin.statusRefunded", "Refunded")}</SelectItem>
               </SelectContent>
