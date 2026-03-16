@@ -127,11 +127,12 @@ export default function FinalExamsPage() {
       const { error } = await supabase.from("final_exams").update(data).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["final-exams"] });
       setShowDialog(false);
       setEditingExam(null);
       resetForm();
+      if (user) logAdminAction(user.id, "update_exam", "final_exams", variables.id);
       toast({ title: t("admin.examUpdated", "Exam Updated") });
     },
   });
