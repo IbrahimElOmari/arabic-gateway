@@ -215,6 +215,7 @@ export default function ClassesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-classes"] });
+      if (user) logAdminAction(user.id, "create_class", "classes", undefined, { name: formData.name });
       toast({
         title: t("admin.classCreated", "Class Created"),
         description: t("admin.classCreatedDescription", "The class has been created successfully."),
