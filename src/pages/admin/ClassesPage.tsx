@@ -327,9 +327,10 @@ export default function ClassesPage() {
         if (error) throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["class-enrollments", assignDialogClass?.id] });
       queryClient.invalidateQueries({ queryKey: ["admin-classes"] });
+      if (user) logAdminAction(user.id, variables.enroll ? "enroll_student" : "unenroll_student", "class_enrollments", variables.classId, { student_id: variables.studentId });
     },
   });
 
