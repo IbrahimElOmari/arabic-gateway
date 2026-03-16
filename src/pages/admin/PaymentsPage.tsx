@@ -26,6 +26,7 @@ const STATUS_COLORS: Record<string, string> = {
 export default function PaymentsPage() {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [methodFilter, setMethodFilter] = useState<string>("all");
 
