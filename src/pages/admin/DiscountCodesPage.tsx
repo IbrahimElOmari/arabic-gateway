@@ -35,6 +35,7 @@ import { Switch } from "@/components/ui/switch";
 import { Plus, Pencil, Trash2, Loader2, Percent, Copy } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { logAdminAction } from "@/lib/admin-log";
 
 interface DiscountCode {
   id: string;
