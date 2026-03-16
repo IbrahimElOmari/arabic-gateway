@@ -301,8 +301,9 @@ export default function ClassesPage() {
         .eq("id", classId);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-classes"] });
+      if (user) logAdminAction(user.id, "assign_teacher", "classes", variables.classId, { teacher_id: variables.teacherId });
       toast({ title: t("admin.teacherAssigned", "Teacher assigned successfully") });
     },
   });
