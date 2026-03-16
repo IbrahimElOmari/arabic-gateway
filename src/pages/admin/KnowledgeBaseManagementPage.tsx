@@ -89,6 +89,7 @@ export default function KnowledgeBaseManagementPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-faq-articles"] });
+      if (user) logAdminAction(user.id, "faq_article_created", "faq_articles", undefined, { title: articleForm.title_en });
       setShowArticleDialog(false);
       resetForm();
       toast({
