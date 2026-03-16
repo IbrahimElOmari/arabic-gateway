@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { CheckCircle, XCircle, Clock, Loader2, User } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { logAdminAction } from "@/lib/admin-log";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
