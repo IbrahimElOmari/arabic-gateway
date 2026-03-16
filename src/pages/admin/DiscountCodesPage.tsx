@@ -35,6 +35,7 @@ import { Switch } from "@/components/ui/switch";
 import { Plus, Pencil, Trash2, Loader2, Percent, Copy } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { logAdminAction } from "@/lib/admin-log";
 
 interface DiscountCode {
   id: string;
@@ -100,6 +101,7 @@ export default function DiscountCodesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-discount-codes"] });
+      if (user) logAdminAction(user.id, "create_discount", "discount_codes", undefined, { code: formData.code });
       toast({
         title: t("admin.discountCreated", "Discount Code Created"),
       });
@@ -126,8 +128,9 @@ export default function DiscountCodesPage() {
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-discount-codes"] });
+      if (user) logAdminAction(user.id, "toggle_discount", "discount_codes", variables.id, { is_active: variables.is_active });
     },
   });
 
@@ -137,8 +140,9 @@ export default function DiscountCodesPage() {
       const { error } = await supabase.from("discount_codes").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["admin-discount-codes"] });
+      if (user) logAdminAction(user.id, "delete_discount", "discount_codes", id);
       toast({
         title: t("admin.discountDeleted", "Discount Code Deleted"),
       });

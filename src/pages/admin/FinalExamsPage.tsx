@@ -35,6 +35,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, Loader2, GraduationCap, Users } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { logAdminAction } from "@/lib/admin-log";
 
 export default function FinalExamsPage() {
   const { t, i18n } = useTranslation();
@@ -113,6 +114,7 @@ export default function FinalExamsPage() {
       queryClient.invalidateQueries({ queryKey: ["final-exams"] });
       setShowDialog(false);
       resetForm();
+      if (user) logAdminAction(user.id, "create_exam", "final_exams", undefined, { title: formData.title });
       toast({ title: t("admin.examCreated", "Exam Created") });
     },
     onError: () => {
@@ -125,11 +127,12 @@ export default function FinalExamsPage() {
       const { error } = await supabase.from("final_exams").update(data).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["final-exams"] });
       setShowDialog(false);
       setEditingExam(null);
       resetForm();
+      if (user) logAdminAction(user.id, "update_exam", "final_exams", variables.id);
       toast({ title: t("admin.examUpdated", "Exam Updated") });
     },
   });
@@ -139,8 +142,9 @@ export default function FinalExamsPage() {
       const { error } = await supabase.from("final_exams").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["final-exams"] });
+      if (user) logAdminAction(user.id, "delete_exam", "final_exams", id);
       toast({ title: t("admin.examDeleted", "Exam Deleted") });
     },
   });

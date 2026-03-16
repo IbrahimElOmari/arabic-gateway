@@ -197,12 +197,10 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
 
       {/* Footer */}
       <div className="border-t p-2 shrink-0">
-        {!collapsed && (
-          <div className="flex items-center gap-1 px-3 py-1">
-            <LanguageSwitcher />
-            <ThemeSwitcher />
-          </div>
-        )}
+        <div className={cn('flex items-center gap-1', collapsed ? 'flex-col px-0 py-1' : 'px-3 py-1')}>
+          <LanguageSwitcher />
+          <ThemeSwitcher />
+        </div>
       </div>
     </aside>
   );

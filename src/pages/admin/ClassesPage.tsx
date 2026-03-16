@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { logAdminAction } from "@/lib/admin-log";
+import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -58,6 +60,7 @@ interface ClassData {
 
 export default function ClassesPage() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -213,6 +216,7 @@ export default function ClassesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-classes"] });
+      if (user) logAdminAction(user.id, "create_class", "classes", undefined, { name: formData.name });
       toast({
         title: t("admin.classCreated", "Class Created"),
         description: t("admin.classCreatedDescription", "The class has been created successfully."),
@@ -248,8 +252,9 @@ export default function ClassesPage() {
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-classes"] });
+      if (user) logAdminAction(user.id, "update_class", "classes", variables.id);
       toast({
         title: t("admin.classUpdated", "Class Updated"),
         description: t("admin.classUpdatedDescription", "The class has been updated successfully."),
@@ -272,8 +277,9 @@ export default function ClassesPage() {
       const { error } = await supabase.from("classes").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["admin-classes"] });
+      if (user) logAdminAction(user.id, "delete_class", "classes", id);
       toast({
         title: t("admin.classDeleted", "Class Deleted"),
       });
@@ -296,8 +302,9 @@ export default function ClassesPage() {
         .eq("id", classId);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-classes"] });
+      if (user) logAdminAction(user.id, "assign_teacher", "classes", variables.classId, { teacher_id: variables.teacherId });
       toast({ title: t("admin.teacherAssigned", "Teacher assigned successfully") });
     },
   });
@@ -321,9 +328,10 @@ export default function ClassesPage() {
         if (error) throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["class-enrollments", assignDialogClass?.id] });
       queryClient.invalidateQueries({ queryKey: ["admin-classes"] });
+      if (user) logAdminAction(user.id, variables.enroll ? "enroll_student" : "unenroll_student", "class_enrollments", variables.classId, { student_id: variables.studentId });
     },
   });
 

@@ -26,6 +26,8 @@ import {
 import { Calendar, CheckCircle, Clock, Loader2, User, Video, GraduationCap } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { logAdminAction } from "@/lib/admin-log";
 
 interface PlacementTest {
   id: string;
@@ -56,6 +58,7 @@ interface Level {
 
 export default function PlacementsPage() {
   const { t, i18n } = useTranslation();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedPlacement, setSelectedPlacement] = useState<PlacementTest | null>(null);
   const [dialogType, setDialogType] = useState<"schedule" | "complete" | null>(null);
@@ -139,8 +142,9 @@ export default function PlacementsPage() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["placement-tests"] });
+      if (user) logAdminAction(user.id, "schedule_placement", "placement_tests", undefined, { user_id: variables.userId });
       toast({
         title: t("admin.placementScheduled", "Placement Test Scheduled"),
         description: t("admin.placementScheduledDescription", "The student has been notified."),
@@ -178,8 +182,9 @@ export default function PlacementsPage() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["placement-tests"] });
+      if (user) logAdminAction(user.id, "complete_placement", "placement_tests", variables.placementId, { level_id: variables.levelId });
       toast({
         title: t("admin.placementCompleted", "Placement Test Completed"),
         description: t("admin.placementCompletedDescription", "Level has been assigned."),

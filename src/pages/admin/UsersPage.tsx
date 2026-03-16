@@ -32,6 +32,8 @@ import {
 import { Search, UserCog, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
+import { logAdminAction } from "@/lib/admin-log";
+import { useAuth } from "@/contexts/AuthContext";
 
 type AppRole = "admin" | "teacher" | "student";
 
@@ -52,6 +54,7 @@ interface ClassOption {
 
 export default function UsersPage() {
   const { t } = useTranslation();
+  const { user: adminUser } = useAuth();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
@@ -147,8 +150,9 @@ export default function UsersPage() {
         }
       }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      if (adminUser) logAdminAction(adminUser.id, "update_role", "user_roles", variables.userId, { role: variables.role, class_id: variables.classId });
       toast({
         title: t("admin.roleUpdated", "Role Updated"),
         description: t("admin.roleUpdatedDescription", "User role has been updated successfully."),

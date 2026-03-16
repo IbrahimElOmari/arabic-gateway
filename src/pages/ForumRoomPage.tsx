@@ -65,9 +65,26 @@ export default function ForumRoomPage() {
         .in("user_id", authorIds);
       
       const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+
+      // Fetch comment counts per post
+      const postIds = postsResult.map(p => p.id);
+      const commentCountMap = new Map<string, number>();
+      if (postIds.length > 0) {
+        const { data: comments } = await supabase
+          .from("forum_comments")
+          .select("post_id")
+          .in("post_id", postIds);
+        if (comments) {
+          for (const c of comments) {
+            commentCountMap.set(c.post_id, (commentCountMap.get(c.post_id) || 0) + 1);
+          }
+        }
+      }
+
       const posts = postsResult.map(post => ({
         ...post,
         author: profileMap.get(post.author_id) || null,
+        comments_count: commentCountMap.get(post.id) || 0,
       }));
       return { posts, totalCount: count ?? 0 };
     },
@@ -225,9 +242,23 @@ export default function ForumRoomPage() {
                             likeMutation.mutate(post.id);
                           }}
                           className={userLikes?.includes(post.id) ? "text-primary" : "text-muted-foreground"}
+                          aria-label={t("forum.likePost", "Like post")}
                         >
                           <ThumbsUp className="h-4 w-4 mr-1" />
                           {post.likes_count}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          className="text-muted-foreground"
+                          aria-label={t("forum.comments", "Comments")}
+                        >
+                          <MessageCircle className="h-4 w-4 mr-1" />
+                          {(post as any).comments_count}
                         </Button>
                         <Button
                           variant="ghost"
@@ -239,7 +270,7 @@ export default function ForumRoomPage() {
                             setReportDialogOpen(true);
                           }}
                           className="text-muted-foreground hover:text-destructive"
-                          title={t("moderation.reportContent", "Report content")}
+                          aria-label={t("moderation.reportContent", "Report content")}
                         >
                           <Flag className="h-4 w-4" />
                         </Button>

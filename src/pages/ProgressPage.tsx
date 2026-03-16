@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { BookOpenCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BookOpenCheck, Download } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,6 +66,23 @@ export default function ProgressPage() {
     enabled: !!user,
   });
 
+  // De-duplicate certificates by level_id, only for passed attempts
+  const uniquePassedLevels = useMemo(() => {
+    if (!attemptsDetailed) return [];
+    const seen = new Set<string>();
+    const result: { levelId: string; levelName: string }[] = [];
+    for (const attempt of attemptsDetailed) {
+      if (!attempt.passed) continue;
+      const levelId = attempt.exercises?.classes?.level_id;
+      const levelName = attempt.exercises?.classes?.levels?.name_nl;
+      if (levelId && levelName && !seen.has(levelId)) {
+        seen.add(levelId);
+        result.push({ levelId, levelName });
+      }
+    }
+    return result;
+  }, [attemptsDetailed]);
+
   const downloadCertificate = (levelId: string, levelName: string) => {
     if (!isFeatureEnabled("CERTIFICATE_GENERATION")) return;
 
@@ -87,9 +105,6 @@ export default function ProgressPage() {
 
   const getLevelName = (attempt: AttemptRow) =>
     attempt.exercises?.classes?.levels?.name_nl ?? "";
-
-  const getLevelId = (attempt: AttemptRow) =>
-    attempt.exercises?.classes?.level_id ?? "";
 
   return (
     <>
@@ -118,8 +133,7 @@ export default function ProgressPage() {
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {isFeatureEnabled("CERTIFICATE_GENERATION") &&
-                  attemptsDetailed &&
-                  attemptsDetailed.length > 0 && (
+                  uniquePassedLevels.length > 0 && (
                     <Card className="col-span-full">
                       <CardHeader>
                         <CardTitle>{t("progress.certificates", "Certificaten")}</CardTitle>
@@ -127,23 +141,22 @@ export default function ProgressPage() {
                           {t("progress.downloadCertificates", "Download hier je behaalde certificaten.")}
                         </CardDescription>
                       </CardHeader>
-                      <CardContent>
-                        {attemptsDetailed.map((attempt, index) => {
-                          const levelName = getLevelName(attempt);
-                          if (!levelName) return null;
-                          return (
-                            <div key={index} className="mb-4">
-                              <p>
-                                {t("progress.level", "Niveau")}: {levelName}
-                              </p>
-                              <button
-                                onClick={() => downloadCertificate(getLevelId(attempt), levelName)}
-                              >
-                                {t("progress.downloadCertificate", "Download Certificaat")}
-                              </button>
-                            </div>
-                          );
-                        })}
+                      <CardContent className="space-y-3">
+                        {uniquePassedLevels.map((level) => (
+                          <div key={level.levelId} className="flex items-center justify-between">
+                            <p className="text-sm font-medium">
+                              {t("progress.level", "Niveau")}: {level.levelName}
+                            </p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => downloadCertificate(level.levelId, level.levelName)}
+                            >
+                              <Download className="h-4 w-4 mr-2" />
+                              {t("progress.downloadCertificate", "Download Certificaat")}
+                            </Button>
+                          </div>
+                        ))}
                       </CardContent>
                     </Card>
                   )}

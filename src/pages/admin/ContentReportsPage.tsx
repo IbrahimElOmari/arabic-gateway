@@ -43,6 +43,7 @@ import {
 import { Flag, CheckCircle, XCircle, Eye, Loader2, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/date-utils";
+import { logAdminAction } from "@/lib/admin-log";
 
 export default function ContentReportsPage() {
   const { t } = useTranslation();
@@ -86,8 +87,9 @@ export default function ContentReportsPage() {
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["content-reports"] });
+      if (user) logAdminAction(user.id, "update_report", "content_reports", variables.id, { status: variables.status });
       setSelectedReport(null);
       setReviewNotes("");
       toast({
@@ -131,8 +133,9 @@ export default function ContentReportsPage() {
         .eq("id", report.id);
       if (updateError) throw updateError;
     },
-    onSuccess: () => {
+    onSuccess: (_, report) => {
       queryClient.invalidateQueries({ queryKey: ["content-reports"] });
+      if (user) logAdminAction(user.id, "delete_reported_content", "content_reports", report.id, { content_type: report.content_type, content_id: report.content_id });
       setDeleteDialogOpen(false);
       setReportToDelete(null);
       toast({
