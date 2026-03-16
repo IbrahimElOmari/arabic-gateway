@@ -114,8 +114,9 @@ export default function LevelsPage() {
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-levels"] });
+      if (user) logAdminAction(user.id, "level_updated", "levels", variables.id, { name: variables.data.name });
       toast({
         title: t("admin.levelUpdated", "Level Updated"),
       });
