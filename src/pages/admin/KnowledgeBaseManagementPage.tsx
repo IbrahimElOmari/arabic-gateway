@@ -128,8 +128,9 @@ export default function KnowledgeBaseManagementPage() {
       const { error } = await supabase.from("faq_articles").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, articleId) => {
       queryClient.invalidateQueries({ queryKey: ["admin-faq-articles"] });
+      if (user) logAdminAction(user.id, "faq_article_deleted", "faq_articles", articleId);
       toast({
         title: t("admin.articleDeleted", "Article Deleted"),
       });
