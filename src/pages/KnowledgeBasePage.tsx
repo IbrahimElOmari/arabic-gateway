@@ -70,9 +70,9 @@ export default function KnowledgeBasePage() {
       if (error) throw error;
 
       // Filter by search query
-      if (searchQuery) {
+      if (debouncedSearch) {
         const lang = i18n.language;
-        const searchLower = searchQuery.toLowerCase();
+        const searchLower = debouncedSearch.toLowerCase();
         return data.filter((article) => {
           const title = lang === "nl" ? article.title_nl : lang === "ar" ? article.title_ar : article.title_en;
           const content = lang === "nl" ? article.content_nl : lang === "ar" ? article.content_ar : article.content_en;
