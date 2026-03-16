@@ -83,6 +83,7 @@ export default function LevelsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-levels"] });
+      if (user) logAdminAction(user.id, "level_created", "levels", undefined, { name: formData.name });
       toast({
         title: t("admin.levelCreated", "Level Created"),
       });
