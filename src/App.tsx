@@ -42,6 +42,7 @@ const KnowledgeBaseManagementPage = React.lazy(() => import("./pages/admin/Knowl
 const ContentReportsPage = React.lazy(() => import("./pages/admin/ContentReportsPage"));
 const AdminInvitationsPage = React.lazy(() => import("./pages/admin/AdminInvitationsPage"));
 const FinalExamsPage = React.lazy(() => import("./pages/admin/FinalExamsPage"));
+const EnrollmentRequestsPage = React.lazy(() => import("./pages/admin/EnrollmentRequestsPage"));
 
 // Teacher pages
 const TeacherDashboard = React.lazy(() => import("./pages/teacher/TeacherDashboard"));
