@@ -130,10 +130,7 @@ export default function PaymentsPage() {
   }, [filtered]);
 
   const formatAmount = (amount: number, currency: string) => {
-    return new Intl.NumberFormat("nl-NL", {
-      style: "currency",
-      currency: currency || "EUR",
-    }).format(amount / 100);
+    return formatCurrency(amount / 100, currency || "EUR");
   };
 
   return (

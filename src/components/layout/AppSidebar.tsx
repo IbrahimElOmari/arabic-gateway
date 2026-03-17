@@ -40,6 +40,8 @@ import {
 interface AppSidebarProps {
   collapsed: boolean;
   onToggle: () => void;
+  mobile?: boolean;
+  onNavigate?: () => void;
 }
 
 interface NavItem {
@@ -49,7 +51,7 @@ interface NavItem {
   end?: boolean;
 }
 
-export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
+export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSidebarProps) {
   const { t } = useTranslation();
   const { user, role, roleStatus } = useAuth();
 
@@ -64,7 +66,6 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
     { to: '/register', icon: UserPlus, label: t('auth.register') },
   ];
 
-  // Dynamic dashboard link based on role
   const getDashboardLink = (): NavItem => {
     if (role === 'admin') return { to: '/admin', icon: LayoutDashboard, label: t('nav.dashboard'), end: true };
     if (role === 'teacher') return { to: '/teacher', icon: LayoutDashboard, label: t('nav.dashboard'), end: true };
@@ -111,6 +112,12 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
     { to: '/admin/final-exams', icon: GraduationCap, label: t('admin.finalExams', 'Final Exams') },
   ];
 
+  const handleNavClick = () => {
+    if (mobile && onNavigate) {
+      onNavigate();
+    }
+  };
+
   const renderSection = (title: string, items: NavItem[]) => (
     <div className="mb-2" key={title}>
       {!collapsed && (
@@ -128,6 +135,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             collapsed && 'justify-center px-2'
           )}
           activeClassName="bg-primary/10 text-primary font-medium"
+          onClick={handleNavClick}
         >
           <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
           {!collapsed && <span className="truncate">{item.label}</span>}
@@ -137,28 +145,33 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
     </div>
   );
 
-  // Determine which sections to show based on role (strictly)
   const isRoleResolved = roleStatus === 'ready' && role !== null;
 
-  return (
-    <aside
-      className={cn(
+  // On mobile, render without the fixed positioning (Sheet handles positioning)
+  const sidebarClasses = mobile
+    ? 'h-full bg-card flex flex-col'
+    : cn(
         'fixed start-0 top-0 z-40 h-screen border-r bg-card transition-all duration-300 flex flex-col',
         collapsed ? 'w-16' : 'w-64'
-      )}
-    >
+      );
+
+  return (
+    <aside className={sidebarClasses}>
       {/* Header */}
       <div className="flex h-14 items-center justify-between border-b px-3 shrink-0">
-        {!collapsed && <Logo size="sm" showText />}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onToggle}
-          className={cn('shrink-0', collapsed && 'mx-auto')}
-          aria-label={collapsed ? t('accessibility.expandSidebar', 'Expand sidebar') : t('accessibility.collapseSidebar', 'Collapse sidebar')}
-        >
-          {collapsed ? <ChevronRight className="h-4 w-4" aria-hidden="true" /> : <ChevronLeft className="h-4 w-4" aria-hidden="true" />}
-        </Button>
+        {!collapsed && !mobile && <Logo size="sm" showText />}
+        {mobile && <Logo size="sm" showText />}
+        {!mobile && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggle}
+            className={cn('shrink-0', collapsed && 'mx-auto')}
+            aria-label={collapsed ? t('accessibility.expandSidebar', 'Expand sidebar') : t('accessibility.collapseSidebar', 'Collapse sidebar')}
+          >
+            {collapsed ? <ChevronRight className="h-4 w-4" aria-hidden="true" /> : <ChevronLeft className="h-4 w-4" aria-hidden="true" />}
+          </Button>
+        )}
       </div>
 
       {/* Navigation */}
@@ -167,7 +180,6 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
 
         {!user && renderSection(t('nav.account', 'Account'), guestItems)}
 
-        {/* Only show role-specific sections when role is resolved */}
         {user && isRoleResolved && role === 'student' && (
           renderSection(t('nav.learning', 'Learning'), studentItems)
         )}
@@ -187,7 +199,6 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
           </>
         )}
 
-        {/* User logged in but role not yet resolved — show minimal nav */}
         {user && !isRoleResolved && (
           renderSection(t('nav.account', 'Account'), [
             { to: '/settings', icon: Settings, label: t('nav.settings') },
