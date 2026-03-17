@@ -81,6 +81,7 @@ const ForumPage = React.lazy(() => import("./pages/ForumPage"));
 const ForumRoomPage = React.lazy(() => import("./pages/ForumRoomPage"));
 const ForumPostPage = React.lazy(() => import("./pages/ForumPostPage"));
 const ChatPage = React.lazy(() => import("./pages/ChatPage"));
+const ApplyTeacherPage = React.lazy(() => import("./pages/ApplyTeacherPage"));
 
 const queryClient = new QueryClient();
 
