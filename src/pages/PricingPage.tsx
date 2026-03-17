@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,10 +12,13 @@ import { Loader2, GraduationCap, Users, Calendar, Tag, CheckCircle, XCircle } fr
 import { useNavigate } from "react-router-dom";
 import { formatCurrency } from "@/lib/format-utils";
 import { calculateTax } from "@/lib/tax-utils";
+import { toast } from "@/hooks/use-toast";
 
 export default function PricingPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [discountCode, setDiscountCode] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState<{
     code: string;
@@ -40,6 +44,52 @@ export default function PricingPage() {
     },
   });
 
+  // Fetch user's existing enrollments
+  const { data: myEnrollments } = useQuery({
+    queryKey: ["my-enrollments", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("class_enrollments")
+        .select("class_id, status")
+        .eq("student_id", user.id);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  // Enrollment mutation
+  const enrollMutation = useMutation({
+    mutationFn: async ({ classId, isFree }: { classId: string; isFree: boolean }) => {
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await supabase.from("class_enrollments").insert({
+        class_id: classId,
+        student_id: user.id,
+        status: isFree ? "enrolled" : "pending",
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_, { isFree }) => {
+      queryClient.invalidateQueries({ queryKey: ["my-enrollments"] });
+      toast({
+        title: isFree
+          ? t("pricing.enrollmentSuccess", "Inschrijving gelukt!")
+          : t("pricing.enrollmentPending", "Aanvraag ingediend"),
+        description: isFree
+          ? t("pricing.enrollmentSuccessDesc", "Je hebt nu toegang tot deze klas.")
+          : t("pricing.enrollmentPendingDesc", "Een beheerder zal je aanvraag beoordelen."),
+      });
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        title: t("common.error", "Error"),
+        description: t("pricing.enrollmentError", "Inschrijving mislukt. Probeer het opnieuw."),
+      });
+    },
+  });
+
   const getLevelName = (levels: any) => {
     if (!levels) return "";
     const lang = i18n.language;
@@ -54,6 +104,18 @@ export default function PricingPage() {
       return Math.max(0, price - (price * appliedDiscount.value) / 100);
     }
     return Math.max(0, price - appliedDiscount.value);
+  };
+
+  const getEnrollmentStatus = (classId: string) => {
+    return myEnrollments?.find((e) => e.class_id === classId)?.status || null;
+  };
+
+  const handleEnroll = (classId: string, isFree: boolean) => {
+    if (!user) {
+      navigate("/register");
+      return;
+    }
+    enrollMutation.mutate({ classId, isFree });
   };
 
   const handleApplyDiscount = async () => {
@@ -163,6 +225,8 @@ export default function PricingPage() {
               const discountedPrice = getDiscountedPrice(originalPrice);
               const hasDiscount = appliedDiscount && originalPrice && discountedPrice !== originalPrice;
               const taxInfo = originalPrice ? calculateTax(originalPrice, "NL") : null;
+              const isFree = !originalPrice || originalPrice === 0;
+              const enrollmentStatus = getEnrollmentStatus(cls.id);
 
               return (
                 <Card key={cls.id} className="flex flex-col">
@@ -171,6 +235,13 @@ export default function PricingPage() {
                       <Badge variant="secondary">
                         {getLevelName(cls.levels)}
                       </Badge>
+                      {enrollmentStatus && (
+                        <Badge variant={enrollmentStatus === "enrolled" ? "default" : "outline"}>
+                          {enrollmentStatus === "enrolled"
+                            ? t("pricing.enrolled", "Ingeschreven")
+                            : t("pricing.pendingApproval", "Wacht op goedkeuring")}
+                        </Badge>
+                      )}
                     </div>
                     <CardTitle className="text-xl">{cls.name}</CardTitle>
                     {cls.description && (
@@ -212,9 +283,21 @@ export default function PricingPage() {
                           {t("pricing.inclVat", "Incl. {{rate}}% BTW", { rate: taxInfo.vatRate * 100 })}
                         </p>
                       ) : null}
-                      <Button className="w-full" onClick={() => navigate("/register")}>
-                        <GraduationCap className="h-4 w-4 mr-2" />
-                        {t("pricing.enroll", "Inschrijven")}
+                      <Button
+                        className="w-full"
+                        onClick={() => handleEnroll(cls.id, isFree)}
+                        disabled={!!enrollmentStatus || enrollMutation.isPending}
+                      >
+                        {enrollMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <GraduationCap className="h-4 w-4 mr-2" />
+                        )}
+                        {enrollmentStatus
+                          ? enrollmentStatus === "enrolled"
+                            ? t("pricing.alreadyEnrolled", "Al ingeschreven")
+                            : t("pricing.pendingApproval", "Wacht op goedkeuring")
+                          : t("pricing.enroll", "Inschrijven")}
                       </Button>
                     </div>
                   </CardContent>

@@ -42,6 +42,7 @@ const KnowledgeBaseManagementPage = React.lazy(() => import("./pages/admin/Knowl
 const ContentReportsPage = React.lazy(() => import("./pages/admin/ContentReportsPage"));
 const AdminInvitationsPage = React.lazy(() => import("./pages/admin/AdminInvitationsPage"));
 const FinalExamsPage = React.lazy(() => import("./pages/admin/FinalExamsPage"));
+const EnrollmentRequestsPage = React.lazy(() => import("./pages/admin/EnrollmentRequestsPage"));
 
 // Teacher pages
 const TeacherDashboard = React.lazy(() => import("./pages/teacher/TeacherDashboard"));
@@ -80,6 +81,7 @@ const ForumPage = React.lazy(() => import("./pages/ForumPage"));
 const ForumRoomPage = React.lazy(() => import("./pages/ForumRoomPage"));
 const ForumPostPage = React.lazy(() => import("./pages/ForumPostPage"));
 const ChatPage = React.lazy(() => import("./pages/ChatPage"));
+const ApplyTeacherPage = React.lazy(() => import("./pages/ApplyTeacherPage"));
 
 const queryClient = new QueryClient();
 
@@ -140,7 +142,7 @@ const App = () => (
                       <Route path="/helpdesk" element={<ProtectedRoute><HelpdeskPage /></ProtectedRoute>} />
                       <Route path="/gamification" element={<ProtectedRoute><GamificationPage /></ProtectedRoute>} />
                       <Route path="/install" element={<InstallPage />} />
-                      
+                      <Route path="/apply-teacher" element={<ProtectedRoute><ApplyTeacherPage /></ProtectedRoute>} />
                       {/* Teacher routes */}
                       <Route path="/teacher" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><TeacherDashboard /></ProtectedRoute>} />
                       <Route path="/teacher/content-studio" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><ContentStudioPage /></ProtectedRoute>} />
@@ -167,7 +169,7 @@ const App = () => (
                       <Route path="/admin/reports" element={<ProtectedRoute requiredRole="admin"><ContentReportsPage /></ProtectedRoute>} />
                       <Route path="/admin/invitations" element={<ProtectedRoute requiredRole="admin"><AdminInvitationsPage /></ProtectedRoute>} />
                       <Route path="/admin/final-exams" element={<ProtectedRoute requiredRole="admin"><FinalExamsPage /></ProtectedRoute>} />
-                      
+                      <Route path="/admin/enrollments" element={<ProtectedRoute requiredRole="admin"><EnrollmentRequestsPage /></ProtectedRoute>} />
                       {/* Catch-all */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>

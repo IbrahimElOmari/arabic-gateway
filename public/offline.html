@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Offline</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #f8f9fa;
+      color: #333;
+    }
+    .container {
+      text-align: center;
+      padding: 2rem;
+      max-width: 420px;
+    }
+    .icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin: 0 0 0.5rem;
+    }
+    p {
+      color: #666;
+      line-height: 1.6;
+    }
+    button {
+      margin-top: 1.5rem;
+      padding: 0.75rem 2rem;
+      background: #3d8c6e;
+      color: #fff;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #2d6b54;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">📶</div>
+    <h1>Je bent offline</h1>
+    <p>Het lijkt erop dat je geen internetverbinding hebt. Controleer je verbinding en probeer het opnieuw.</p>
+    <button onclick="window.location.reload()">Opnieuw proberen</button>
+  </div>
+</body>
+</html>
