@@ -46,6 +46,7 @@ export function AdminSidebar({ collapsed, onToggle }: AdminSidebarProps) {
     { to: "/admin/invitations", icon: Mail, label: t("admin.invitations", "Invitations") },
     { to: "/admin/analytics", icon: BarChart3, label: t("admin.analytics", "Analytics") },
     { to: "/admin/final-exams", icon: GraduationCap, label: t("admin.finalExams", "Final Exams") },
+    { to: "/admin/enrollments", icon: Users, label: t("admin.enrollmentRequests", "Enrollments") },
   ];
 
   return (
