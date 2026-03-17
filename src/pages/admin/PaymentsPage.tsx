@@ -12,6 +12,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatDate } from "@/lib/date-utils";
 import { exportToCSV } from "@/lib/export-utils";
+import { formatCurrency } from "@/lib/format-utils";
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
