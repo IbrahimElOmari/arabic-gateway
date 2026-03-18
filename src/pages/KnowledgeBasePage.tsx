@@ -22,7 +22,7 @@ import {
   ThumbsDown,
   Loader2
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const iconMap: Record<string, React.ElementType> = {
   "help-circle": HelpCircle,

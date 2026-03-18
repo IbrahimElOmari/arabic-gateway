@@ -15,7 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CheckCircle, XCircle, Loader2, Users } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/date-utils";
 
 interface PendingEnrollment {

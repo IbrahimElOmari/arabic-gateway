@@ -17,7 +17,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { ArrowLeft, ArrowRight, Clock, Send, Loader2, CheckCircle } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 // Question components
 import { MultipleChoiceQuestion } from "@/components/exercises/questions/MultipleChoiceQuestion";

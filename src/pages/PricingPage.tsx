@@ -18,7 +18,7 @@ export default function PricingPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [discountCode, setDiscountCode] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState<{
     code: string;
