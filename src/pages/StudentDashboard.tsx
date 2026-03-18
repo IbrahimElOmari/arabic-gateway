@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useQuery } from '@tanstack/react-query';
+import { apiQuery } from '@/lib/supabase-api';
 import { supabase } from '@/integrations/supabase/client';
 import { BookOpen, Calendar, TrendingUp, Flame, Trophy, MessageCircle, Shield, Palette, Lightbulb } from 'lucide-react';
 import { Link } from 'react-router-dom';
