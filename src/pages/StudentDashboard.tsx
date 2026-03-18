@@ -45,11 +45,9 @@ export default function StudentDashboard() {
   const { data: exercises } = useQuery({
     queryKey: ['available-exercises', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('exercises')
-        .select(`id, title, category_id, category:exercise_categories(name)`)
-        .eq('is_published', true);
-      if (error) throw error;
+      const data = await apiQuery<any[]>('exercises', q =>
+        q.select(`id, title, category_id, category:exercise_categories(name)`).eq('is_published', true)
+      );
       return data.map((e: any) => ({
         id: e.id,
         title: e.title,
