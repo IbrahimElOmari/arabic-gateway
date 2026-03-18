@@ -36,6 +36,7 @@ const iconMap: Record<string, React.ElementType> = {
 
 export default function KnowledgeBasePage() {
   const { t, i18n } = useTranslation();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);

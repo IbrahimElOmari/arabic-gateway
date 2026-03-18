@@ -18,6 +18,7 @@ export default function ApplyTeacherPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const [qualifications, setQualifications] = useState("");
   const [experience, setExperience] = useState("");

@@ -33,6 +33,7 @@ export default function EnrollmentRequestsPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: pendingEnrollments, isLoading } = useQuery({
     queryKey: ["pending-enrollments"],
