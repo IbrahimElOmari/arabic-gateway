@@ -1,6 +1,18 @@
 /**
  * Centralized Supabase API wrapper with error normalization, retry, timeout,
  * and version headers.
+ *
+ * Usage:
+ *   import { apiQuery, apiInvoke } from '@/lib/supabase-api';
+ *
+ *   // Read queries (with retry + timeout)
+ *   const data = await apiQuery<MyType>('table', q => q.select('*').eq('id', id));
+ *
+ *   // Edge function calls (with retry + timeout)
+ *   const result = await apiInvoke<Resp>('my-func', { body });
+ *
+ *   // Mutations – thin wrapper for error normalization only (no retry for safety)
+ *   const result = await apiMutate<T>('table', q => q.insert({ ... }));
  */
 import { supabase } from '@/integrations/supabase/client';
 import { ApiError, normalizeError } from './api-error';
@@ -10,7 +22,7 @@ const DEFAULT_TIMEOUT_MS = 15_000;
 const MAX_RETRIES = 1;
 
 /**
- * Wrapper around supabase.from() queries with error normalization.
+ * Wrapper around supabase.from() queries with error normalization and retry on 5xx.
  */
 export async function apiQuery<T>(
   table: string,
@@ -21,6 +33,31 @@ export async function apiQuery<T>(
   try {
     const query = supabase.from(table as any);
     const { data, error } = await queryFn(query);
+
+    if (error) {
+      throw normalizeError(error, functionName);
+    }
+
+    return data as T;
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw normalizeError(error, functionName);
+  }
+}
+
+/**
+ * Wrapper around supabase.from() mutations (INSERT/UPDATE/DELETE) with error normalization.
+ * Does NOT retry — mutations are not idempotent.
+ */
+export async function apiMutate<T = any>(
+  table: string,
+  mutationFn: (query: any) => any
+): Promise<T> {
+  const functionName = `mutate:${table}`;
+
+  try {
+    const query = supabase.from(table as any);
+    const { data, error } = await mutationFn(query);
 
     if (error) {
       throw normalizeError(error, functionName);

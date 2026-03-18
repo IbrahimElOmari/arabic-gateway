@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CreditCard, Search, Download, Loader2, DollarSign, TrendingUp, AlertCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { apiQuery } from "@/lib/supabase-api";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useMemo, useCallback } from "react";
 import { useDebounce } from "@/hooks/use-debounce";

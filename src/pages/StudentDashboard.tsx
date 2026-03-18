@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useQuery } from '@tanstack/react-query';
+import { apiQuery } from '@/lib/supabase-api';
 import { supabase } from '@/integrations/supabase/client';
 import { BookOpen, Calendar, TrendingUp, Flame, Trophy, MessageCircle, Shield, Palette, Lightbulb } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -19,55 +20,34 @@ export default function StudentDashboard() {
 
   const { data: attempts } = useQuery({
     queryKey: ['my-attempts', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('exercise_attempts')
-        .select('id, passed, time_spent_seconds')
-        .eq('student_id', user!.id);
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>('exercise_attempts', q =>
+      q.select('id, passed, time_spent_seconds').eq('student_id', user!.id)
+    ),
     enabled: !!user,
   });
 
   const { data: userPoints } = useQuery({
     queryKey: ['my-points', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('user_points')
-        .select('*')
-        .eq('user_id', user!.id)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any>('user_points', q =>
+      q.select('*').eq('user_id', user!.id).maybeSingle()
+    ),
     enabled: !!user,
   });
 
   const { data: analytics } = useQuery({
     queryKey: ['my-analytics', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('student_analytics')
-        .select('*')
-        .eq('user_id', user!.id)
-        .order('week_start', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any>('student_analytics', q =>
+      q.select('*').eq('user_id', user!.id).order('week_start', { ascending: false }).limit(1).maybeSingle()
+    ),
     enabled: !!user,
   });
 
   const { data: exercises } = useQuery({
     queryKey: ['available-exercises', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('exercises')
-        .select(`id, title, category_id, category:exercise_categories(name)`)
-        .eq('is_published', true);
-      if (error) throw error;
+      const data = await apiQuery<any[]>('exercises', q =>
+        q.select(`id, title, category_id, category:exercise_categories(name)`).eq('is_published', true)
+      );
       return data.map((e: any) => ({
         id: e.id,
         title: e.title,

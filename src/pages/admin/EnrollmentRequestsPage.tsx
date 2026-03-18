@@ -15,7 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CheckCircle, XCircle, Loader2, Users } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/date-utils";
 
 interface PendingEnrollment {
@@ -33,6 +33,7 @@ export default function EnrollmentRequestsPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: pendingEnrollments, isLoading } = useQuery({
     queryKey: ["pending-enrollments"],
