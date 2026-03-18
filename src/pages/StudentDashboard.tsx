@@ -20,14 +20,9 @@ export default function StudentDashboard() {
 
   const { data: attempts } = useQuery({
     queryKey: ['my-attempts', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('exercise_attempts')
-        .select('id, passed, time_spent_seconds')
-        .eq('student_id', user!.id);
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>('exercise_attempts', q =>
+      q.select('id, passed, time_spent_seconds').eq('student_id', user!.id)
+    ),
     enabled: !!user,
   });
 
