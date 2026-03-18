@@ -12,7 +12,7 @@ import { Loader2, GraduationCap, Users, Calendar, Tag, CheckCircle, XCircle } fr
 import { useNavigate } from "react-router-dom";
 import { formatCurrency } from "@/lib/format-utils";
 import { calculateTax } from "@/lib/tax-utils";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 export default function PricingPage() {
   const { t, i18n } = useTranslation();
