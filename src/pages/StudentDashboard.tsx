@@ -36,17 +36,9 @@ export default function StudentDashboard() {
 
   const { data: analytics } = useQuery({
     queryKey: ['my-analytics', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('student_analytics')
-        .select('*')
-        .eq('user_id', user!.id)
-        .order('week_start', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any>('student_analytics', q =>
+      q.select('*').eq('user_id', user!.id).order('week_start', { ascending: false }).limit(1).maybeSingle()
+    ),
     enabled: !!user,
   });
 
