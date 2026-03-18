@@ -28,15 +28,9 @@ export default function StudentDashboard() {
 
   const { data: userPoints } = useQuery({
     queryKey: ['my-points', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('user_points')
-        .select('*')
-        .eq('user_id', user!.id)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any>('user_points', q =>
+      q.select('*').eq('user_id', user!.id).maybeSingle()
+    ),
     enabled: !!user,
   });
 
