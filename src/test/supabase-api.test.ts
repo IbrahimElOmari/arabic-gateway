@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { apiInvoke, apiQuery } from '../lib/supabase-api';
+import { apiInvoke, apiQuery, apiMutate } from '../lib/supabase-api';
 import { supabase } from '../integrations/supabase/client';
+import { ApiError } from '../lib/api-error';
 
 // Mock supabase client
 vi.mock('@/integrations/supabase/client', () => ({
@@ -43,6 +44,56 @@ describe('Supabase API Wrapper', () => {
         .rejects
         .toThrow('DB Error');
     });
+
+    it('should normalize non-ApiError exceptions', async () => {
+      const mockQueryBuilder = {
+        select: vi.fn().mockRejectedValue(new Error('Network error')),
+      };
+      (supabase.from as any).mockReturnValue(mockQueryBuilder);
+
+      await expect(apiQuery('test_table', (q) => q.select()))
+        .rejects
+        .toBeInstanceOf(ApiError);
+    });
+  });
+
+  describe('apiMutate', () => {
+    it('should return data on success', async () => {
+      const mockData = { id: 1 };
+      const mockQueryBuilder = {
+        insert: vi.fn().mockResolvedValue({ data: mockData, error: null }),
+      };
+      (supabase.from as any).mockReturnValue(mockQueryBuilder);
+
+      const result = await apiMutate('test_table', (q) => q.insert({ name: 'test' }));
+      expect(result).toEqual(mockData);
+    });
+
+    it('should throw ApiError on mutation failure', async () => {
+      const mockError = { message: 'Constraint violation', code: '23505' };
+      const mockQueryBuilder = {
+        insert: vi.fn().mockResolvedValue({ data: null, error: mockError }),
+      };
+      (supabase.from as any).mockReturnValue(mockQueryBuilder);
+
+      await expect(apiMutate('test_table', (q) => q.insert({ name: 'dup' })))
+        .rejects
+        .toThrow('Constraint violation');
+    });
+
+    it('should NOT retry mutations (safety)', async () => {
+      const mockError = { message: 'Server Error', status: 500 };
+      const mockQueryBuilder = {
+        insert: vi.fn().mockResolvedValue({ data: null, error: mockError }),
+      };
+      (supabase.from as any).mockReturnValue(mockQueryBuilder);
+
+      await expect(apiMutate('test_table', (q) => q.insert({ x: 1 })))
+        .rejects
+        .toThrow('Server Error');
+      // Only called once — no retry
+      expect(mockQueryBuilder.insert).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('apiInvoke', () => {
@@ -73,6 +124,27 @@ describe('Supabase API Wrapper', () => {
 
       await expect(apiInvoke('test-func')).rejects.toThrow('Server Error');
       expect(supabase.functions.invoke).toHaveBeenCalledTimes(2); // Initial + 1 retry
+    });
+
+    it('should not retry on 4xx errors', async () => {
+      const error400 = { message: 'Bad Request', status: 400 };
+      (supabase.functions.invoke as any).mockResolvedValue({ data: null, error: error400 });
+
+      await expect(apiInvoke('test-func')).rejects.toThrow('Bad Request');
+      expect(supabase.functions.invoke).toHaveBeenCalledTimes(1);
+    });
+
+    it('should include version header', async () => {
+      const mockResponse = { data: { ok: true }, error: null };
+      (supabase.functions.invoke as any).mockResolvedValue(mockResponse);
+
+      await apiInvoke('test-func');
+
+      expect(supabase.functions.invoke).toHaveBeenCalledWith('test-func', expect.objectContaining({
+        headers: expect.objectContaining({
+          'X-App-Version': expect.stringContaining('/1.0'),
+        }),
+      }));
     });
   });
 });
