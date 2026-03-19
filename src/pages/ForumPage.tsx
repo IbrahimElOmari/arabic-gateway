@@ -39,10 +39,9 @@ export default function ForumPage() {
   const { data: postCounts } = useQuery({
     queryKey: ["forum-post-counts"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("forum_posts")
-        .select("room_id");
-      if (error) throw error;
+      const data = await apiQuery<any[]>("forum_posts", (q) =>
+        q.select("room_id")
+      );
       
       const counts: Record<string, number> = {};
       data.forEach(post => {
