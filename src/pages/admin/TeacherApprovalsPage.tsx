@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { CheckCircle, XCircle, Clock, Loader2, User } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { logAdminAction } from "@/lib/admin-log";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,6 +37,7 @@ interface TeacherApplication {
 export default function TeacherApprovalsPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedApplication, setSelectedApplication] = useState<TeacherApplication | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");

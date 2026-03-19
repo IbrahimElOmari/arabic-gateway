@@ -8,7 +8,7 @@
  import { Label } from "@/components/ui/label";
  import { Switch } from "@/components/ui/switch";
  import { Calendar, Clock, Loader2 } from "lucide-react";
- import { toast } from "@/hooks/use-toast";
+ import { useToast } from "@/hooks/use-toast";
  import { format } from "date-fns";
  
  interface ExerciseReleaseSettingsProps {
@@ -23,6 +23,7 @@
  
  export function ExerciseReleaseSettings({ exercise }: ExerciseReleaseSettingsProps) {
    const { t } = useTranslation();
+   const { toast } = useToast();
    const queryClient = useQueryClient();
    const [isPublished, setIsPublished] = useState(exercise.is_published);
    const [releaseDate, setReleaseDate] = useState(

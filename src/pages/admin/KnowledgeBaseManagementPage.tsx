@@ -36,11 +36,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Edit, Trash2, Eye, EyeOff, Loader2, BookOpen } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 export default function KnowledgeBaseManagementPage() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showArticleDialog, setShowArticleDialog] = useState(false);
   const [editingArticle, setEditingArticle] = useState<any>(null);

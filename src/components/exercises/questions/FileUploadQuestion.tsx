@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, File, Loader2, Trash2, Download, Image, FileText } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface FileUploadQuestionProps {
   value: string | undefined;
@@ -15,6 +15,7 @@ interface FileUploadQuestionProps {
 
 export function FileUploadQuestion({ value, onChange, attemptId, questionId }: FileUploadQuestionProps) {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);

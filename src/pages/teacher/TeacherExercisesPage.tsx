@@ -33,7 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, Edit, Trash2, Eye, EyeOff, Loader2, Calendar } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/date-utils";
 import { ExerciseBuilder } from "@/components/teacher/ExerciseBuilder";
 import { ExerciseReleaseSettings } from "@/components/exercises/ExerciseReleaseSettings";
@@ -41,6 +41,7 @@ import { ExerciseReleaseSettings } from "@/components/exercises/ExerciseReleaseS
 export default function TeacherExercisesPage() {
   const { t, i18n } = useTranslation();
   const { user, isAdmin } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showExerciseDialog, setShowExerciseDialog] = useState(false);
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);

@@ -30,10 +30,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Search, UserCog, Loader2 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { logAdminAction } from "@/lib/admin-log";
 import { useAuth } from "@/contexts/AuthContext";
+import { apiQuery, apiMutate } from "@/lib/supabase-api";
 
 type AppRole = "admin" | "teacher" | "student";
 
@@ -55,6 +56,7 @@ interface ClassOption {
 export default function UsersPage() {
   const { t } = useTranslation();
   const { user: adminUser } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");

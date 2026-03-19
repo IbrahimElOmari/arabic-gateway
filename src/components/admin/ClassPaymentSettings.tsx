@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, Loader2, CreditCard, Percent, Calendar } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface ClassPaymentSettingsProps {
@@ -46,6 +46,7 @@ interface ClassPaymentSettingsProps {
 export function ClassPaymentSettings({ classId, className, currentPrice, currency }: ClassPaymentSettingsProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showPriceDialog, setShowPriceDialog] = useState(false);
   const [showDiscountDialog, setShowDiscountDialog] = useState(false);

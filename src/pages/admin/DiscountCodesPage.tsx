@@ -33,7 +33,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Pencil, Trash2, Loader2, Percent, Copy } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { logAdminAction } from "@/lib/admin-log";
 
@@ -54,6 +54,7 @@ interface DiscountCode {
 export default function DiscountCodesPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingCode, setEditingCode] = useState<DiscountCode | null>(null);

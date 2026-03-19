@@ -24,7 +24,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Calendar, CheckCircle, Clock, Loader2, User, Video, GraduationCap } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { logAdminAction } from "@/lib/admin-log";
@@ -59,6 +59,7 @@ interface Level {
 export default function PlacementsPage() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedPlacement, setSelectedPlacement] = useState<PlacementTest | null>(null);
   const [dialogType, setDialogType] = useState<"schedule" | "complete" | null>(null);

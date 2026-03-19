@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { apiMutate } from './supabase-api';
 
 /**
  * Log an admin action to the admin_activity_log table.
@@ -12,13 +12,15 @@ export async function logAdminAction(
   details?: Record<string, unknown>
 ): Promise<void> {
   try {
-    await supabase.from("admin_activity_log").insert([{
-      admin_id: adminId,
-      action,
-      target_table: targetTable ?? null,
-      target_id: targetId ?? null,
-      details: (details as any) ?? null,
-    }]);
+    await apiMutate('admin_activity_log', (q) =>
+      q.insert([{
+        admin_id: adminId,
+        action,
+        target_table: targetTable ?? null,
+        target_id: targetId ?? null,
+        details: (details as any) ?? null,
+      }])
+    );
   } catch (err) {
     console.error("[AdminLog] Failed to log action:", err);
   }

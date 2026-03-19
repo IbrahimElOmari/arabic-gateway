@@ -93,7 +93,30 @@ serve(async (req: Request) => {
       }
     }
 
-    // Send email notifications
+    // Create in-app notifications for all students
+    const notificationRows: any[] = [];
+    for (const [studentId, student] of studentsToNotify) {
+      notificationRows.push({
+        user_id: studentId,
+        type: "exercise_released",
+        title: student.exercises.length === 1
+          ? `Nieuwe oefening: ${student.exercises[0]}`
+          : `${student.exercises.length} nieuwe oefeningen beschikbaar`,
+        message: `Er ${student.exercises.length === 1 ? 'is een nieuwe oefening' : 'zijn nieuwe oefeningen'} vrijgegeven: ${student.exercises.join(', ')}`,
+        data: { exercises: student.exercises },
+      });
+    }
+
+    if (notificationRows.length > 0) {
+      const { error: notifError } = await supabase
+        .from("notifications")
+        .insert(notificationRows);
+      if (notifError) {
+        logger.error("Failed to create notifications", { error: notifError.message });
+      }
+    }
+
+    // Send email notifications (optional — requires RESEND_API_KEY)
     const resendKey = Deno.env.get("RESEND_API_KEY");
     if (resendKey && studentsToNotify.size > 0) {
       for (const [_, student] of studentsToNotify) {

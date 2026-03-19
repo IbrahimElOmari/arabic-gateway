@@ -32,7 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { UserPlus, Copy, Trash2, Loader2, Mail, CheckCircle } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/date-utils";
 
 function generateToken() {
@@ -44,6 +44,7 @@ function generateToken() {
 export default function AdminInvitationsPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [email, setEmail] = useState("");

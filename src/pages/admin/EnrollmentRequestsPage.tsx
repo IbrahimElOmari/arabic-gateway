@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { logAdminAction } from "@/lib/admin-log";
+import { apiMutate } from "@/lib/supabase-api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -68,18 +69,23 @@ export default function EnrollmentRequestsPage() {
   const processEnrollmentMutation = useMutation({
     mutationFn: async ({ id, studentId, classId, approve }: { id: string; studentId: string; classId: string; approve: boolean }) => {
       if (approve) {
-        const { error } = await supabase
-          .from("class_enrollments")
-          .update({ status: "enrolled" })
-          .eq("id", id);
-        if (error) throw error;
+        await apiMutate('class_enrollments', (q) => q.update({ status: "enrolled" }).eq("id", id));
       } else {
-        const { error } = await supabase
-          .from("class_enrollments")
-          .delete()
-          .eq("id", id);
-        if (error) throw error;
+        await apiMutate('class_enrollments', (q) => q.delete().eq("id", id));
       }
+      // Create in-app notification for the student
+      const enrollment = pendingEnrollments?.find(e => e.id === id);
+      await supabase.from("notifications").insert({
+        user_id: studentId,
+        type: approve ? "enrollment_approved" : "enrollment_rejected",
+        title: approve
+          ? `Inschrijving goedgekeurd: ${enrollment?.className || ''}`
+          : `Inschrijving afgewezen: ${enrollment?.className || ''}`,
+        message: approve
+          ? "Je bent nu ingeschreven en hebt toegang tot de klas."
+          : "Je inschrijving is helaas afgewezen.",
+        data: { class_id: classId },
+      });
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["pending-enrollments"] });

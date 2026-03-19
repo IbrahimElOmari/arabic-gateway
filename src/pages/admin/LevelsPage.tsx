@@ -26,7 +26,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Pencil, Trash2, Loader2, GripVertical } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { apiQuery, apiMutate } from "@/lib/supabase-api";
 
 interface Level {
   id: string;
@@ -41,6 +42,7 @@ interface Level {
 export default function LevelsPage() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingLevel, setEditingLevel] = useState<Level | null>(null);
@@ -57,29 +59,21 @@ export default function LevelsPage() {
   // Fetch levels
   const { data: levels, isLoading } = useQuery({
     queryKey: ["admin-levels"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("levels")
-        .select("*")
-        .order("display_order");
-      if (error) throw error;
-      return data as Level[];
-    },
+    queryFn: () => apiQuery<Level[]>('levels', (q) => q.select("*").order("display_order")),
   });
 
   // Create level mutation
   const createLevelMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const maxOrder = levels?.reduce((max, l) => Math.max(max, l.display_order), 0) || 0;
-      const { error } = await supabase.from("levels").insert({
+      await apiMutate('levels', (q) => q.insert({
         name: data.name,
         name_nl: data.name_nl,
         name_en: data.name_en,
         name_ar: data.name_ar,
         description: data.description || null,
         display_order: maxOrder + 1,
-      });
-      if (error) throw error;
+      }));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-levels"] });
@@ -102,17 +96,13 @@ export default function LevelsPage() {
   // Update level mutation
   const updateLevelMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
-      const { error } = await supabase
-        .from("levels")
-        .update({
-          name: data.name,
-          name_nl: data.name_nl,
-          name_en: data.name_en,
-          name_ar: data.name_ar,
-          description: data.description || null,
-        })
-        .eq("id", id);
-      if (error) throw error;
+      await apiMutate('levels', (q) => q.update({
+        name: data.name,
+        name_nl: data.name_nl,
+        name_en: data.name_en,
+        name_ar: data.name_ar,
+        description: data.description || null,
+      }).eq("id", id));
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-levels"] });
@@ -135,8 +125,7 @@ export default function LevelsPage() {
   // Delete level mutation
   const deleteLevelMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("levels").delete().eq("id", id);
-      if (error) throw error;
+      await apiMutate('levels', (q) => q.delete().eq("id", id));
     },
     onSuccess: (_data, levelId) => {
       queryClient.invalidateQueries({ queryKey: ["admin-levels"] });

@@ -41,13 +41,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Flag, CheckCircle, XCircle, Eye, Loader2, Trash2 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/date-utils";
 import { logAdminAction } from "@/lib/admin-log";
 
 export default function ContentReportsPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>("pending");
   const [selectedReport, setSelectedReport] = useState<any>(null);
