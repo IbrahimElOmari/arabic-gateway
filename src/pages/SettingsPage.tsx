@@ -13,7 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Shield, User, Bell, Palette, Sun, Moon, Monitor, Briefcase, Sparkles, Loader2, Download, Type } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiMutate, apiInvoke } from '@/lib/supabase-api';
 import { useToast } from '@/hooks/use-toast';
 
 export default function SettingsPage() {
