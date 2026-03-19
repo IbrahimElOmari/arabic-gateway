@@ -63,15 +63,7 @@ export default function ExercisePage() {
   // Fetch questions
   const { data: questions, isLoading: questionsLoading } = useQuery({
     queryKey: ["questions", exerciseId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("questions")
-        .select("*")
-        .eq("exercise_id", exerciseId as string)
-        .order("display_order");
-      if (error) throw error;
-      return data as unknown as Question[];
-    },
+    queryFn: () => apiQuery<Question[]>("questions", (q) => q.select("*").eq("exercise_id", exerciseId as string).order("display_order")),
     enabled: !!exerciseId,
   });
 
