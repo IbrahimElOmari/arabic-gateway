@@ -52,13 +52,11 @@ export default function TeacherLessonsPage() {
   const { data: lessons, isLoading } = useQuery({
     queryKey: ["teacher-lessons", classIds],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("lessons")
-        .select("*, class:classes(name)")
-        .in("class_id", classIds)
-        .order("scheduled_at", { ascending: false });
-      if (error) throw error;
-      return data;
+      return apiQuery<any[]>("lessons", (q) =>
+        q.select("*, class:classes(name)")
+          .in("class_id", classIds)
+          .order("scheduled_at", { ascending: false })
+      );
     },
     enabled: classIds.length > 0,
   });
