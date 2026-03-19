@@ -48,15 +48,7 @@ export default function FinalExamPage() {
   // Fetch exam details
   const { data: exam } = useQuery({
     queryKey: ["final-exam", examId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("final_exams")
-        .select("*, level:levels(id, name, name_nl, name_en, name_ar, display_order)")
-        .eq("id", examId)
-        .single();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any>("final_exams", (q) => q.select("*, level:levels(id, name, name_nl, name_en, name_ar, display_order)").eq("id", examId).single()),
     enabled: !!examId,
   });
 
