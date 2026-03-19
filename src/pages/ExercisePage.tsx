@@ -56,15 +56,7 @@ export default function ExercisePage() {
   // Fetch exercise
   const { data: exercise } = useQuery({
     queryKey: ["exercise", exerciseId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("exercises")
-        .select("*")
-        .eq("id", exerciseId)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any>("exercises", (q) => q.select("*").eq("id", exerciseId).maybeSingle()),
     enabled: !!exerciseId,
   });
 
