@@ -66,15 +66,14 @@ export default function LevelsPage() {
   const createLevelMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const maxOrder = levels?.reduce((max, l) => Math.max(max, l.display_order), 0) || 0;
-      const { error } = await supabase.from("levels").insert({
+      await apiMutate('levels', (q) => q.insert({
         name: data.name,
         name_nl: data.name_nl,
         name_en: data.name_en,
         name_ar: data.name_ar,
         description: data.description || null,
         display_order: maxOrder + 1,
-      });
-      if (error) throw error;
+      }));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-levels"] });
