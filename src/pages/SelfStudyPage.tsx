@@ -24,12 +24,9 @@ export default function SelfStudyPage() {
   const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ["exercise-categories"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("exercise_categories")
-        .select("*")
-        .order("display_order");
-      if (error) throw error;
-      return data;
+      return apiQuery<any[]>("exercise_categories", (q) =>
+        q.select("*").order("display_order")
+      );
     },
   });
 
