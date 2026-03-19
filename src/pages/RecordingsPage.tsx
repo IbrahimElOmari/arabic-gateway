@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Video, Loader2, Play, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiQuery } from "@/lib/supabase-api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -42,12 +42,9 @@ export default function RecordingsPage() {
   const { data: enrolledClassIds } = useQuery({
     queryKey: ["enrolled-class-ids", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("class_enrollments")
-        .select("class_id")
-        .eq("student_id", user!.id)
-        .eq("status", "enrolled");
-      if (error) throw error;
+      const data = await apiQuery<any[]>("class_enrollments", (q) =>
+        q.select("class_id").eq("student_id", user!.id).eq("status", "enrolled")
+      );
       return data.map((e) => e.class_id);
     },
     enabled: !!user && !isStaff,
@@ -56,13 +53,10 @@ export default function RecordingsPage() {
   const { data: recordings, isLoading } = useQuery({
     queryKey: ["lesson-recordings", user?.id, isStaff, enrolledClassIds],
     queryFn: async () => {
-      // Staff sees all recordings; students see only enrolled class recordings
-      // RLS already enforces this, but we add explicit filtering for clarity
-      const { data, error } = await supabase
-        .from("lesson_recordings")
-        .select("*, lesson:lessons(title, description, class_id)")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
+      const data = await apiQuery<any[]>("lesson_recordings", (q) =>
+        q.select("*, lesson:lessons(title, description, class_id)")
+          .order("created_at", { ascending: false })
+      );
 
       if (isStaff) return data;
 

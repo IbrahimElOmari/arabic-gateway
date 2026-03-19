@@ -1,6 +1,6 @@
  import { useTranslation } from "react-i18next";
  import { useQuery } from "@tanstack/react-query";
- import { supabase } from "@/integrations/supabase/client";
+ import { apiQuery } from "@/lib/supabase-api";
  import { useAuth } from "@/contexts/AuthContext";
  import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
  import { Progress } from "@/components/ui/progress";
@@ -15,60 +15,49 @@
    // Fetch student progress by category
    const { data: categoryProgress, isLoading: progressLoading } = useQuery({
      queryKey: ["student-category-progress", user?.id],
-     queryFn: async () => {
-       const { data, error } = await supabase
-         .from("student_progress")
-         .select("*, category:exercise_categories(name, name_nl, name_en, name_ar)")
-         .eq("student_id", user!.id);
-       if (error) throw error;
-       return data;
-     },
+    queryFn: async () => {
+      return apiQuery<any[]>("student_progress", (q) =>
+        q.select("*, category:exercise_categories(name, name_nl, name_en, name_ar)")
+          .eq("student_id", user!.id)
+      );
+    },
      enabled: !!user,
    });
  
    // Fetch exercise attempts for score trends
    const { data: attempts } = useQuery({
      queryKey: ["student-attempts-trend", user?.id],
-     queryFn: async () => {
-       const { data, error } = await supabase
-         .from("exercise_attempts")
-         .select("total_score, submitted_at, passed")
-         .eq("student_id", user!.id)
-         .not("submitted_at", "is", null)
-         .order("submitted_at", { ascending: true })
-         .limit(20);
-       if (error) throw error;
-       return data;
-     },
+    queryFn: async () => {
+      return apiQuery<any[]>("exercise_attempts", (q) =>
+        q.select("total_score, submitted_at, passed")
+          .eq("student_id", user!.id)
+          .not("submitted_at", "is", null)
+          .order("submitted_at", { ascending: true })
+          .limit(20)
+      );
+    },
      enabled: !!user,
    });
  
    // Fetch user points
    const { data: userPoints } = useQuery({
      queryKey: ["user-points", user?.id],
-     queryFn: async () => {
-       const { data, error } = await supabase
-         .from("user_points")
-         .select("*")
-         .eq("user_id", user!.id)
-         .single();
-       if (error && error.code !== "PGRST116") throw error;
-       return data;
-     },
+    queryFn: async () => {
+      return apiQuery<any>("user_points", (q) =>
+        q.select("*").eq("user_id", user!.id).single()
+      );
+    },
      enabled: !!user,
    });
  
    // Fetch user badges
    const { data: userBadges } = useQuery({
      queryKey: ["user-badges", user?.id],
-     queryFn: async () => {
-       const { data, error } = await supabase
-         .from("user_badges")
-         .select("*, badge:badges(*)")
-         .eq("user_id", user!.id);
-       if (error) throw error;
-       return data;
-     },
+    queryFn: async () => {
+      return apiQuery<any[]>("user_badges", (q) =>
+        q.select("*, badge:badges(*)").eq("user_id", user!.id)
+      );
+    },
      enabled: !!user,
    });
  

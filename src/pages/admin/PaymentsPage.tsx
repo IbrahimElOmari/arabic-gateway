@@ -85,8 +85,7 @@ export default function PaymentsPage() {
   const { data: statsData } = useQuery({
     queryKey: ["admin-payments-stats"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("payments").select("status, amount");
-      if (error) throw error;
+      const data = await apiQuery<any[]>("payments", (q) => q.select("status, amount"));
       return {
         total: data.length,
         succeeded: data.filter((p) => p.status === "succeeded").length,

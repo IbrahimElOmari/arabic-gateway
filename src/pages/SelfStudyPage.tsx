@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiQuery } from "@/lib/supabase-api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -24,12 +24,9 @@ export default function SelfStudyPage() {
   const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ["exercise-categories"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("exercise_categories")
-        .select("*")
-        .order("display_order");
-      if (error) throw error;
-      return data;
+      return apiQuery<any[]>("exercise_categories", (q) =>
+        q.select("*").order("display_order")
+      );
     },
   });
 
@@ -38,11 +35,9 @@ export default function SelfStudyPage() {
     queryKey: ["student-progress", user?.id],
     queryFn: async () => {
       if (!user) return {};
-      const { data, error } = await supabase
-        .from("student_progress")
-        .select("*")
-        .eq("student_id", user.id);
-      if (error) throw error;
+      const data = await apiQuery<any[]>("student_progress", (q) =>
+        q.select("*").eq("student_id", user.id)
+      );
       
       // Convert to a map by category_id
       const progressMap: Record<string, { completed: number; total: number; score: number }> = {};

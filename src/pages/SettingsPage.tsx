@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Shield, User, Bell, Palette, Sun, Moon, Monitor, Briefcase, Sparkles, Loader2, Download, Type } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { apiMutate, apiInvoke } from '@/lib/supabase-api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 
@@ -55,11 +56,9 @@ export default function SettingsPage() {
   const saveProfileMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('Not authenticated');
-      const { error } = await supabase
-        .from('profiles')
-        .update({ full_name: fullName, phone, address })
-        .eq('user_id', user.id);
-      if (error) throw error;
+      await apiMutate('profiles', (q) =>
+        q.update({ full_name: fullName, phone, address }).eq('user_id', user.id)
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
@@ -92,11 +91,9 @@ export default function SettingsPage() {
   const updateNotificationMutation = useMutation({
     mutationFn: async (updates: { email_notifications?: boolean; lesson_reminders?: boolean; exercise_notifications?: boolean }) => {
       if (!user) throw new Error('Not authenticated');
-      const { error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('user_id', user.id);
-      if (error) throw error;
+      await apiMutate('profiles', (q) =>
+        q.update(updates).eq('user_id', user.id)
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
@@ -129,11 +126,9 @@ export default function SettingsPage() {
         .from('avatars')
         .getPublicUrl(filePath);
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: urlData.publicUrl })
-        .eq('user_id', user.id);
-      if (updateError) throw updateError;
+      await apiMutate('profiles', (q) =>
+        q.update({ avatar_url: urlData.publicUrl }).eq('user_id', user.id)
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
@@ -148,14 +143,7 @@ export default function SettingsPage() {
   const exportDataMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('Not authenticated');
-      const { data: sessionData } = await supabase.auth.getSession();
-      const response = await supabase.functions.invoke('export-user-data', {
-        headers: {
-          Authorization: `Bearer ${sessionData.session?.access_token}`,
-        },
-      });
-      if (response.error) throw response.error;
-      return response.data;
+      return apiInvoke('export-user-data');
     },
     onSuccess: (data) => {
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });

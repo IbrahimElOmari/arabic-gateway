@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileCheck, Loader2, CheckCircle, XCircle, Play, FileText } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -28,15 +29,11 @@ export default function TeacherSubmissionsPage() {
   const { data: classes } = useQuery({
     queryKey: ["teacher-classes", user?.id, isAdmin],
     queryFn: async () => {
-      let query = supabase.from("classes").select("id");
       if (isAdmin) {
-        query = query.eq("is_active", true);
+        return apiQuery<any[]>("classes", (q) => q.select("id").eq("is_active", true));
       } else {
-        query = query.eq("teacher_id", user!.id);
+        return apiQuery<any[]>("classes", (q) => q.select("id").eq("teacher_id", user!.id));
       }
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
     },
     enabled: !!user,
   });
@@ -47,9 +44,8 @@ export default function TeacherSubmissionsPage() {
   const { data: pendingSubmissions, isLoading: pendingLoading } = useQuery({
     queryKey: ["pending-submissions", classIds],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("student_answers")
-        .select(`
+      const data = await apiQuery<any[]>("student_answers", (q) =>
+        q.select(`
           *,
           student:profiles!student_answers_student_id_fkey(full_name),
           question:questions(
@@ -59,9 +55,8 @@ export default function TeacherSubmissionsPage() {
             exercise:exercises(title, class_id, class:classes(name))
           )
         `)
-        .is("reviewed_at", null);
-      if (error) throw error;
-      // Filter by teacher's classes
+        .is("reviewed_at", null)
+      );
       return data.filter((s: any) => classIds.includes(s.question?.exercise?.class_id));
     },
     enabled: classIds.length > 0,
@@ -71,9 +66,8 @@ export default function TeacherSubmissionsPage() {
   const { data: reviewedSubmissions, isLoading: reviewedLoading } = useQuery({
     queryKey: ["reviewed-submissions", classIds],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("student_answers")
-        .select(`
+      const data = await apiQuery<any[]>("student_answers", (q) =>
+        q.select(`
           *,
           student:profiles!student_answers_student_id_fkey(full_name),
           question:questions(
@@ -85,8 +79,8 @@ export default function TeacherSubmissionsPage() {
         `)
         .not("reviewed_at", "is", null)
         .order("reviewed_at", { ascending: false })
-        .limit(50);
-      if (error) throw error;
+        .limit(50)
+      );
       return data.filter((s: any) => classIds.includes(s.question?.exercise?.class_id));
     },
     enabled: classIds.length > 0,
@@ -94,14 +88,15 @@ export default function TeacherSubmissionsPage() {
 
   const reviewMutation = useMutation({
     mutationFn: async ({ id, score, feedback, isCorrect }: { id: string; score: number; feedback: string; isCorrect: boolean }) => {
-      const { error } = await supabase.from("student_answers").update({
-        score,
-        feedback,
-        is_correct: isCorrect,
-        reviewed_by: user!.id,
-        reviewed_at: new Date().toISOString(),
-      }).eq("id", id);
-      if (error) throw error;
+      await apiMutate("student_answers", (q) =>
+        q.update({
+          score,
+          feedback,
+          is_correct: isCorrect,
+          reviewed_by: user!.id,
+          reviewed_at: new Date().toISOString(),
+        }).eq("id", id)
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pending-submissions"] });

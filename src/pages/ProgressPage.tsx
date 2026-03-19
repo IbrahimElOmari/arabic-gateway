@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { BookOpenCheck, Download } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiQuery } from "@/lib/supabase-api";
 import { Link } from "react-router-dom";
 import config from "@/lib/app-config";
 import { isFeatureEnabled } from "@/lib/feature-flags";
@@ -37,10 +37,8 @@ export default function ProgressPage() {
   const { data: attemptsDetailed, isLoading } = useQuery({
     queryKey: ["attempts-detailed", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("exercise_attempts")
-        .select(
-          `
+      return apiQuery<AttemptRow[]>("exercise_attempts", (q) =>
+        q.select(`
           exercise_id,
           passed,
           exercises (
@@ -55,13 +53,10 @@ export default function ProgressPage() {
               )
             )
           )
-        `
-        )
+        `)
         .eq("student_id", user!.id)
-        .order("submitted_at", { ascending: false });
-
-      if (error) throw error;
-      return data as unknown as AttemptRow[];
+        .order("submitted_at", { ascending: false })
+      );
     },
     enabled: !!user,
   });

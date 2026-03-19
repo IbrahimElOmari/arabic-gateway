@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiQuery } from "@/lib/supabase-api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -39,14 +39,11 @@ export default function AnalyticsPage() {
     queryKey: ["admin-analytics-daily"],
     queryFn: async () => {
       const thirtyDaysAgo = format(subDays(new Date(), 30), "yyyy-MM-dd");
-      const { data, error } = await supabase
-        .from("analytics_daily_stats")
-        .select("*")
-        .gte("stat_date", thirtyDaysAgo)
-        .order("stat_date", { ascending: true });
-
-      if (error) throw error;
-      return data || [];
+      return apiQuery<any[]>("analytics_daily_stats", (q) =>
+        q.select("*")
+          .gte("stat_date", thirtyDaysAgo)
+          .order("stat_date", { ascending: true })
+      );
     },
   });
 
@@ -57,22 +54,14 @@ export default function AnalyticsPage() {
       const today = format(new Date(), "yyyy-MM-dd");
       const sevenDaysAgo = format(subDays(new Date(), 7), "yyyy-MM-dd");
 
-      const [todayStats, weekStats, totalUsers, totalExercises] = await Promise.all([
-        supabase
-          .from("analytics_daily_stats")
-          .select("*")
-          .eq("stat_date", today)
-          .maybeSingle(),
-        supabase
-          .from("analytics_daily_stats")
-          .select("*")
-          .gte("stat_date", sevenDaysAgo),
-        supabase.from("profiles").select("*", { count: "exact", head: true }),
-        supabase.from("exercise_attempts").select("*", { count: "exact", head: true }),
+      const [todayData, weekData, totalUsersData, totalExercisesData] = await Promise.all([
+        apiQuery<any>("analytics_daily_stats", (q) => q.select("*").eq("stat_date", today).maybeSingle()),
+        apiQuery<any[]>("analytics_daily_stats", (q) => q.select("*").gte("stat_date", sevenDaysAgo)),
+        apiQuery<any[]>("profiles", (q) => q.select("id", { count: "exact", head: true })),
+        apiQuery<any[]>("exercise_attempts", (q) => q.select("id", { count: "exact", head: true })),
       ]);
 
-      const weekData = weekStats.data || [];
-      const weekTotals = weekData.reduce(
+      const weekTotals = (weekData || []).reduce(
         (acc, day) => ({
           pageViews: acc.pageViews + (day.page_views || 0),
           exercisesStarted: acc.exercisesStarted + (day.exercises_started || 0),
@@ -85,10 +74,10 @@ export default function AnalyticsPage() {
       );
 
       return {
-        today: todayStats.data,
+        today: todayData,
         week: weekTotals,
-        totalUsers: totalUsers.count || 0,
-        totalExerciseAttempts: totalExercises.count || 0,
+        totalUsers: Array.isArray(totalUsersData) ? totalUsersData.length : 0,
+        totalExerciseAttempts: Array.isArray(totalExercisesData) ? totalExercisesData.length : 0,
       };
     },
   });
@@ -98,14 +87,12 @@ export default function AnalyticsPage() {
     queryKey: ["admin-analytics-pages"],
     queryFn: async () => {
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const { data, error } = await supabase
-        .from("analytics_events")
-        .select("page_path")
-        .gte("created_at", sevenDaysAgo)
-        .eq("event_type", "page_view")
-        .not("page_path", "is", null);
-
-      if (error) throw error;
+      const data = await apiQuery<any[]>("analytics_events", (q) =>
+        q.select("page_path")
+          .gte("created_at", sevenDaysAgo)
+          .eq("event_type", "page_view")
+          .not("page_path", "is", null)
+      );
 
       // Count page views per path
       const pageCounts: Record<string, number> = {};
@@ -128,12 +115,9 @@ export default function AnalyticsPage() {
     queryKey: ["admin-analytics-features"],
     queryFn: async () => {
       const sevenDaysAgo = format(subDays(new Date(), 7), "yyyy-MM-dd");
-      const { data, error } = await supabase
-        .from("feature_usage")
-        .select("*")
-        .gte("usage_date", sevenDaysAgo);
-
-      if (error) throw error;
+      const data = await apiQuery<any[]>("feature_usage", (q) =>
+        q.select("*").gte("usage_date", sevenDaysAgo)
+      );
 
       // Aggregate by feature
       const featureTotals: Record<string, number> = {};

@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle, BookOpen, Users, Sparkles, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiQuery } from "@/lib/supabase-api";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -29,12 +29,9 @@ export default function ForumPage() {
   const { data: rooms, isLoading } = useQuery({
     queryKey: ["forum-rooms"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("forum_rooms")
-        .select("*")
-        .order("display_order", { ascending: true });
-      if (error) throw error;
-      return data;
+      return apiQuery<any[]>("forum_rooms", (q) =>
+        q.select("*").order("display_order", { ascending: true })
+      );
     },
     enabled: !!user,
   });
@@ -42,10 +39,9 @@ export default function ForumPage() {
   const { data: postCounts } = useQuery({
     queryKey: ["forum-post-counts"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("forum_posts")
-        .select("room_id");
-      if (error) throw error;
+      const data = await apiQuery<any[]>("forum_posts", (q) =>
+        q.select("room_id")
+      );
       
       const counts: Record<string, number> = {};
       data.forEach(post => {

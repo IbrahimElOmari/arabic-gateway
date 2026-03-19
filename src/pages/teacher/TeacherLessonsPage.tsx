@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Calendar, Plus, Video, Loader2, ExternalLink, Edit, Trash } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -36,15 +37,11 @@ export default function TeacherLessonsPage() {
   const { data: classes } = useQuery({
     queryKey: ["teacher-classes", user?.id, isAdmin],
     queryFn: async () => {
-      let query = supabase.from("classes").select("id, name");
       if (isAdmin) {
-        query = query.eq("is_active", true);
+        return apiQuery<any[]>("classes", (q) => q.select("id, name").eq("is_active", true));
       } else {
-        query = query.eq("teacher_id", user!.id);
+        return apiQuery<any[]>("classes", (q) => q.select("id, name").eq("teacher_id", user!.id));
       }
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
     },
     enabled: !!user,
   });
@@ -55,29 +52,28 @@ export default function TeacherLessonsPage() {
   const { data: lessons, isLoading } = useQuery({
     queryKey: ["teacher-lessons", classIds],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("lessons")
-        .select("*, class:classes(name)")
-        .in("class_id", classIds)
-        .order("scheduled_at", { ascending: false });
-      if (error) throw error;
-      return data;
+      return apiQuery<any[]>("lessons", (q) =>
+        q.select("*, class:classes(name)")
+          .in("class_id", classIds)
+          .order("scheduled_at", { ascending: false })
+      );
     },
     enabled: classIds.length > 0,
   });
 
   const createLessonMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const { error } = await supabase.from("lessons").insert({
-        title: data.title,
-        description: data.description,
-        class_id: data.class_id,
-        scheduled_at: data.scheduled_at,
-        duration_minutes: parseInt(data.duration_minutes),
-        meet_link: data.meet_link || null,
-        created_by: user!.id,
-      });
-      if (error) throw error;
+      await apiMutate("lessons", (q) =>
+        q.insert({
+          title: data.title,
+          description: data.description,
+          class_id: data.class_id,
+          scheduled_at: data.scheduled_at,
+          duration_minutes: parseInt(data.duration_minutes),
+          meet_link: data.meet_link || null,
+          created_by: user!.id,
+        })
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teacher-lessons"] });
@@ -92,15 +88,16 @@ export default function TeacherLessonsPage() {
 
   const updateLessonMutation = useMutation({
     mutationFn: async (data: typeof formData & { id: string }) => {
-      const { error } = await supabase.from("lessons").update({
-        title: data.title,
-        description: data.description,
-        class_id: data.class_id,
-        scheduled_at: data.scheduled_at,
-        duration_minutes: parseInt(data.duration_minutes),
-        meet_link: data.meet_link || null,
-      }).eq("id", data.id);
-      if (error) throw error;
+      await apiMutate("lessons", (q) =>
+        q.update({
+          title: data.title,
+          description: data.description,
+          class_id: data.class_id,
+          scheduled_at: data.scheduled_at,
+          duration_minutes: parseInt(data.duration_minutes),
+          meet_link: data.meet_link || null,
+        }).eq("id", data.id)
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teacher-lessons"] });
@@ -113,8 +110,7 @@ export default function TeacherLessonsPage() {
 
   const deleteLessonMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("lessons").delete().eq("id", id);
-      if (error) throw error;
+      await apiMutate("lessons", (q) => q.delete().eq("id", id));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teacher-lessons"] });

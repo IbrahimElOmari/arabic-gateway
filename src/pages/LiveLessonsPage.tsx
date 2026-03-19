@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Video, Loader2, Plus, Palette } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiQuery } from "@/lib/supabase-api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,12 +20,9 @@ export default function LiveLessonsPage() {
   const { data: enrolledClassIds } = useQuery({
     queryKey: ["my-enrolled-classes", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("class_enrollments")
-        .select("class_id")
-        .eq("student_id", user!.id)
-        .eq("status", "enrolled");
-      if (error) throw error;
+      const data = await apiQuery<any[]>("class_enrollments", (q) =>
+        q.select("class_id").eq("student_id", user!.id).eq("status", "enrolled")
+      );
       return data?.map(e => e.class_id) || [];
     },
     enabled: !!user && role === 'student',
@@ -34,22 +31,19 @@ export default function LiveLessonsPage() {
   const { data: lessons, isLoading } = useQuery({
     queryKey: ["upcoming-lessons", user?.id, enrolledClassIds, isStaff],
     queryFn: async () => {
-      let query = supabase
-        .from("lessons")
-        .select("*, class:classes(name)")
-        .gte("scheduled_at", new Date().toISOString())
-        .order("scheduled_at");
-      
       // Students only see lessons from their enrolled classes
-      if (!isStaff && enrolledClassIds && enrolledClassIds.length > 0) {
-        query = query.in("class_id", enrolledClassIds);
-      } else if (!isStaff && (!enrolledClassIds || enrolledClassIds.length === 0)) {
+      if (!isStaff && (!enrolledClassIds || enrolledClassIds.length === 0)) {
         return [];
       }
-      
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
+      return apiQuery<any[]>("lessons", (q) => {
+        let query = q.select("*, class:classes(name)")
+          .gte("scheduled_at", new Date().toISOString())
+          .order("scheduled_at");
+        if (!isStaff && enrolledClassIds && enrolledClassIds.length > 0) {
+          query = query.in("class_id", enrolledClassIds);
+        }
+        return query;
+      });
     },
     enabled: !!user && (isStaff || enrolledClassIds !== undefined),
   });
