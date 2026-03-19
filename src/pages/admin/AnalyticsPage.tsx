@@ -87,14 +87,12 @@ export default function AnalyticsPage() {
     queryKey: ["admin-analytics-pages"],
     queryFn: async () => {
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const { data, error } = await supabase
-        .from("analytics_events")
-        .select("page_path")
-        .gte("created_at", sevenDaysAgo)
-        .eq("event_type", "page_view")
-        .not("page_path", "is", null);
-
-      if (error) throw error;
+      const data = await apiQuery<any[]>("analytics_events", (q) =>
+        q.select("page_path")
+          .gte("created_at", sevenDaysAgo)
+          .eq("event_type", "page_view")
+          .not("page_path", "is", null)
+      );
 
       // Count page views per path
       const pageCounts: Record<string, number> = {};
