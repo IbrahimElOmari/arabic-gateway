@@ -91,11 +91,9 @@ export default function SettingsPage() {
   const updateNotificationMutation = useMutation({
     mutationFn: async (updates: { email_notifications?: boolean; lesson_reminders?: boolean; exercise_notifications?: boolean }) => {
       if (!user) throw new Error('Not authenticated');
-      const { error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('user_id', user.id);
-      if (error) throw error;
+      await apiMutate('profiles', (q) =>
+        q.update(updates).eq('user_id', user.id)
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
