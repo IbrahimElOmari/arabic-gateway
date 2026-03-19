@@ -59,14 +59,7 @@ export default function LevelsPage() {
   // Fetch levels
   const { data: levels, isLoading } = useQuery({
     queryKey: ["admin-levels"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("levels")
-        .select("*")
-        .order("display_order");
-      if (error) throw error;
-      return data as Level[];
-    },
+    queryFn: () => apiQuery<Level[]>('levels', (q) => q.select("*").order("display_order")),
   });
 
   // Create level mutation
