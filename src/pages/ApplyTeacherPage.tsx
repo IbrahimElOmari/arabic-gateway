@@ -2,11 +2,10 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -24,49 +23,24 @@ export default function ApplyTeacherPage() {
   const [experience, setExperience] = useState("");
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
 
-  // Fetch levels for selection
   const { data: levels } = useQuery({
     queryKey: ["levels"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("levels")
-        .select("*")
-        .order("display_order");
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>("levels", (q) => q.select("*").order("display_order")),
   });
 
-  // Check if user already has a pending/approved application
   const { data: existingApplication, isLoading: checkingApplication } = useQuery({
     queryKey: ["my-teacher-application", user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      const { data, error } = await supabase
-        .from("teacher_applications")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any>("teacher_applications", (q) =>
+      q.select("*").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(1).maybeSingle()
+    ),
     enabled: !!user,
   });
 
   const submitMutation = useMutation({
-    mutationFn: async () => {
-      if (!user) throw new Error("Not authenticated");
-      const { error } = await supabase.from("teacher_applications").insert({
-        user_id: user.id,
-        qualifications,
-        experience,
-        requested_levels: selectedLevels,
-        status: "pending",
-      });
-      if (error) throw error;
-    },
+    mutationFn: () =>
+      apiMutate("teacher_applications", (q) =>
+        q.insert({ user_id: user!.id, qualifications, experience, requested_levels: selectedLevels, status: "pending" })
+      ),
     onSuccess: () => {
       toast({
         title: t("applyTeacher.submitted", "Aanvraag ingediend"),
@@ -103,7 +77,6 @@ export default function ApplyTeacherPage() {
     );
   }
 
-  // Show existing application status
   if (existingApplication && existingApplication.status !== "rejected") {
     return (
       <div className="container max-w-2xl py-12">

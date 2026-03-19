@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Video, Plus, Loader2, Upload, Play, Trash } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -26,53 +27,32 @@ export default function TeacherRecordingsPage() {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Get teacher's classes (admin sees all)
   const { data: classes } = useQuery({
     queryKey: ["teacher-classes", user?.id, isAdmin],
-    queryFn: async () => {
-      let query = supabase.from("classes").select("id, name");
+    queryFn: () => {
       if (isAdmin) {
-        query = query.eq("is_active", true);
-      } else {
-        query = query.eq("teacher_id", user!.id);
+        return apiQuery<any[]>("classes", (q) => q.select("id, name").eq("is_active", true));
       }
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
+      return apiQuery<any[]>("classes", (q) => q.select("id, name").eq("teacher_id", user!.id));
     },
     enabled: !!user,
   });
 
   const classIds = classes?.map(c => c.id) || [];
 
-  // Get lessons for recording
   const { data: lessons } = useQuery({
     queryKey: ["teacher-lessons-for-recording", classIds],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("lessons")
-        .select("id, title, class:classes(name)")
-        .in("class_id", classIds)
-        .eq("status", "completed")
-        .order("scheduled_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>("lessons", (q) =>
+      q.select("id, title, class:classes(name)").in("class_id", classIds).eq("status", "completed").order("scheduled_at", { ascending: false })
+    ),
     enabled: classIds.length > 0,
   });
 
-  // Get recordings
   const { data: recordings, isLoading } = useQuery({
     queryKey: ["teacher-recordings", user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("lesson_recordings")
-        .select("*, lesson:lessons(title, class:classes(name))")
-        .eq("uploaded_by", user!.id)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>("lesson_recordings", (q) =>
+      q.select("*, lesson:lessons(title, class:classes(name))").eq("uploaded_by", user!.id).order("created_at", { ascending: false })
+    ),
     enabled: !!user,
   });
 
@@ -87,33 +67,19 @@ export default function TeacherRecordingsPage() {
       const fileExt = file.name.split(".").pop();
       const fileName = `${selectedLesson}/${Date.now()}.${fileExt}`;
 
-      // Simulate upload progress
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => Math.min(prev + 10, 90));
       }, 200);
 
-      const { error } = await supabase.storage
-        .from("lesson-recordings")
-        .upload(fileName, file);
-
+      const { error } = await supabase.storage.from("lesson-recordings").upload(fileName, file);
       clearInterval(progressInterval);
-
       if (error) throw error;
 
-      const { data: urlData } = supabase.storage
-        .from("lesson-recordings")
-        .getPublicUrl(fileName);
+      const { data: urlData } = supabase.storage.from("lesson-recordings").getPublicUrl(fileName);
 
-      // Create recording record
-      const { error: recordError } = await supabase.from("lesson_recordings").insert({
-        lesson_id: selectedLesson,
-        video_url: urlData.publicUrl,
-        uploaded_by: user!.id,
-        duration_seconds: null, // Could be extracted from video metadata
-        transcript: transcriptText || null,
-      });
-
-      if (recordError) throw recordError;
+      await apiMutate("lesson_recordings", (q) =>
+        q.insert({ lesson_id: selectedLesson, video_url: urlData.publicUrl, uploaded_by: user!.id, duration_seconds: null, transcript: transcriptText || null })
+      );
 
       setUploadProgress(100);
       queryClient.invalidateQueries({ queryKey: ["teacher-recordings"] });
@@ -131,10 +97,7 @@ export default function TeacherRecordingsPage() {
   };
 
   const deleteRecordingMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("lesson_recordings").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => apiMutate("lesson_recordings", (q) => q.delete().eq("id", id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teacher-recordings"] });
       toast({ title: t("teacher.recordingDeleted", "Recording deleted") });
@@ -150,10 +113,7 @@ export default function TeacherRecordingsPage() {
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              {t("teacher.uploadRecording", "Upload Recording")}
-            </Button>
+            <Button><Plus className="h-4 w-4 mr-2" />{t("teacher.uploadRecording", "Upload Recording")}</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -163,45 +123,22 @@ export default function TeacherRecordingsPage() {
               <div>
                 <Label>{t("teacher.selectLesson", "Select Lesson")}</Label>
                 <Select value={selectedLesson} onValueChange={setSelectedLesson}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("teacher.chooseLessonForRecording", "Choose a lesson")} />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("teacher.chooseLessonForRecording", "Choose a lesson")} /></SelectTrigger>
                   <SelectContent>
                     {lessons?.map((lesson) => (
-                      <SelectItem key={lesson.id} value={lesson.id}>
-                        {lesson.title} - {lesson.class?.name}
-                      </SelectItem>
+                      <SelectItem key={lesson.id} value={lesson.id}>{lesson.title} - {lesson.class?.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-
               <div>
                 <Label>{t("teacher.transcript", "Transcript")}</Label>
-                <Textarea 
-                  value={transcriptText} 
-                  onChange={(e) => setTranscriptText(e.target.value)} 
-                  placeholder={t("teacher.transcriptPlaceholder", "Enter lesson transcript...")}
-                  className="h-32"
-                />
+                <Textarea value={transcriptText} onChange={(e) => setTranscriptText(e.target.value)} placeholder={t("teacher.transcriptPlaceholder", "Enter lesson transcript...")} className="h-32" />
               </div>
-
               <div>
                 <Label>{t("teacher.videoFile", "Video File")}</Label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="video/*"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  disabled={!selectedLesson || isUploading}
-                />
-                <Button
-                  variant="outline"
-                  className="w-full h-24 border-dashed"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={!selectedLesson || isUploading}
-                >
+                <input ref={fileInputRef} type="file" accept="video/*" onChange={handleFileUpload} className="hidden" disabled={!selectedLesson || isUploading} />
+                <Button variant="outline" className="w-full h-24 border-dashed" onClick={() => fileInputRef.current?.click()} disabled={!selectedLesson || isUploading}>
                   {isUploading ? (
                     <div className="flex flex-col items-center gap-2 w-full">
                       <Loader2 className="h-6 w-6 animate-spin" />
@@ -222,32 +159,21 @@ export default function TeacherRecordingsPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
+        <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
       ) : recordings && recordings.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {recordings.map((recording) => (
             <Card key={recording.id}>
               <CardHeader>
                 <CardTitle className="text-lg">{recording.lesson?.title}</CardTitle>
-                <CardDescription>
-                  {recording.lesson?.class?.name} · {formatDate(recording.created_at, "PPP")}
-                </CardDescription>
+                <CardDescription>{recording.lesson?.class?.name} · {formatDate(recording.created_at, "PPP")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex gap-2">
                   <Button className="flex-1" asChild>
-                    <a href={recording.video_url} target="_blank" rel="noopener noreferrer">
-                      <Play className="h-4 w-4 mr-2" />
-                      {t("teacher.watch", "Watch")}
-                    </a>
+                    <a href={recording.video_url} target="_blank" rel="noopener noreferrer"><Play className="h-4 w-4 mr-2" />{t("teacher.watch", "Watch")}</a>
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => deleteRecordingMutation.mutate(recording.id)}
-                  >
+                  <Button variant="outline" size="icon" onClick={() => deleteRecordingMutation.mutate(recording.id)}>
                     <Trash className="h-4 w-4" />
                   </Button>
                 </div>
