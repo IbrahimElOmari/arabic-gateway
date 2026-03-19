@@ -37,15 +37,11 @@ export default function TeacherLessonsPage() {
   const { data: classes } = useQuery({
     queryKey: ["teacher-classes", user?.id, isAdmin],
     queryFn: async () => {
-      let query = supabase.from("classes").select("id, name");
       if (isAdmin) {
-        query = query.eq("is_active", true);
+        return apiQuery<any[]>("classes", (q) => q.select("id, name").eq("is_active", true));
       } else {
-        query = query.eq("teacher_id", user!.id);
+        return apiQuery<any[]>("classes", (q) => q.select("id, name").eq("teacher_id", user!.id));
       }
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
     },
     enabled: !!user,
   });
