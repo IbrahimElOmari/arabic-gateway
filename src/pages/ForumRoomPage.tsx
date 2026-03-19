@@ -9,12 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { MessageCircle, Plus, ThumbsUp, Pin, Lock, Loader2, ArrowLeft, Flag } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { formatRelative } from "@/lib/date-utils";
 import { ReportContentDialog } from "@/components/moderation/ReportContentDialog";
+import { apiQuery, apiMutate } from "@/lib/supabase-api";
 
 export default function ForumRoomPage() {
   const { roomName } = useParams();
@@ -31,15 +31,7 @@ export default function ForumRoomPage() {
 
   const { data: room, isLoading: roomLoading } = useQuery({
     queryKey: ["forum-room", roomName],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("forum_rooms")
-        .select("*")
-        .eq("name", roomName)
-        .single();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any>("forum_rooms", (q) => q.select("*").eq("name", roomName).single()),
     enabled: !!roomName,
   });
 
@@ -48,32 +40,22 @@ export default function ForumRoomPage() {
     queryFn: async () => {
       const from = page * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
-      const { data: postsResult, error, count } = await supabase
-        .from("forum_posts")
-        .select("*", { count: "exact" })
-        .eq("room_id", room!.id)
-        .order("is_pinned", { ascending: false })
-        .order("created_at", { ascending: false })
-        .range(from, to);
-      if (error) throw error;
-      
-      // Fetch author profiles separately
-      const authorIds = [...new Set(postsResult.map(p => p.author_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, avatar_url")
-        .in("user_id", authorIds);
-      
-      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+      const postsResult = await apiQuery<any[]>("forum_posts", (q) =>
+        q.select("*", { count: "exact" }).eq("room_id", room!.id).order("is_pinned", { ascending: false }).order("created_at", { ascending: false }).range(from, to)
+      );
 
-      // Fetch comment counts per post
-      const postIds = postsResult.map(p => p.id);
+      const authorIds = [...new Set(postsResult.map((p: any) => p.author_id))];
+      const profiles = await apiQuery<any[]>("profiles", (q) =>
+        q.select("user_id, full_name, avatar_url").in("user_id", authorIds)
+      );
+      const profileMap = new Map(profiles?.map((p: any) => [p.user_id, p]) || []);
+
+      const postIds = postsResult.map((p: any) => p.id);
       const commentCountMap = new Map<string, number>();
       if (postIds.length > 0) {
-        const { data: comments } = await supabase
-          .from("forum_comments")
-          .select("post_id")
-          .in("post_id", postIds);
+        const comments = await apiQuery<any[]>("forum_comments", (q) =>
+          q.select("post_id").in("post_id", postIds)
+        );
         if (comments) {
           for (const c of comments) {
             commentCountMap.set(c.post_id, (commentCountMap.get(c.post_id) || 0) + 1);
@@ -81,12 +63,12 @@ export default function ForumRoomPage() {
         }
       }
 
-      const posts = postsResult.map(post => ({
+      const posts = postsResult.map((post: any) => ({
         ...post,
         author: profileMap.get(post.author_id) || null,
         comments_count: commentCountMap.get(post.id) || 0,
       }));
-      return { posts, totalCount: count ?? 0 };
+      return { posts, totalCount: postsResult.length };
     },
     enabled: !!room?.id,
   });
@@ -97,25 +79,19 @@ export default function ForumRoomPage() {
   const { data: userLikes } = useQuery({
     queryKey: ["forum-user-likes", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("forum_likes")
-        .select("post_id")
-        .eq("user_id", user!.id);
-      if (error) throw error;
-      return data.map(l => l.post_id);
+      const data = await apiQuery<any[]>("forum_likes", (q) =>
+        q.select("post_id").eq("user_id", user!.id)
+      );
+      return data.map((l: any) => l.post_id);
     },
     enabled: !!user,
   });
 
   const createPostMutation = useMutation({
     mutationFn: async (post: { title: string; content: string }) => {
-      const { error } = await supabase.from("forum_posts").insert({
-        room_id: room!.id,
-        author_id: user!.id,
-        title: post.title,
-        content: post.content,
-      });
-      if (error) throw error;
+      await apiMutate("forum_posts", (q) =>
+        q.insert({ room_id: room!.id, author_id: user!.id, title: post.title, content: post.content })
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["forum-posts", room?.id] });
@@ -132,11 +108,11 @@ export default function ForumRoomPage() {
     mutationFn: async (postId: string) => {
       const isLiked = userLikes?.includes(postId);
       if (isLiked) {
-        await supabase.from("forum_likes").delete().eq("user_id", user!.id).eq("post_id", postId);
-        await supabase.from("forum_posts").update({ likes_count: (posts?.find(p => p.id === postId)?.likes_count || 1) - 1 }).eq("id", postId);
+        await apiMutate("forum_likes", (q) => q.delete().eq("user_id", user!.id).eq("post_id", postId));
+        await apiMutate("forum_posts", (q) => q.update({ likes_count: (posts?.find((p: any) => p.id === postId)?.likes_count || 1) - 1 }).eq("id", postId));
       } else {
-        await supabase.from("forum_likes").insert({ user_id: user!.id, post_id: postId });
-        await supabase.from("forum_posts").update({ likes_count: (posts?.find(p => p.id === postId)?.likes_count || 0) + 1 }).eq("id", postId);
+        await apiMutate("forum_likes", (q) => q.insert({ user_id: user!.id, post_id: postId }));
+        await apiMutate("forum_posts", (q) => q.update({ likes_count: (posts?.find((p: any) => p.id === postId)?.likes_count || 0) + 1 }).eq("id", postId));
       }
     },
     onSuccess: () => {
@@ -211,7 +187,7 @@ export default function ForumRoomPage() {
           </div>
         ) : posts && posts.length > 0 ? (
           <div className="space-y-4">
-            {posts.map((post) => (
+            {posts.map((post: any) => (
               <Link key={post.id} to={`/forum/${roomName}/${post.id}`}>
                 <Card className="transition-colors hover:bg-accent/50">
                   <CardHeader>
@@ -237,38 +213,21 @@ export default function ForumRoomPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            likeMutation.mutate(post.id);
-                          }}
+                          onClick={(e) => { e.preventDefault(); likeMutation.mutate(post.id); }}
                           className={userLikes?.includes(post.id) ? "text-primary" : "text-muted-foreground"}
                           aria-label={t("forum.likePost", "Like post")}
                         >
                           <ThumbsUp className="h-4 w-4 mr-1" />
                           {post.likes_count}
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }}
-                          className="text-muted-foreground"
-                          aria-label={t("forum.comments", "Comments")}
-                        >
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} className="text-muted-foreground" aria-label={t("forum.comments", "Comments")}>
                           <MessageCircle className="h-4 w-4 mr-1" />
-                          {(post as any).comments_count}
+                          {post.comments_count}
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setReportTarget({ type: "forum_post", id: post.id });
-                            setReportDialogOpen(true);
-                          }}
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setReportTarget({ type: "forum_post", id: post.id }); setReportDialogOpen(true); }}
                           className="text-muted-foreground hover:text-destructive"
                           aria-label={t("moderation.reportContent", "Report content")}
                         >
@@ -283,26 +242,15 @@ export default function ForumRoomPage() {
                 </Card>
               </Link>
             ))}
-            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-2 pt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page === 0}
-                  onClick={() => setPage(p => p - 1)}
-                >
+                <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
                   {t("common.previous", "Previous")}
                 </Button>
                 <span className="text-sm text-muted-foreground">
                   {t("common.pageOf", "Page {{current}} of {{total}}", { current: page + 1, total: totalPages })}
                 </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page >= totalPages - 1}
-                  onClick={() => setPage(p => p + 1)}
-                >
+                <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
                   {t("common.next", "Next")}
                 </Button>
               </div>
@@ -318,7 +266,6 @@ export default function ForumRoomPage() {
           </Card>
         )}
 
-        {/* Report Dialog */}
         {reportTarget && (
           <ReportContentDialog
             open={reportDialogOpen}
