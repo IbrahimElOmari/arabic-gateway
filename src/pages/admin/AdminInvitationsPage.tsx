@@ -44,6 +44,7 @@ function generateToken() {
 export default function AdminInvitationsPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [email, setEmail] = useState("");

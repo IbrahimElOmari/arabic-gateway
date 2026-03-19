@@ -41,6 +41,7 @@ import { ExerciseReleaseSettings } from "@/components/exercises/ExerciseReleaseS
 export default function TeacherExercisesPage() {
   const { t, i18n } = useTranslation();
   const { user, isAdmin } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showExerciseDialog, setShowExerciseDialog] = useState(false);
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);

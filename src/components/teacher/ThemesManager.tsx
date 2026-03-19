@@ -35,6 +35,7 @@ interface ThemesManagerProps {
 export function ThemesManager({ onSelectTheme, selectedThemeId }: ThemesManagerProps) {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(false);
   const [editingTheme, setEditingTheme] = useState<any>(null);

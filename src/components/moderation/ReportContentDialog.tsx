@@ -41,6 +41,7 @@ export function ReportContentDialog({
 }: ReportContentDialogProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [reason, setReason] = useState<string>("");
   const [description, setDescription] = useState("");
 

@@ -43,6 +43,7 @@ const fileTypeIcons: Record<string, React.ElementType> = {
 export default function TeacherMaterialsPage() {
   const { t } = useTranslation();
   const { user, isAdmin } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<string>("");

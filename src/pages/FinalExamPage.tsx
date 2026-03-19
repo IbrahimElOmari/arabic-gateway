@@ -29,6 +29,7 @@ export default function FinalExamPage() {
   const { examId } = useParams<{ examId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);

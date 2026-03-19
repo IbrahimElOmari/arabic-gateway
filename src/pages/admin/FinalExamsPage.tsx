@@ -40,6 +40,7 @@ import { logAdminAction } from "@/lib/admin-log";
 export default function FinalExamsPage() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(false);
   const [editingExam, setEditingExam] = useState<any>(null);

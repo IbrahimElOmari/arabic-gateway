@@ -59,6 +59,7 @@ interface Level {
 export default function PlacementsPage() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedPlacement, setSelectedPlacement] = useState<PlacementTest | null>(null);
   const [dialogType, setDialogType] = useState<"schedule" | "complete" | null>(null);

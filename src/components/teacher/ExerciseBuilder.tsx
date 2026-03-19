@@ -59,6 +59,7 @@ const questionTypeIcons: Record<QuestionType, React.ElementType> = {
 export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showQuestionDialog, setShowQuestionDialog] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<any>(null);

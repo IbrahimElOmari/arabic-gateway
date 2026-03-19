@@ -41,6 +41,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function KnowledgeBaseManagementPage() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showArticleDialog, setShowArticleDialog] = useState(false);
   const [editingArticle, setEditingArticle] = useState<any>(null);
