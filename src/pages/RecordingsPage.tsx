@@ -42,12 +42,9 @@ export default function RecordingsPage() {
   const { data: enrolledClassIds } = useQuery({
     queryKey: ["enrolled-class-ids", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("class_enrollments")
-        .select("class_id")
-        .eq("student_id", user!.id)
-        .eq("status", "enrolled");
-      if (error) throw error;
+      const data = await apiQuery<any[]>("class_enrollments", (q) =>
+        q.select("class_id").eq("student_id", user!.id).eq("status", "enrolled")
+      );
       return data.map((e) => e.class_id);
     },
     enabled: !!user && !isStaff,
