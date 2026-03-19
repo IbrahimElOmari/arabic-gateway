@@ -63,16 +63,17 @@ export default function TeacherLessonsPage() {
 
   const createLessonMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const { error } = await supabase.from("lessons").insert({
-        title: data.title,
-        description: data.description,
-        class_id: data.class_id,
-        scheduled_at: data.scheduled_at,
-        duration_minutes: parseInt(data.duration_minutes),
-        meet_link: data.meet_link || null,
-        created_by: user!.id,
-      });
-      if (error) throw error;
+      await apiMutate("lessons", (q) =>
+        q.insert({
+          title: data.title,
+          description: data.description,
+          class_id: data.class_id,
+          scheduled_at: data.scheduled_at,
+          duration_minutes: parseInt(data.duration_minutes),
+          meet_link: data.meet_link || null,
+          created_by: user!.id,
+        })
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teacher-lessons"] });
