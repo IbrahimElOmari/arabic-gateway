@@ -2,37 +2,22 @@ import { useState } from "react";
 import { formatDate } from "@/lib/date-utils";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, Loader2, Percent, Copy } from "lucide-react";
+import { Plus, Trash2, Loader2, Percent, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { logAdminAction } from "@/lib/admin-log";
@@ -57,9 +42,7 @@ export default function DiscountCodesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editingCode, setEditingCode] = useState<DiscountCode | null>(null);
 
-  // Form state
   const [formData, setFormData] = useState({
     code: "",
     discount_type: "percentage" as "percentage" | "fixed_amount",
@@ -71,41 +54,32 @@ export default function DiscountCodesPage() {
     is_active: true,
   });
 
-  // Fetch discount codes
   const { data: codes, isLoading } = useQuery({
     queryKey: ["admin-discount-codes"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("discount_codes")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as DiscountCode[];
-    },
+    queryFn: () => apiQuery<DiscountCode[]>("discount_codes", (q) =>
+      q.select("*").order("created_at", { ascending: false })
+    ),
   });
 
-  // Create discount code mutation
   const createCodeMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
-      const { error } = await supabase.from("discount_codes").insert({
-        code: data.code.toUpperCase(),
-        discount_type: data.discount_type,
-        discount_value: parseFloat(data.discount_value),
-        valid_from: data.valid_from,
-        valid_until: data.valid_until || null,
-        max_uses: data.max_uses ? parseInt(data.max_uses) : null,
-        class_id: data.class_id || null,
-        is_active: data.is_active,
-        created_by: user?.id,
-      });
-      if (error) throw error;
-    },
+    mutationFn: (data: typeof formData) =>
+      apiMutate("discount_codes", (q) =>
+        q.insert({
+          code: data.code.toUpperCase(),
+          discount_type: data.discount_type,
+          discount_value: parseFloat(data.discount_value),
+          valid_from: data.valid_from,
+          valid_until: data.valid_until || null,
+          max_uses: data.max_uses ? parseInt(data.max_uses) : null,
+          class_id: data.class_id || null,
+          is_active: data.is_active,
+          created_by: user?.id,
+        })
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-discount-codes"] });
       if (user) logAdminAction(user.id, "create_discount", "discount_codes", undefined, { code: formData.code });
-      toast({
-        title: t("admin.discountCreated", "Discount Code Created"),
-      });
+      toast({ title: t("admin.discountCreated", "Discount Code Created") });
       setIsCreateOpen(false);
       resetForm();
     },
@@ -120,33 +94,22 @@ export default function DiscountCodesPage() {
     },
   });
 
-  // Toggle active mutation
   const toggleActiveMutation = useMutation({
-    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { error } = await supabase
-        .from("discount_codes")
-        .update({ is_active })
-        .eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) =>
+      apiMutate("discount_codes", (q) => q.update({ is_active }).eq("id", id)),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-discount-codes"] });
       if (user) logAdminAction(user.id, "toggle_discount", "discount_codes", variables.id, { is_active: variables.is_active });
     },
   });
 
-  // Delete discount code mutation
   const deleteCodeMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("discount_codes").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) =>
+      apiMutate("discount_codes", (q) => q.delete().eq("id", id)),
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["admin-discount-codes"] });
       if (user) logAdminAction(user.id, "delete_discount", "discount_codes", id);
-      toast({
-        title: t("admin.discountDeleted", "Discount Code Deleted"),
-      });
+      toast({ title: t("admin.discountDeleted", "Discount Code Deleted") });
     },
     onError: () => {
       toast({
@@ -159,94 +122,53 @@ export default function DiscountCodesPage() {
 
   const resetForm = () => {
     setFormData({
-      code: "",
-      discount_type: "percentage",
-      discount_value: "",
-      valid_from: new Date().toISOString().split("T")[0],
-      valid_until: "",
-      max_uses: "",
-      class_id: "",
-      is_active: true,
+      code: "", discount_type: "percentage", discount_value: "",
+      valid_from: new Date().toISOString().split("T")[0], valid_until: "",
+      max_uses: "", class_id: "", is_active: true,
     });
   };
 
   const generateRandomCode = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let code = "";
-    for (let i = 0; i < 8; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
+    for (let i = 0; i < 8; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
     setFormData({ ...formData, code });
   };
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
-    toast({
-      title: t("admin.codeCopied", "Code copied to clipboard"),
-    });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    createCodeMutation.mutate(formData);
+    toast({ title: t("admin.codeCopied", "Code copied to clipboard") });
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">
-            {t("admin.discountCodes", "Discount Codes")}
-          </h1>
-          <p className="text-muted-foreground">
-            {t("admin.discountCodesDescription", "Create and manage promotional codes")}
-          </p>
+          <h1 className="text-3xl font-bold text-foreground">{t("admin.discountCodes", "Discount Codes")}</h1>
+          <p className="text-muted-foreground">{t("admin.discountCodesDescription", "Create and manage promotional codes")}</p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              {t("admin.createDiscount", "Create Discount")}
-            </Button>
+            <Button><Plus className="h-4 w-4 mr-2" />{t("admin.createDiscount", "Create Discount")}</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{t("admin.createNewDiscount", "Create New Discount Code")}</DialogTitle>
-              <DialogDescription>
-                {t("admin.createDiscountDescription", "Set up a promotional discount code.")}
-              </DialogDescription>
+              <DialogDescription>{t("admin.createDiscountDescription", "Set up a promotional discount code.")}</DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={(e) => { e.preventDefault(); createCodeMutation.mutate(formData); }} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="code">{t("admin.discountCode", "Discount Code")}</Label>
                 <div className="flex gap-2">
-                  <Input
-                    id="code"
-                    value={formData.code}
-                    onChange={(e) =>
-                      setFormData({ ...formData, code: e.target.value.toUpperCase() })
-                    }
-                    placeholder="SAVE20"
-                    required
-                  />
-                  <Button type="button" variant="outline" onClick={generateRandomCode}>
-                    {t("admin.generate", "Generate")}
-                  </Button>
+                  <Input id="code" value={formData.code} onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })} placeholder="SAVE20" required />
+                  <Button type="button" variant="outline" onClick={generateRandomCode}>{t("admin.generate", "Generate")}</Button>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="type">{t("admin.discountType", "Discount Type")}</Label>
-                  <Select
-                    value={formData.discount_type}
-                    onValueChange={(v) =>
-                      setFormData({ ...formData, discount_type: v as "percentage" | "fixed_amount" })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                  <Label>{t("admin.discountType", "Discount Type")}</Label>
+                  <Select value={formData.discount_type} onValueChange={(v) => setFormData({ ...formData, discount_type: v as any })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="percentage">{t("admin.percentage", "Percentage (%)")}</SelectItem>
                       <SelectItem value="fixed_amount">{t("admin.fixedAmount", "Fixed Amount (€)")}</SelectItem>
@@ -254,67 +176,30 @@ export default function DiscountCodesPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="value">
-                    {formData.discount_type === "percentage"
-                      ? t("admin.percentageValue", "Percentage")
-                      : t("admin.amountValue", "Amount (€)")}
-                  </Label>
-                  <Input
-                    id="value"
-                    type="number"
-                    step={formData.discount_type === "percentage" ? "1" : "0.01"}
-                    min={0}
-                    max={formData.discount_type === "percentage" ? 100 : undefined}
-                    value={formData.discount_value}
-                    onChange={(e) => setFormData({ ...formData, discount_value: e.target.value })}
-                    required
-                  />
+                  <Label>{formData.discount_type === "percentage" ? t("admin.percentageValue", "Percentage") : t("admin.amountValue", "Amount (€)")}</Label>
+                  <Input type="number" step={formData.discount_type === "percentage" ? "1" : "0.01"} min={0} max={formData.discount_type === "percentage" ? 100 : undefined} value={formData.discount_value} onChange={(e) => setFormData({ ...formData, discount_value: e.target.value })} required />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="valid_from">{t("admin.validFrom", "Valid From")}</Label>
-                  <Input
-                    id="valid_from"
-                    type="date"
-                    value={formData.valid_from}
-                    onChange={(e) => setFormData({ ...formData, valid_from: e.target.value })}
-                    required
-                  />
+                  <Label>{t("admin.validFrom", "Valid From")}</Label>
+                  <Input type="date" value={formData.valid_from} onChange={(e) => setFormData({ ...formData, valid_from: e.target.value })} required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="valid_until">{t("admin.validUntil", "Valid Until")}</Label>
-                  <Input
-                    id="valid_until"
-                    type="date"
-                    value={formData.valid_until}
-                    onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
-                  />
+                  <Label>{t("admin.validUntil", "Valid Until")}</Label>
+                  <Input type="date" value={formData.valid_until} onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })} />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="max_uses">{t("admin.maxUses", "Max Uses (optional)")}</Label>
-                <Input
-                  id="max_uses"
-                  type="number"
-                  min={1}
-                  value={formData.max_uses}
-                  onChange={(e) => setFormData({ ...formData, max_uses: e.target.value })}
-                  placeholder={t("admin.unlimited", "Unlimited")}
-                />
+                <Label>{t("admin.maxUses", "Max Uses (optional)")}</Label>
+                <Input type="number" min={1} value={formData.max_uses} onChange={(e) => setFormData({ ...formData, max_uses: e.target.value })} placeholder={t("admin.unlimited", "Unlimited")} />
               </div>
               <div className="flex items-center gap-2">
-                <Switch
-                  id="is_active"
-                  checked={formData.is_active}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                />
+                <Switch id="is_active" checked={formData.is_active} onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })} />
                 <Label htmlFor="is_active">{t("admin.activeImmediately", "Active immediately")}</Label>
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
-                  {t("common.cancel", "Cancel")}
-                </Button>
+                <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>{t("common.cancel", "Cancel")}</Button>
                 <Button type="submit" disabled={createCodeMutation.isPending}>
                   {createCodeMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                   {t("common.create", "Create")}
@@ -325,7 +210,6 @@ export default function DiscountCodesPage() {
         </Dialog>
       </div>
 
-      {/* Discount Codes Table */}
       <div className="rounded-lg border bg-card">
         <Table>
           <TableHeader>
@@ -340,66 +224,36 @@ export default function DiscountCodesPage() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                </TableCell>
-              </TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></TableCell></TableRow>
             ) : codes && codes.length > 0 ? (
               codes.map((code) => (
                 <TableRow key={code.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <code className="font-mono font-bold text-primary">{code.code}</code>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyCode(code.code)}>
-                        <Copy className="h-3 w-3" />
-                      </Button>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyCode(code.code)}><Copy className="h-3 w-3" /></Button>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      {code.discount_type === "percentage" ? (
-                        <>
-                          <Percent className="h-4 w-4 text-muted-foreground" />
-                          <span>{code.discount_value}%</span>
-                        </>
-                      ) : (
-                        <span>€{code.discount_value.toFixed(2)}</span>
-                      )}
+                      {code.discount_type === "percentage" ? (<><Percent className="h-4 w-4 text-muted-foreground" /><span>{code.discount_value}%</span></>) : (<span>€{code.discount_value.toFixed(2)}</span>)}
                     </div>
                   </TableCell>
-                  <TableCell>
-                    {code.current_uses}/{code.max_uses || "∞"}
-                  </TableCell>
+                  <TableCell>{code.current_uses}/{code.max_uses || "∞"}</TableCell>
                   <TableCell className="text-sm">
                     {formatDate(code.valid_from, "PP")}
                     {code.valid_until && ` - ${formatDate(code.valid_until, "PP")}`}
                   </TableCell>
                   <TableCell>
-                    <Switch
-                      checked={code.is_active}
-                      onCheckedChange={(checked) =>
-                        toggleActiveMutation.mutate({ id: code.id, is_active: checked })
-                      }
-                    />
+                    <Switch checked={code.is_active} onCheckedChange={(checked) => toggleActiveMutation.mutate({ id: code.id, is_active: checked })} />
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => deleteCodeMutation.mutate(code.id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => deleteCodeMutation.mutate(code.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                   </TableCell>
                 </TableRow>
               ))
             ) : (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                  {t("admin.noDiscountCodes", "No discount codes found")}
-                </TableCell>
-              </TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{t("admin.noDiscountCodes", "No discount codes found")}</TableCell></TableRow>
             )}
           </TableBody>
         </Table>

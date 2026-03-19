@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,29 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Edit, Trash2, Eye, EyeOff, Loader2, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/date-utils";
@@ -47,110 +27,53 @@ export default function TeacherExercisesPage() {
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
   const [releaseExercise, setReleaseExercise] = useState<any>(null);
 
-  // Get accessible classes based on role (admin sees all, teacher sees own)
   const { data: classes } = useQuery({
     queryKey: ["teacher-classes", user?.id, isAdmin],
-    queryFn: async () => {
-      if (isAdmin) {
-        const { data, error } = await supabase
-          .from("classes")
-          .select("id, name, level:levels(name)")
-          .eq("is_active", true)
-          .order("name");
-        if (error) throw error;
-        return data;
-      } else {
-        const { data, error } = await supabase
-          .from("classes")
-          .select("id, name, level:levels(name)")
-          .eq("teacher_id", user!.id)
-          .eq("is_active", true)
-          .order("name");
-        if (error) throw error;
-        return data;
-      }
+    queryFn: () => {
+      if (isAdmin) return apiQuery<any[]>("classes", (q) => q.select("id, name, level:levels(name)").eq("is_active", true).order("name"));
+      return apiQuery<any[]>("classes", (q) => q.select("id, name, level:levels(name)").eq("teacher_id", user!.id).eq("is_active", true).order("name"));
     },
     enabled: !!user,
   });
 
-  // Get categories
   const { data: categories } = useQuery({
     queryKey: ["exercise-categories"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("exercise_categories")
-        .select("*")
-        .order("display_order", { ascending: true });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>("exercise_categories", (q) => q.select("*").order("display_order", { ascending: true })),
   });
 
-  // Get exercises for accessible classes
   const classIds = classes?.map((c) => c.id) || [];
   const { data: exercises, isLoading } = useQuery({
     queryKey: ["teacher-exercises", classIds],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("exercises")
-        .select("*, class:classes(name), category:exercise_categories(name_nl, name_en, name_ar)")
-        .in("class_id", classIds)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>("exercises", (q) =>
+      q.select("*, class:classes(name), category:exercise_categories(name_nl, name_en, name_ar)").in("class_id", classIds).order("created_at", { ascending: false })
+    ),
     enabled: classIds.length > 0,
   });
 
   const [exerciseForm, setExerciseForm] = useState({
-    class_id: "",
-    category_id: "",
-    title: "",
-    description: "",
-    passing_score: 60,
-    max_attempts: 3,
-    time_limit_seconds: null as number | null,
-    is_published: false,
+    class_id: "", category_id: "", title: "", description: "",
+    passing_score: 60, max_attempts: 3, time_limit_seconds: null as number | null, is_published: false,
   });
 
   const createExerciseMutation = useMutation({
-    mutationFn: async (form: typeof exerciseForm) => {
-      const { data, error } = await supabase
-        .from("exercises")
-        .insert({
-          ...form,
-          created_by: user!.id,
-          release_date: new Date().toISOString(),
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: (form: typeof exerciseForm) =>
+      apiMutate<any>("exercises", (q) =>
+        q.insert({ ...form, created_by: user!.id, release_date: new Date().toISOString() }).select().single()
+      ),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["teacher-exercises"] });
       setShowExerciseDialog(false);
       setSelectedExerciseId(data.id);
       resetForm();
-      toast({
-        title: t("teacher.exerciseCreated", "Exercise Created"),
-        description: t("teacher.addQuestionsNow", "Now add questions to your exercise."),
-      });
+      toast({ title: t("teacher.exerciseCreated", "Exercise Created"), description: t("teacher.addQuestionsNow", "Now add questions to your exercise.") });
     },
     onError: () => {
-      toast({
-        variant: "destructive",
-        title: t("common.error", "Error"),
-        description: t("teacher.exerciseCreateError", "Failed to create exercise."),
-      });
+      toast({ variant: "destructive", title: t("common.error", "Error"), description: t("teacher.exerciseCreateError", "Failed to create exercise.") });
     },
   });
 
   const deleteExerciseMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("exercises").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => apiMutate("exercises", (q) => q.delete().eq("id", id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teacher-exercises"] });
       toast({ title: t("teacher.exerciseDeleted", "Exercise Deleted") });
@@ -158,31 +81,16 @@ export default function TeacherExercisesPage() {
   });
 
   const togglePublishMutation = useMutation({
-    mutationFn: async ({ id, isPublished }: { id: string; isPublished: boolean }) => {
+    mutationFn: ({ id, isPublished }: { id: string; isPublished: boolean }) => {
       const updateData: any = { is_published: isPublished };
-      // Auto-set release_date to now when publishing
-      if (isPublished) {
-        updateData.release_date = new Date().toISOString();
-      }
-      const { error } = await supabase.from("exercises").update(updateData).eq("id", id);
-      if (error) throw error;
+      if (isPublished) updateData.release_date = new Date().toISOString();
+      return apiMutate("exercises", (q) => q.update(updateData).eq("id", id));
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teacher-exercises"] });
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["teacher-exercises"] }); },
   });
 
   const resetForm = () => {
-    setExerciseForm({
-      class_id: "",
-      category_id: "",
-      title: "",
-      description: "",
-      passing_score: 60,
-      max_attempts: 3,
-      time_limit_seconds: null,
-      is_published: false,
-    });
+    setExerciseForm({ class_id: "", category_id: "", title: "", description: "", passing_score: 60, max_attempts: 3, time_limit_seconds: null, is_published: false });
   };
 
   const getCategoryName = (category: any) => {
@@ -192,14 +100,8 @@ export default function TeacherExercisesPage() {
     return category?.name_en;
   };
 
-  // If an exercise is selected, show the question builder
   if (selectedExerciseId) {
-    return (
-      <ExerciseBuilder
-        exerciseId={selectedExerciseId}
-        onBack={() => setSelectedExerciseId(null)}
-      />
-    );
+    return <ExerciseBuilder exerciseId={selectedExerciseId} onBack={() => setSelectedExerciseId(null)} />;
   }
 
   return (
@@ -207,13 +109,10 @@ export default function TeacherExercisesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">{t("teacher.exercises", "Exercises")}</h1>
-          <p className="text-muted-foreground">
-            {t("teacher.exercisesDescription", "Create and manage exercises for your classes")}
-          </p>
+          <p className="text-muted-foreground">{t("teacher.exercisesDescription", "Create and manage exercises for your classes")}</p>
         </div>
         <Button onClick={() => { resetForm(); setShowExerciseDialog(true); }} data-testid="teacher-exercises-create-button">
-          <Plus className="h-4 w-4 mr-2" />
-          {t("teacher.createExercise", "Create Exercise")}
+          <Plus className="h-4 w-4 mr-2" />{t("teacher.createExercise", "Create Exercise")}
         </Button>
       </div>
 
@@ -232,11 +131,7 @@ export default function TeacherExercisesPage() {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                  </TableCell>
-                </TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></TableCell></TableRow>
               ) : exercises && exercises.length > 0 ? (
                 exercises.map((exercise) => (
                   <TableRow key={exercise.id}>
@@ -250,168 +145,89 @@ export default function TeacherExercisesPage() {
                     </TableCell>
                     <TableCell>{formatDate(exercise.created_at, "MMM d, yyyy")}</TableCell>
                     <TableCell className="text-right space-x-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => togglePublishMutation.mutate({ id: exercise.id, isPublished: !exercise.is_published })}
-                        title={exercise.is_published ? t("common.unpublish", "Unpublish") : t("common.publish", "Publish")}
-                      >
+                      <Button variant="ghost" size="icon" onClick={() => togglePublishMutation.mutate({ id: exercise.id, isPublished: !exercise.is_published })} title={exercise.is_published ? t("common.unpublish", "Unpublish") : t("common.publish", "Publish")}>
                         {exercise.is_published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setReleaseExercise(exercise)}
-                        title={t("exercises.releaseSettings", "Release Settings")}
-                        data-testid="exercise-release-settings-button"
-                      >
+                      <Button variant="ghost" size="icon" onClick={() => setReleaseExercise(exercise)} title={t("exercises.releaseSettings", "Release Settings")} data-testid="exercise-release-settings-button">
                         <Calendar className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedExerciseId(exercise.id)}
-                      >
-                        <Edit className="h-4 w-4 mr-1" />
-                        {t("teacher.editQuestions", "Questions")}
+                      <Button variant="ghost" size="sm" onClick={() => setSelectedExerciseId(exercise.id)}>
+                        <Edit className="h-4 w-4 mr-1" />{t("teacher.editQuestions", "Questions")}
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => deleteExerciseMutation.mutate(exercise.id)}
-                      >
+                      <Button variant="ghost" size="icon" onClick={() => deleteExerciseMutation.mutate(exercise.id)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    {t("teacher.noExercises", "No exercises yet. Create your first exercise!")}
-                  </TableCell>
-                </TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{t("teacher.noExercises", "No exercises yet. Create your first exercise!")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
-      {/* Create Exercise Dialog */}
       <Dialog open={showExerciseDialog} onOpenChange={setShowExerciseDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("teacher.createExercise", "Create Exercise")}</DialogTitle>
-            <DialogDescription>
-              {t("teacher.createExerciseDescription", "Set up a new exercise for your students.")}
-            </DialogDescription>
+            <DialogDescription>{t("teacher.createExerciseDescription", "Set up a new exercise for your students.")}</DialogDescription>
           </DialogHeader>
-
           <div className="space-y-4">
             <div>
               <Label>{t("admin.class", "Class")}</Label>
               <Select value={exerciseForm.class_id} onValueChange={(v) => setExerciseForm({ ...exerciseForm, class_id: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("admin.selectClass", "Select class")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {classes?.map((cls) => (
-                    <SelectItem key={cls.id} value={cls.id}>
-                      {cls.name} {cls.level?.name ? `(${cls.level.name})` : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                <SelectTrigger><SelectValue placeholder={t("admin.selectClass", "Select class")} /></SelectTrigger>
+                <SelectContent>{classes?.map((cls) => (<SelectItem key={cls.id} value={cls.id}>{cls.name} {cls.level?.name ? `(${cls.level.name})` : ''}</SelectItem>))}</SelectContent>
               </Select>
             </div>
-
             <div>
               <Label>{t("admin.category", "Category")}</Label>
               <Select value={exerciseForm.category_id} onValueChange={(v) => setExerciseForm({ ...exerciseForm, category_id: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("admin.selectCategory", "Select category")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories?.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {getCategoryName(cat)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                <SelectTrigger><SelectValue placeholder={t("admin.selectCategory", "Select category")} /></SelectTrigger>
+                <SelectContent>{categories?.map((cat) => (<SelectItem key={cat.id} value={cat.id}>{getCategoryName(cat)}</SelectItem>))}</SelectContent>
               </Select>
             </div>
-
             <div>
               <Label>{t("common.title", "Title")}</Label>
-              <Input
-                value={exerciseForm.title}
-                onChange={(e) => setExerciseForm({ ...exerciseForm, title: e.target.value })}
-              />
+              <Input value={exerciseForm.title} onChange={(e) => setExerciseForm({ ...exerciseForm, title: e.target.value })} />
             </div>
-
             <div>
               <Label>{t("common.description", "Description")}</Label>
-              <Textarea
-                value={exerciseForm.description}
-                onChange={(e) => setExerciseForm({ ...exerciseForm, description: e.target.value })}
-                rows={3}
-              />
+              <Textarea value={exerciseForm.description} onChange={(e) => setExerciseForm({ ...exerciseForm, description: e.target.value })} rows={3} />
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>{t("teacher.passingScore", "Passing Score (%)")}</Label>
-                <Input
-                  type="number"
-                  value={exerciseForm.passing_score}
-                  onChange={(e) => setExerciseForm({ ...exerciseForm, passing_score: parseInt(e.target.value) })}
-                />
+                <Input type="number" value={exerciseForm.passing_score} onChange={(e) => setExerciseForm({ ...exerciseForm, passing_score: parseInt(e.target.value) })} />
               </div>
               <div>
                 <Label>{t("teacher.maxAttempts", "Max Attempts")}</Label>
-                <Input
-                  type="number"
-                  value={exerciseForm.max_attempts}
-                  onChange={(e) => setExerciseForm({ ...exerciseForm, max_attempts: parseInt(e.target.value) })}
-                />
+                <Input type="number" value={exerciseForm.max_attempts} onChange={(e) => setExerciseForm({ ...exerciseForm, max_attempts: parseInt(e.target.value) })} />
               </div>
             </div>
-
             <div>
               <Label>{t("teacher.timeLimit", "Time Limit (minutes, optional)")}</Label>
-              <Input
-                type="number"
-                value={exerciseForm.time_limit_seconds ? exerciseForm.time_limit_seconds / 60 : ""}
-                onChange={(e) => setExerciseForm({ ...exerciseForm, time_limit_seconds: e.target.value ? parseInt(e.target.value) * 60 : null })}
-                placeholder={t("teacher.noTimeLimit", "No time limit")}
-              />
+              <Input type="number" value={exerciseForm.time_limit_seconds ? exerciseForm.time_limit_seconds / 60 : ""} onChange={(e) => setExerciseForm({ ...exerciseForm, time_limit_seconds: e.target.value ? parseInt(e.target.value) * 60 : null })} placeholder={t("teacher.noTimeLimit", "No time limit")} />
             </div>
           </div>
-
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowExerciseDialog(false)}>
-              {t("common.cancel", "Cancel")}
-            </Button>
-            <Button
-              onClick={() => createExerciseMutation.mutate(exerciseForm)}
-              disabled={!exerciseForm.class_id || !exerciseForm.category_id || !exerciseForm.title || createExerciseMutation.isPending}
-            >
-              {createExerciseMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {t("common.create", "Create")}
+            <Button variant="outline" onClick={() => setShowExerciseDialog(false)}>{t("common.cancel", "Cancel")}</Button>
+            <Button onClick={() => createExerciseMutation.mutate(exerciseForm)} disabled={!exerciseForm.class_id || !exerciseForm.category_id || !exerciseForm.title || createExerciseMutation.isPending}>
+              {createExerciseMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}{t("common.create", "Create")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Release Settings Dialog */}
       <Dialog open={!!releaseExercise} onOpenChange={(open) => !open && setReleaseExercise(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{t("exercises.releaseSettings", "Release Settings")}</DialogTitle>
             <DialogDescription>{releaseExercise?.title}</DialogDescription>
           </DialogHeader>
-          {releaseExercise && (
-            <ExerciseReleaseSettings exercise={releaseExercise} />
-          )}
+          {releaseExercise && <ExerciseReleaseSettings exercise={releaseExercise} />}
         </DialogContent>
       </Dialog>
     </div>

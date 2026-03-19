@@ -201,11 +201,10 @@ export default function FinalExamPage() {
       let promotedLevelName = null;
       if (promotedToLevelId) {
         const nextLevel = await apiQuery<any>("levels", (q) => q.select("*").eq("id", promotedToLevelId).single());
-          promotedLevelName = getLevelName(nextLevel);
-        }
+        promotedLevelName = getLevelName(nextLevel);
       }
 
-      setResults({ 
+      setResults({
         score: scorePercent, 
         passed,
         promotedToLevel: promotedLevelName,
