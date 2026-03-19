@@ -84,22 +84,13 @@ export default function FinalExamPage() {
         return;
       }
 
-      const { data, error } = await supabase
-        .from("final_exam_attempts")
-        .insert({
-          final_exam_id: examId,
-          student_id: user.id,
-          attempt_number: currentAttemptCount + 1,
-        })
-        .select()
-        .single();
-
-      if (error) {
+      try {
+        const data = await apiMutate<any>("final_exam_attempts", (q) => q.insert({ final_exam_id: examId, student_id: user.id, attempt_number: currentAttemptCount + 1 }).select().single());
+        setAttemptId(data.id);
+      } catch (error) {
         console.error("Failed to create attempt:", error);
         return;
       }
-
-      setAttemptId(data.id);
 
       if (exam.time_limit_seconds) {
         setTimeLeft(exam.time_limit_seconds);
