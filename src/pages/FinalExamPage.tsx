@@ -200,12 +200,7 @@ export default function FinalExamPage() {
       // Get next level name if promoted
       let promotedLevelName = null;
       if (promotedToLevelId) {
-        const { data: nextLevel } = await supabase
-          .from("levels")
-          .select("*")
-          .eq("id", promotedToLevelId)
-          .single();
-        if (nextLevel) {
+        const nextLevel = await apiQuery<any>("levels", (q) => q.select("*").eq("id", promotedToLevelId).single());
           promotedLevelName = getLevelName(nextLevel);
         }
       }
