@@ -44,9 +44,8 @@ export default function TeacherSubmissionsPage() {
   const { data: pendingSubmissions, isLoading: pendingLoading } = useQuery({
     queryKey: ["pending-submissions", classIds],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("student_answers")
-        .select(`
+      const data = await apiQuery<any[]>("student_answers", (q) =>
+        q.select(`
           *,
           student:profiles!student_answers_student_id_fkey(full_name),
           question:questions(
@@ -56,9 +55,8 @@ export default function TeacherSubmissionsPage() {
             exercise:exercises(title, class_id, class:classes(name))
           )
         `)
-        .is("reviewed_at", null);
-      if (error) throw error;
-      // Filter by teacher's classes
+        .is("reviewed_at", null)
+      );
       return data.filter((s: any) => classIds.includes(s.question?.exercise?.class_id));
     },
     enabled: classIds.length > 0,
