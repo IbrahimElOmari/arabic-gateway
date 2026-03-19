@@ -72,14 +72,9 @@ export default function ExercisePage() {
     const createAttempt = async () => {
       if (!user || !exerciseId || attemptId) return;
 
-      // Check existing attempts
-      const { data: existingAttempts } = await supabase
-        .from("exercise_attempts")
-        .select("attempt_number")
-        .eq("exercise_id", exerciseId)
-        .eq("student_id", user.id)
-        .order("attempt_number", { ascending: false })
-        .limit(1);
+      const existingAttempts = await apiQuery<any[]>("exercise_attempts", (q) =>
+        q.select("attempt_number").eq("exercise_id", exerciseId).eq("student_id", user.id).order("attempt_number", { ascending: false }).limit(1)
+      );
 
       const attemptNumber = (existingAttempts?.[0]?.attempt_number || 0) + 1;
 
