@@ -66,9 +66,8 @@ export default function TeacherSubmissionsPage() {
   const { data: reviewedSubmissions, isLoading: reviewedLoading } = useQuery({
     queryKey: ["reviewed-submissions", classIds],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("student_answers")
-        .select(`
+      const data = await apiQuery<any[]>("student_answers", (q) =>
+        q.select(`
           *,
           student:profiles!student_answers_student_id_fkey(full_name),
           question:questions(
@@ -80,8 +79,8 @@ export default function TeacherSubmissionsPage() {
         `)
         .not("reviewed_at", "is", null)
         .order("reviewed_at", { ascending: false })
-        .limit(50);
-      if (error) throw error;
+        .limit(50)
+      );
       return data.filter((s: any) => classIds.includes(s.question?.exercise?.class_id));
     },
     enabled: classIds.length > 0,
