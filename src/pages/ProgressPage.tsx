@@ -37,10 +37,8 @@ export default function ProgressPage() {
   const { data: attemptsDetailed, isLoading } = useQuery({
     queryKey: ["attempts-detailed", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("exercise_attempts")
-        .select(
-          `
+      return apiQuery<AttemptRow[]>("exercise_attempts", (q) =>
+        q.select(`
           exercise_id,
           passed,
           exercises (
@@ -55,13 +53,10 @@ export default function ProgressPage() {
               )
             )
           )
-        `
-        )
+        `)
         .eq("student_id", user!.id)
-        .order("submitted_at", { ascending: false });
-
-      if (error) throw error;
-      return data as unknown as AttemptRow[];
+        .order("submitted_at", { ascending: false })
+      );
     },
     enabled: !!user,
   });
