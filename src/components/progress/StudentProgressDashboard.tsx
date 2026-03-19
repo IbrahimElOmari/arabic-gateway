@@ -27,17 +27,15 @@
    // Fetch exercise attempts for score trends
    const { data: attempts } = useQuery({
      queryKey: ["student-attempts-trend", user?.id],
-     queryFn: async () => {
-       const { data, error } = await supabase
-         .from("exercise_attempts")
-         .select("total_score, submitted_at, passed")
-         .eq("student_id", user!.id)
-         .not("submitted_at", "is", null)
-         .order("submitted_at", { ascending: true })
-         .limit(20);
-       if (error) throw error;
-       return data;
-     },
+    queryFn: async () => {
+      return apiQuery<any[]>("exercise_attempts", (q) =>
+        q.select("total_score, submitted_at, passed")
+          .eq("student_id", user!.id)
+          .not("submitted_at", "is", null)
+          .order("submitted_at", { ascending: true })
+          .limit(20)
+      );
+    },
      enabled: !!user,
    });
  
