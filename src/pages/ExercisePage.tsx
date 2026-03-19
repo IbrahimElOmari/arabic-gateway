@@ -78,22 +78,15 @@ export default function ExercisePage() {
 
       const attemptNumber = (existingAttempts?.[0]?.attempt_number || 0) + 1;
 
-      const { data, error } = await supabase
-        .from("exercise_attempts")
-        .insert({
-          exercise_id: exerciseId,
-          student_id: user.id,
-          attempt_number: attemptNumber,
-        })
-        .select()
-        .single();
-
-      if (error) {
+      try {
+        const data = await apiMutate<any>("exercise_attempts", (q) =>
+          q.insert({ exercise_id: exerciseId, student_id: user.id, attempt_number: attemptNumber }).select().single()
+        );
+        setAttemptId(data.id);
+      } catch (error) {
         console.error("Failed to create attempt:", error);
         return;
       }
-
-      setAttemptId(data.id);
 
       // Set timer if time limit exists
       if (exercise?.time_limit_seconds) {
