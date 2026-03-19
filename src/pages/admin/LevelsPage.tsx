@@ -96,17 +96,13 @@ export default function LevelsPage() {
   // Update level mutation
   const updateLevelMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
-      const { error } = await supabase
-        .from("levels")
-        .update({
-          name: data.name,
-          name_nl: data.name_nl,
-          name_en: data.name_en,
-          name_ar: data.name_ar,
-          description: data.description || null,
-        })
-        .eq("id", id);
-      if (error) throw error;
+      await apiMutate('levels', (q) => q.update({
+        name: data.name,
+        name_nl: data.name_nl,
+        name_en: data.name_en,
+        name_ar: data.name_ar,
+        description: data.description || null,
+      }).eq("id", id));
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-levels"] });
