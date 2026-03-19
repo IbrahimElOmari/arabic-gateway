@@ -206,17 +206,11 @@ export default function ExercisePage() {
             : null,
       }));
 
-      await supabase.from("student_answers").insert(answersToInsert);
+      await apiMutate("student_answers", (q) => q.insert(answersToInsert));
 
-      // Update attempt
-      await supabase
-        .from("exercise_attempts")
-        .update({
-          submitted_at: new Date().toISOString(),
-          total_score: scorePercent,
-          passed,
-        })
-        .eq("id", attemptId);
+      await apiMutate("exercise_attempts", (q) =>
+        q.update({ submitted_at: new Date().toISOString(), total_score: scorePercent, passed }).eq("id", attemptId)
+      );
 
       setResults({ score: scorePercent, passed });
       setIsCompleted(true);
