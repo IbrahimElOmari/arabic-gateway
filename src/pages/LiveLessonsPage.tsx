@@ -31,22 +31,19 @@ export default function LiveLessonsPage() {
   const { data: lessons, isLoading } = useQuery({
     queryKey: ["upcoming-lessons", user?.id, enrolledClassIds, isStaff],
     queryFn: async () => {
-      let query = supabase
-        .from("lessons")
-        .select("*, class:classes(name)")
-        .gte("scheduled_at", new Date().toISOString())
-        .order("scheduled_at");
-      
       // Students only see lessons from their enrolled classes
-      if (!isStaff && enrolledClassIds && enrolledClassIds.length > 0) {
-        query = query.in("class_id", enrolledClassIds);
-      } else if (!isStaff && (!enrolledClassIds || enrolledClassIds.length === 0)) {
+      if (!isStaff && (!enrolledClassIds || enrolledClassIds.length === 0)) {
         return [];
       }
-      
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
+      return apiQuery<any[]>("lessons", (q) => {
+        let query = q.select("*, class:classes(name)")
+          .gte("scheduled_at", new Date().toISOString())
+          .order("scheduled_at");
+        if (!isStaff && enrolledClassIds && enrolledClassIds.length > 0) {
+          query = query.in("class_id", enrolledClassIds);
+        }
+        return query;
+      });
     },
     enabled: !!user && (isStaff || enrolledClassIds !== undefined),
   });

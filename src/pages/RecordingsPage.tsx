@@ -53,13 +53,10 @@ export default function RecordingsPage() {
   const { data: recordings, isLoading } = useQuery({
     queryKey: ["lesson-recordings", user?.id, isStaff, enrolledClassIds],
     queryFn: async () => {
-      // Staff sees all recordings; students see only enrolled class recordings
-      // RLS already enforces this, but we add explicit filtering for clarity
-      const { data, error } = await supabase
-        .from("lesson_recordings")
-        .select("*, lesson:lessons(title, description, class_id)")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
+      const data = await apiQuery<any[]>("lesson_recordings", (q) =>
+        q.select("*, lesson:lessons(title, description, class_id)")
+          .order("created_at", { ascending: false })
+      );
 
       if (isStaff) return data;
 

@@ -35,11 +35,9 @@ export default function SelfStudyPage() {
     queryKey: ["student-progress", user?.id],
     queryFn: async () => {
       if (!user) return {};
-      const { data, error } = await supabase
-        .from("student_progress")
-        .select("*")
-        .eq("student_id", user.id);
-      if (error) throw error;
+      const data = await apiQuery<any[]>("student_progress", (q) =>
+        q.select("*").eq("student_id", user.id)
+      );
       
       // Convert to a map by category_id
       const progressMap: Record<string, { completed: number; total: number; score: number }> = {};
