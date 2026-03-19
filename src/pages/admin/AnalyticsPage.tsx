@@ -61,8 +61,7 @@ export default function AnalyticsPage() {
         apiQuery<any[]>("exercise_attempts", (q) => q.select("id", { count: "exact", head: true })),
       ]);
 
-      const weekData = weekStats.data || [];
-      const weekTotals = weekData.reduce(
+      const weekTotals = (weekData || []).reduce(
         (acc, day) => ({
           pageViews: acc.pageViews + (day.page_views || 0),
           exercisesStarted: acc.exercisesStarted + (day.exercises_started || 0),
