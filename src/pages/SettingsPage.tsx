@@ -143,14 +143,7 @@ export default function SettingsPage() {
   const exportDataMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('Not authenticated');
-      const { data: sessionData } = await supabase.auth.getSession();
-      const response = await supabase.functions.invoke('export-user-data', {
-        headers: {
-          Authorization: `Bearer ${sessionData.session?.access_token}`,
-        },
-      });
-      if (response.error) throw response.error;
-      return response.data;
+      return apiInvoke('export-user-data');
     },
     onSuccess: (data) => {
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
