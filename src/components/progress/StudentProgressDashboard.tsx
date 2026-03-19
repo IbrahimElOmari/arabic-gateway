@@ -15,14 +15,12 @@
    // Fetch student progress by category
    const { data: categoryProgress, isLoading: progressLoading } = useQuery({
      queryKey: ["student-category-progress", user?.id],
-     queryFn: async () => {
-       const { data, error } = await supabase
-         .from("student_progress")
-         .select("*, category:exercise_categories(name, name_nl, name_en, name_ar)")
-         .eq("student_id", user!.id);
-       if (error) throw error;
-       return data;
-     },
+    queryFn: async () => {
+      return apiQuery<any[]>("student_progress", (q) =>
+        q.select("*, category:exercise_categories(name, name_nl, name_en, name_ar)")
+          .eq("student_id", user!.id)
+      );
+    },
      enabled: !!user,
    });
  
