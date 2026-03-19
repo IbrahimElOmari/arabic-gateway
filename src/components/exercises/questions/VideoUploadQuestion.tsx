@@ -27,6 +27,7 @@ export function VideoUploadQuestion({
   maxFileSizeMB = MAX_FILE_SIZE_MB,
 }: VideoUploadQuestionProps) {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [isRecording, setIsRecording] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);

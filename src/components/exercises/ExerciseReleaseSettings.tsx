@@ -23,6 +23,7 @@
  
  export function ExerciseReleaseSettings({ exercise }: ExerciseReleaseSettingsProps) {
    const { t } = useTranslation();
+   const { toast } = useToast();
    const queryClient = useQueryClient();
    const [isPublished, setIsPublished] = useState(exercise.is_published);
    const [releaseDate, setReleaseDate] = useState(

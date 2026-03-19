@@ -27,6 +27,7 @@ export function AudioUploadQuestion({
   maxFileSizeMB = MAX_FILE_SIZE_MB,
 }: AudioUploadQuestionProps) {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
