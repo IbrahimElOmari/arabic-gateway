@@ -37,6 +37,7 @@ interface TeacherApplication {
 export default function TeacherApprovalsPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedApplication, setSelectedApplication] = useState<TeacherApplication | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");

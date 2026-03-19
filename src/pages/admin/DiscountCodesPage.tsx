@@ -54,6 +54,7 @@ interface DiscountCode {
 export default function DiscountCodesPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingCode, setEditingCode] = useState<DiscountCode | null>(null);

@@ -56,6 +56,7 @@ interface ClassOption {
 export default function UsersPage() {
   const { t } = useTranslation();
   const { user: adminUser } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
