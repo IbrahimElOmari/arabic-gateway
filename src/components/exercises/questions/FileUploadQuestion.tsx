@@ -15,6 +15,7 @@ interface FileUploadQuestionProps {
 
 export function FileUploadQuestion({ value, onChange, attemptId, questionId }: FileUploadQuestionProps) {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);

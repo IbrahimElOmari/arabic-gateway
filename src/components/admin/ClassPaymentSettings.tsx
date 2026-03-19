@@ -46,6 +46,7 @@ interface ClassPaymentSettingsProps {
 export function ClassPaymentSettings({ classId, className, currentPrice, currency }: ClassPaymentSettingsProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showPriceDialog, setShowPriceDialog] = useState(false);
   const [showDiscountDialog, setShowDiscountDialog] = useState(false);
