@@ -42,6 +42,7 @@ interface Level {
 export default function LevelsPage() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingLevel, setEditingLevel] = useState<Level | null>(null);
