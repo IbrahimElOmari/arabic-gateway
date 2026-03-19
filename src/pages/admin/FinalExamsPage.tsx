@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, Loader2, GraduationCap, Users } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { logAdminAction } from "@/lib/admin-log";
 
 export default function FinalExamsPage() {

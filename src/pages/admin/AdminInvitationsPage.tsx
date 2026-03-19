@@ -32,7 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { UserPlus, Copy, Trash2, Loader2, Mail, CheckCircle } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/date-utils";
 
 function generateToken() {

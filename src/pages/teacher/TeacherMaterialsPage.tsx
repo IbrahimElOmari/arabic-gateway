@@ -30,7 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, Upload, Trash2, FileText, Video, File, Loader2, ExternalLink } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
 const fileTypeIcons: Record<string, React.ElementType> = {

@@ -38,7 +38,7 @@ import {
   Mic,
   Video
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface ExerciseBuilderProps {
   exerciseId: string;

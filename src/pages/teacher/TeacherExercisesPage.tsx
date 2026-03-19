@@ -33,7 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, Edit, Trash2, Eye, EyeOff, Loader2, Calendar } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/date-utils";
 import { ExerciseBuilder } from "@/components/teacher/ExerciseBuilder";
 import { ExerciseReleaseSettings } from "@/components/exercises/ExerciseReleaseSettings";
