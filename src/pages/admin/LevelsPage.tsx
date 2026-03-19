@@ -125,8 +125,7 @@ export default function LevelsPage() {
   // Delete level mutation
   const deleteLevelMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("levels").delete().eq("id", id);
-      if (error) throw error;
+      await apiMutate('levels', (q) => q.delete().eq("id", id));
     },
     onSuccess: (_data, levelId) => {
       queryClient.invalidateQueries({ queryKey: ["admin-levels"] });
