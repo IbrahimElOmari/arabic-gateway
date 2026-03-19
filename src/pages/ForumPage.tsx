@@ -29,12 +29,9 @@ export default function ForumPage() {
   const { data: rooms, isLoading } = useQuery({
     queryKey: ["forum-rooms"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("forum_rooms")
-        .select("*")
-        .order("display_order", { ascending: true });
-      if (error) throw error;
-      return data;
+      return apiQuery<any[]>("forum_rooms", (q) =>
+        q.select("*").order("display_order", { ascending: true })
+      );
     },
     enabled: !!user,
   });
