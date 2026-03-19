@@ -74,10 +74,10 @@ export default function AnalyticsPage() {
       );
 
       return {
-        today: todayStats.data,
+        today: todayData,
         week: weekTotals,
-        totalUsers: totalUsers.count || 0,
-        totalExerciseAttempts: totalExercises.count || 0,
+        totalUsers: Array.isArray(totalUsersData) ? totalUsersData.length : 0,
+        totalExerciseAttempts: Array.isArray(totalExercisesData) ? totalExercisesData.length : 0,
       };
     },
   });
