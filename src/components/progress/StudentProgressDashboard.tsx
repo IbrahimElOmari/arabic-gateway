@@ -53,14 +53,11 @@
    // Fetch user badges
    const { data: userBadges } = useQuery({
      queryKey: ["user-badges", user?.id],
-     queryFn: async () => {
-       const { data, error } = await supabase
-         .from("user_badges")
-         .select("*, badge:badges(*)")
-         .eq("user_id", user!.id);
-       if (error) throw error;
-       return data;
-     },
+    queryFn: async () => {
+      return apiQuery<any[]>("user_badges", (q) =>
+        q.select("*, badge:badges(*)").eq("user_id", user!.id)
+      );
+    },
      enabled: !!user,
    });
  
