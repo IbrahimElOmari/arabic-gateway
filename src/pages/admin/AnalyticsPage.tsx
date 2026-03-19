@@ -54,18 +54,11 @@ export default function AnalyticsPage() {
       const today = format(new Date(), "yyyy-MM-dd");
       const sevenDaysAgo = format(subDays(new Date(), 7), "yyyy-MM-dd");
 
-      const [todayStats, weekStats, totalUsers, totalExercises] = await Promise.all([
-        supabase
-          .from("analytics_daily_stats")
-          .select("*")
-          .eq("stat_date", today)
-          .maybeSingle(),
-        supabase
-          .from("analytics_daily_stats")
-          .select("*")
-          .gte("stat_date", sevenDaysAgo),
-        supabase.from("profiles").select("*", { count: "exact", head: true }),
-        supabase.from("exercise_attempts").select("*", { count: "exact", head: true }),
+      const [todayData, weekData, totalUsersData, totalExercisesData] = await Promise.all([
+        apiQuery<any>("analytics_daily_stats", (q) => q.select("*").eq("stat_date", today).maybeSingle()),
+        apiQuery<any[]>("analytics_daily_stats", (q) => q.select("*").gte("stat_date", sevenDaysAgo)),
+        apiQuery<any[]>("profiles", (q) => q.select("id", { count: "exact", head: true })),
+        apiQuery<any[]>("exercise_attempts", (q) => q.select("id", { count: "exact", head: true })),
       ]);
 
       const weekData = weekStats.data || [];
