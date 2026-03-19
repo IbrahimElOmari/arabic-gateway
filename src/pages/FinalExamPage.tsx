@@ -195,16 +195,7 @@ export default function FinalExamPage() {
         }
       }
 
-      // Update attempt
-      await supabase
-        .from("final_exam_attempts")
-        .update({
-          submitted_at: new Date().toISOString(),
-          total_score: scorePercent,
-          passed,
-          promoted_to_level_id: promotedToLevelId,
-        })
-        .eq("id", attemptId);
+      await apiMutate("final_exam_attempts", (q) => q.update({ submitted_at: new Date().toISOString(), total_score: scorePercent, passed, promoted_to_level_id: promotedToLevelId }).eq("id", attemptId));
 
       // Get next level name if promoted
       let promotedLevelName = null;
