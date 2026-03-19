@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { apiQuery, apiInvoke } from '@/lib/supabase-api';
 
 interface TwoFactorStatus {
   isEnabled: boolean;
@@ -18,10 +18,7 @@ interface SetupData {
 export function useTwoFactor() {
   const { user, role } = useAuth();
   const [status, setStatus] = useState<TwoFactorStatus>({
-    isEnabled: false,
-    isRequired: false,
-    method: null,
-    backupCodesRemaining: 0,
+    isEnabled: false, isRequired: false, method: null, backupCodesRemaining: 0,
   });
   const [loading, setLoading] = useState(true);
   const [setupData, setSetupData] = useState<SetupData | null>(null);
@@ -30,16 +27,8 @@ export function useTwoFactor() {
 
   const fetchStatus = useCallback(async () => {
     if (!user) return;
-
     try {
-      const { data, error } = await supabase
-        .from('user_two_factor')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (error) throw error;
-
+      const data = await apiQuery<any>('user_two_factor', (q) => q.select('*').eq('user_id', user.id).maybeSingle());
       setStatus({
         isEnabled: data?.is_enabled || false,
         isRequired,
@@ -53,23 +42,11 @@ export function useTwoFactor() {
     }
   }, [user, isRequired]);
 
-  useEffect(() => {
-    fetchStatus();
-  }, [fetchStatus]);
+  useEffect(() => { fetchStatus(); }, [fetchStatus]);
 
   const setup = async (): Promise<SetupData | null> => {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const response = await supabase.functions.invoke('verify-2fa', {
-        body: { action: 'setup' },
-        headers: {
-          Authorization: `Bearer ${sessionData.session?.access_token}`,
-        },
-      });
-
-      if (response.error) throw response.error;
-
-      const data = response.data as SetupData;
+      const data = await apiInvoke<SetupData>('verify-2fa', { action: 'setup' });
       setSetupData(data);
       return data;
     } catch (error) {
@@ -80,20 +57,8 @@ export function useTwoFactor() {
 
   const verify = async (code: string): Promise<boolean> => {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const response = await supabase.functions.invoke('verify-2fa', {
-        body: { action: 'verify', code },
-        headers: {
-          Authorization: `Bearer ${sessionData.session?.access_token}`,
-        },
-      });
-
-      if (response.error) throw response.error;
-
-      if (response.data.verified) {
-        await fetchStatus();
-        return true;
-      }
+      const response = await apiInvoke<{ verified: boolean }>('verify-2fa', { action: 'verify', code });
+      if (response.verified) { await fetchStatus(); return true; }
       return false;
     } catch (error) {
       console.error('Error verifying 2FA:', error);
@@ -103,21 +68,8 @@ export function useTwoFactor() {
 
   const disable = async (code: string): Promise<boolean> => {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const response = await supabase.functions.invoke('verify-2fa', {
-        body: { action: 'disable', code },
-        headers: {
-          Authorization: `Bearer ${sessionData.session?.access_token}`,
-        },
-      });
-
-      if (response.error) throw response.error;
-
-      if (response.data.disabled) {
-        await fetchStatus();
-        setSetupData(null);
-        return true;
-      }
+      const response = await apiInvoke<{ disabled: boolean }>('verify-2fa', { action: 'disable', code });
+      if (response.disabled) { await fetchStatus(); setSetupData(null); return true; }
       return false;
     } catch (error) {
       console.error('Error disabling 2FA:', error);
@@ -127,20 +79,8 @@ export function useTwoFactor() {
 
   const useBackupCode = async (backupCode: string): Promise<boolean> => {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const response = await supabase.functions.invoke('verify-2fa', {
-        body: { action: 'use_backup', backupCode },
-        headers: {
-          Authorization: `Bearer ${sessionData.session?.access_token}`,
-        },
-      });
-
-      if (response.error) throw response.error;
-
-      if (response.data.verified) {
-        await fetchStatus();
-        return true;
-      }
+      const response = await apiInvoke<{ verified: boolean }>('verify-2fa', { action: 'use_backup', backupCode });
+      if (response.verified) { await fetchStatus(); return true; }
       return false;
     } catch (error) {
       console.error('Error using backup code:', error);
@@ -148,14 +88,5 @@ export function useTwoFactor() {
     }
   };
 
-  return {
-    status,
-    loading,
-    setupData,
-    setup,
-    verify,
-    disable,
-    useBackupCode,
-    refresh: fetchStatus,
-  };
+  return { status, loading, setupData, setup, verify, disable, useBackupCode, refresh: fetchStatus };
 }

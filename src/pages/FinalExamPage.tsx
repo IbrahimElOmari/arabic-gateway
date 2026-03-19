@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useParams, useNavigate, Link } from "react-router-dom";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -47,46 +48,21 @@ export default function FinalExamPage() {
   // Fetch exam details
   const { data: exam } = useQuery({
     queryKey: ["final-exam", examId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("final_exams")
-        .select("*, level:levels(id, name, name_nl, name_en, name_ar, display_order)")
-        .eq("id", examId)
-        .single();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any>("final_exams", (q) => q.select("*, level:levels(id, name, name_nl, name_en, name_ar, display_order)").eq("id", examId).single()),
     enabled: !!examId,
   });
 
   // Fetch questions
   const { data: questions, isLoading: questionsLoading } = useQuery({
     queryKey: ["final-exam-questions", examId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("final_exam_questions")
-        .select("*")
-        .eq("final_exam_id", examId)
-        .order("display_order");
-      if (error) throw error;
-      return data as unknown as FinalExamQuestion[];
-    },
+    queryFn: () => apiQuery<FinalExamQuestion[]>("final_exam_questions", (q) => q.select("*").eq("final_exam_id", examId).order("display_order")),
     enabled: !!examId,
   });
 
   // Check existing attempts
   const { data: existingAttempts } = useQuery({
     queryKey: ["final-exam-attempts", examId, user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("final_exam_attempts")
-        .select("*")
-        .eq("final_exam_id", examId)
-        .eq("student_id", user!.id)
-        .order("attempt_number", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>("final_exam_attempts", (q) => q.select("*").eq("final_exam_id", examId).eq("student_id", user!.id).order("attempt_number", { ascending: false })),
     enabled: !!examId && !!user,
   });
 
@@ -108,22 +84,13 @@ export default function FinalExamPage() {
         return;
       }
 
-      const { data, error } = await supabase
-        .from("final_exam_attempts")
-        .insert({
-          final_exam_id: examId,
-          student_id: user.id,
-          attempt_number: currentAttemptCount + 1,
-        })
-        .select()
-        .single();
-
-      if (error) {
+      try {
+        const data = await apiMutate<any>("final_exam_attempts", (q) => q.insert({ final_exam_id: examId, student_id: user.id, attempt_number: currentAttemptCount + 1 }).select().single());
+        setAttemptId(data.id);
+      } catch (error) {
         console.error("Failed to create attempt:", error);
         return;
       }
-
-      setAttemptId(data.id);
 
       if (exam.time_limit_seconds) {
         setTimeLeft(exam.time_limit_seconds);
@@ -228,26 +195,12 @@ export default function FinalExamPage() {
         }
       }
 
-      // Update attempt
-      await supabase
-        .from("final_exam_attempts")
-        .update({
-          submitted_at: new Date().toISOString(),
-          total_score: scorePercent,
-          passed,
-          promoted_to_level_id: promotedToLevelId,
-        })
-        .eq("id", attemptId);
+      await apiMutate("final_exam_attempts", (q) => q.update({ submitted_at: new Date().toISOString(), total_score: scorePercent, passed, promoted_to_level_id: promotedToLevelId }).eq("id", attemptId));
 
       // Get next level name if promoted
       let promotedLevelName = null;
       if (promotedToLevelId) {
-        const { data: nextLevel } = await supabase
-          .from("levels")
-          .select("*")
-          .eq("id", promotedToLevelId)
-          .single();
-        if (nextLevel) {
+        const nextLevel = await apiQuery<any>("levels", (q) => q.select("*").eq("id", promotedToLevelId).single());
           promotedLevelName = getLevelName(nextLevel);
         }
       }

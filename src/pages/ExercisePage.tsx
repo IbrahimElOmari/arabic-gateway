@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useParams, useNavigate, Link } from "react-router-dom";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,30 +56,14 @@ export default function ExercisePage() {
   // Fetch exercise
   const { data: exercise } = useQuery({
     queryKey: ["exercise", exerciseId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("exercises")
-        .select("*")
-        .eq("id", exerciseId)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any>("exercises", (q) => q.select("*").eq("id", exerciseId).maybeSingle()),
     enabled: !!exerciseId,
   });
 
   // Fetch questions
   const { data: questions, isLoading: questionsLoading } = useQuery({
     queryKey: ["questions", exerciseId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("questions")
-        .select("*")
-        .eq("exercise_id", exerciseId as string)
-        .order("display_order");
-      if (error) throw error;
-      return data as unknown as Question[];
-    },
+    queryFn: () => apiQuery<Question[]>("questions", (q) => q.select("*").eq("exercise_id", exerciseId as string).order("display_order")),
     enabled: !!exerciseId,
   });
 
@@ -88,33 +72,21 @@ export default function ExercisePage() {
     const createAttempt = async () => {
       if (!user || !exerciseId || attemptId) return;
 
-      // Check existing attempts
-      const { data: existingAttempts } = await supabase
-        .from("exercise_attempts")
-        .select("attempt_number")
-        .eq("exercise_id", exerciseId)
-        .eq("student_id", user.id)
-        .order("attempt_number", { ascending: false })
-        .limit(1);
+      const existingAttempts = await apiQuery<any[]>("exercise_attempts", (q) =>
+        q.select("attempt_number").eq("exercise_id", exerciseId).eq("student_id", user.id).order("attempt_number", { ascending: false }).limit(1)
+      );
 
       const attemptNumber = (existingAttempts?.[0]?.attempt_number || 0) + 1;
 
-      const { data, error } = await supabase
-        .from("exercise_attempts")
-        .insert({
-          exercise_id: exerciseId,
-          student_id: user.id,
-          attempt_number: attemptNumber,
-        })
-        .select()
-        .single();
-
-      if (error) {
+      try {
+        const data = await apiMutate<any>("exercise_attempts", (q) =>
+          q.insert({ exercise_id: exerciseId, student_id: user.id, attempt_number: attemptNumber }).select().single()
+        );
+        setAttemptId(data.id);
+      } catch (error) {
         console.error("Failed to create attempt:", error);
         return;
       }
-
-      setAttemptId(data.id);
 
       // Set timer if time limit exists
       if (exercise?.time_limit_seconds) {
@@ -234,17 +206,11 @@ export default function ExercisePage() {
             : null,
       }));
 
-      await supabase.from("student_answers").insert(answersToInsert);
+      await apiMutate("student_answers", (q) => q.insert(answersToInsert));
 
-      // Update attempt
-      await supabase
-        .from("exercise_attempts")
-        .update({
-          submitted_at: new Date().toISOString(),
-          total_score: scorePercent,
-          passed,
-        })
-        .eq("id", attemptId);
+      await apiMutate("exercise_attempts", (q) =>
+        q.update({ submitted_at: new Date().toISOString(), total_score: scorePercent, passed }).eq("id", attemptId)
+      );
 
       setResults({ score: scorePercent, passed });
       setIsCompleted(true);
