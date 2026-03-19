@@ -39,14 +39,11 @@ export default function AnalyticsPage() {
     queryKey: ["admin-analytics-daily"],
     queryFn: async () => {
       const thirtyDaysAgo = format(subDays(new Date(), 30), "yyyy-MM-dd");
-      const { data, error } = await supabase
-        .from("analytics_daily_stats")
-        .select("*")
-        .gte("stat_date", thirtyDaysAgo)
-        .order("stat_date", { ascending: true });
-
-      if (error) throw error;
-      return data || [];
+      return apiQuery<any[]>("analytics_daily_stats", (q) =>
+        q.select("*")
+          .gte("stat_date", thirtyDaysAgo)
+          .order("stat_date", { ascending: true })
+      );
     },
   });
 
