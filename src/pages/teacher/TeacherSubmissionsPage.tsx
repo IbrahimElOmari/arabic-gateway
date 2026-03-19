@@ -88,14 +88,15 @@ export default function TeacherSubmissionsPage() {
 
   const reviewMutation = useMutation({
     mutationFn: async ({ id, score, feedback, isCorrect }: { id: string; score: number; feedback: string; isCorrect: boolean }) => {
-      const { error } = await supabase.from("student_answers").update({
-        score,
-        feedback,
-        is_correct: isCorrect,
-        reviewed_by: user!.id,
-        reviewed_at: new Date().toISOString(),
-      }).eq("id", id);
-      if (error) throw error;
+      await apiMutate("student_answers", (q) =>
+        q.update({
+          score,
+          feedback,
+          is_correct: isCorrect,
+          reviewed_by: user!.id,
+          reviewed_at: new Date().toISOString(),
+        }).eq("id", id)
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pending-submissions"] });

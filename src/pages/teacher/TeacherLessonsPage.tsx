@@ -110,8 +110,7 @@ export default function TeacherLessonsPage() {
 
   const deleteLessonMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("lessons").delete().eq("id", id);
-      if (error) throw error;
+      await apiMutate("lessons", (q) => q.delete().eq("id", id));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teacher-lessons"] });
