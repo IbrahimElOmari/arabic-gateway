@@ -126,11 +126,9 @@ export default function SettingsPage() {
         .from('avatars')
         .getPublicUrl(filePath);
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: urlData.publicUrl })
-        .eq('user_id', user.id);
-      if (updateError) throw updateError;
+      await apiMutate('profiles', (q) =>
+        q.update({ avatar_url: urlData.publicUrl }).eq('user_id', user.id)
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
