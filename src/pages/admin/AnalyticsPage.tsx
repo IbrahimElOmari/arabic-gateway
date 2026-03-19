@@ -115,12 +115,9 @@ export default function AnalyticsPage() {
     queryKey: ["admin-analytics-features"],
     queryFn: async () => {
       const sevenDaysAgo = format(subDays(new Date(), 7), "yyyy-MM-dd");
-      const { data, error } = await supabase
-        .from("feature_usage")
-        .select("*")
-        .gte("usage_date", sevenDaysAgo);
-
-      if (error) throw error;
+      const data = await apiQuery<any[]>("feature_usage", (q) =>
+        q.select("*").gte("usage_date", sevenDaysAgo)
+      );
 
       // Aggregate by feature
       const featureTotals: Record<string, number> = {};

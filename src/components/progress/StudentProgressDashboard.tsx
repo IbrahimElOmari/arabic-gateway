@@ -42,15 +42,11 @@
    // Fetch user points
    const { data: userPoints } = useQuery({
      queryKey: ["user-points", user?.id],
-     queryFn: async () => {
-       const { data, error } = await supabase
-         .from("user_points")
-         .select("*")
-         .eq("user_id", user!.id)
-         .single();
-       if (error && error.code !== "PGRST116") throw error;
-       return data;
-     },
+    queryFn: async () => {
+      return apiQuery<any>("user_points", (q) =>
+        q.select("*").eq("user_id", user!.id).single()
+      );
+    },
      enabled: !!user,
    });
  
