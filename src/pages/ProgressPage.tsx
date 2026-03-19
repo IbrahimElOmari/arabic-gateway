@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { BookOpenCheck, Download } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiQuery } from "@/lib/supabase-api";
 import { Link } from "react-router-dom";
 import config from "@/lib/app-config";
 import { isFeatureEnabled } from "@/lib/feature-flags";
