@@ -62,16 +62,7 @@ export default function FinalExamPage() {
   // Check existing attempts
   const { data: existingAttempts } = useQuery({
     queryKey: ["final-exam-attempts", examId, user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("final_exam_attempts")
-        .select("*")
-        .eq("final_exam_id", examId)
-        .eq("student_id", user!.id)
-        .order("attempt_number", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>("final_exam_attempts", (q) => q.select("*").eq("final_exam_id", examId).eq("student_id", user!.id).order("attempt_number", { ascending: false })),
     enabled: !!examId && !!user,
   });
 
