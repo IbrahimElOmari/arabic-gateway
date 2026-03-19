@@ -55,15 +55,7 @@ export default function FinalExamPage() {
   // Fetch questions
   const { data: questions, isLoading: questionsLoading } = useQuery({
     queryKey: ["final-exam-questions", examId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("final_exam_questions")
-        .select("*")
-        .eq("final_exam_id", examId)
-        .order("display_order");
-      if (error) throw error;
-      return data as unknown as FinalExamQuestion[];
-    },
+    queryFn: () => apiQuery<FinalExamQuestion[]>("final_exam_questions", (q) => q.select("*").eq("final_exam_id", examId).order("display_order")),
     enabled: !!examId,
   });
 
