@@ -63,14 +63,9 @@ export default function FinalExamsPage() {
   // Fetch final exams
   const { data: exams, isLoading } = useQuery({
     queryKey: ["final-exams"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("final_exams")
-        .select("*, level:levels(id, name, name_nl, name_en, name_ar)")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>("final_exams", (q) =>
+      q.select("*, level:levels(id, name, name_nl, name_en, name_ar)").order("created_at", { ascending: false })
+    ),
   });
 
   // Fetch attempt counts
