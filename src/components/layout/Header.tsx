@@ -18,6 +18,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Menu, User, Settings, LogOut, TrendingUp, Shield, Palette } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 export function Header() {
   const { t } = useTranslation();
