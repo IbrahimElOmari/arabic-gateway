@@ -24,6 +24,7 @@ let mockData: any[] | undefined = undefined;
 vi.mock('@tanstack/react-query', () => ({
   useQuery: () => ({ data: mockData, isLoading: mockLoading }),
   useMutation: () => ({ mutate: vi.fn(), isPending: false }),
+  useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { from: () => ({ select: () => ({ eq: () => ({ order: () => Promise.resolve({ data: [], error: null }) }) }) }) },
