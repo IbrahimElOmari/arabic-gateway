@@ -272,7 +272,7 @@ export default function PaymentsPage() {
                         </TableCell>
                         <TableCell>
                           <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${STATUS_COLORS[payment.status] || ""}`}>
-                            {t(`admin.status${payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}`, payment.status)}
+                            {String(t(`admin.status${payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}`, payment.status))}
                           </span>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
