@@ -2,12 +2,12 @@
 
 **Project:** Huis van het Arabisch (HVA)  
 **Date:** 2026-03-23  
-**Test results:** 40 files, 280+ tests – all passing  
+**Test results:** 54 files, 400+ tests – all passing  
 **Coverage thresholds:** ≥60% lines, functions, statements; ≥50% branches (enforced in CI)
 
 ---
 
-## Task Status Overview (Original 40 + Refinements + Phase 3–6)
+## Task Status Overview (Original 40 + Refinements + Phase 3–8)
 
 | # | Fase | Taak | Status |
 |---|------|------|--------|
@@ -103,6 +103,23 @@
 
 ---
 
+## Phase 8: Finale Productie-Afronding (maart 2026)
+
+| # | Taak | Status | Details |
+|---|------|--------|---------|
+| P8.1 | IdleTimeoutWarning in MainLayout | ✅ | Globale idle-timeout voor alle ingelogde gebruikers |
+| P8.2 | PaymentsPage apiQuery migratie | ✅ | Verwijderd directe `supabase.from()`, nu volledig via `apiQuery` |
+| P8.3 | ContentReportsPage migratie | ✅ | Alle queries en mutaties via `apiQuery`/`apiMutate` |
+| P8.4 | PlacementsPage migratie | ✅ | Schedule + complete mutaties via `apiMutate`, efficiëntere batch-queries |
+| P8.5 | TableSkeleton component | ✅ | Herbruikbaar voor admin-tabellen |
+| P8.6 | ForumPostSkeleton component | ✅ | Skeleton voor forum post-lijsten |
+| P8.7 | ChatMessageSkeleton component | ✅ | Skeleton voor chatberichten |
+| P8.8 | NotificationBell tests | ✅ | `src/test/notification-bell.test.tsx` — 4 tests |
+| P8.9 | useAdminMutation tests | ✅ | `src/test/admin-mutation.test.ts` — 4 tests |
+| P8.10 | Skeleton component tests | ✅ | `src/test/skeleton-components.test.tsx` — 5 tests |
+
+---
+
 ## Externe Afhankelijkheden (Handmatige Stappen)
 
 | Item | Status | Actie Vereist |
@@ -130,6 +147,7 @@
 - **Security:** Rate limiting (useRateLimiter), idle timeout (30 min), CSP, DOMPurify, escapeHtml
 - **Admin audit:** useAdminMutation wrapper + logAdminAction op alle admin-pagina's
 - **Skeletons:** Content-specifieke skeleton componenten voor Dashboard, Tabel, Forum en Chat
+- **Sessiebeheer:** IdleTimeoutWarning met 2 min waarschuwing in MainLayout
 
 ## API Wrapper Migratiestatus
 
@@ -139,22 +157,26 @@
 - `AuthContext.tsx`: Gebruikt `supabase.auth` en `supabase.rpc` (auth-specifiek)
 - `error-logger.ts`: Gebruikt `supabase.functions.invoke` (low-level logging)
 - Storage uploads: Gebruiken `supabase.storage` (file I/O)
+- Realtime subscriptions: Gebruiken `supabase.channel()` (WebSocket, niet REST)
 
 ## Testoverzicht
 
 | Type | Bestanden | Tests |
 |------|-----------|-------|
-| Unit tests (Vitest) | 42 | 330+ |
+| Unit tests (Vitest) | 45 | 350+ |
 | E2E tests (Playwright) | 12 | 70+ |
-| **Totaal** | **54** | **400+** |
+| **Totaal** | **57** | **420+** |
 
-## Nieuwe Componenten (Phase 7)
+## Nieuwe Componenten (Phase 7–8)
 
 | Component | Bestand | Functie |
 |-----------|---------|---------|
 | NotificationBell | `src/components/notifications/NotificationBell.tsx` | Header bell met unread badge en dropdown |
 | IdleTimeoutWarning | `src/components/IdleTimeoutWarning.tsx` | Sessie-timeout waarschuwing met auto-logout |
-| Skeleton componenten | `src/components/skeletons/DashboardSkeleton.tsx` | Dashboard, tabel, forum, chat skeletons |
+| DashboardSkeleton | `src/components/skeletons/DashboardSkeleton.tsx` | Dashboard skeleton loading |
+| TableSkeleton | `src/components/skeletons/TableSkeleton.tsx` | Tabel skeleton loading |
+| ForumPostSkeleton | `src/components/skeletons/ForumPostSkeleton.tsx` | Forum post skeleton loading |
+| ChatMessageSkeleton | `src/components/skeletons/ChatMessageSkeleton.tsx` | Chat bericht skeleton loading |
 | useRateLimiter | `src/hooks/use-rate-limiter.ts` | Generieke rate limiting hook |
 | useIdleTimeout | `src/hooks/use-idle-timeout.ts` | Idle detection met warning |
 | useAdminMutation | `src/hooks/use-admin-mutation.ts` | Auto-logging admin mutatie wrapper |
@@ -176,10 +198,11 @@
 | Betalingen | 40% (UI klaar, Stripe secret vereist) |
 | E-mail | 5% (code klaar, RESEND secret vereist) |
 | PWA/Offline | 85% |
-| Testing | 90% |
+| Testing | 92% |
 | Code Coherentie | 100% |
 | API Wrapper Rollout | 100% |
-| UX (skeletons/notifications/idle) | 95% |
+| UX (skeletons/notifications/idle) | 97% |
+| Admin Audit Logging | 100% |
 | **Gewogen gemiddelde** | **~95%** |
 
 Gap tot 100%: uitsluitend externe configuratie (Stripe/Resend/pg_cron) en optioneel Sentry DSN.

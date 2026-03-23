@@ -8,7 +8,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { CreditCard, Search, Download, Loader2, DollarSign, TrendingUp, AlertCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiQuery } from "@/lib/supabase-api";
-import { supabase } from "@/integrations/supabase/client";
 import { useState, useMemo, useCallback } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatDate } from "@/lib/date-utils";
@@ -36,45 +35,31 @@ export default function PaymentsPage() {
   const { data: paymentsData, isLoading } = useQuery({
     queryKey: ["admin-payments", statusFilter, methodFilter, page],
     queryFn: async () => {
-      let query = supabase
-        .from("payments")
-        .select("*", { count: "exact" })
-        .order("created_at", { ascending: false });
-
-      if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter as any);
-      }
-      if (methodFilter !== "all") {
-        query = query.eq("payment_method", methodFilter as any);
-      }
-
       const from = page * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
-      query = query.range(from, to);
 
-      const { data, error, count } = await query;
-      if (error) throw error;
+      const data = await apiQuery<any[]>("payments", (q) => {
+        let query = q.select("*").order("created_at", { ascending: false });
+        if (statusFilter !== "all") query = query.eq("status", statusFilter as any);
+        if (methodFilter !== "all") query = query.eq("payment_method", methodFilter as any);
+        return query.range(from, to);
+      });
 
-      // Fetch user profiles
       const userIds = [...new Set(data.map((p) => p.user_id))];
       let profiles: { user_id: string; full_name: string; email: string }[] = [];
       if (userIds.length > 0) {
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("user_id, full_name, email")
-          .in("user_id", userIds);
-        profiles = profileData || [];
+        profiles = await apiQuery<any[]>("profiles", (q) =>
+          q.select("user_id, full_name, email").in("user_id", userIds)
+        );
       }
 
-      const profileMap = new Map<string, { user_id: string; full_name: string; email: string }>(
-        profiles.map((p) => [p.user_id, p])
-      );
+      const profileMap = new Map(profiles.map((p) => [p.user_id, p]));
       const payments = data.map((payment) => ({
         ...payment,
         profile: profileMap.get(payment.user_id) || null,
       }));
 
-      return { payments, totalCount: count ?? 0 };
+      return { payments, totalCount: data.length };
     },
   });
 
@@ -287,7 +272,7 @@ export default function PaymentsPage() {
                         </TableCell>
                         <TableCell>
                           <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${STATUS_COLORS[payment.status] || ""}`}>
-                            {t(`admin.status${payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}`, payment.status)}
+                            {String(t(`admin.status${payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}`, payment.status))}
                           </span>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">

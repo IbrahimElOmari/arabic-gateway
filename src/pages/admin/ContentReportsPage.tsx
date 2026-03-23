@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,89 +59,43 @@ export default function ContentReportsPage() {
 
   const { data: reports, isLoading } = useQuery({
     queryKey: ["content-reports", statusFilter],
-    queryFn: async () => {
-      let query = supabase
-        .from("content_reports")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>("content_reports", (q) => {
+      let query = q.select("*").order("created_at", { ascending: false });
+      if (statusFilter !== "all") query = query.eq("status", statusFilter);
+      return query;
+    }),
   });
 
   const updateReportMutation = useMutation({
     mutationFn: async ({ id, status, notes }: { id: string; status: string; notes: string }) => {
-      const { error } = await supabase
-        .from("content_reports")
-        .update({
-          status,
-          review_notes: notes,
-          reviewed_by: user!.id,
-          reviewed_at: new Date().toISOString(),
-        })
-        .eq("id", id);
-      if (error) throw error;
+      await apiMutate("content_reports", (q) =>
+        q.update({ status, review_notes: notes, reviewed_by: user!.id, reviewed_at: new Date().toISOString() }).eq("id", id)
+      );
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["content-reports"] });
       if (user) logAdminAction(user.id, "update_report", "content_reports", variables.id, { status: variables.status });
       setSelectedReport(null);
       setReviewNotes("");
-      toast({
-        title: t("moderation.reportUpdated", "Report Updated"),
-      });
+      toast({ title: t("moderation.reportUpdated", "Report Updated") });
     },
   });
 
   const deleteContentMutation = useMutation({
     mutationFn: async (report: any) => {
-      // Delete the content based on type
-      if (report.content_type === "forum_post") {
-        const { error } = await supabase
-          .from("forum_posts")
-          .delete()
-          .eq("id", report.content_id);
-        if (error) throw error;
-      } else if (report.content_type === "forum_comment") {
-        const { error } = await supabase
-          .from("forum_comments")
-          .delete()
-          .eq("id", report.content_id);
-        if (error) throw error;
-      } else if (report.content_type === "chat_message") {
-        const { error } = await supabase
-          .from("chat_messages")
-          .delete()
-          .eq("id", report.content_id);
-        if (error) throw error;
-      }
-
-      // Update report status to resolved
-      const { error: updateError } = await supabase
-        .from("content_reports")
-        .update({
-          status: "resolved",
-          review_notes: "Content deleted by moderator",
-          reviewed_by: user!.id,
-          reviewed_at: new Date().toISOString(),
-        })
-        .eq("id", report.id);
-      if (updateError) throw updateError;
+      const tableMap: Record<string, string> = { forum_post: "forum_posts", forum_comment: "forum_comments", chat_message: "chat_messages" };
+      const table = tableMap[report.content_type];
+      if (table) await apiMutate(table, (q) => q.delete().eq("id", report.content_id));
+      await apiMutate("content_reports", (q) =>
+        q.update({ status: "resolved", review_notes: "Content deleted by moderator", reviewed_by: user!.id, reviewed_at: new Date().toISOString() }).eq("id", report.id)
+      );
     },
     onSuccess: (_, report) => {
       queryClient.invalidateQueries({ queryKey: ["content-reports"] });
       if (user) logAdminAction(user.id, "delete_reported_content", "content_reports", report.id, { content_type: report.content_type, content_id: report.content_id });
       setDeleteDialogOpen(false);
       setReportToDelete(null);
-      toast({
-        title: t("moderation.contentDeleted", "Content Deleted"),
-      });
+      toast({ title: t("moderation.contentDeleted", "Content Deleted") });
     },
   });
 
