@@ -65,14 +65,9 @@ export default function KnowledgeBaseManagementPage() {
 
   const { data: articles, isLoading } = useQuery({
     queryKey: ["admin-faq-articles"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("faq_articles")
-        .select("*, category:faq_categories(name_nl, name_en, name_ar)")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>("faq_articles", (q) =>
+      q.select("*, category:faq_categories(name_nl, name_en, name_ar)").order("created_at", { ascending: false })
+    ),
   });
 
   const createArticleMutation = useMutation({
