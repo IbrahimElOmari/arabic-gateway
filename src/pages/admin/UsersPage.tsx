@@ -99,17 +99,10 @@ export default function UsersPage() {
   const { data: classes = [] } = useQuery<ClassOption[]>({
     queryKey: ["admin-classes-for-assignment"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("classes")
-        .select("id, name, level:levels(name)")
-        .eq("is_active", true)
-        .order("name");
-      if (error) throw error;
-      return (data || []).map((c: any) => ({
-        id: c.id,
-        name: c.name,
-        level_name: c.level?.name,
-      }));
+      const data = await apiQuery<any[]>("classes", (q) =>
+        q.select("id, name, level:levels(name)").eq("is_active", true).order("name")
+      );
+      return (data || []).map((c: any) => ({ id: c.id, name: c.name, level_name: c.level?.name }));
     },
   });
 
