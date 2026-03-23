@@ -83,15 +83,9 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
   // Get exercise details
   const { data: exercise } = useQuery({
     queryKey: ["exercise", exerciseId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("exercises")
-        .select("*, class:classes(name)")
-        .eq("id", exerciseId)
-        .single();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any>("exercises", (q) =>
+      q.select("*, class:classes(name)").eq("id", exerciseId).single()
+    ),
   });
 
   // Get questions for this exercise
