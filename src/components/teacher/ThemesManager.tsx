@@ -49,14 +49,9 @@ export function ThemesManager({ onSelectTheme, selectedThemeId }: ThemesManagerP
   // Fetch themes
   const { data: themes, isLoading } = useQuery({
     queryKey: ["lesson-themes"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("lesson_themes")
-        .select("*")
-        .order("display_order", { ascending: true });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>("lesson_themes", (q) =>
+      q.select("*").order("display_order", { ascending: true })
+    ),
   });
 
   const createMutation = useMutation({
