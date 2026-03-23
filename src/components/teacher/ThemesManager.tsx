@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,25 +49,17 @@ export function ThemesManager({ onSelectTheme, selectedThemeId }: ThemesManagerP
   // Fetch themes
   const { data: themes, isLoading } = useQuery({
     queryKey: ["lesson-themes"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("lesson_themes")
-        .select("*")
-        .order("display_order", { ascending: true });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>("lesson_themes", (q) =>
+      q.select("*").order("display_order", { ascending: true })
+    ),
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const displayOrder = (themes?.length || 0) + 1;
-      const { error } = await supabase.from("lesson_themes").insert({
-        ...data,
-        display_order: displayOrder,
-        created_by: user!.id,
-      });
-      if (error) throw error;
+      await apiMutate("lesson_themes", (q) =>
+        q.insert({ ...data, display_order: displayOrder, created_by: user!.id })
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lesson-themes"] });
@@ -81,10 +73,8 @@ export function ThemesManager({ onSelectTheme, selectedThemeId }: ThemesManagerP
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
-      const { error } = await supabase.from("lesson_themes").update(data).eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: ({ id, data }: { id: string; data: typeof formData }) =>
+      apiMutate("lesson_themes", (q) => q.update(data).eq("id", id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lesson-themes"] });
       setShowDialog(false);
@@ -95,10 +85,7 @@ export function ThemesManager({ onSelectTheme, selectedThemeId }: ThemesManagerP
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("lesson_themes").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => apiMutate("lesson_themes", (q) => q.delete().eq("id", id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lesson-themes"] });
       toast({ title: t("teacher.themeDeleted", "Theme Deleted") });

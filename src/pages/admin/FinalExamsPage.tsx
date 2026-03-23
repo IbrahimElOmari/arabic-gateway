@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,37 +57,22 @@ export default function FinalExamsPage() {
   // Fetch levels
   const { data: levels } = useQuery({
     queryKey: ["levels"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("levels")
-        .select("*")
-        .order("display_order");
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>("levels", (q) => q.select("*").order("display_order")),
   });
 
   // Fetch final exams
   const { data: exams, isLoading } = useQuery({
     queryKey: ["final-exams"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("final_exams")
-        .select("*, level:levels(id, name, name_nl, name_en, name_ar)")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>("final_exams", (q) =>
+      q.select("*, level:levels(id, name, name_nl, name_en, name_ar)").order("created_at", { ascending: false })
+    ),
   });
 
   // Fetch attempt counts
   const { data: attemptCounts } = useQuery({
     queryKey: ["final-exam-attempt-counts"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("final_exam_attempts")
-        .select("final_exam_id, passed");
-      if (error) throw error;
+      const data = await apiQuery<any[]>("final_exam_attempts", (q) => q.select("final_exam_id, passed"));
       
       const counts: Record<string, { total: number; passed: number }> = {};
       data.forEach((attempt) => {
@@ -104,13 +89,8 @@ export default function FinalExamsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
-      const { error } = await supabase.from("final_exams").insert({
-        ...data,
-        created_by: user!.id,
-      });
-      if (error) throw error;
-    },
+    mutationFn: (data: typeof formData) =>
+      apiMutate("final_exams", (q) => q.insert({ ...data, created_by: user!.id })),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["final-exams"] });
       setShowDialog(false);
@@ -124,10 +104,8 @@ export default function FinalExamsPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
-      const { error } = await supabase.from("final_exams").update(data).eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: ({ id, data }: { id: string; data: typeof formData }) =>
+      apiMutate("final_exams", (q) => q.update(data).eq("id", id)),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["final-exams"] });
       setShowDialog(false);
@@ -139,10 +117,8 @@ export default function FinalExamsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("final_exams").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) =>
+      apiMutate("final_exams", (q) => q.delete().eq("id", id)),
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["final-exams"] });
       if (user) logAdminAction(user.id, "delete_exam", "final_exams", id);

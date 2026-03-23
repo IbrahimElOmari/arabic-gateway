@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import { useAuth } from "@/contexts/AuthContext";
 import { logAdminAction } from "@/lib/admin-log";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,36 +58,21 @@ export default function KnowledgeBaseManagementPage() {
 
   const { data: categories } = useQuery({
     queryKey: ["admin-faq-categories"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("faq_categories")
-        .select("*")
-        .order("display_order", { ascending: true });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>("faq_categories", (q) =>
+      q.select("*").order("display_order", { ascending: true })
+    ),
   });
 
   const { data: articles, isLoading } = useQuery({
     queryKey: ["admin-faq-articles"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("faq_articles")
-        .select("*, category:faq_categories(name_nl, name_en, name_ar)")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>("faq_articles", (q) =>
+      q.select("*, category:faq_categories(name_nl, name_en, name_ar)").order("created_at", { ascending: false })
+    ),
   });
 
   const createArticleMutation = useMutation({
-    mutationFn: async (form: typeof articleForm) => {
-      const { error } = await supabase.from("faq_articles").insert({
-        ...form,
-        created_by: user!.id,
-      });
-      if (error) throw error;
-    },
+    mutationFn: (form: typeof articleForm) =>
+      apiMutate("faq_articles", (q) => q.insert({ ...form, created_by: user!.id })),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-faq-articles"] });
       if (user) logAdminAction(user.id, "faq_article_created", "faq_articles", undefined, { title: articleForm.title_en });
@@ -108,10 +93,8 @@ export default function KnowledgeBaseManagementPage() {
   });
 
   const updateArticleMutation = useMutation({
-    mutationFn: async ({ id, form }: { id: string; form: typeof articleForm }) => {
-      const { error } = await supabase.from("faq_articles").update(form).eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: ({ id, form }: { id: string; form: typeof articleForm }) =>
+      apiMutate("faq_articles", (q) => q.update(form).eq("id", id)),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-faq-articles"] });
       if (user) logAdminAction(user.id, "faq_article_updated", "faq_articles", variables.id);
@@ -125,10 +108,7 @@ export default function KnowledgeBaseManagementPage() {
   });
 
   const deleteArticleMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("faq_articles").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => apiMutate("faq_articles", (q) => q.delete().eq("id", id)),
     onSuccess: (_data, articleId) => {
       queryClient.invalidateQueries({ queryKey: ["admin-faq-articles"] });
       if (user) logAdminAction(user.id, "faq_article_deleted", "faq_articles", articleId);
@@ -139,10 +119,8 @@ export default function KnowledgeBaseManagementPage() {
   });
 
   const togglePublishMutation = useMutation({
-    mutationFn: async ({ id, isPublished }: { id: string; isPublished: boolean }) => {
-      const { error } = await supabase.from("faq_articles").update({ is_published: isPublished }).eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: ({ id, isPublished }: { id: string; isPublished: boolean }) =>
+      apiMutate("faq_articles", (q) => q.update({ is_published: isPublished }).eq("id", id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-faq-articles"] });
     },

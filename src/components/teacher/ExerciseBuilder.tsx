@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -83,29 +83,17 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
   // Get exercise details
   const { data: exercise } = useQuery({
     queryKey: ["exercise", exerciseId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("exercises")
-        .select("*, class:classes(name)")
-        .eq("id", exerciseId)
-        .single();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any>("exercises", (q) =>
+      q.select("*, class:classes(name)").eq("id", exerciseId).single()
+    ),
   });
 
   // Get questions for this exercise
   const { data: questions, isLoading } = useQuery({
     queryKey: ["exercise-questions", exerciseId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("questions")
-        .select("*")
-        .eq("exercise_id", exerciseId)
-        .order("display_order", { ascending: true });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>("questions", (q) =>
+      q.select("*").eq("exercise_id", exerciseId).order("display_order", { ascending: true })
+    ),
   });
 
   const createQuestionMutation = useMutation({
@@ -121,7 +109,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
         correctAnswer = null;
       }
 
-      const { error } = await supabase.from("questions").insert({
+      await apiMutate("questions", (q) => q.insert({
         exercise_id: exerciseId,
         type: form.type,
         question_text: form.question_text,
@@ -131,8 +119,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
         explanation: form.explanation || null,
         display_order: displayOrder,
         time_limit_seconds: form.time_limit_seconds,
-      });
-      if (error) throw error;
+      }));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["exercise-questions", exerciseId] });
@@ -162,19 +149,15 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
         correctAnswer = null;
       }
 
-      const { error } = await supabase
-        .from("questions")
-        .update({
-          type: form.type,
-          question_text: form.question_text,
-          options: form.type === "multiple_choice" || form.type === "checkbox" ? form.options : null,
-          correct_answer: correctAnswer,
-          points: form.points,
-          explanation: form.explanation || null,
-          time_limit_seconds: form.time_limit_seconds,
-        })
-        .eq("id", id);
-      if (error) throw error;
+      await apiMutate("questions", (q) => q.update({
+        type: form.type,
+        question_text: form.question_text,
+        options: form.type === "multiple_choice" || form.type === "checkbox" ? form.options : null,
+        correct_answer: correctAnswer,
+        points: form.points,
+        explanation: form.explanation || null,
+        time_limit_seconds: form.time_limit_seconds,
+      }).eq("id", id));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["exercise-questions", exerciseId] });
@@ -188,10 +171,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
   });
 
   const deleteQuestionMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("questions").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => apiMutate("questions", (q) => q.delete().eq("id", id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["exercise-questions", exerciseId] });
       toast({
@@ -320,7 +300,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
                       <div className="flex items-center gap-2 mb-2">
                         <Icon className="h-4 w-4 text-primary" />
                         <span className="text-xs text-muted-foreground uppercase">
-                          {t(`questionTypes.${question.type}`, question.type)}
+                          {String(t(`questionTypes.${question.type}`, question.type))}
                         </span>
                         <span className="text-xs text-muted-foreground">
                           • {question.points} {t("common.points", "points")}

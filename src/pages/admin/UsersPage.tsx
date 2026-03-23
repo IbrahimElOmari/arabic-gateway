@@ -2,7 +2,7 @@ import { useState } from "react";
 import { formatDate } from "@/lib/date-utils";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import {
   Table,
   TableBody,
@@ -34,7 +34,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { logAdminAction } from "@/lib/admin-log";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiQuery, apiMutate } from "@/lib/supabase-api";
 
 type AppRole = "admin" | "teacher" | "student";
 
@@ -68,37 +67,29 @@ export default function UsersPage() {
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users", searchQuery, roleFilter],
     queryFn: async () => {
-      let query = supabase
-        .from("profiles")
-        .select("id, user_id, full_name, email, created_at")
-        .order("created_at", { ascending: false });
-
+      let profiles: any[];
       if (searchQuery) {
-        query = query.or(`full_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
+        profiles = await apiQuery<any[]>("profiles", (q) =>
+          q.select("id, user_id, full_name, email, created_at")
+            .or(`full_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
+            .order("created_at", { ascending: false })
+        );
+      } else {
+        profiles = await apiQuery<any[]>("profiles", (q) =>
+          q.select("id, user_id, full_name, email, created_at").order("created_at", { ascending: false })
+        );
       }
-
-      const { data: profiles, error } = await query;
-      if (error) throw error;
 
       const usersWithRoles = await Promise.all(
         (profiles || []).map(async (profile) => {
-          const { data: roleData } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", profile.user_id)
-            .maybeSingle();
-
-          return {
-            ...profile,
-            role: roleData?.role as AppRole | undefined,
-          };
+          const roleData = await apiQuery<any>("user_roles", (q) =>
+            q.select("role").eq("user_id", profile.user_id).maybeSingle()
+          );
+          return { ...profile, role: roleData?.role as AppRole | undefined };
         })
       );
 
-      if (roleFilter !== "all") {
-        return usersWithRoles.filter((u) => u.role === roleFilter);
-      }
-
+      if (roleFilter !== "all") return usersWithRoles.filter((u) => u.role === roleFilter);
       return usersWithRoles;
     },
   });
@@ -107,48 +98,26 @@ export default function UsersPage() {
   const { data: classes = [] } = useQuery<ClassOption[]>({
     queryKey: ["admin-classes-for-assignment"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("classes")
-        .select("id, name, level:levels(name)")
-        .eq("is_active", true)
-        .order("name");
-      if (error) throw error;
-      return (data || []).map((c: any) => ({
-        id: c.id,
-        name: c.name,
-        level_name: c.level?.name,
-      }));
+      const data = await apiQuery<any[]>("classes", (q) =>
+        q.select("id, name, level:levels(name)").eq("is_active", true).order("name")
+      );
+      return (data || []).map((c: any) => ({ id: c.id, name: c.name, level_name: c.level?.name }));
     },
   });
 
   // Update user role + optional class enrollment
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role, classId }: { userId: string; role: AppRole; classId?: string }) => {
-      // Update role
-      await supabase.from("user_roles").delete().eq("user_id", userId);
-      const { error } = await supabase
-        .from("user_roles")
-        .insert({ user_id: userId, role });
-      if (error) throw error;
+      await apiMutate("user_roles", (q) => q.delete().eq("user_id", userId));
+      await apiMutate("user_roles", (q) => q.insert({ user_id: userId, role }));
 
-      // Optionally enroll in class
       if (classId && (role === "teacher" || role === "student")) {
         if (role === "teacher") {
-          // Assign as teacher of the class
-          const { error: classError } = await supabase
-            .from("classes")
-            .update({ teacher_id: userId })
-            .eq("id", classId);
-          if (classError) throw classError;
+          await apiMutate("classes", (q) => q.update({ teacher_id: userId }).eq("id", classId));
         } else {
-          // Enroll as student
-          const { error: enrollError } = await supabase
-            .from("class_enrollments")
-            .upsert(
-              { student_id: userId, class_id: classId, status: "enrolled" },
-              { onConflict: "student_id,class_id" }
-            );
-          if (enrollError) throw enrollError;
+          await apiMutate("class_enrollments", (q) =>
+            q.upsert({ student_id: userId, class_id: classId, status: "enrolled" }, { onConflict: "student_id,class_id" })
+          );
         }
       }
     },
