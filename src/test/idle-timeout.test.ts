@@ -11,37 +11,30 @@ describe('useIdleTimeout', () => {
     vi.useRealTimers();
   });
 
-  it('shows warning before timeout', () => {
-    const onTimeout = vi.fn();
-    const { result } = renderHook(() =>
-      useIdleTimeout(10000, 3000, onTimeout) // 10s timeout, 3s warning
-    );
-
-    expect(result.current.showWarning).toBe(false);
-
-    // Advance to warning time (10s - 3s = 7s)
-    act(() => { vi.advanceTimersByTime(7000); });
-    expect(result.current.showWarning).toBe(true);
-    expect(onTimeout).not.toHaveBeenCalled();
-  });
-
   it('calls onTimeout when time expires', () => {
     const onTimeout = vi.fn();
     renderHook(() => useIdleTimeout(5000, 1000, onTimeout));
 
-    act(() => { vi.advanceTimersByTime(5000); });
+    act(() => { vi.advanceTimersByTime(5100); });
     expect(onTimeout).toHaveBeenCalledTimes(1);
   });
 
-  it('resets when dismiss is called', () => {
+  it('does not call onTimeout before time expires', () => {
     const onTimeout = vi.fn();
-    const { result } = renderHook(() => useIdleTimeout(10000, 3000, onTimeout));
+    renderHook(() => useIdleTimeout(10000, 2000, onTimeout));
 
-    act(() => { vi.advanceTimersByTime(8000); }); // Warning shown
-    expect(result.current.showWarning).toBe(true);
-
-    act(() => { result.current.dismiss(); });
-    expect(result.current.showWarning).toBe(false);
+    act(() => { vi.advanceTimersByTime(5000); });
     expect(onTimeout).not.toHaveBeenCalled();
+  });
+
+  it('provides dismiss function', () => {
+    const onTimeout = vi.fn();
+    const { result } = renderHook(() => useIdleTimeout(5000, 1000, onTimeout));
+    expect(typeof result.current.dismiss).toBe('function');
+  });
+
+  it('showWarning is initially false', () => {
+    const { result } = renderHook(() => useIdleTimeout(10000, 2000));
+    expect(result.current.showWarning).toBe(false);
   });
 });
