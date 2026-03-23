@@ -11,6 +11,7 @@ import TranslatedErrorBoundary from "@/components/TranslatedErrorBoundary";
 import { FullPageLoader } from "@/components/FullPageLoader";
 import { CookieConsent } from "@/components/CookieConsent";
 import { HelpWidget } from "@/components/HelpWidget";
+import { IdleTimeoutWarning } from "@/components/IdleTimeoutWarning";
 import { AppLayout } from "@/components/layout/AppLayout";
 
 // Import i18n
@@ -177,6 +178,7 @@ const App = () => (
                 </AppLayout>
                 <CookieConsent />
                 <HelpWidget />
+                <IdleTimeoutWarning />
               </TranslatedErrorBoundary>
             </BrowserRouter>
           </TooltipProvider>

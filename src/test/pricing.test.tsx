@@ -24,9 +24,20 @@ let mockData: any[] | undefined = undefined;
 vi.mock('@tanstack/react-query', () => ({
   useQuery: () => ({ data: mockData, isLoading: mockLoading }),
   useMutation: () => ({ mutate: vi.fn(), isPending: false }),
+  useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { from: () => ({ select: () => ({ eq: () => ({ order: () => Promise.resolve({ data: [], error: null }) }) }) }) },
+}));
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({ user: null, profile: null, role: null, roleStatus: 'ready', loading: false, signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), isAdmin: false, isTeacher: false }),
+}));
+vi.mock('@/lib/supabase-api', () => ({
+  apiQuery: vi.fn().mockResolvedValue([]),
+  apiMutate: vi.fn().mockResolvedValue({}),
+}));
+vi.mock('@/hooks/use-toast', () => ({
+  useToast: () => ({ toast: vi.fn() }),
 }));
 
 import PricingPage from '@/pages/PricingPage';

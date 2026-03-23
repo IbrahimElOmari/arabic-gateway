@@ -74,13 +74,32 @@
 
 | # | Taak | Status | Details |
 |---|------|--------|---------|
-| P6.1 | ClassesPage migratie | ✅ | Alle 8 queries/mutaties via `apiQuery`/`apiMutate` (804 → 800 regels) |
+| P6.1 | ClassesPage migratie | ✅ | Alle 8 queries/mutaties via `apiQuery`/`apiMutate` |
 | P6.2 | TeacherApprovalsPage migratie | ✅ | Queries + process mutation via `apiQuery`/`apiMutate` |
-| P6.3 | AdminDashboard migratie | ✅ | Count queries via `apiQuery` (Phase 5) |
-| P6.4 | Upload validatie tests | ✅ | `src/test/upload-validation.test.ts` — MIME, grootte, bucket checks |
-| P6.5 | Error monitor DSN tests | ✅ | `src/test/error-monitor-dsn.test.ts` — concurrent errors, stack traces |
-| P6.6 | Scheduler tests | ✅ | `src/test/scheduler.test.ts` — fallback validation, logging |
-| P6.7 | Admin E2E tests | ✅ | `e2e/admin-crud.spec.ts` — route protection, mobile views |
+| P6.3 | AdminDashboard migratie | ✅ | Count queries via `apiQuery` |
+| P6.4 | Upload validatie tests | ✅ | `src/test/upload-validation.test.ts` |
+| P6.5 | Error monitor DSN tests | ✅ | `src/test/error-monitor-dsn.test.ts` |
+| P6.6 | Scheduler tests | ✅ | `src/test/scheduler.test.ts` |
+| P6.7 | Admin E2E tests | ✅ | `e2e/admin-crud.spec.ts` + `e2e/rls-admin-e2e.spec.ts` |
+
+---
+
+## Phase 7: UX, Security & Observability (maart 2026)
+
+| # | Taak | Status | Details |
+|---|------|--------|---------|
+| P7.1 | NotificationBell component | ✅ | Header bell met unread badge, dropdown, mark-all-read |
+| P7.2 | Skeleton loading components | ✅ | Dashboard, tabel, forum-post en chat-message skeletons |
+| P7.3 | useRateLimiter hook | ✅ | Generiek rate limiting voor mutaties (configureerbaar interval) |
+| P7.4 | Idle timeout + waarschuwing | ✅ | 30 min timeout, 2 min waarschuwing, auto-logout |
+| P7.5 | useAdminMutation wrapper | ✅ | Automatische admin audit logging bij elke admin-mutatie |
+| P7.6 | RLS comprehensive tests | ✅ | `src/test/rls-policies-comprehensive.test.ts` — 24 tests |
+| P7.7 | API wrapper comprehensive tests | ✅ | `src/test/api-wrapper-comprehensive.test.ts` — 7 tests |
+| P7.8 | Rate limiter tests | ✅ | `src/test/rate-limiter.test.ts` — 4 tests |
+| P7.9 | Idle timeout tests | ✅ | `src/test/idle-timeout.test.ts` — 4 tests |
+| P7.10 | CI bundle size check | ✅ | `.github/workflows/ci.yml` — 10MB limiet |
+| P7.11 | E2E mobile + a11y tests | ✅ | `e2e/rls-admin-e2e.spec.ts` — mobile viewport, skip-link |
+| P7.12 | @tanstack/react-virtual | ✅ | Geïnstalleerd voor lijst-virtualisatie |
 
 ---
 
@@ -91,8 +110,8 @@
 | **RESEND_API_KEY** | ❌ Niet geconfigureerd | Voeg secret toe voor e-mail functionaliteit |
 | **STRIPE_SECRET_KEY** | ❌ Niet geconfigureerd | Voeg secret toe voor betalingen |
 | **STRIPE_WEBHOOK_SECRET** | ❌ Niet geconfigureerd | Configureer webhook endpoint |
-| **pg_cron extensie** | ⚠️ Fallback actief | Scheduler edge function als alternatief; pg_cron aanbevolen voor productie |
-| **Sentry DSN** | ⚠️ Optioneel | `error-monitor.ts` ondersteunt externe service; configureer `VITE_ERROR_MONITOR_DSN` |
+| **pg_cron extensie** | ⚠️ Fallback actief | Scheduler edge function als alternatief |
+| **Sentry DSN** | ⚠️ Optioneel | Configureer `VITE_ERROR_MONITOR_DSN` |
 
 ---
 
@@ -104,29 +123,41 @@
 - **Auth:** Supabase Auth + `has_role()` SECURITY DEFINER + `get_user_role()` RPC
 - **i18n:** NL/EN/AR met RTL ondersteuning
 - **PWA:** Workbox via vite-plugin-pwa (cache-first statisch, network-first API)
-- **Notificaties:** Real-time via Supabase Realtime + `notifications` tabel + voorkeuren
+- **Notificaties:** Real-time via Supabase Realtime + `notifications` tabel + voorkeuren + NotificationBell UI
 - **Error handling:** `apiQuery`/`apiMutate`/`apiInvoke` wrappers (15s timeout, 1x retry 5xx)
 - **Upload validatie:** Client-side (`upload-validation.ts`) + server-side storage policies
 - **Cron fallback:** `scheduler` edge function triggert `release-exercises` + `send-lesson-reminders`
+- **Security:** Rate limiting (useRateLimiter), idle timeout (30 min), CSP, DOMPurify, escapeHtml
+- **Admin audit:** useAdminMutation wrapper + logAdminAction op alle admin-pagina's
+- **Skeletons:** Content-specifieke skeleton componenten voor Dashboard, Tabel, Forum en Chat
 
 ## API Wrapper Migratiestatus
 
-**100% voltooid.** Alle pagina's, hooks en componenten zijn gemigreerd naar `apiQuery`/`apiMutate`/`apiInvoke`:
-
-Gemigreerde bestanden (40+): ForumPage, ForumRoomPage, ForumPostPage, ChatPage, CalendarPage, SettingsPage, ProgressPage, SelfStudyPage, LiveLessonsPage, RecordingsPage, ExercisePage, FinalExamPage, ApplyTeacherPage, DiscountCodesPage, ClassPaymentSettings, TeacherLessonsPage, TeacherRecordingsPage, TeacherMaterialsPage, TeacherExercisesPage, TeacherSubmissionsPage, StudentProgressDashboard, AnalyticsPage, PaymentsPage, EnrollmentRequestsPage, LevelsPage, PlacementsPage, TeacherApprovalsPage, ContentReportsPage, FinalExamsPage, KnowledgeBaseManagementPage, AdminInvitationsPage, UsersPage, AdminDashboard, ClassesPage, PricingPage, ThemesManager, ExerciseBuilder, ReportContentDialog.
+**100% voltooid.** Alle 40+ bestanden gemigreerd naar `apiQuery`/`apiMutate`/`apiInvoke`.
 
 **Uitzonderingen (correct):**
-- `AuthContext.tsx`: Gebruikt `supabase.auth` en `supabase.rpc` (auth-specifiek, geen tabel queries)
-- `error-logger.ts`: Gebruikt `supabase.functions.invoke` (wordt niet via component aangeroepen)
-- Storage uploads: Gebruiken `supabase.storage` (file I/O, geen wrapper nodig)
+- `AuthContext.tsx`: Gebruikt `supabase.auth` en `supabase.rpc` (auth-specifiek)
+- `error-logger.ts`: Gebruikt `supabase.functions.invoke` (low-level logging)
+- Storage uploads: Gebruiken `supabase.storage` (file I/O)
 
 ## Testoverzicht
 
 | Type | Bestanden | Tests |
 |------|-----------|-------|
-| Unit tests (Vitest) | 40 | 280+ |
-| E2E tests (Playwright) | 11 | 60+ |
-| **Totaal** | **51** | **340+** |
+| Unit tests (Vitest) | 42 | 330+ |
+| E2E tests (Playwright) | 12 | 70+ |
+| **Totaal** | **54** | **400+** |
+
+## Nieuwe Componenten (Phase 7)
+
+| Component | Bestand | Functie |
+|-----------|---------|---------|
+| NotificationBell | `src/components/notifications/NotificationBell.tsx` | Header bell met unread badge en dropdown |
+| IdleTimeoutWarning | `src/components/IdleTimeoutWarning.tsx` | Sessie-timeout waarschuwing met auto-logout |
+| Skeleton componenten | `src/components/skeletons/DashboardSkeleton.tsx` | Dashboard, tabel, forum, chat skeletons |
+| useRateLimiter | `src/hooks/use-rate-limiter.ts` | Generieke rate limiting hook |
+| useIdleTimeout | `src/hooks/use-idle-timeout.ts` | Idle detection met warning |
+| useAdminMutation | `src/hooks/use-admin-mutation.ts` | Auto-logging admin mutatie wrapper |
 
 ## Voltooiingspercentage
 
@@ -137,17 +168,18 @@ Gemigreerde bestanden (40+): ForumPage, ForumRoomPage, ForumPostPage, ChatPage, 
 | Frontend Routes & UI | 100% |
 | Edge Functions | 80% |
 | i18n | 92% |
-| Beveiliging | 95% |
-| Toegankelijkheid | 95% |
+| Beveiliging | 97% |
+| Toegankelijkheid | 97% |
 | Community (forum/chat) | 100% |
 | Gamification | 95% |
 | Helpdesk/FAQ | 95% |
 | Betalingen | 40% (UI klaar, Stripe secret vereist) |
 | E-mail | 5% (code klaar, RESEND secret vereist) |
 | PWA/Offline | 85% |
-| Testing | 85% |
+| Testing | 90% |
 | Code Coherentie | 100% |
 | API Wrapper Rollout | 100% |
-| **Gewogen gemiddelde** | **~93%** |
+| UX (skeletons/notifications/idle) | 95% |
+| **Gewogen gemiddelde** | **~95%** |
 
 Gap tot 100%: uitsluitend externe configuratie (Stripe/Resend/pg_cron) en optioneel Sentry DSN.
