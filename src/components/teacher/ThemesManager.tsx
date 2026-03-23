@@ -73,10 +73,8 @@ export function ThemesManager({ onSelectTheme, selectedThemeId }: ThemesManagerP
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
-      const { error } = await supabase.from("lesson_themes").update(data).eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: ({ id, data }: { id: string; data: typeof formData }) =>
+      apiMutate("lesson_themes", (q) => q.update(data).eq("id", id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lesson-themes"] });
       setShowDialog(false);
