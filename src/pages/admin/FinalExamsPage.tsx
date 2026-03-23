@@ -117,10 +117,8 @@ export default function FinalExamsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("final_exams").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) =>
+      apiMutate("final_exams", (q) => q.delete().eq("id", id)),
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["final-exams"] });
       if (user) logAdminAction(user.id, "delete_exam", "final_exams", id);

@@ -109,31 +109,16 @@ export default function UsersPage() {
   // Update user role + optional class enrollment
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role, classId }: { userId: string; role: AppRole; classId?: string }) => {
-      // Update role
-      await supabase.from("user_roles").delete().eq("user_id", userId);
-      const { error } = await supabase
-        .from("user_roles")
-        .insert({ user_id: userId, role });
-      if (error) throw error;
+      await apiMutate("user_roles", (q) => q.delete().eq("user_id", userId));
+      await apiMutate("user_roles", (q) => q.insert({ user_id: userId, role }));
 
-      // Optionally enroll in class
       if (classId && (role === "teacher" || role === "student")) {
         if (role === "teacher") {
-          // Assign as teacher of the class
-          const { error: classError } = await supabase
-            .from("classes")
-            .update({ teacher_id: userId })
-            .eq("id", classId);
-          if (classError) throw classError;
+          await apiMutate("classes", (q) => q.update({ teacher_id: userId }).eq("id", classId));
         } else {
-          // Enroll as student
-          const { error: enrollError } = await supabase
-            .from("class_enrollments")
-            .upsert(
-              { student_id: userId, class_id: classId, status: "enrolled" },
-              { onConflict: "student_id,class_id" }
-            );
-          if (enrollError) throw enrollError;
+          await apiMutate("class_enrollments", (q) =>
+            q.upsert({ student_id: userId, class_id: classId, status: "enrolled" }, { onConflict: "student_id,class_id" })
+          );
         }
       }
     },
