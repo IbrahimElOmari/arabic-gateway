@@ -76,128 +76,49 @@ export default function PlacementsPage() {
   const { data: placements, isLoading } = useQuery({
     queryKey: ["placement-tests"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("placement_tests")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      // Fetch profile and level info for each placement
-      const placementsWithDetails = await Promise.all(
-        (data || []).map(async (placement) => {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("full_name, email")
-            .eq("user_id", placement.user_id)
-            .maybeSingle();
-
-          let level = null;
-          if (placement.assigned_level_id) {
-            const { data: levelData } = await supabase
-              .from("levels")
-              .select("name_nl, name_en, name_ar")
-              .eq("id", placement.assigned_level_id)
-              .maybeSingle();
-            level = levelData;
-          }
-
-          return {
-            ...placement,
-            profile,
-            level,
-          } as PlacementTest;
-        })
-      );
-
-      return placementsWithDetails;
+      const data = await apiQuery<any[]>("placement_tests", (q) => q.select("*").order("created_at", { ascending: false }));
+      const userIds = [...new Set(data.map((p) => p.user_id))];
+      const profiles = userIds.length > 0 ? await apiQuery<any[]>("profiles", (q) => q.select("user_id, full_name, email").in("user_id", userIds)) : [];
+      const profileMap = new Map(profiles.map((p) => [p.user_id, p]));
+      const levelIds = [...new Set(data.filter((p) => p.assigned_level_id).map((p) => p.assigned_level_id))];
+      const levelsData = levelIds.length > 0 ? await apiQuery<any[]>("levels", (q) => q.select("id, name_nl, name_en, name_ar").in("id", levelIds)) : [];
+      const levelMap = new Map(levelsData.map((l) => [l.id, l]));
+      return data.map((p) => ({ ...p, profile: profileMap.get(p.user_id) || null, level: p.assigned_level_id ? levelMap.get(p.assigned_level_id) || null : null })) as PlacementTest[];
     },
   });
 
-  // Fetch levels
   const { data: levels } = useQuery({
     queryKey: ["levels"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("levels")
-        .select("id, name_nl, name_en, name_ar")
-        .order("display_order");
-      
-      if (error) throw error;
-      return data as Level[];
-    },
+    queryFn: () => apiQuery<Level[]>("levels", (q) => q.select("id, name_nl, name_en, name_ar").order("display_order")),
   });
 
-  // Schedule mutation
   const scheduleMutation = useMutation({
     mutationFn: async ({ userId, scheduledAt, meetLink }: { userId: string; scheduledAt: string; meetLink: string }) => {
-      const { error } = await supabase
-        .from("placement_tests")
-        .update({
-          scheduled_at: scheduledAt,
-          meet_link: meetLink,
-          status: "scheduled" as const,
-        })
-        .eq("user_id", userId)
-        .eq("status", "pending" as const);
-
-      if (error) throw error;
+      await apiMutate("placement_tests", (q) => q.update({ scheduled_at: scheduledAt, meet_link: meetLink, status: "scheduled" as const }).eq("user_id", userId).eq("status", "pending" as const));
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["placement-tests"] });
       if (user) logAdminAction(user.id, "schedule_placement", "placement_tests", undefined, { user_id: variables.userId });
-      toast({
-        title: t("admin.placementScheduled", "Placement Test Scheduled"),
-        description: t("admin.placementScheduledDescription", "The student has been notified."),
-      });
+      toast({ title: t("admin.placementScheduled", "Placement Test Scheduled"), description: t("admin.placementScheduledDescription", "The student has been notified.") });
       closeDialog();
     },
     onError: () => {
-      toast({
-        variant: "destructive",
-        title: t("common.error", "Error"),
-        description: t("admin.schedulePlacementError", "Failed to schedule placement test."),
-      });
+      toast({ variant: "destructive", title: t("common.error", "Error"), description: t("admin.schedulePlacementError", "Failed to schedule placement test.") });
     },
   });
 
-  // Complete mutation
   const completeMutation = useMutation({
-    mutationFn: async ({ 
-      placementId, 
-      levelId, 
-      notes 
-    }: { 
-      placementId: string; 
-      levelId: string; 
-      notes: string;
-    }) => {
-      const { error } = await supabase
-        .from("placement_tests")
-        .update({
-          status: "completed" as const,
-          assigned_level_id: levelId,
-          assessment_notes: notes || null,
-        })
-        .eq("id", placementId);
-
-      if (error) throw error;
+    mutationFn: async ({ placementId, levelId, notes }: { placementId: string; levelId: string; notes: string }) => {
+      await apiMutate("placement_tests", (q) => q.update({ status: "completed" as const, assigned_level_id: levelId, assessment_notes: notes || null }).eq("id", placementId));
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["placement-tests"] });
       if (user) logAdminAction(user.id, "complete_placement", "placement_tests", variables.placementId, { level_id: variables.levelId });
-      toast({
-        title: t("admin.placementCompleted", "Placement Test Completed"),
-        description: t("admin.placementCompletedDescription", "Level has been assigned."),
-      });
+      toast({ title: t("admin.placementCompleted", "Placement Test Completed"), description: t("admin.placementCompletedDescription", "Level has been assigned.") });
       closeDialog();
     },
     onError: () => {
-      toast({
-        variant: "destructive",
-        title: t("common.error", "Error"),
-        description: t("admin.completePlacementError", "Failed to complete placement test."),
-      });
+      toast({ variant: "destructive", title: t("common.error", "Error"), description: t("admin.completePlacementError", "Failed to complete placement test.") });
     },
   });
 
