@@ -72,10 +72,7 @@ export default function FinalExamsPage() {
   const { data: attemptCounts } = useQuery({
     queryKey: ["final-exam-attempt-counts"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("final_exam_attempts")
-        .select("final_exam_id, passed");
-      if (error) throw error;
+      const data = await apiQuery<any[]>("final_exam_attempts", (q) => q.select("final_exam_id, passed"));
       
       const counts: Record<string, { total: number; passed: number }> = {};
       data.forEach((attempt) => {
