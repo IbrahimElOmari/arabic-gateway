@@ -34,7 +34,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { logAdminAction } from "@/lib/admin-log";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiQuery, apiMutate } from "@/lib/supabase-api";
 
 type AppRole = "admin" | "teacher" | "student";
 
