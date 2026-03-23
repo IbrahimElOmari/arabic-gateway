@@ -3,9 +3,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { NavLink } from '@/components/NavLink';
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { apiQuery } from '@/lib/supabase-api';
 import {
   Home,
   LayoutDashboard,
@@ -49,11 +52,25 @@ interface NavItem {
   icon: React.ElementType;
   label: string;
   end?: boolean;
+  badge?: number;
 }
 
 export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSidebarProps) {
   const { t } = useTranslation();
   const { user, role, roleStatus } = useAuth();
+
+  // Fetch pending enrollment count for admin badge
+  const { data: pendingEnrollmentCount } = useQuery({
+    queryKey: ['pending-enrollment-count'],
+    queryFn: async () => {
+      const data = await apiQuery<any[]>('class_enrollments', (q) =>
+        q.select('id').eq('status', 'pending')
+      );
+      return data?.length || 0;
+    },
+    enabled: !!user && role === 'admin',
+    refetchInterval: 30000, // refresh every 30s
+  });
 
   const publicItems: NavItem[] = [
     { to: '/', icon: Home, label: t('nav.home'), end: true },
@@ -101,7 +118,7 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
     { to: '/admin/users', icon: Users, label: t('admin.users', 'Users') },
     { to: '/admin/teachers', icon: UserCheck, label: t('admin.teacherApprovals', 'Teacher Approvals') },
     { to: '/admin/classes', icon: School, label: t('admin.classes', 'Classes') },
-    { to: '/admin/enrollments', icon: UserPlus, label: t('admin.enrollmentRequests', 'Inschrijvingsaanvragen') },
+    { to: '/admin/enrollments', icon: UserPlus, label: t('admin.enrollmentRequests', 'Inschrijvingsaanvragen'), badge: pendingEnrollmentCount || 0 },
     { to: '/admin/levels', icon: Layers, label: t('admin.levels', 'Levels') },
     { to: '/admin/placements', icon: ClipboardList, label: t('admin.placements', 'Placements') },
     { to: '/admin/payments', icon: CreditCard, label: t('admin.payments', 'Payments') },
@@ -132,14 +149,24 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
           to={item.to}
           end={item.end}
           className={cn(
-            'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
+            'relative flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
             collapsed && 'justify-center px-2'
           )}
           activeClassName="bg-primary/10 text-primary font-medium"
           onClick={handleNavClick}
         >
           <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-          {!collapsed && <span className="truncate">{item.label}</span>}
+          {!collapsed && (
+            <span className="truncate flex-1">{item.label}</span>
+          )}
+          {!collapsed && item.badge !== undefined && item.badge > 0 && (
+            <Badge variant="destructive" className="ml-auto text-xs h-5 min-w-5 flex items-center justify-center rounded-full px-1.5">
+              {item.badge}
+            </Badge>
+          )}
+          {collapsed && item.badge !== undefined && item.badge > 0 && (
+            <span className="absolute top-0 right-0 h-2 w-2 bg-destructive rounded-full" />
+          )}
           {collapsed && <span className="sr-only">{item.label}</span>}
         </NavLink>
       ))}
