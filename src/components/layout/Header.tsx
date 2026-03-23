@@ -181,6 +181,8 @@ export function Header() {
           <LanguageSwitcher />
           <ThemeSwitcher />
 
+          {user && <NotificationBell />}
+
           {user ? (
             <div className="flex items-center gap-2">
               {/* Role badge - always visible */}
