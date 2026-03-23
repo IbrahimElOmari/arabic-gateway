@@ -11,47 +11,34 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiQuery } from "@/lib/supabase-api";
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
 
-  // Fetch dashboard stats
   const { data: stats } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
-      const [
-        { count: totalUsers },
-        { count: totalClasses },
-        { count: activeEnrollments },
-        { count: pendingTeachers },
-      ] = await Promise.all([
-        supabase.from("profiles").select("*", { count: "exact", head: true }),
-        supabase.from("classes").select("*", { count: "exact", head: true }),
-        supabase.from("class_enrollments").select("*", { count: "exact", head: true }).eq("status", "enrolled"),
-        supabase.from("teacher_applications").select("*", { count: "exact", head: true }).eq("status", "pending"),
+      const [profiles, classes, enrollments, applications] = await Promise.all([
+        apiQuery<any[]>("profiles", (q) => q.select("id").limit(1000)),
+        apiQuery<any[]>("classes", (q) => q.select("id")),
+        apiQuery<any[]>("class_enrollments", (q) => q.select("id").eq("status", "enrolled")),
+        apiQuery<any[]>("teacher_applications", (q) => q.select("id").eq("status", "pending")),
       ]);
-
       return {
-        totalUsers: totalUsers || 0,
-        totalClasses: totalClasses || 0,
-        activeEnrollments: activeEnrollments || 0,
-        pendingTeachers: pendingTeachers || 0,
+        totalUsers: profiles?.length || 0,
+        totalClasses: classes?.length || 0,
+        activeEnrollments: enrollments?.length || 0,
+        pendingTeachers: applications?.length || 0,
       };
     },
   });
 
-  // Fetch recent activity
   const { data: recentActivity } = useQuery({
     queryKey: ["admin-recent-activity"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("admin_activity_log")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(5);
-      return data || [];
-    },
+    queryFn: () => apiQuery<any[]>("admin_activity_log", (q) =>
+      q.select("*").order("created_at", { ascending: false }).limit(5)
+    ),
   });
 
   return (
