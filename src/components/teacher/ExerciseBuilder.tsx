@@ -109,7 +109,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
         correctAnswer = null;
       }
 
-      const { error } = await supabase.from("questions").insert({
+      await apiMutate("questions", (q) => q.insert({
         exercise_id: exerciseId,
         type: form.type,
         question_text: form.question_text,
@@ -119,8 +119,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
         explanation: form.explanation || null,
         display_order: displayOrder,
         time_limit_seconds: form.time_limit_seconds,
-      });
-      if (error) throw error;
+      }));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["exercise-questions", exerciseId] });
