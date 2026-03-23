@@ -91,15 +91,9 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
   // Get questions for this exercise
   const { data: questions, isLoading } = useQuery({
     queryKey: ["exercise-questions", exerciseId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("questions")
-        .select("*")
-        .eq("exercise_id", exerciseId)
-        .order("display_order", { ascending: true });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>("questions", (q) =>
+      q.select("*").eq("exercise_id", exerciseId).order("display_order", { ascending: true })
+    ),
   });
 
   const createQuestionMutation = useMutation({
