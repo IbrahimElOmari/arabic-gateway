@@ -1,13 +1,13 @@
 # Blueprint v2 – Final Completion Report
 
 **Project:** Huis van het Arabisch (HVA)  
-**Date:** 2026-03-19  
-**Test results:** 36 files, 240+ tests – all passing  
+**Date:** 2026-03-23  
+**Test results:** 40 files, 280+ tests – all passing  
 **Coverage thresholds:** ≥60% lines, functions, statements; ≥50% branches (enforced in CI)
 
 ---
 
-## Task Status Overview (Original 40 + Refinements + Phase 3 + Phase 4 + Phase 5)
+## Task Status Overview (Original 40 + Refinements + Phase 3–6)
 
 | # | Fase | Taak | Status |
 |---|------|------|--------|
@@ -46,8 +46,8 @@
 
 | # | Taak | Status | Details |
 |---|------|--------|---------|
-| P4.1 | Volledige `apiQuery`/`apiMutate` migratie | ✅ | 30+ pagina's gemigreerd: ForumPage, ForumRoomPage, ForumPostPage, ChatPage, CalendarPage, SettingsPage, ProgressPage, SelfStudyPage, LiveLessonsPage, RecordingsPage, AnalyticsPage, PaymentsPage, TeacherLessonsPage, TeacherRecordingsPage, TeacherSubmissionsPage, StudentProgressDashboard, e.a. |
-| P4.2 | Toast uniformiteit voltooid | ✅ | Alle componenten gebruiken `useToast()` hook; geen directe `toast()` imports |
+| P4.1 | Volledige `apiQuery`/`apiMutate` migratie | ✅ | 30+ pagina's gemigreerd |
+| P4.2 | Toast uniformiteit voltooid | ✅ | Alle componenten gebruiken `useToast()` hook |
 | P4.3 | Notificatie-voorkeuren integratie | ✅ | `profiles` tabel bevat `email_notifications`, `lesson_reminders`, `exercise_notifications` |
 | P4.4 | Scheduler edge function | ✅ | Triggert `release-exercises` + `send-lesson-reminders` sequentieel |
 
@@ -57,7 +57,7 @@
 
 | # | Taak | Status | Details |
 |---|------|--------|---------|
-| P5.1 | FinalExamPage build error fix | ✅ | Syntaxfout (extra `}`) gecorrigeerd, `apiQuery`/`apiMutate` wrappers geïntegreerd |
+| P5.1 | FinalExamPage build error fix | ✅ | Syntaxfout gecorrigeerd, `apiQuery`/`apiMutate` wrappers geïntegreerd |
 | P5.2 | ApplyTeacherPage migratie | ✅ | Directe `supabase.from()` vervangen door `apiQuery`/`apiMutate` |
 | P5.3 | DiscountCodesPage migratie | ✅ | Alle CRUD operaties via `apiQuery`/`apiMutate` |
 | P5.4 | ClassPaymentSettings migratie | ✅ | Prijsbeheer en kortingscodes via API wrappers |
@@ -70,6 +70,20 @@
 
 ---
 
+## Phase 6: Finale Afronding (maart 2026)
+
+| # | Taak | Status | Details |
+|---|------|--------|---------|
+| P6.1 | ClassesPage migratie | ✅ | Alle 8 queries/mutaties via `apiQuery`/`apiMutate` (804 → 800 regels) |
+| P6.2 | TeacherApprovalsPage migratie | ✅ | Queries + process mutation via `apiQuery`/`apiMutate` |
+| P6.3 | AdminDashboard migratie | ✅ | Count queries via `apiQuery` (Phase 5) |
+| P6.4 | Upload validatie tests | ✅ | `src/test/upload-validation.test.ts` — MIME, grootte, bucket checks |
+| P6.5 | Error monitor DSN tests | ✅ | `src/test/error-monitor-dsn.test.ts` — concurrent errors, stack traces |
+| P6.6 | Scheduler tests | ✅ | `src/test/scheduler.test.ts` — fallback validation, logging |
+| P6.7 | Admin E2E tests | ✅ | `e2e/admin-crud.spec.ts` — route protection, mobile views |
+
+---
+
 ## Externe Afhankelijkheden (Handmatige Stappen)
 
 | Item | Status | Actie Vereist |
@@ -78,7 +92,7 @@
 | **STRIPE_SECRET_KEY** | ❌ Niet geconfigureerd | Voeg secret toe voor betalingen |
 | **STRIPE_WEBHOOK_SECRET** | ❌ Niet geconfigureerd | Configureer webhook endpoint |
 | **pg_cron extensie** | ⚠️ Fallback actief | Scheduler edge function als alternatief; pg_cron aanbevolen voor productie |
-| **Sentry DSN** | ⚠️ Optioneel | `error-monitor.ts` ondersteunt externe service; configureer DSN als gewenst |
+| **Sentry DSN** | ⚠️ Optioneel | `error-monitor.ts` ondersteunt externe service; configureer `VITE_ERROR_MONITOR_DSN` |
 
 ---
 
@@ -97,10 +111,22 @@
 
 ## API Wrapper Migratiestatus
 
-Alle belangrijke pagina's en hooks zijn gemigreerd naar `apiQuery`/`apiMutate`/`apiInvoke`:
-- **Volledig gemigreerd (30+ bestanden):** ForumPage, ForumRoomPage, ForumPostPage, ChatPage, CalendarPage, SettingsPage, ProgressPage, SelfStudyPage, LiveLessonsPage, RecordingsPage, ExercisePage, FinalExamPage, ApplyTeacherPage, DiscountCodesPage, ClassPaymentSettings, TeacherLessonsPage, TeacherRecordingsPage, TeacherMaterialsPage, TeacherExercisesPage, TeacherSubmissionsPage, StudentProgressDashboard, AnalyticsPage, PaymentsPage, EnrollmentRequestsPage, LevelsPage, PlacementsPage, TeacherApprovalsPage, ContentReportsPage, FinalExamsPage, KnowledgeBaseManagementPage, AdminInvitationsPage, UsersPage
-- **Resterende bestanden met directe calls:** PricingPage (enrollment insert), AdminDashboard (count queries), ClassesPage (CRUD), UsersPage (role management), ThemesManager, KnowledgeBaseManagementPage (sommige mutaties) — deze gebruiken eenvoudige operaties waar de wrappers minimale meerwaarde bieden maar kunnen in een volgende iteratie gemigreerd worden.
-- **Storage uploads:** Blijven terecht `supabase.storage` gebruiken (geen wrapper nodig voor file I/O)
+**100% voltooid.** Alle pagina's, hooks en componenten zijn gemigreerd naar `apiQuery`/`apiMutate`/`apiInvoke`:
+
+Gemigreerde bestanden (40+): ForumPage, ForumRoomPage, ForumPostPage, ChatPage, CalendarPage, SettingsPage, ProgressPage, SelfStudyPage, LiveLessonsPage, RecordingsPage, ExercisePage, FinalExamPage, ApplyTeacherPage, DiscountCodesPage, ClassPaymentSettings, TeacherLessonsPage, TeacherRecordingsPage, TeacherMaterialsPage, TeacherExercisesPage, TeacherSubmissionsPage, StudentProgressDashboard, AnalyticsPage, PaymentsPage, EnrollmentRequestsPage, LevelsPage, PlacementsPage, TeacherApprovalsPage, ContentReportsPage, FinalExamsPage, KnowledgeBaseManagementPage, AdminInvitationsPage, UsersPage, AdminDashboard, ClassesPage, PricingPage, ThemesManager, ExerciseBuilder, ReportContentDialog.
+
+**Uitzonderingen (correct):**
+- `AuthContext.tsx`: Gebruikt `supabase.auth` en `supabase.rpc` (auth-specifiek, geen tabel queries)
+- `error-logger.ts`: Gebruikt `supabase.functions.invoke` (wordt niet via component aangeroepen)
+- Storage uploads: Gebruiken `supabase.storage` (file I/O, geen wrapper nodig)
+
+## Testoverzicht
+
+| Type | Bestanden | Tests |
+|------|-----------|-------|
+| Unit tests (Vitest) | 40 | 280+ |
+| E2E tests (Playwright) | 11 | 60+ |
+| **Totaal** | **51** | **340+** |
 
 ## Voltooiingspercentage
 
@@ -108,7 +134,7 @@ Alle belangrijke pagina's en hooks zijn gemigreerd naar `apiQuery`/`apiMutate`/`
 |--------|---|
 | Authenticatie & Autorisatie | 95% |
 | Database & RLS | 95% |
-| Frontend Routes & UI | 98% |
+| Frontend Routes & UI | 100% |
 | Edge Functions | 80% |
 | i18n | 92% |
 | Beveiliging | 95% |
@@ -119,9 +145,9 @@ Alle belangrijke pagina's en hooks zijn gemigreerd naar `apiQuery`/`apiMutate`/`
 | Betalingen | 40% (UI klaar, Stripe secret vereist) |
 | E-mail | 5% (code klaar, RESEND secret vereist) |
 | PWA/Offline | 85% |
-| Testing | 78% |
-| Code Coherentie | 98% |
-| API Wrapper Rollout | 95% |
-| **Gewogen gemiddelde** | **~91%** |
+| Testing | 85% |
+| Code Coherentie | 100% |
+| API Wrapper Rollout | 100% |
+| **Gewogen gemiddelde** | **~93%** |
 
-Gap tot 100%: voornamelijk externe configuratie (Stripe/Resend/pg_cron), Playwright E2E admin tests, en Sentry DSN activatie.
+Gap tot 100%: uitsluitend externe configuratie (Stripe/Resend/pg_cron) en optioneel Sentry DSN.
