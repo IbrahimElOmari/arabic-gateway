@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { logAdminAction } from "@/lib/admin-log";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import {
   Table,
   TableBody,
@@ -87,38 +87,33 @@ export default function ClassesPage() {
   const { data: classes, isLoading } = useQuery({
     queryKey: ["admin-classes", searchQuery],
     queryFn: async () => {
-      let query = supabase
-        .from("classes")
-        .select("*, level:levels(name)")
-        .order("created_at", { ascending: false });
-
-      if (searchQuery) {
-        query = query.ilike("name", `%${searchQuery}%`);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
+      const data = await apiQuery<any[]>("classes", (q) => {
+        let query = q.select("*, level:levels(name)").order("created_at", { ascending: false });
+        if (searchQuery) {
+          query = query.ilike("name", `%${searchQuery}%`);
+        }
+        return query;
+      });
 
       // Get enrollment counts and teacher names
       const classesWithDetails = await Promise.all(
-        (data || []).map(async (cls) => {
-          const { count } = await supabase
-            .from("class_enrollments")
-            .select("*", { count: "exact", head: true })
-            .eq("class_id", cls.id)
-            .eq("status", "enrolled");
+        (data || []).map(async (cls: any) => {
+          const enrollments = await apiQuery<any[]>("class_enrollments", (q) =>
+            q.select("id", { count: "exact", head: true }).eq("class_id", cls.id).eq("status", "enrolled")
+          );
 
           let teacher = null;
           if (cls.teacher_id) {
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("full_name")
-              .eq("user_id", cls.teacher_id)
-              .single();
-            teacher = profile;
+            try {
+              teacher = await apiQuery<{ full_name: string }>("profiles", (q) =>
+                q.select("full_name").eq("user_id", cls.teacher_id).single()
+              );
+            } catch {
+              // teacher profile not found
+            }
           }
 
-          return { ...cls, enrollment_count: count || 0, teacher };
+          return { ...cls, enrollment_count: Array.isArray(enrollments) ? enrollments.length : 0, teacher };
         })
       );
 
@@ -129,35 +124,22 @@ export default function ClassesPage() {
   // Fetch levels for dropdown
   const { data: levels } = useQuery({
     queryKey: ["levels"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("levels")
-        .select("*")
-        .order("display_order");
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>("levels", (q) => q.select("*").order("display_order")),
   });
 
   // Fetch approved teachers
   const { data: teachers } = useQuery({
     queryKey: ["approved-teachers"],
     queryFn: async () => {
-      const { data: teacherRoles, error } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "teacher");
-      if (error) throw error;
-
+      const teacherRoles = await apiQuery<{ user_id: string }[]>("user_roles", (q) =>
+        q.select("user_id").eq("role", "teacher")
+      );
       if (!teacherRoles || teacherRoles.length === 0) return [];
 
       const userIds = teacherRoles.map((r) => r.user_id);
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, email")
-        .in("user_id", userIds);
-
-      return profiles || [];
+      return apiQuery<{ user_id: string; full_name: string; email: string }[]>("profiles", (q) =>
+        q.select("user_id, full_name, email").in("user_id", userIds)
+      );
     },
   });
 
@@ -165,21 +147,15 @@ export default function ClassesPage() {
   const { data: allStudents } = useQuery({
     queryKey: ["all-students"],
     queryFn: async () => {
-      const { data: studentRoles, error } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "student");
-      if (error) throw error;
-
+      const studentRoles = await apiQuery<{ user_id: string }[]>("user_roles", (q) =>
+        q.select("user_id").eq("role", "student")
+      );
       if (!studentRoles || studentRoles.length === 0) return [];
 
       const userIds = studentRoles.map((r) => r.user_id);
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, email")
-        .in("user_id", userIds);
-
-      return profiles || [];
+      return apiQuery<{ user_id: string; full_name: string; email: string }[]>("profiles", (q) =>
+        q.select("user_id, full_name, email").in("user_id", userIds)
+      );
     },
   });
 
@@ -188,12 +164,9 @@ export default function ClassesPage() {
     queryKey: ["class-enrollments", assignDialogClass?.id],
     queryFn: async () => {
       if (!assignDialogClass) return [];
-      const { data, error } = await supabase
-        .from("class_enrollments")
-        .select("student_id")
-        .eq("class_id", assignDialogClass.id)
-        .eq("status", "enrolled");
-      if (error) throw error;
+      const data = await apiQuery<{ student_id: string }[]>("class_enrollments", (q) =>
+        q.select("student_id").eq("class_id", assignDialogClass.id).eq("status", "enrolled")
+      );
       return data?.map((e) => e.student_id) || [];
     },
     enabled: !!assignDialogClass,
@@ -202,18 +175,19 @@ export default function ClassesPage() {
   // Create class mutation
   const createClassMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const { error } = await supabase.from("classes").insert({
-        name: data.name,
-        description: data.description || null,
-        level_id: data.level_id,
-        teacher_id: data.teacher_id && data.teacher_id !== 'none' ? data.teacher_id : null,
-        max_students: data.max_students,
-        price: data.price ? parseFloat(data.price) : null,
-        currency: data.currency,
-        start_date: data.start_date || null,
-        end_date: data.end_date || null,
-      });
-      if (error) throw error;
+      await apiMutate("classes", (q) =>
+        q.insert({
+          name: data.name,
+          description: data.description || null,
+          level_id: data.level_id,
+          teacher_id: data.teacher_id && data.teacher_id !== 'none' ? data.teacher_id : null,
+          max_students: data.max_students,
+          price: data.price ? parseFloat(data.price) : null,
+          currency: data.currency,
+          start_date: data.start_date || null,
+          end_date: data.end_date || null,
+        })
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-classes"] });
@@ -237,9 +211,8 @@ export default function ClassesPage() {
   // Update class mutation
   const updateClassMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
-      const { error } = await supabase
-        .from("classes")
-        .update({
+      await apiMutate("classes", (q) =>
+        q.update({
           name: data.name,
           description: data.description || null,
           level_id: data.level_id,
@@ -249,9 +222,8 @@ export default function ClassesPage() {
           currency: data.currency,
           start_date: data.start_date || null,
           end_date: data.end_date || null,
-        })
-        .eq("id", id);
-      if (error) throw error;
+        }).eq("id", id)
+      );
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-classes"] });
@@ -275,8 +247,7 @@ export default function ClassesPage() {
   // Delete class mutation
   const deleteClassMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("classes").delete().eq("id", id);
-      if (error) throw error;
+      await apiMutate("classes", (q) => q.delete().eq("id", id));
     },
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["admin-classes"] });
@@ -297,11 +268,9 @@ export default function ClassesPage() {
   // Assign teacher mutation
   const assignTeacherMutation = useMutation({
     mutationFn: async ({ classId, teacherId }: { classId: string; teacherId: string | null }) => {
-      const { error } = await supabase
-        .from("classes")
-        .update({ teacher_id: teacherId })
-        .eq("id", classId);
-      if (error) throw error;
+      await apiMutate("classes", (q) =>
+        q.update({ teacher_id: teacherId }).eq("id", classId)
+      );
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-classes"] });
@@ -314,19 +283,13 @@ export default function ClassesPage() {
   const enrollStudentMutation = useMutation({
     mutationFn: async ({ classId, studentId, enroll }: { classId: string; studentId: string; enroll: boolean }) => {
       if (enroll) {
-        const { error } = await supabase.from("class_enrollments").insert({
-          class_id: classId,
-          student_id: studentId,
-          status: "enrolled",
-        });
-        if (error) throw error;
+        await apiMutate("class_enrollments", (q) =>
+          q.insert({ class_id: classId, student_id: studentId, status: "enrolled" })
+        );
       } else {
-        const { error } = await supabase
-          .from("class_enrollments")
-          .delete()
-          .eq("class_id", classId)
-          .eq("student_id", studentId);
-        if (error) throw error;
+        await apiMutate("class_enrollments", (q) =>
+          q.delete().eq("class_id", classId).eq("student_id", studentId)
+        );
       }
     },
     onSuccess: (_, variables) => {

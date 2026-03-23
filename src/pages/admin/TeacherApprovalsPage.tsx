@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { formatDate } from "@/lib/date-utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,26 +47,20 @@ export default function TeacherApprovalsPage() {
   const { data: applications, isLoading } = useQuery({
     queryKey: ["teacher-applications"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("teacher_applications")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const data = await apiQuery<any[]>("teacher_applications", (q) =>
+        q.select("*").order("created_at", { ascending: false })
+      );
 
-      if (error) throw error;
-
-      // Fetch profile info for each application
       const applicationsWithProfiles = await Promise.all(
-        (data || []).map(async (app) => {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("full_name, email")
-            .eq("user_id", app.user_id)
-            .maybeSingle();
+        (data || []).map(async (app: any) => {
+          let profile = null;
+          try {
+            profile = await apiQuery<{ full_name: string; email: string }>("profiles", (q) =>
+              q.select("full_name, email").eq("user_id", app.user_id).maybeSingle()
+            );
+          } catch { /* profile not found */ }
 
-          return {
-            ...app,
-            profile,
-          } as TeacherApplication;
+          return { ...app, profile } as TeacherApplication;
         })
       );
 
@@ -88,29 +82,19 @@ export default function TeacherApprovalsPage() {
       notes: string;
     }) => {
       // Update application status
-      const { error: updateError } = await supabase
-        .from("teacher_applications")
-        .update({
+      await apiMutate("teacher_applications", (q) =>
+        q.update({
           status,
           review_notes: notes,
           reviewed_by: user?.id,
           reviewed_at: new Date().toISOString(),
-        })
-        .eq("id", applicationId);
-
-      if (updateError) throw updateError;
+        }).eq("id", applicationId)
+      );
 
       // If approved, update user role to teacher
       if (status === "approved") {
-        // Delete existing role
-        await supabase.from("user_roles").delete().eq("user_id", userId);
-
-        // Insert teacher role
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .insert({ user_id: userId, role: "teacher" });
-
-        if (roleError) throw roleError;
+        await apiMutate("user_roles", (q) => q.delete().eq("user_id", userId));
+        await apiMutate("user_roles", (q) => q.insert({ user_id: userId, role: "teacher" }));
       }
     },
     onSuccess: (_, variables) => {
