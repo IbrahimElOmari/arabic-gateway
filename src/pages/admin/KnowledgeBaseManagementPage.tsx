@@ -71,13 +71,8 @@ export default function KnowledgeBaseManagementPage() {
   });
 
   const createArticleMutation = useMutation({
-    mutationFn: async (form: typeof articleForm) => {
-      const { error } = await supabase.from("faq_articles").insert({
-        ...form,
-        created_by: user!.id,
-      });
-      if (error) throw error;
-    },
+    mutationFn: (form: typeof articleForm) =>
+      apiMutate("faq_articles", (q) => q.insert({ ...form, created_by: user!.id })),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-faq-articles"] });
       if (user) logAdminAction(user.id, "faq_article_created", "faq_articles", undefined, { title: articleForm.title_en });
