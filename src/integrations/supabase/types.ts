@@ -1721,6 +1721,105 @@ export type Database = {
         }
         Relationships: []
       }
+      private_chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          room_id: string
+          sender_id: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          room_id: string
+          sender_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          room_id?: string
+          sender_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "private_chat_messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "private_chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      private_chat_participants: {
+        Row: {
+          id: string
+          joined_at: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "private_chat_participants_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "private_chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      private_chat_rooms: {
+        Row: {
+          class_id: string | null
+          created_at: string
+          id: string
+          is_group: boolean
+          name: string | null
+          updated_at: string
+        }
+        Insert: {
+          class_id?: string | null
+          created_at?: string
+          id?: string
+          is_group?: boolean
+          name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string | null
+          created_at?: string
+          id?: string
+          is_group?: boolean
+          name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "private_chat_rooms_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           address: string | null
