@@ -235,9 +235,24 @@
   "chat": {
     "title": "Klas Chat",
     "noClasses": "Nog geen klassen",
+    "noClassesDescription": "Je moet ingeschreven zijn in een klas om de chat te gebruiken.",
     "enrollFirst": "Schrijf je in voor een klas om deel te nemen aan de chat",
     "noMessages": "Nog geen berichten. Begin het gesprek!",
-    "typeMessage": "Typ een bericht..."
+    "typeMessage": "Typ een bericht...",
+    "messageInput": "Berichtinvoer",
+    "addReaction": "Reactie toevoegen",
+    "toggleReaction": "{{emoji}} reactie wisselen",
+    "reactWith": "Reageer met {{emoji}}",
+    "sendMessage": "Bericht versturen",
+    "loadOlder": "Oudere berichten laden",
+    "groupChat": "Groepschat",
+    "privateChat": "Privéchat",
+    "newConversation": "Nieuw gesprek",
+    "startConversation": "Start een gesprek",
+    "searchUser": "Zoek een gebruiker...",
+    "noUsersFound": "Geen gebruikers gevonden",
+    "noConversations": "Geen gesprekken",
+    "selectConversation": "Selecteer een gesprek of start een nieuw gesprek"
   },
   "teacher": {
     "dashboard": "Docenten Dashboard",
