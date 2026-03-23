@@ -93,10 +93,8 @@ export default function KnowledgeBaseManagementPage() {
   });
 
   const updateArticleMutation = useMutation({
-    mutationFn: async ({ id, form }: { id: string; form: typeof articleForm }) => {
-      const { error } = await supabase.from("faq_articles").update(form).eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: ({ id, form }: { id: string; form: typeof articleForm }) =>
+      apiMutate("faq_articles", (q) => q.update(form).eq("id", id)),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-faq-articles"] });
       if (user) logAdminAction(user.id, "faq_article_updated", "faq_articles", variables.id);
