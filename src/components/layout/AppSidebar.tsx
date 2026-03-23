@@ -156,7 +156,17 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
           onClick={handleNavClick}
         >
           <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-          {!collapsed && <span className="truncate">{item.label}</span>}
+          {!collapsed && (
+            <span className="truncate flex-1">{item.label}</span>
+          )}
+          {!collapsed && item.badge !== undefined && item.badge > 0 && (
+            <Badge variant="destructive" className="ml-auto text-xs h-5 min-w-5 flex items-center justify-center rounded-full px-1.5">
+              {item.badge}
+            </Badge>
+          )}
+          {collapsed && item.badge !== undefined && item.badge > 0 && (
+            <span className="absolute top-0 right-0 h-2 w-2 bg-destructive rounded-full" />
+          )}
           {collapsed && <span className="sr-only">{item.label}</span>}
         </NavLink>
       ))}
