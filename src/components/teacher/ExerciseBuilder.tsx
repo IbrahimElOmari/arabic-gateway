@@ -300,7 +300,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
                       <div className="flex items-center gap-2 mb-2">
                         <Icon className="h-4 w-4 text-primary" />
                         <span className="text-xs text-muted-foreground uppercase">
-                          {t(`questionTypes.${question.type}`, question.type)}
+                          {String(t(`questionTypes.${question.type}`, question.type))}
                         </span>
                         <span className="text-xs text-muted-foreground">
                           • {question.points} {t("common.points", "points")}

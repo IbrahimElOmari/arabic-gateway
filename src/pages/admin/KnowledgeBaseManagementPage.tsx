@@ -119,10 +119,8 @@ export default function KnowledgeBaseManagementPage() {
   });
 
   const togglePublishMutation = useMutation({
-    mutationFn: async ({ id, isPublished }: { id: string; isPublished: boolean }) => {
-      const { error } = await supabase.from("faq_articles").update({ is_published: isPublished }).eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: ({ id, isPublished }: { id: string; isPublished: boolean }) =>
+      apiMutate("faq_articles", (q) => q.update({ is_published: isPublished }).eq("id", id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-faq-articles"] });
     },
