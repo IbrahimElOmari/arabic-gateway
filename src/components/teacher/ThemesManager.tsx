@@ -57,12 +57,9 @@ export function ThemesManager({ onSelectTheme, selectedThemeId }: ThemesManagerP
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const displayOrder = (themes?.length || 0) + 1;
-      const { error } = await supabase.from("lesson_themes").insert({
-        ...data,
-        display_order: displayOrder,
-        created_by: user!.id,
-      });
-      if (error) throw error;
+      await apiMutate("lesson_themes", (q) =>
+        q.insert({ ...data, display_order: displayOrder, created_by: user!.id })
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lesson-themes"] });
