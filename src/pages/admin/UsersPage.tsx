@@ -68,37 +68,29 @@ export default function UsersPage() {
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users", searchQuery, roleFilter],
     queryFn: async () => {
-      let query = supabase
-        .from("profiles")
-        .select("id, user_id, full_name, email, created_at")
-        .order("created_at", { ascending: false });
-
+      let profiles: any[];
       if (searchQuery) {
-        query = query.or(`full_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
+        profiles = await apiQuery<any[]>("profiles", (q) =>
+          q.select("id, user_id, full_name, email, created_at")
+            .or(`full_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
+            .order("created_at", { ascending: false })
+        );
+      } else {
+        profiles = await apiQuery<any[]>("profiles", (q) =>
+          q.select("id, user_id, full_name, email, created_at").order("created_at", { ascending: false })
+        );
       }
-
-      const { data: profiles, error } = await query;
-      if (error) throw error;
 
       const usersWithRoles = await Promise.all(
         (profiles || []).map(async (profile) => {
-          const { data: roleData } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", profile.user_id)
-            .maybeSingle();
-
-          return {
-            ...profile,
-            role: roleData?.role as AppRole | undefined,
-          };
+          const roleData = await apiQuery<any>("user_roles", (q) =>
+            q.select("role").eq("user_id", profile.user_id).maybeSingle()
+          );
+          return { ...profile, role: roleData?.role as AppRole | undefined };
         })
       );
 
-      if (roleFilter !== "all") {
-        return usersWithRoles.filter((u) => u.role === roleFilter);
-      }
-
+      if (roleFilter !== "all") return usersWithRoles.filter((u) => u.role === roleFilter);
       return usersWithRoles;
     },
   });
