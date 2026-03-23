@@ -239,13 +239,24 @@
   "chat": {
     "title": "Class Chat",
     "noClasses": "No classes yet",
+    "noClassesDescription": "You need to be enrolled in a class to use chat.",
     "enrollFirst": "Enroll in a class to join the chat",
     "noMessages": "No messages yet. Start the conversation!",
     "typeMessage": "Type a message...",
     "messageInput": "Message input",
     "addReaction": "Add reaction",
     "toggleReaction": "Toggle {{emoji}} reaction",
-    "reactWith": "React with {{emoji}}"
+    "reactWith": "React with {{emoji}}",
+    "sendMessage": "Send message",
+    "loadOlder": "Load older messages",
+    "groupChat": "Group Chat",
+    "privateChat": "Private Chat",
+    "newConversation": "New conversation",
+    "startConversation": "Start a conversation",
+    "searchUser": "Search for a user...",
+    "noUsersFound": "No users found",
+    "noConversations": "No conversations",
+    "selectConversation": "Select a conversation or start a new one"
   },
   "teacher": {
     "dashboard": "Teacher Dashboard",

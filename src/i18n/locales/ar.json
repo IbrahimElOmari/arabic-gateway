@@ -233,9 +233,24 @@
   "chat": {
     "title": "دردشة الفصل",
     "noClasses": "لا توجد فصول حتى الآن",
+    "noClassesDescription": "يجب أن تكون مسجلاً في فصل لاستخدام الدردشة.",
     "enrollFirst": "سجل في فصل للانضمام إلى الدردشة",
     "noMessages": "لا توجد رسائل حتى الآن. ابدأ المحادثة!",
-    "typeMessage": "اكتب رسالة..."
+    "typeMessage": "اكتب رسالة...",
+    "messageInput": "إدخال الرسالة",
+    "addReaction": "إضافة تفاعل",
+    "toggleReaction": "تبديل تفاعل {{emoji}}",
+    "reactWith": "تفاعل بـ {{emoji}}",
+    "sendMessage": "إرسال رسالة",
+    "loadOlder": "تحميل رسائل أقدم",
+    "groupChat": "دردشة جماعية",
+    "privateChat": "دردشة خاصة",
+    "newConversation": "محادثة جديدة",
+    "startConversation": "ابدأ محادثة",
+    "searchUser": "ابحث عن مستخدم...",
+    "noUsersFound": "لم يتم العثور على مستخدمين",
+    "noConversations": "لا توجد محادثات",
+    "selectConversation": "اختر محادثة أو ابدأ محادثة جديدة"
   },
   "teacher": {
     "dashboard": "لوحة تحكم المعلم",
