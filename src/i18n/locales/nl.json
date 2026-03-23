@@ -892,7 +892,20 @@
     "free": "Gratis",
     "maxStudents": "Max {{count}} studenten",
     "enroll": "Inschrijven",
-    "noClasses": "Er zijn momenteel geen actieve cursussen."
+    "noClasses": "Er zijn momenteel geen actieve cursussen.",
+    "enrolled": "Ingeschreven",
+    "alreadyEnrolled": "Al ingeschreven",
+    "pendingApproval": "Wacht op goedkeuring",
+    "enrollmentSuccess": "Inschrijving gelukt!",
+    "enrollmentSuccessDesc": "Je hebt nu toegang tot deze klas.",
+    "enrollmentPending": "Aanvraag ingediend",
+    "enrollmentPendingDesc": "Een beheerder zal je aanvraag beoordelen.",
+    "enrollmentError": "Inschrijving mislukt. Probeer het opnieuw.",
+    "discountCode": "Kortingscode",
+    "applyCode": "Toepassen",
+    "invalidCode": "Ongeldige kortingscode",
+    "discountApplied": "Korting toegepast!",
+    "inclVat": "Incl. {{rate}}% BTW"
   },
   "help": {
     "faq": "FAQ / Kennisbank",
