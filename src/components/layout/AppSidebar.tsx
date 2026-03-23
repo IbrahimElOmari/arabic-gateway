@@ -118,7 +118,7 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
     { to: '/admin/users', icon: Users, label: t('admin.users', 'Users') },
     { to: '/admin/teachers', icon: UserCheck, label: t('admin.teacherApprovals', 'Teacher Approvals') },
     { to: '/admin/classes', icon: School, label: t('admin.classes', 'Classes') },
-    { to: '/admin/enrollments', icon: UserPlus, label: t('admin.enrollmentRequests', 'Inschrijvingsaanvragen') },
+    { to: '/admin/enrollments', icon: UserPlus, label: t('admin.enrollmentRequests', 'Inschrijvingsaanvragen'), badge: pendingEnrollmentCount || 0 },
     { to: '/admin/levels', icon: Layers, label: t('admin.levels', 'Levels') },
     { to: '/admin/placements', icon: ClipboardList, label: t('admin.placements', 'Placements') },
     { to: '/admin/payments', icon: CreditCard, label: t('admin.payments', 'Payments') },
