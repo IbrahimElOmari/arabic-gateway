@@ -85,10 +85,7 @@ export function ThemesManager({ onSelectTheme, selectedThemeId }: ThemesManagerP
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("lesson_themes").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => apiMutate("lesson_themes", (q) => q.delete().eq("id", id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lesson-themes"] });
       toast({ title: t("teacher.themeDeleted", "Theme Deleted") });
