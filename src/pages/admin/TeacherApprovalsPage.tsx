@@ -47,26 +47,20 @@ export default function TeacherApprovalsPage() {
   const { data: applications, isLoading } = useQuery({
     queryKey: ["teacher-applications"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("teacher_applications")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const data = await apiQuery<any[]>("teacher_applications", (q) =>
+        q.select("*").order("created_at", { ascending: false })
+      );
 
-      if (error) throw error;
-
-      // Fetch profile info for each application
       const applicationsWithProfiles = await Promise.all(
-        (data || []).map(async (app) => {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("full_name, email")
-            .eq("user_id", app.user_id)
-            .maybeSingle();
+        (data || []).map(async (app: any) => {
+          let profile = null;
+          try {
+            profile = await apiQuery<{ full_name: string; email: string }>("profiles", (q) =>
+              q.select("full_name, email").eq("user_id", app.user_id).maybeSingle()
+            );
+          } catch { /* profile not found */ }
 
-          return {
-            ...app,
-            profile,
-          } as TeacherApplication;
+          return { ...app, profile } as TeacherApplication;
         })
       );
 
