@@ -108,10 +108,7 @@ export default function KnowledgeBaseManagementPage() {
   });
 
   const deleteArticleMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("faq_articles").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => apiMutate("faq_articles", (q) => q.delete().eq("id", id)),
     onSuccess: (_data, articleId) => {
       queryClient.invalidateQueries({ queryKey: ["admin-faq-articles"] });
       if (user) logAdminAction(user.id, "faq_article_deleted", "faq_articles", articleId);
