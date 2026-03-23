@@ -58,14 +58,9 @@ export default function KnowledgeBaseManagementPage() {
 
   const { data: categories } = useQuery({
     queryKey: ["admin-faq-categories"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("faq_categories")
-        .select("*")
-        .order("display_order", { ascending: true });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => apiQuery<any[]>("faq_categories", (q) =>
+      q.select("*").order("display_order", { ascending: true })
+    ),
   });
 
   const { data: articles, isLoading } = useQuery({
