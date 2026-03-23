@@ -3,9 +3,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { NavLink } from '@/components/NavLink';
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { apiQuery } from '@/lib/supabase-api';
 import {
   Home,
   LayoutDashboard,
@@ -49,6 +52,7 @@ interface NavItem {
   icon: React.ElementType;
   label: string;
   end?: boolean;
+  badge?: number;
 }
 
 export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSidebarProps) {
