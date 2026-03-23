@@ -59,6 +59,19 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
   const { t } = useTranslation();
   const { user, role, roleStatus } = useAuth();
 
+  // Fetch pending enrollment count for admin badge
+  const { data: pendingEnrollmentCount } = useQuery({
+    queryKey: ['pending-enrollment-count'],
+    queryFn: async () => {
+      const data = await apiQuery<any[]>('class_enrollments', (q) =>
+        q.select('id').eq('status', 'pending')
+      );
+      return data?.length || 0;
+    },
+    enabled: !!user && role === 'admin',
+    refetchInterval: 30000, // refresh every 30s
+  });
+
   const publicItems: NavItem[] = [
     { to: '/', icon: Home, label: t('nav.home'), end: true },
     { to: '/faq', icon: HelpCircleIcon, label: t('nav.knowledgeBase', 'FAQ') },
