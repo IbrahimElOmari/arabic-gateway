@@ -82,29 +82,19 @@ export default function TeacherApprovalsPage() {
       notes: string;
     }) => {
       // Update application status
-      const { error: updateError } = await supabase
-        .from("teacher_applications")
-        .update({
+      await apiMutate("teacher_applications", (q) =>
+        q.update({
           status,
           review_notes: notes,
           reviewed_by: user?.id,
           reviewed_at: new Date().toISOString(),
-        })
-        .eq("id", applicationId);
-
-      if (updateError) throw updateError;
+        }).eq("id", applicationId)
+      );
 
       // If approved, update user role to teacher
       if (status === "approved") {
-        // Delete existing role
-        await supabase.from("user_roles").delete().eq("user_id", userId);
-
-        // Insert teacher role
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .insert({ user_id: userId, role: "teacher" });
-
-        if (roleError) throw roleError;
+        await apiMutate("user_roles", (q) => q.delete().eq("user_id", userId));
+        await apiMutate("user_roles", (q) => q.insert({ user_id: userId, role: "teacher" }));
       }
     },
     onSuccess: (_, variables) => {
