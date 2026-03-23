@@ -149,19 +149,15 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
         correctAnswer = null;
       }
 
-      const { error } = await supabase
-        .from("questions")
-        .update({
-          type: form.type,
-          question_text: form.question_text,
-          options: form.type === "multiple_choice" || form.type === "checkbox" ? form.options : null,
-          correct_answer: correctAnswer,
-          points: form.points,
-          explanation: form.explanation || null,
-          time_limit_seconds: form.time_limit_seconds,
-        })
-        .eq("id", id);
-      if (error) throw error;
+      await apiMutate("questions", (q) => q.update({
+        type: form.type,
+        question_text: form.question_text,
+        options: form.type === "multiple_choice" || form.type === "checkbox" ? form.options : null,
+        correct_answer: correctAnswer,
+        points: form.points,
+        explanation: form.explanation || null,
+        time_limit_seconds: form.time_limit_seconds,
+      }).eq("id", id));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["exercise-questions", exerciseId] });
