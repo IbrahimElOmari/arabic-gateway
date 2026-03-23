@@ -178,6 +178,7 @@ const App = () => (
                 </AppLayout>
                 <CookieConsent />
                 <HelpWidget />
+                <IdleTimeoutWarning />
               </TranslatedErrorBoundary>
             </BrowserRouter>
           </TooltipProvider>
