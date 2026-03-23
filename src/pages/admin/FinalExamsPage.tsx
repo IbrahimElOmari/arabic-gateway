@@ -89,13 +89,8 @@ export default function FinalExamsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
-      const { error } = await supabase.from("final_exams").insert({
-        ...data,
-        created_by: user!.id,
-      });
-      if (error) throw error;
-    },
+    mutationFn: (data: typeof formData) =>
+      apiMutate("final_exams", (q) => q.insert({ ...data, created_by: user!.id })),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["final-exams"] });
       setShowDialog(false);
