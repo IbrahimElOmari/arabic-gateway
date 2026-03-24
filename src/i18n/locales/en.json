@@ -595,7 +595,17 @@
     "popularPages": "Popular Pages",
     "userEngagement": "User Engagement",
     "last7Days": "Last 7 days",
-    "last30Days": "Last 30 days"
+    "last30Days": "Last 30 days",
+    "enrollmentRequests": "Enrollment Requests",
+    "enrollmentRequestsDesc": "Review and process student enrollment requests.",
+    "pendingEnrollments": "Pending Enrollments",
+    "enrollmentApproved": "Enrollment Approved",
+    "enrollmentRejected": "Enrollment Rejected",
+    "noPendingEnrollments": "No pending enrollments",
+    "knowledgeBase": "Knowledge Base",
+    "contentReports": "Reports",
+    "invitations": "Invitations",
+    "finalExams": "Final Exams"
   },
   "twoFactor": {
     "title": "Two-Factor Authentication",

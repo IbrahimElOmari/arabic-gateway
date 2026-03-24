@@ -589,7 +589,17 @@
     "popularPages": "الصفحات الشائعة",
     "userEngagement": "تفاعل المستخدمين",
     "last7Days": "آخر 7 أيام",
-    "last30Days": "آخر 30 يوم"
+    "last30Days": "آخر 30 يوم",
+    "enrollmentRequests": "طلبات التسجيل",
+    "enrollmentRequestsDesc": "مراجعة ومعالجة طلبات تسجيل الطلاب.",
+    "pendingEnrollments": "التسجيلات المعلقة",
+    "enrollmentApproved": "تمت الموافقة على التسجيل",
+    "enrollmentRejected": "تم رفض التسجيل",
+    "noPendingEnrollments": "لا توجد تسجيلات معلقة",
+    "knowledgeBase": "قاعدة المعرفة",
+    "contentReports": "البلاغات",
+    "invitations": "الدعوات",
+    "finalExams": "الامتحانات النهائية"
   },
   "twoFactor": {
     "title": "المصادقة الثنائية",
