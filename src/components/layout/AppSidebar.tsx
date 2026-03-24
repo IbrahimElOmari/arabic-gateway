@@ -267,11 +267,7 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
                 variant="ghost"
                 size="icon"
                 className="shrink-0 h-8 w-8"
-                onClick={async () => {
-                  const { useAuth } = await import('@/contexts/AuthContext');
-                  // signOut is already available via the outer scope
-                  await signOut();
-                }}
+                onClick={() => signOut()}
                 aria-label={t('auth.logout', 'Uitloggen')}
               >
                 <LogOut className="h-4 w-4" />
