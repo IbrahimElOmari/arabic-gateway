@@ -4,6 +4,8 @@ import { NavLink } from '@/components/NavLink';
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { cn } from '@/lib/utils';
@@ -38,6 +40,7 @@ import {
   ChevronLeft,
   ChevronRight,
   DollarSign,
+  LogOut,
 } from 'lucide-react';
 
 interface AppSidebarProps {
@@ -57,7 +60,7 @@ interface NavItem {
 
 export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSidebarProps) {
   const { t } = useTranslation();
-  const { user, role, roleStatus } = useAuth();
+  const { user, profile, role, roleStatus, signOut } = useAuth();
 
   // Fetch pending enrollment count for admin badge
   const { data: pendingEnrollmentCount } = useQuery({
@@ -235,7 +238,43 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
       </nav>
 
       {/* Footer */}
-      <div className="border-t p-2 shrink-0">
+      <div className="border-t p-2 shrink-0 space-y-2">
+        {/* User profile area */}
+        {user && (
+          <div className={cn('flex items-center gap-2', collapsed ? 'flex-col px-0 py-1' : 'px-3 py-1')}>
+            <Avatar className="h-8 w-8 shrink-0">
+              <AvatarImage src={profile?.avatar_url || ''} />
+              <AvatarFallback className="text-xs">
+                {profile?.full_name ? profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U'}
+              </AvatarFallback>
+            </Avatar>
+            {!collapsed && (
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{profile?.full_name}</p>
+                {role && (
+                  <Badge
+                    variant={role === 'admin' ? 'destructive' : role === 'teacher' ? 'default' : 'secondary'}
+                    className="text-[10px] h-4 px-1"
+                  >
+                    {role === 'admin' ? t('roles.admin', 'Beheerder') : role === 'teacher' ? t('roles.teacher', 'Leerkracht') : t('roles.student', 'Student')}
+                  </Badge>
+                )}
+              </div>
+            )}
+            <NotificationBell />
+            {!collapsed && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0 h-8 w-8"
+                onClick={() => signOut()}
+                aria-label={t('auth.logout', 'Uitloggen')}
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        )}
         <div className={cn('flex items-center gap-1', collapsed ? 'flex-col px-0 py-1' : 'px-3 py-1')}>
           <LanguageSwitcher />
           <ThemeSwitcher />
