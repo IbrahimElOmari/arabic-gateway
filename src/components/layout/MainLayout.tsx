@@ -3,8 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { OfflineBanner } from '@/components/OfflineBanner';
-import { IdleTimeoutWarning } from '@/components/IdleTimeoutWarning';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface MainLayoutProps {
   children: React.ReactNode;
