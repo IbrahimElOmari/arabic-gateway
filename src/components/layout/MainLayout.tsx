@@ -27,7 +27,6 @@ export function MainLayout({ children, showFooter = true }: MainLayoutProps) {
         {children}
       </main>
       {showFooter && <Footer />}
-      {user && <IdleTimeoutWarning />}
     </div>
   );
 }
