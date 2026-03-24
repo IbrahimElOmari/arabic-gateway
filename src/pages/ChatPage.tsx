@@ -25,7 +25,7 @@ const SEND_COOLDOWN_MS = 1000;
 // ─── Group Chat Tab ───
 function GroupChatTab() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const queryClient = useQueryClient();
   const [newMessage, setNewMessage] = useState("");
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
