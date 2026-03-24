@@ -3,8 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { OfflineBanner } from '@/components/OfflineBanner';
-import { IdleTimeoutWarning } from '@/components/IdleTimeoutWarning';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -13,7 +11,6 @@ interface MainLayoutProps {
 
 export function MainLayout({ children, showFooter = true }: MainLayoutProps) {
   const { t } = useTranslation();
-  const { user } = useAuth();
   
   return (
     <div className="flex min-h-screen flex-col">
@@ -30,7 +27,6 @@ export function MainLayout({ children, showFooter = true }: MainLayoutProps) {
         {children}
       </main>
       {showFooter && <Footer />}
-      {user && <IdleTimeoutWarning />}
     </div>
   );
 }
