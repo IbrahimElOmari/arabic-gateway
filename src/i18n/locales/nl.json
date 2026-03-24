@@ -120,7 +120,14 @@
     "contentStudio": "Content Studio",
     "adminPanel": "Beheerderspaneel",
     "management": "Beheer",
-    "gamification": "Gamification"
+    "gamification": "Gamification",
+    "general": "Algemeen",
+    "account": "Account",
+    "learning": "Leren",
+    "teaching": "Lesgeven",
+    "administration": "Administratie",
+    "knowledgeBase": "FAQ",
+    "helpdesk": "Helpdesk"
   },
   "categories": {
     "reading": "Lezen",
@@ -591,7 +598,17 @@
     "popularPages": "Populaire Pagina's",
     "userEngagement": "Gebruikersbetrokkenheid",
     "last7Days": "Laatste 7 dagen",
-    "last30Days": "Laatste 30 dagen"
+    "last30Days": "Laatste 30 dagen",
+    "enrollmentRequests": "Inschrijvingsaanvragen",
+    "enrollmentRequestsDesc": "Beoordeel en verwerk inschrijvingsaanvragen van studenten.",
+    "pendingEnrollments": "Wachtende inschrijvingen",
+    "enrollmentApproved": "Inschrijving goedgekeurd",
+    "enrollmentRejected": "Inschrijving afgewezen",
+    "noPendingEnrollments": "Geen wachtende inschrijvingen",
+    "knowledgeBase": "Kennisbank",
+    "contentReports": "Meldingen",
+    "invitations": "Uitnodigingen",
+    "finalExams": "Eindtoetsen"
   },
   "twoFactor": {
     "title": "Twee-Factor Authenticatie",

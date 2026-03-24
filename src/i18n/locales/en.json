@@ -120,7 +120,14 @@
     "contentStudio": "Content Studio",
     "adminPanel": "Admin Panel",
     "management": "Management",
-    "gamification": "Gamification"
+    "gamification": "Gamification",
+    "general": "General",
+    "account": "Account",
+    "learning": "Learning",
+    "teaching": "Teaching",
+    "administration": "Administration",
+    "knowledgeBase": "FAQ",
+    "helpdesk": "Helpdesk"
   },
   "categories": {
     "reading": "Reading",
@@ -595,7 +602,17 @@
     "popularPages": "Popular Pages",
     "userEngagement": "User Engagement",
     "last7Days": "Last 7 days",
-    "last30Days": "Last 30 days"
+    "last30Days": "Last 30 days",
+    "enrollmentRequests": "Enrollment Requests",
+    "enrollmentRequestsDesc": "Review and process student enrollment requests.",
+    "pendingEnrollments": "Pending Enrollments",
+    "enrollmentApproved": "Enrollment Approved",
+    "enrollmentRejected": "Enrollment Rejected",
+    "noPendingEnrollments": "No pending enrollments",
+    "knowledgeBase": "Knowledge Base",
+    "contentReports": "Reports",
+    "invitations": "Invitations",
+    "finalExams": "Final Exams"
   },
   "twoFactor": {
     "title": "Two-Factor Authentication",

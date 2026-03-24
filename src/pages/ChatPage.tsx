@@ -25,7 +25,7 @@ const SEND_COOLDOWN_MS = 1000;
 // ─── Group Chat Tab ───
 function GroupChatTab() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const queryClient = useQueryClient();
   const [newMessage, setNewMessage] = useState("");
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
@@ -39,22 +39,30 @@ function GroupChatTab() {
 
   const { data: enrollments, isLoading: enrollmentsLoading } = useQuery({
     queryKey: ["chat-enrollments", user?.id],
-    queryFn: () => apiQuery<any[]>("class_enrollments", (q) => q.select("class_id, class:classes(id, name)").eq("student_id", user!.id)),
+    queryFn: () => apiQuery<any[]>("class_enrollments", (q) => q.select("class_id, class:classes(id, name)").eq("student_id", user!.id).eq("status", "enrolled")),
     enabled: !!user,
   });
 
   const { data: teacherClasses } = useQuery({
     queryKey: ["teacher-classes", user?.id],
     queryFn: () => apiQuery<any[]>("classes", (q) => q.select("id, name").eq("teacher_id", user!.id)),
-    enabled: !!user,
+    enabled: !!user && role !== 'admin',
+  });
+
+  // Admins can see ALL classes
+  const { data: adminClasses } = useQuery({
+    queryKey: ["admin-all-classes"],
+    queryFn: () => apiQuery<any[]>("classes", (q) => q.select("id, name").eq("is_active", true).order("name")),
+    enabled: !!user && role === 'admin',
   });
 
   const allClasses = useMemo(() => {
+    if (role === 'admin') return adminClasses || [];
     return [
       ...(enrollments?.map((e: any) => e.class) || []),
       ...(teacherClasses || []),
     ].filter((c, i, arr) => arr.findIndex((x: any) => x?.id === c?.id) === i);
-  }, [enrollments, teacherClasses]);
+  }, [enrollments, teacherClasses, adminClasses, role]);
 
   useEffect(() => {
     if (allClasses.length > 0 && !selectedClass) setSelectedClass(allClasses[0]?.id || null);
