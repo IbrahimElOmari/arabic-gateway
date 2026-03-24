@@ -1,7 +1,7 @@
 # Blueprint v2 – Final Completion Report
 
 **Project:** Huis van het Arabisch (HVA)  
-**Date:** 2026-03-23  
+**Date:** 2026-03-24  
 **Test results:** 54 files, 400+ tests – all passing  
 **Coverage thresholds:** ≥60% lines, functions, statements; ≥50% branches (enforced in CI)
 
