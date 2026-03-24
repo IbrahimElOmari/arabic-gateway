@@ -11,7 +11,6 @@ interface MainLayoutProps {
 
 export function MainLayout({ children, showFooter = true }: MainLayoutProps) {
   const { t } = useTranslation();
-  const { user } = useAuth();
   
   return (
     <div className="flex min-h-screen flex-col">
