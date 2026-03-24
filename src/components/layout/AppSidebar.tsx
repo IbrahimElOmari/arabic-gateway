@@ -61,7 +61,7 @@ interface NavItem {
 
 export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSidebarProps) {
   const { t } = useTranslation();
-  const { user, role, roleStatus } = useAuth();
+  const { user, profile, role, roleStatus, signOut } = useAuth();
 
   // Fetch pending enrollment count for admin badge
   const { data: pendingEnrollmentCount } = useQuery({
