@@ -213,8 +213,12 @@ Gap tot 100%: uitsluitend externe configuratie (Stripe/Resend/pg_cron) en option
 
 | # | Taak | Status | Details |
 |---|------|--------|---------|
-| P9.1 | RLS enrollment status check | ✅ | exercises, lessons, chat_reactions RLS nu gefilterd op `status='enrolled'` – pending studenten geen toegang |
-| P9.2 | Admin groepschat toegang | ✅ | Admins zien alle klassen in groepschat (niet meer beperkt tot eigen enrollments) |
-| P9.3 | i18n admin enrollment keys | ✅ | Ontbrekende sleutels (enrollmentRequests, pendingEnrollments, etc.) toegevoegd aan NL/EN/AR |
+| P9.1 | RLS enrollment status check (exercises/lessons/chat_reactions) | ✅ | Policies gefilterd op `status='enrolled'` – pending studenten geen toegang |
+| P9.2 | Admin groepschat toegang | ✅ | Admins zien alle klassen in groepschat |
+| P9.3 | i18n admin enrollment keys | ✅ | Alle ontbrekende sleutels toegevoegd aan NL/EN/AR |
 | P9.4 | i18n nav sidebar keys | ✅ | general, account, learning, teaching, administration keys toegevoegd |
 | P9.5 | Enrollment flow verificatie | ✅ | RLS correct: admin ALL, teacher per klas, student eigen status |
+| P9.6 | chat_messages RLS hardening | ✅ | SELECT + INSERT policies vereisen nu `class_enrollments.status = 'enrolled'` |
+| P9.7 | Duplicate class_enrollments policy verwijderd | ✅ | "Students can view own enrollments" duplicaat gedropt |
+| P9.8 | IdleTimeoutWarning deduplicatie | ✅ | Verwijderd uit MainLayout.tsx; globale variant in App.tsx volstaat |
+| P9.9 | private_chat_rooms RLS verificatie | ✅ | SELECT/UPDATE policies correct met `room_id` join + admin override |
