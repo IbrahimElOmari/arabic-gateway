@@ -39,7 +39,6 @@ import {
   Flag,
   ChevronLeft,
   ChevronRight,
-  ChevronRight,
   DollarSign,
   LogOut,
 } from 'lucide-react';
