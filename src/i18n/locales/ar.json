@@ -114,7 +114,14 @@
     "contentStudio": "استوديو المحتوى",
     "adminPanel": "لوحة الإدارة",
     "management": "الإدارة",
-    "gamification": "التحفيز"
+    "gamification": "التحفيز",
+    "general": "عام",
+    "account": "الحساب",
+    "learning": "التعلم",
+    "teaching": "التدريس",
+    "administration": "الإدارة",
+    "knowledgeBase": "الأسئلة الشائعة",
+    "helpdesk": "مركز المساعدة"
   },
   "categories": {
     "reading": "القراءة",
