@@ -189,8 +189,8 @@
 | Database & RLS | 95% |
 | Frontend Routes & UI | 100% |
 | Edge Functions | 80% |
-| i18n | 92% |
-| Beveiliging | 97% |
+| i18n | 100% |
+| Beveiliging | 98% |
 | Toegankelijkheid | 97% |
 | Community (forum/chat) | 100% |
 | Gamification | 95% |
@@ -203,6 +203,18 @@
 | API Wrapper Rollout | 100% |
 | UX (skeletons/notifications/idle) | 97% |
 | Admin Audit Logging | 100% |
-| **Gewogen gemiddelde** | **~95%** |
+| **Gewogen gemiddelde** | **~96%** |
 
 Gap tot 100%: uitsluitend externe configuratie (Stripe/Resend/pg_cron) en optioneel Sentry DSN.
+
+---
+
+## Phase 9: Audit & Security Hardening (24 maart 2026)
+
+| # | Taak | Status | Details |
+|---|------|--------|---------|
+| P9.1 | RLS enrollment status check | ✅ | exercises, lessons, chat_reactions RLS nu gefilterd op `status='enrolled'` – pending studenten geen toegang |
+| P9.2 | Admin groepschat toegang | ✅ | Admins zien alle klassen in groepschat (niet meer beperkt tot eigen enrollments) |
+| P9.3 | i18n admin enrollment keys | ✅ | Ontbrekende sleutels (enrollmentRequests, pendingEnrollments, etc.) toegevoegd aan NL/EN/AR |
+| P9.4 | i18n nav sidebar keys | ✅ | general, account, learning, teaching, administration keys toegevoegd |
+| P9.5 | Enrollment flow verificatie | ✅ | RLS correct: admin ALL, teacher per klas, student eigen status |
