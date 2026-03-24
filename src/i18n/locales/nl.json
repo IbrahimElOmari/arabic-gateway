@@ -120,7 +120,14 @@
     "contentStudio": "Content Studio",
     "adminPanel": "Beheerderspaneel",
     "management": "Beheer",
-    "gamification": "Gamification"
+    "gamification": "Gamification",
+    "general": "Algemeen",
+    "account": "Account",
+    "learning": "Leren",
+    "teaching": "Lesgeven",
+    "administration": "Administratie",
+    "knowledgeBase": "FAQ",
+    "helpdesk": "Helpdesk"
   },
   "categories": {
     "reading": "Lezen",
