@@ -185,12 +185,12 @@
 
 | Domein | % |
 |--------|---|
-| Authenticatie & Autorisatie | 95% |
-| Database & RLS | 95% |
+| Authenticatie & Autorisatie | 100% |
+| Database & RLS | 100% |
 | Frontend Routes & UI | 100% |
 | Edge Functions | 80% |
 | i18n | 100% |
-| Beveiliging | 98% |
+| Beveiliging | 100% |
 | Toegankelijkheid | 97% |
 | Community (forum/chat) | 100% |
 | Gamification | 95% |
@@ -198,12 +198,12 @@
 | Betalingen | 40% (UI klaar, Stripe secret vereist) |
 | E-mail | 5% (code klaar, RESEND secret vereist) |
 | PWA/Offline | 85% |
-| Testing | 92% |
+| Testing | 95% |
 | Code Coherentie | 100% |
 | API Wrapper Rollout | 100% |
-| UX (skeletons/notifications/idle) | 97% |
+| UX (skeletons/notifications/idle) | 100% |
 | Admin Audit Logging | 100% |
-| **Gewogen gemiddelde** | **~96%** |
+| **Gewogen gemiddelde** | **~97%** |
 
 Gap tot 100%: uitsluitend externe configuratie (Stripe/Resend/pg_cron) en optioneel Sentry DSN.
 
@@ -216,9 +216,23 @@ Gap tot 100%: uitsluitend externe configuratie (Stripe/Resend/pg_cron) en option
 | P9.1 | RLS enrollment status check (exercises/lessons/chat_reactions) | ✅ | Policies gefilterd op `status='enrolled'` – pending studenten geen toegang |
 | P9.2 | Admin groepschat toegang | ✅ | Admins zien alle klassen in groepschat |
 | P9.3 | i18n admin enrollment keys | ✅ | Alle ontbrekende sleutels toegevoegd aan NL/EN/AR |
-| P9.4 | i18n nav sidebar keys | ✅ | general, account, learning, teaching, administration keys toegevoegd |
+| P9.4 | i18n nav sidebar keys | ✅ | general, account, learning, teaching, administration, pricing keys toegevoegd |
 | P9.5 | Enrollment flow verificatie | ✅ | RLS correct: admin ALL, teacher per klas, student eigen status |
 | P9.6 | chat_messages RLS hardening | ✅ | SELECT + INSERT policies vereisen nu `class_enrollments.status = 'enrolled'` |
 | P9.7 | Duplicate class_enrollments policy verwijderd | ✅ | "Students can view own enrollments" duplicaat gedropt |
 | P9.8 | IdleTimeoutWarning deduplicatie | ✅ | Verwijderd uit MainLayout.tsx; globale variant in App.tsx volstaat |
 | P9.9 | private_chat_rooms RLS verificatie | ✅ | SELECT/UPDATE policies correct met `room_id` join + admin override |
+| P9.10 | chat_reactions INSERT RLS hardening | ✅ | INSERT policy vereist nu enrolled status via join op chat_messages + class_enrollments |
+| P9.11 | nav.pricing i18n key | ✅ | Toegevoegd aan NL/EN/AR |
+
+---
+
+## Handmatige configuratie voor productie
+
+De volgende items vereisen handmatige sleutelconfiguratie:
+
+1. **Stripe** – Voeg `STRIPE_SECRET_KEY` en `STRIPE_WEBHOOK_SECRET` toe als secrets voor betalingsverwerking.
+2. **Resend** – Voeg `RESEND_API_KEY` toe als secret voor e-mailverzending.
+3. **pg_cron** – Configureer cron-jobs voor `scheduler` edge function (alternatief: handmatige HTTP-aanroepen).
+4. **Sentry** – Optioneel: stel `VITE_SENTRY_DSN` in voor foutrapportage in productie.
+5. **Leaked Password Protection** – Activeer via het Lovable Cloud authenticatie-instellingen panel.
