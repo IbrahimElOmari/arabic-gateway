@@ -46,6 +46,14 @@ export default function AdminDashboard() {
     ),
   });
 
+  const { data: unassignedCount } = useQuery({
+    queryKey: ["admin-unassigned-students"],
+    queryFn: async () => {
+      const { data } = await supabase.rpc('count_unassigned_students');
+      return (data as number) || 0;
+    },
+  });
+
   return (
     <div className="space-y-6">
       {/* Header */}
