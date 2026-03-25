@@ -152,7 +152,9 @@
     "quickActions": "Snelle Acties",
     "adminFallback": "Je bent ingelogd als beheerder.",
     "teacherFallback": "Je bent ingelogd als leerkracht.",
-    "studyTimeLabel": "Studietijd"
+    "studyTimeLabel": "Studietijd",
+    "noClassAssigned": "Je bent nog niet ingeschreven voor een klas. Schrijf je in om te beginnen met leren.",
+    "goToPricing": "Bekijk klassen"
   },
   "settings": {
     "title": "Instellingen",
