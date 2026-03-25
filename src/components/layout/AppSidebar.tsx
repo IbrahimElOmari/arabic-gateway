@@ -72,7 +72,18 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
       return data?.length || 0;
     },
     enabled: !!user && role === 'admin',
-    refetchInterval: 30000, // refresh every 30s
+    refetchInterval: 30000,
+  });
+
+  // Fetch unassigned students count for admin badge
+  const { data: unassignedCount } = useQuery({
+    queryKey: ['unassigned-students-count'],
+    queryFn: async () => {
+      const { data } = await supabase.rpc('count_unassigned_students');
+      return (data as number) || 0;
+    },
+    enabled: !!user && role === 'admin',
+    refetchInterval: 30000,
   });
 
   const publicItems: NavItem[] = [
