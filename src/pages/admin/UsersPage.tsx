@@ -65,9 +65,6 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [newRole, setNewRole] = useState<AppRole>("student");
   const [selectedClassId, setSelectedClassId] = useState<string>("none");
-  const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
-  const [newRole, setNewRole] = useState<AppRole>("student");
-  const [selectedClassId, setSelectedClassId] = useState<string>("none");
 
   // Fetch users with their roles
   const { data: users, isLoading } = useQuery({
