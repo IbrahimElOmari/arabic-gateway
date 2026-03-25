@@ -59,8 +59,12 @@ export default function UsersPage() {
   const { user: adminUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [roleFilter, setRoleFilter] = useState<string>(searchParams.get('filter') === 'unassigned' ? 'unassigned' : 'all');
+  const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
+  const [newRole, setNewRole] = useState<AppRole>("student");
+  const [selectedClassId, setSelectedClassId] = useState<string>("none");
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [newRole, setNewRole] = useState<AppRole>("student");
   const [selectedClassId, setSelectedClassId] = useState<string>("none");
