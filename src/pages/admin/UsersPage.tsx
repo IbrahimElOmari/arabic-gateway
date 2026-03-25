@@ -95,6 +95,15 @@ export default function UsersPage() {
         })
       );
 
+      if (roleFilter === 'unassigned') {
+        // Filter to students with no class enrollments
+        const enrollments = await apiQuery<any[]>("class_enrollments", (q) =>
+          q.select("student_id")
+        );
+        const enrolledIds = new Set((enrollments || []).map((e: any) => e.student_id));
+        return usersWithRoles.filter((u) => (u.role === 'student' || !u.role) && !enrolledIds.has(u.user_id));
+      }
+
       if (roleFilter !== "all") return usersWithRoles.filter((u) => u.role === roleFilter);
       return usersWithRoles;
     },
