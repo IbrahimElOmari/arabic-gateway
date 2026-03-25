@@ -207,6 +207,7 @@ export default function UsersPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("admin.allRoles", "All Roles")}</SelectItem>
+            <SelectItem value="unassigned">{t("admin.unassignedStudents", "Without class")}</SelectItem>
             <SelectItem value="admin">{t("admin.admin", "Admin")}</SelectItem>
             <SelectItem value="teacher">{t("admin.teacher", "Teacher")}</SelectItem>
             <SelectItem value="student">{t("admin.student", "Student")}</SelectItem>
