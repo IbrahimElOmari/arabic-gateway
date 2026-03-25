@@ -18,6 +18,16 @@ export default function StudentDashboard() {
 
   const isStaff = role === 'admin' || role === 'teacher';
 
+  const { data: enrollments } = useQuery({
+    queryKey: ['my-enrollments', user?.id],
+    queryFn: () => apiQuery<any[]>('class_enrollments', q =>
+      q.select('id, status').eq('student_id', user!.id)
+    ),
+    enabled: !!user,
+  });
+
+  const hasNoClass = enrollments !== undefined && enrollments.length === 0;
+
   const { data: attempts } = useQuery({
     queryKey: ['my-attempts', user?.id],
     queryFn: () => apiQuery<any[]>('exercise_attempts', q =>
