@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiQuery } from "@/lib/supabase-api";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
