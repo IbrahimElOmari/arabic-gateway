@@ -107,6 +107,21 @@ export default function StudentDashboard() {
         </Alert>
       )}
 
+      {hasNoClass && (
+        <Alert className="mb-6 border-destructive/30 bg-destructive/5">
+          <BookOpen className="h-4 w-4" />
+          <AlertDescription className="flex flex-wrap items-center gap-3">
+            <span>{t('dashboard.noClassAssigned', 'Je bent nog niet ingeschreven voor een klas. Schrijf je in om te beginnen met leren.')}</span>
+            <Button size="sm" asChild>
+              <Link to="/pricing">
+                <BookOpen className="h-4 w-4 mr-1" />
+                {t('dashboard.goToPricing', 'Bekijk klassen')}
+              </Link>
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {recommendedExercise && (
           <Card className="col-span-full bg-primary/5 border-primary/20">

@@ -66,6 +66,24 @@ export default function AdminDashboard() {
         </p>
       </div>
 
+      {/* Unassigned Students Alert */}
+      {(unassignedCount ?? 0) > 0 && (
+        <Alert className="border-destructive/30 bg-destructive/5">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="flex flex-wrap items-center gap-3">
+            <span>
+              {t('admin.unassignedStudentsAlert', '{{count}} student(en) zonder klas. Wijs ze toe aan een klas.', { count: unassignedCount })}
+            </span>
+            <Button size="sm" variant="outline" asChild>
+              <Link to="/admin/users?filter=unassigned">
+                <Users className="h-4 w-4 mr-1" />
+                {t('admin.viewUnassigned', 'Bekijken')}
+              </Link>
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard

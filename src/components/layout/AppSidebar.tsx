@@ -129,7 +129,7 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
 
   const adminItems: NavItem[] = [
     { to: '/admin', icon: LayoutDashboard, label: t('admin.dashboard', 'Admin Dashboard'), end: true },
-    { to: '/admin/users', icon: Users, label: t('admin.users', 'Users') },
+    { to: '/admin/users', icon: Users, label: t('admin.users', 'Users'), badge: unassignedCount || 0 },
     { to: '/admin/teachers', icon: UserCheck, label: t('admin.teacherApprovals', 'Teacher Approvals') },
     { to: '/admin/classes', icon: School, label: t('admin.classes', 'Classes') },
     { to: '/admin/enrollments', icon: UserPlus, label: t('admin.enrollmentRequests', 'Inschrijvingsaanvragen'), badge: pendingEnrollmentCount || 0 },
