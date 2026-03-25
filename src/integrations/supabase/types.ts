@@ -2545,6 +2545,7 @@ export type Database = {
         Returns: number
       }
       cancel_user_deletion: { Args: { p_user_id: string }; Returns: undefined }
+      count_unassigned_students: { Args: never; Returns: number }
       generate_ticket_number: { Args: never; Returns: string }
       get_upcoming_deletions: {
         Args: { days_ahead?: number }

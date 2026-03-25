@@ -18,6 +18,16 @@ export default function StudentDashboard() {
 
   const isStaff = role === 'admin' || role === 'teacher';
 
+  const { data: enrollments } = useQuery({
+    queryKey: ['my-enrollments', user?.id],
+    queryFn: () => apiQuery<any[]>('class_enrollments', q =>
+      q.select('id, status').eq('student_id', user!.id)
+    ),
+    enabled: !!user,
+  });
+
+  const hasNoClass = enrollments !== undefined && enrollments.length === 0;
+
   const { data: attempts } = useQuery({
     queryKey: ['my-attempts', user?.id],
     queryFn: () => apiQuery<any[]>('exercise_attempts', q =>
@@ -91,6 +101,21 @@ export default function StudentDashboard() {
               <Link to={role === 'admin' ? '/admin' : '/teacher'}>
                 <Shield className="h-4 w-4 mr-1" />
                 {role === 'admin' ? t('nav.adminPanel', 'Beheerderspaneel') : t('teacher.dashboard', 'Docenten Dashboard')}
+              </Link>
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {hasNoClass && (
+        <Alert className="mb-6 border-destructive/30 bg-destructive/5">
+          <BookOpen className="h-4 w-4" />
+          <AlertDescription className="flex flex-wrap items-center gap-3">
+            <span>{t('dashboard.noClassAssigned', 'Je bent nog niet ingeschreven voor een klas. Schrijf je in om te beginnen met leren.')}</span>
+            <Button size="sm" asChild>
+              <Link to="/pricing">
+                <BookOpen className="h-4 w-4 mr-1" />
+                {t('dashboard.goToPricing', 'Bekijk klassen')}
               </Link>
             </Button>
           </AlertDescription>

@@ -152,7 +152,9 @@
     "quickActions": "Quick Actions",
     "adminFallback": "You are logged in as an administrator.",
     "teacherFallback": "You are logged in as a teacher.",
-    "studyTimeLabel": "Study Time"
+    "studyTimeLabel": "Study Time",
+    "noClassAssigned": "You are not enrolled in any class yet. Enroll now to start learning.",
+    "goToPricing": "View classes"
   },
   "settings": {
     "title": "Settings",

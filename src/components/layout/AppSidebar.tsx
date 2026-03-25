@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { NavLink } from '@/components/NavLink';
+import { supabase } from '@/integrations/supabase/client';
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -72,7 +73,18 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
       return data?.length || 0;
     },
     enabled: !!user && role === 'admin',
-    refetchInterval: 30000, // refresh every 30s
+    refetchInterval: 30000,
+  });
+
+  // Fetch unassigned students count for admin badge
+  const { data: unassignedCount } = useQuery({
+    queryKey: ['unassigned-students-count'],
+    queryFn: async () => {
+      const { data } = await supabase.rpc('count_unassigned_students');
+      return (data as number) || 0;
+    },
+    enabled: !!user && role === 'admin',
+    refetchInterval: 30000,
   });
 
   const publicItems: NavItem[] = [
@@ -118,7 +130,7 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
 
   const adminItems: NavItem[] = [
     { to: '/admin', icon: LayoutDashboard, label: t('admin.dashboard', 'Admin Dashboard'), end: true },
-    { to: '/admin/users', icon: Users, label: t('admin.users', 'Users') },
+    { to: '/admin/users', icon: Users, label: t('admin.users', 'Users'), badge: unassignedCount || 0 },
     { to: '/admin/teachers', icon: UserCheck, label: t('admin.teacherApprovals', 'Teacher Approvals') },
     { to: '/admin/classes', icon: School, label: t('admin.classes', 'Classes') },
     { to: '/admin/enrollments', icon: UserPlus, label: t('admin.enrollmentRequests', 'Inschrijvingsaanvragen'), badge: pendingEnrollmentCount || 0 },

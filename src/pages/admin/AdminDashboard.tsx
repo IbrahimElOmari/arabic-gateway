@@ -8,10 +8,15 @@ import {
   CreditCard,
   UserCheck,
   Clock,
+  AlertTriangle,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiQuery } from "@/lib/supabase-api";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
@@ -41,6 +46,14 @@ export default function AdminDashboard() {
     ),
   });
 
+  const { data: unassignedCount } = useQuery({
+    queryKey: ["admin-unassigned-students"],
+    queryFn: async () => {
+      const { data } = await supabase.rpc('count_unassigned_students');
+      return (data as number) || 0;
+    },
+  });
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -52,6 +65,24 @@ export default function AdminDashboard() {
           {t("admin.dashboardDescription", "Overview of your platform statistics")}
         </p>
       </div>
+
+      {/* Unassigned Students Alert */}
+      {(unassignedCount ?? 0) > 0 && (
+        <Alert className="border-destructive/30 bg-destructive/5">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="flex flex-wrap items-center gap-3">
+            <span>
+              {t('admin.unassignedStudentsAlert', '{{count}} student(en) zonder klas. Wijs ze toe aan een klas.', { count: unassignedCount })}
+            </span>
+            <Button size="sm" variant="outline" asChild>
+              <Link to="/admin/users?filter=unassigned">
+                <Users className="h-4 w-4 mr-1" />
+                {t('admin.viewUnassigned', 'Bekijken')}
+              </Link>
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

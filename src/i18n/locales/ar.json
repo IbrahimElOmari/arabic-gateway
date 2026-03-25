@@ -146,7 +146,9 @@
     "quickActions": "إجراءات سريعة",
     "adminFallback": "أنت مسجل الدخول كمدير.",
     "teacherFallback": "أنت مسجل الدخول كمعلم.",
-    "studyTimeLabel": "وقت الدراسة"
+    "studyTimeLabel": "وقت الدراسة",
+    "noClassAssigned": "لم يتم تسجيلك في أي فصل بعد. سجل الآن لتبدأ التعلم.",
+    "goToPricing": "عرض الفصول"
   },
   "settings": {
     "title": "الإعدادات",

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { formatDate } from "@/lib/date-utils";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -29,7 +30,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Search, UserCog, Loader2 } from "lucide-react";
+import { Search, UserCog, Loader2, AlertTriangle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { logAdminAction } from "@/lib/admin-log";
@@ -57,8 +59,9 @@ export default function UsersPage() {
   const { user: adminUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [roleFilter, setRoleFilter] = useState<string>(searchParams.get('filter') === 'unassigned' ? 'unassigned' : 'all');
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [newRole, setNewRole] = useState<AppRole>("student");
   const [selectedClassId, setSelectedClassId] = useState<string>("none");
@@ -88,6 +91,15 @@ export default function UsersPage() {
           return { ...profile, role: roleData?.role as AppRole | undefined };
         })
       );
+
+      if (roleFilter === 'unassigned') {
+        // Filter to students with no class enrollments
+        const enrollments = await apiQuery<any[]>("class_enrollments", (q) =>
+          q.select("student_id")
+        );
+        const enrolledIds = new Set((enrollments || []).map((e: any) => e.student_id));
+        return usersWithRoles.filter((u) => (u.role === 'student' || !u.role) && !enrolledIds.has(u.user_id));
+      }
 
       if (roleFilter !== "all") return usersWithRoles.filter((u) => u.role === roleFilter);
       return usersWithRoles;
@@ -192,6 +204,7 @@ export default function UsersPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("admin.allRoles", "All Roles")}</SelectItem>
+            <SelectItem value="unassigned">{t("admin.unassignedStudents", "Without class")}</SelectItem>
             <SelectItem value="admin">{t("admin.admin", "Admin")}</SelectItem>
             <SelectItem value="teacher">{t("admin.teacher", "Teacher")}</SelectItem>
             <SelectItem value="student">{t("admin.student", "Student")}</SelectItem>
