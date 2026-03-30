@@ -389,7 +389,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
 
       {/* Question Dialog */}
       <Dialog open={showQuestionDialog} onOpenChange={setShowQuestionDialog}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-auto">
           <DialogHeader>
             <DialogTitle>
               {editingQuestion ? t("teacher.editQuestion", "Edit Question") : t("teacher.addQuestion", "Add Question")}
