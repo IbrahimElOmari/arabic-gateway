@@ -47,9 +47,10 @@ export const BUCKET_LIMITS: Record<string, UploadLimits> = {
   'exercise-media': {
     maxSizeBytes: 50 * 1024 * 1024,
     allowedMimeTypes: [
-      'image/jpeg', 'image/png', 'image/gif',
-      'audio/mpeg', 'audio/wav',
-      'video/mp4',
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp',
+      'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/webm', 'audio/aac', 'audio/mp4', 'audio/x-m4a', 'audio/flac',
+      'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska',
+      'application/pdf',
     ],
     bucketName: 'exercise-media',
   },
