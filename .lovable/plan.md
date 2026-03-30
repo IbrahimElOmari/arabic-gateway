@@ -1,65 +1,87 @@
 
 
-## Root Cause Analysis
+## Analysis & Fix Plan
 
-The problem is an architectural gap in the enrollment flow:
+### Problem: Missing Media Upload in Exercise Builder
 
-1. **Registration creates a student role** — the `handle_new_user()` trigger inserts into `profiles` and `user_roles` with role `student`
-2. **Enrollment is a separate, voluntary step** — a student must visit `/pricing`, pick a class, and click "Inschrijven" to create a `class_enrollments` record
-3. **Admin badge only counts `class_enrollments` with `status = 'pending'`** — students who registered but never enrolled have **zero records** in `class_enrollments`, so they're completely invisible to admins
+The ExerciseBuilder dialog (used by teachers/admins) has no way to attach reference media to questions. When a teacher selects "Audio Recording", "Video Upload", or "File Upload" as question type, the dialog shows the same fields as a text question (question text, time limit, correction type, explanation). There is no upload area for the teacher to attach:
 
-```text
-Register → profile + role created → student lands on dashboard
-                                      ↓
-                              NO enrollment record exists
-                                      ↓
-                              Admin sees nothing — no pending, no badge
-```
+- A reference audio clip (e.g., "listen and repeat")
+- A reference image or PDF (e.g., "look at this document and answer")
+- A video example
 
-The admin has no way to know a new student exists without a class assignment.
+The database already has a `media_url` column on the `questions` table, and the `ExercisePage` (student side) has a `media_url` field in the Question interface — but it's never populated because the builder never sets it.
 
----
+### Fix: Add media attachment to ExerciseBuilder
 
-## Solution
+**File: `src/components/teacher/ExerciseBuilder.tsx`**
 
-Two complementary fixes:
+Add a "Reference Media" upload section in the question dialog that appears for ALL question types (not just upload types — any question could benefit from an attached image/audio). This section will:
 
-### A. Admin: "Unassigned Students" indicator
+1. Show a file drop zone / browse button after the question text tabs
+2. Accept images, audio, video, and PDF files
+3. Upload to the `exercise-media` storage bucket (already exists)
+4. Store the URL in a new `media_url` field on the question form
+5. Display a preview (image thumbnail, audio player, or file icon) when media is attached
+6. Include a remove button to clear the attachment
 
-Add a query + UI section to the admin dashboard and sidebar that counts/lists students who have **no record** in `class_enrollments` at all. This lets admins proactively assign them.
+Additionally, the student-facing `ExercisePage.tsx` needs to render `media_url` when present (show image, play audio/video, or link to file).
 
-**Admin sidebar badge**: Change the existing enrollment badge to show the sum of pending enrollments + unassigned students (or add a second badge on a new "Users" or "Unassigned" link).
-
-**Admin Dashboard / Users page**: Add a prominent alert or tab showing unassigned students with a "Assign to class" action button.
-
-### B. Student: Post-registration nudge
-
-On `StudentDashboard`, detect when the student has zero enrollments and show a prominent banner: "Je bent nog niet ingeschreven voor een klas" with a CTA button to `/pricing`.
-
----
-
-## Implementation
+### Implementation Steps
 
 | # | File | Change |
 |---|------|--------|
-| 1 | `src/pages/StudentDashboard.tsx` | Add query for `class_enrollments` where `student_id = user.id`. If empty, show alert banner with link to `/pricing` |
-| 2 | `src/components/layout/AppSidebar.tsx` | Add a second query counting students with no enrollments (for admin only). Combine with pending count for the badge, or add a separate badge on the Users link |
-| 3 | `src/pages/admin/AdminDashboard.tsx` | Add an "Unassigned Students" card showing count + link to users page |
-| 4 | `src/pages/admin/UsersPage.tsx` | Add a filter option "Without class" that shows students who have no `class_enrollments` record. Add an inline "Assign to class" action |
-| 5 | `src/i18n/locales/{nl,en,ar}.json` | Add keys: `dashboard.noClassAssigned`, `dashboard.noClassAssignedDesc`, `dashboard.goToPricing`, `admin.unassignedStudents`, `admin.unassignedStudentsDesc` |
+| 1 | `src/components/teacher/ExerciseBuilder.tsx` | Add `media_url` to `questionForm` state. Add a media upload section in the dialog (after question text tabs, before time limit). Upload files to `exercise-media` bucket. Save `media_url` in create/update mutations. |
+| 2 | `src/pages/ExercisePage.tsx` | Render `currentQuestion.media_url` above the answer input — show `<img>`, `<audio>`, `<video>`, or download link based on file type |
+| 3 | `src/i18n/locales/{nl,en,ar}.json` | Add keys: `teacher.referenceMedia`, `teacher.referenceMediaHint`, `teacher.removeMedia` |
 
-### Technical Detail
+### Technical Details
 
-**Unassigned students query** (for admin):
-```sql
-SELECT p.* FROM profiles p
-JOIN user_roles ur ON ur.user_id = p.user_id AND ur.role = 'student'
-WHERE NOT EXISTS (
-  SELECT 1 FROM class_enrollments ce WHERE ce.student_id = p.user_id
-)
+**ExerciseBuilder media section** (inserted after the i18n Tabs, before the timer grid):
+
+```text
+┌─────────────────────────────────────────┐
+│ Reference Media (optional)              │
+│ ┌─────────────────────────────────────┐ │
+│ │  [Drop file or click to browse]     │ │
+│ │  Images, audio, video, PDF (max 50MB│ │
+│ └─────────────────────────────────────┘ │
+│                                         │
+│ Preview: [image/audio player/file icon] │
+│                            [🗑 Remove]  │
+└─────────────────────────────────────────┘
 ```
 
-This will be implemented as a Supabase RPC function (since the join logic is complex for the JS client), or as two queries: fetch all student user_ids from `user_roles`, then filter out those present in `class_enrollments`.
+**Upload target**: `exercise-media` bucket, path: `{exerciseId}/{questionId or timestamp}/filename`
 
-**Student dashboard banner**: Simple query — if `class_enrollments` returns empty array for the current user, render an `Alert` with a `Link` to `/pricing`.
+**Student-side rendering** in ExercisePage `CardHeader` (below question text):
+- If `media_url` contains image extension → `<img>`
+- If audio extension → `<audio controls>`
+- If video extension → `<video controls>`
+- Otherwise → download link
+
+---
+
+### Optimization & Improvement List
+
+| # | Category | Issue | Fix |
+|---|----------|-------|-----|
+| 1 | **UX** | No loading state when navigating between lazy-loaded pages (only generic spinner) | Add skeleton loaders per page type |
+| 2 | **UX** | No confirmation dialog when deleting questions, exercises, or forum posts | Add `AlertDialog` before destructive actions |
+| 3 | **UX** | Drag-and-drop reorder on questions shows `GripVertical` icon but has no actual DnD implementation | Implement with `@dnd-kit/core` or remove the grip icon |
+| 4 | **UX** | No search/filter on exercises list for teachers with many exercises | Add search input + status filter |
+| 5 | **UX** | Student `ExercisePage` doesn't show which questions are answered in the progress bar | Add question dots/indicators showing answered vs unanswered |
+| 6 | **Performance** | `QueryClient` created with no `staleTime` — every focus refetch hits the DB | Set default `staleTime: 5 * 60 * 1000` for most queries |
+| 7 | **Performance** | All admin/teacher pages are lazy-loaded but no prefetch on hover | Add `onMouseEnter` prefetch for sidebar links |
+| 8 | **Routes** | `/profile` redirects to `/settings` but there's no dedicated profile tab in settings | Verify settings page has a profile section or remove redirect |
+| 9 | **Routes** | No `/student-dashboard` route — `DashboardPage` dispatches by role but URL doesn't reflect this | Consider role-specific dashboard URLs |
+| 10 | **Security** | `student-uploads` bucket is private but `getPublicUrl()` is used — this returns a URL that won't work without auth | Either make bucket public or use `createSignedUrl()` |
+| 11 | **Accessibility** | Missing `aria-label` on icon-only buttons (edit, delete, grip) in ExerciseBuilder | Add descriptive aria-labels |
+| 12 | **Accessibility** | No skip-to-content link in AppLayout | Add hidden skip link |
+| 13 | **i18n** | Some `t()` calls use template literals in fallback text (e.g., `Max duration: ${x}`) — these won't translate properly | Use i18n interpolation: `t('key', { count: x })` |
+| 14 | **Data** | Exercise attempts have no retry/reset mechanism in the UI | Add "Retry" button on failed attempts |
+| 15 | **Mobile** | ExerciseBuilder dialog at `max-w-3xl` is hard to use on mobile | Make dialog responsive with full-screen on mobile |
+| 16 | **Error handling** | No error boundary inside individual pages — a single component crash takes down the whole app | Add per-page error boundaries |
+| 17 | **Chat** | No message read receipts or typing indicators | Implement via Supabase Realtime presence |
+| 18 | **Storage** | `exercise-media` bucket has no RLS policies for teacher uploads | Add INSERT policy for teachers and admins |
 
