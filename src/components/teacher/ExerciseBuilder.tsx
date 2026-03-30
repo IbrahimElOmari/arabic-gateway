@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiQuery, apiMutate } from "@/lib/supabase-api";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,9 +37,13 @@ import {
   FileText,
   Upload,
   Mic,
-  Video
+  Video,
+  ImageIcon,
+  X,
+  FileUp,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { validateUpload } from "@/lib/upload-validation";
 
 interface ExerciseBuilderProps {
   exerciseId: string;
@@ -56,6 +61,14 @@ const questionTypeIcons: Record<QuestionType, React.ElementType> = {
   file_upload: Upload,
 };
 
+function getMediaType(url: string): "image" | "audio" | "video" | "file" {
+  const ext = url.split(".").pop()?.toLowerCase() || "";
+  if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext)) return "image";
+  if (["mp3", "wav", "ogg", "webm", "m4a"].includes(ext)) return "audio";
+  if (["mp4", "webm", "mov", "avi"].includes(ext)) return "video";
+  return "file";
+}
+
 export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
@@ -63,6 +76,8 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
   const queryClient = useQueryClient();
   const [showQuestionDialog, setShowQuestionDialog] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<any>(null);
+  const [mediaUploading, setMediaUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [questionForm, setQuestionForm] = useState({
     type: "multiple_choice" as QuestionType,
     question_text: { nl: "", en: "", ar: "" },
@@ -78,6 +93,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
     explanation: "",
     time_limit_seconds: null as number | null,
     requires_manual_grading: false,
+    media_url: null as string | null,
   });
 
   // Get exercise details
