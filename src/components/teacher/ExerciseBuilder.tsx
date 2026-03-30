@@ -214,6 +214,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
       explanation: "",
       time_limit_seconds: null,
       requires_manual_grading: false,
+      media_url: null,
     });
   };
 
