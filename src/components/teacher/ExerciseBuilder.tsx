@@ -358,10 +358,10 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
                       <p className="font-medium">{getQuestionText(question)}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => openEditDialog(question)}>
+                      <Button variant="ghost" size="icon" onClick={() => openEditDialog(question)} aria-label={t("common.edit", "Edit")}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => deleteQuestionMutation.mutate(question.id)}>
+                      <Button variant="ghost" size="icon" onClick={() => deleteQuestionMutation.mutate(question.id)} aria-label={t("common.delete", "Delete")}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
