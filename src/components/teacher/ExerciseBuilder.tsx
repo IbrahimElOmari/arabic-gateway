@@ -174,6 +174,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
         points: form.points,
         explanation: form.explanation || null,
         time_limit_seconds: form.time_limit_seconds,
+        media_url: form.media_url,
       }).eq("id", id));
     },
     onSuccess: () => {
