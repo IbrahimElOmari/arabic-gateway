@@ -135,6 +135,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
         explanation: form.explanation || null,
         display_order: displayOrder,
         time_limit_seconds: form.time_limit_seconds,
+        media_url: form.media_url,
       }));
     },
     onSuccess: () => {
