@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiQuery, apiMutate } from "@/lib/supabase-api";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,9 +37,13 @@ import {
   FileText,
   Upload,
   Mic,
-  Video
+  Video,
+  ImageIcon,
+  X,
+  FileUp,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { validateUpload } from "@/lib/upload-validation";
 
 interface ExerciseBuilderProps {
   exerciseId: string;
@@ -56,6 +61,14 @@ const questionTypeIcons: Record<QuestionType, React.ElementType> = {
   file_upload: Upload,
 };
 
+function getMediaType(url: string): "image" | "audio" | "video" | "file" {
+  const ext = url.split(".").pop()?.toLowerCase() || "";
+  if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext)) return "image";
+  if (["mp3", "wav", "ogg", "webm", "m4a"].includes(ext)) return "audio";
+  if (["mp4", "webm", "mov", "avi"].includes(ext)) return "video";
+  return "file";
+}
+
 export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
@@ -63,6 +76,8 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
   const queryClient = useQueryClient();
   const [showQuestionDialog, setShowQuestionDialog] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<any>(null);
+  const [mediaUploading, setMediaUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [questionForm, setQuestionForm] = useState({
     type: "multiple_choice" as QuestionType,
     question_text: { nl: "", en: "", ar: "" },
@@ -78,6 +93,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
     explanation: "",
     time_limit_seconds: null as number | null,
     requires_manual_grading: false,
+    media_url: null as string | null,
   });
 
   // Get exercise details
@@ -119,6 +135,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
         explanation: form.explanation || null,
         display_order: displayOrder,
         time_limit_seconds: form.time_limit_seconds,
+        media_url: form.media_url,
       }));
     },
     onSuccess: () => {
@@ -157,6 +174,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
         points: form.points,
         explanation: form.explanation || null,
         time_limit_seconds: form.time_limit_seconds,
+        media_url: form.media_url,
       }).eq("id", id));
     },
     onSuccess: () => {
@@ -196,6 +214,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
       explanation: "",
       time_limit_seconds: null,
       requires_manual_grading: false,
+      media_url: null,
     });
   };
 
@@ -216,8 +235,38 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
       explanation: question.explanation || "",
       time_limit_seconds: question.time_limit_seconds || null,
       requires_manual_grading: ["open_text", "audio_upload", "video_upload", "file_upload"].includes(question.type),
+      media_url: question.media_url || null,
     });
     setShowQuestionDialog(true);
+  };
+
+  const handleMediaUpload = async (file: File) => {
+    const validation = validateUpload(file, "exercise-media");
+    if (!validation.valid) {
+      toast({ variant: "destructive", title: t("common.error", "Error"), description: validation.error });
+      return;
+    }
+
+    setMediaUploading(true);
+    try {
+      const timestamp = Date.now();
+      const filePath = `${exerciseId}/${timestamp}-${file.name}`;
+      const { error } = await supabase.storage.from("exercise-media").upload(filePath, file);
+      if (error) throw error;
+
+      const { data: urlData } = supabase.storage.from("exercise-media").getPublicUrl(filePath);
+      setQuestionForm((prev) => ({ ...prev, media_url: urlData.publicUrl }));
+      toast({ title: t("teacher.mediaUploaded", "Media uploaded") });
+    } catch (error) {
+      console.error("Media upload error:", error);
+      toast({ variant: "destructive", title: t("common.error", "Error"), description: t("teacher.mediaUploadError", "Failed to upload media.") });
+    } finally {
+      setMediaUploading(false);
+    }
+  };
+
+  const handleRemoveMedia = () => {
+    setQuestionForm((prev) => ({ ...prev, media_url: null }));
   };
 
   const handleSubmit = () => {
@@ -259,7 +308,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={onBack}>
+        <Button variant="ghost" size="icon" onClick={onBack} aria-label={t("common.back", "Back")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
@@ -309,10 +358,10 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
                       <p className="font-medium">{getQuestionText(question)}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => openEditDialog(question)}>
+                      <Button variant="ghost" size="icon" onClick={() => openEditDialog(question)} aria-label={t("common.edit", "Edit")}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => deleteQuestionMutation.mutate(question.id)}>
+                      <Button variant="ghost" size="icon" onClick={() => deleteQuestionMutation.mutate(question.id)} aria-label={t("common.delete", "Delete")}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
@@ -340,7 +389,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
 
       {/* Question Dialog */}
       <Dialog open={showQuestionDialog} onOpenChange={setShowQuestionDialog}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-auto">
           <DialogHeader>
             <DialogTitle>
               {editingQuestion ? t("teacher.editQuestion", "Edit Question") : t("teacher.addQuestion", "Add Question")}
@@ -439,6 +488,59 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
                 </TabsContent>
               ))}
             </Tabs>
+
+            {/* Reference Media Upload */}
+            <div>
+              <Label>{t("teacher.referenceMedia", "Reference Media")} ({t("common.optional", "optional")})</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                {t("teacher.referenceMediaHint", "Attach an image, audio, video, or PDF that students will see with this question.")}
+              </p>
+              {questionForm.media_url ? (
+                <div className="border rounded-lg p-3 bg-muted/30 space-y-2">
+                  {(() => {
+                    const type = getMediaType(questionForm.media_url);
+                    if (type === "image") return <img src={questionForm.media_url} alt="" className="max-h-40 rounded object-contain" />;
+                    if (type === "audio") return <audio controls src={questionForm.media_url} className="w-full" />;
+                    if (type === "video") return <video controls src={questionForm.media_url} className="max-h-40 rounded" />;
+                    return (
+                      <a href={questionForm.media_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary underline">
+                        <FileText className="h-4 w-4" /> {t("teacher.viewFile", "View file")}
+                      </a>
+                    );
+                  })()}
+                  <Button type="button" variant="ghost" size="sm" onClick={handleRemoveMedia} className="text-destructive">
+                    <X className="h-4 w-4 mr-1" /> {t("teacher.removeMedia", "Remove")}
+                  </Button>
+                </div>
+              ) : (
+                <div
+                  className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {mediaUploading ? (
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto" />
+                  ) : (
+                    <>
+                      <FileUp className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">
+                        {t("teacher.clickToUpload", "Click to upload")} — max 50MB
+                      </p>
+                    </>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    accept="image/*,audio/*,video/*,application/pdf"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleMediaUpload(file);
+                      e.target.value = "";
+                    }}
+                  />
+                </div>
+              )}
+            </div>
 
             {/* Timer per vraag */}
             <div className="grid grid-cols-2 gap-4">
