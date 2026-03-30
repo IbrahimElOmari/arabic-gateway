@@ -84,7 +84,14 @@ const ForumPostPage = React.lazy(() => import("./pages/ForumPostPage"));
 const ChatPage = React.lazy(() => import("./pages/ChatPage"));
 const ApplyTeacherPage = React.lazy(() => import("./pages/ApplyTeacherPage"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
