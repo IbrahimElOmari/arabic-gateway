@@ -235,8 +235,38 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
       explanation: question.explanation || "",
       time_limit_seconds: question.time_limit_seconds || null,
       requires_manual_grading: ["open_text", "audio_upload", "video_upload", "file_upload"].includes(question.type),
+      media_url: question.media_url || null,
     });
     setShowQuestionDialog(true);
+  };
+
+  const handleMediaUpload = async (file: File) => {
+    const validation = validateUpload(file, "exercise-media");
+    if (!validation.valid) {
+      toast({ variant: "destructive", title: t("common.error", "Error"), description: validation.error });
+      return;
+    }
+
+    setMediaUploading(true);
+    try {
+      const timestamp = Date.now();
+      const filePath = `${exerciseId}/${timestamp}-${file.name}`;
+      const { error } = await supabase.storage.from("exercise-media").upload(filePath, file);
+      if (error) throw error;
+
+      const { data: urlData } = supabase.storage.from("exercise-media").getPublicUrl(filePath);
+      setQuestionForm((prev) => ({ ...prev, media_url: urlData.publicUrl }));
+      toast({ title: t("teacher.mediaUploaded", "Media uploaded") });
+    } catch (error) {
+      console.error("Media upload error:", error);
+      toast({ variant: "destructive", title: t("common.error", "Error"), description: t("teacher.mediaUploadError", "Failed to upload media.") });
+    } finally {
+      setMediaUploading(false);
+    }
+  };
+
+  const handleRemoveMedia = () => {
+    setQuestionForm((prev) => ({ ...prev, media_url: null }));
   };
 
   const handleSubmit = () => {
