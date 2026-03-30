@@ -489,6 +489,59 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
               ))}
             </Tabs>
 
+            {/* Reference Media Upload */}
+            <div>
+              <Label>{t("teacher.referenceMedia", "Reference Media")} ({t("common.optional", "optional")})</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                {t("teacher.referenceMediaHint", "Attach an image, audio, video, or PDF that students will see with this question.")}
+              </p>
+              {questionForm.media_url ? (
+                <div className="border rounded-lg p-3 bg-muted/30 space-y-2">
+                  {(() => {
+                    const type = getMediaType(questionForm.media_url);
+                    if (type === "image") return <img src={questionForm.media_url} alt="" className="max-h-40 rounded object-contain" />;
+                    if (type === "audio") return <audio controls src={questionForm.media_url} className="w-full" />;
+                    if (type === "video") return <video controls src={questionForm.media_url} className="max-h-40 rounded" />;
+                    return (
+                      <a href={questionForm.media_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary underline">
+                        <FileText className="h-4 w-4" /> {t("teacher.viewFile", "View file")}
+                      </a>
+                    );
+                  })()}
+                  <Button type="button" variant="ghost" size="sm" onClick={handleRemoveMedia} className="text-destructive">
+                    <X className="h-4 w-4 mr-1" /> {t("teacher.removeMedia", "Remove")}
+                  </Button>
+                </div>
+              ) : (
+                <div
+                  className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {mediaUploading ? (
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto" />
+                  ) : (
+                    <>
+                      <FileUp className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">
+                        {t("teacher.clickToUpload", "Click to upload")} — max 50MB
+                      </p>
+                    </>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    accept="image/*,audio/*,video/*,application/pdf"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleMediaUpload(file);
+                      e.target.value = "";
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
             {/* Timer per vraag */}
             <div className="grid grid-cols-2 gap-4">
               <div>

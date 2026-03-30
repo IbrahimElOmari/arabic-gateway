@@ -353,6 +353,27 @@ export default function ExercisePage() {
               <CardTitle className="text-lg">
                 {getLocalizedText(currentQuestion.question_text)}
               </CardTitle>
+              {currentQuestion.media_url && (
+                <div className="mt-3">
+                  {(() => {
+                    const ext = currentQuestion.media_url.split(".").pop()?.toLowerCase() || "";
+                    if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext)) {
+                      return <img src={currentQuestion.media_url} alt="" className="max-h-64 rounded-lg object-contain" />;
+                    }
+                    if (["mp3", "wav", "ogg", "webm", "m4a"].includes(ext)) {
+                      return <audio controls src={currentQuestion.media_url} className="w-full" />;
+                    }
+                    if (["mp4", "mov", "avi"].includes(ext)) {
+                      return <video controls src={currentQuestion.media_url} className="max-h-64 rounded-lg" />;
+                    }
+                    return (
+                      <a href={currentQuestion.media_url} target="_blank" rel="noopener noreferrer" className="text-primary underline text-sm">
+                        📎 {t("exercises.viewAttachment", "View attachment")}
+                      </a>
+                    );
+                  })()}
+                </div>
+              )}
             </CardHeader>
             <CardContent>
               {currentQuestion.type === "multiple_choice" && (
