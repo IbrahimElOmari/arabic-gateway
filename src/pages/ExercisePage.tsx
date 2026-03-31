@@ -26,6 +26,7 @@ import { OpenTextQuestion } from "@/components/exercises/questions/OpenTextQuest
 import { AudioUploadQuestion } from "@/components/exercises/questions/AudioUploadQuestion";
 import { VideoUploadQuestion } from "@/components/exercises/questions/VideoUploadQuestion";
 import { FileUploadQuestion } from "@/components/exercises/questions/FileUploadQuestion";
+import { OrderingQuestion } from "@/components/exercises/questions/OrderingQuestion";
 
 interface Question {
   id: string;
