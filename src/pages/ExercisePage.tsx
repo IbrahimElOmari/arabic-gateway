@@ -176,6 +176,16 @@ export default function ExercisePage() {
             totalScore += question.points;
           }
         }
+        else if (question.type === "ordering" && answer && question.options) {
+          const correctOrder = question.options.map((o: any) => o.value || o.label);
+          const answerArray = Array.isArray(answer) ? answer : [];
+          if (
+            correctOrder.length === answerArray.length &&
+            correctOrder.every((v: string, i: number) => v === answerArray[i])
+          ) {
+            totalScore += question.points;
+          }
+        }
         // Open text, audio, video questions need teacher review
       }
 
