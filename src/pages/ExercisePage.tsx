@@ -432,6 +432,19 @@ export default function ExercisePage() {
                   questionId={currentQuestion.id}
                 />
               )}
+              {currentQuestion.type === "ordering" && (
+                <OrderingQuestion
+                  options={(currentQuestion.options || []).map((o: any, i: number) => ({
+                    label: o.label || o[i18n.language] || o.en || o.nl || "",
+                    value: o.value || o.label || o[i18n.language] || o.en || String(i),
+                    order: o.order ?? i,
+                    image_url: o.image_url,
+                  }))}
+                  value={answers[currentQuestion.id] as string[]}
+                  onChange={(value) => handleAnswerChange(currentQuestion.id, value)}
+                  attemptId={attemptId}
+                />
+              )}
             </CardContent>
           </Card>
         )}

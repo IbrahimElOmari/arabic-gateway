@@ -495,6 +495,52 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
                       </p>
                     </div>
                   )}
+
+                  {questionForm.type === "ordering" && (
+                    <div className="space-y-2">
+                      <Label>{t("teacher.orderItems", "Items in Correct Order")} ({lang.toUpperCase()})</Label>
+                      <p className="text-xs text-muted-foreground">
+                        {t("teacher.orderingDescription", "Enter items in the correct order. Students will see them shuffled.")}
+                      </p>
+                      {questionForm.options.map((option, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <span className="text-sm font-mono text-muted-foreground w-6 text-center shrink-0">{index + 1}</span>
+                          <Input
+                            value={option[lang as keyof typeof option] || ""}
+                            onChange={(e) => updateOption(index, lang, e.target.value)}
+                            placeholder={`${t("teacher.item", "Item")} ${index + 1}`}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="shrink-0"
+                            onClick={() => {
+                              const newOptions = questionForm.options.filter((_, i) => i !== index);
+                              setQuestionForm({ ...questionForm, options: newOptions });
+                            }}
+                            disabled={questionForm.options.length <= 2}
+                          >
+                            <X className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setQuestionForm({
+                            ...questionForm,
+                            options: [...questionForm.options, { nl: "", en: "", ar: "" }],
+                          });
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        {t("teacher.addOrderItem", "Add Item")}
+                      </Button>
+                    </div>
+                  )}
                 </TabsContent>
               ))}
             </Tabs>

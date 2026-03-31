@@ -778,7 +778,8 @@
     "open_text": "Open tekst",
     "audio_upload": "Audio-opname",
     "video_upload": "Video-opname",
-    "file_upload": "Bestand uploaden"
+    "file_upload": "Bestand uploaden",
+    "ordering": "Rangschikken (slepen)"
   },
   "exercises": {
     "submitted": "Oefening ingediend",
