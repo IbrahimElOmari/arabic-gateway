@@ -200,12 +200,17 @@ export default function ExercisePage() {
         answer_text: typeof answers[q.id] === "string" ? (answers[q.id] as string) : null,
         answer_data: Array.isArray(answers[q.id]) ? { selected: answers[q.id] } : null,
         is_correct:
-          q.type === "multiple_choice" || q.type === "checkbox"
+          q.type === "multiple_choice" || q.type === "checkbox" || q.type === "ordering"
             ? (() => {
                 const ans = answers[q.id];
                 if (!ans || !q.options) return false;
                 if (q.type === "multiple_choice") {
                   return q.options.find((o) => o.isCorrect)?.value === ans;
+                }
+                if (q.type === "ordering") {
+                  const correctOrder = q.options.map((o: any) => o.value || o.label);
+                  const ansArray = Array.isArray(ans) ? ans : [];
+                  return correctOrder.length === ansArray.length && correctOrder.every((v: string, i: number) => v === ansArray[i]);
                 }
                 const correctValues = q.options.filter((o) => o.isCorrect).map((o) => o.value);
                 const ansArray = Array.isArray(ans) ? ans : [ans];
