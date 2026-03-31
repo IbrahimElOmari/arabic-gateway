@@ -50,7 +50,7 @@ interface ExerciseBuilderProps {
   onBack: () => void;
 }
 
-type QuestionType = "multiple_choice" | "checkbox" | "open_text" | "audio_upload" | "video_upload" | "file_upload";
+type QuestionType = "multiple_choice" | "checkbox" | "open_text" | "audio_upload" | "video_upload" | "file_upload" | "ordering";
 
 const questionTypeIcons: Record<QuestionType, React.ElementType> = {
   multiple_choice: ListChecks,
@@ -59,6 +59,7 @@ const questionTypeIcons: Record<QuestionType, React.ElementType> = {
   audio_upload: Mic,
   video_upload: Video,
   file_upload: Upload,
+  ordering: GripVertical,
 };
 
 function getMediaType(url: string): "image" | "audio" | "video" | "file" {
@@ -121,15 +122,19 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
         correctAnswer = form.correct_answer;
       } else if (form.type === "checkbox") {
         correctAnswer = form.correct_answers;
+      } else if (form.type === "ordering") {
+        correctAnswer = form.options.map((o: any) => o.value || o.label);
       } else {
         correctAnswer = null;
       }
+
+      const hasOptions = ["multiple_choice", "checkbox", "ordering"].includes(form.type);
 
       await apiMutate("questions", (q) => q.insert({
         exercise_id: exerciseId,
         type: form.type,
         question_text: form.question_text,
-        options: form.type === "multiple_choice" || form.type === "checkbox" ? form.options : null,
+        options: hasOptions ? form.options : null,
         correct_answer: correctAnswer,
         points: form.points,
         explanation: form.explanation || null,
@@ -162,14 +167,18 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
         correctAnswer = form.correct_answer;
       } else if (form.type === "checkbox") {
         correctAnswer = form.correct_answers;
+      } else if (form.type === "ordering") {
+        correctAnswer = form.options.map((o: any) => o.value || o.label);
       } else {
         correctAnswer = null;
       }
 
+      const hasOptions = ["multiple_choice", "checkbox", "ordering"].includes(form.type);
+
       await apiMutate("questions", (q) => q.update({
         type: form.type,
         question_text: form.question_text,
-        options: form.type === "multiple_choice" || form.type === "checkbox" ? form.options : null,
+        options: hasOptions ? form.options : null,
         correct_answer: correctAnswer,
         points: form.points,
         explanation: form.explanation || null,
@@ -414,6 +423,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
                     <SelectItem value="audio_upload">{t("questionTypes.audio_upload", "Audio Recording")}</SelectItem>
                     <SelectItem value="video_upload">{t("questionTypes.video_upload", "Video Recording")}</SelectItem>
                     <SelectItem value="file_upload">{t("questionTypes.file_upload", "File Upload")}</SelectItem>
+                    <SelectItem value="ordering">{t("questionTypes.ordering", "Ordering (Drag & Drop)")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -483,6 +493,52 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
                           ? t("teacher.selectCorrectAnswer", "Select the correct answer")
                           : t("teacher.selectCorrectAnswers", "Select all correct answers")}
                       </p>
+                    </div>
+                  )}
+
+                  {questionForm.type === "ordering" && (
+                    <div className="space-y-2">
+                      <Label>{t("teacher.orderItems", "Items in Correct Order")} ({lang.toUpperCase()})</Label>
+                      <p className="text-xs text-muted-foreground">
+                        {t("teacher.orderingDescription", "Enter items in the correct order. Students will see them shuffled.")}
+                      </p>
+                      {questionForm.options.map((option, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <span className="text-sm font-mono text-muted-foreground w-6 text-center shrink-0">{index + 1}</span>
+                          <Input
+                            value={option[lang as keyof typeof option] || ""}
+                            onChange={(e) => updateOption(index, lang, e.target.value)}
+                            placeholder={`${t("teacher.item", "Item")} ${index + 1}`}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="shrink-0"
+                            onClick={() => {
+                              const newOptions = questionForm.options.filter((_, i) => i !== index);
+                              setQuestionForm({ ...questionForm, options: newOptions });
+                            }}
+                            disabled={questionForm.options.length <= 2}
+                          >
+                            <X className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setQuestionForm({
+                            ...questionForm,
+                            options: [...questionForm.options, { nl: "", en: "", ar: "" }],
+                          });
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        {t("teacher.addOrderItem", "Add Item")}
+                      </Button>
                     </div>
                   )}
                 </TabsContent>

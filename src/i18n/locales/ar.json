@@ -776,7 +776,8 @@
     "open_text": "نص مفتوح",
     "audio_upload": "تسجيل صوتي",
     "video_upload": "تسجيل فيديو",
-    "file_upload": "رفع ملف"
+    "file_upload": "رفع ملف",
+    "ordering": "ترتيب (سحب وإفلات)"
   },
   "exercises": {
     "submitted": "تم إرسال التمرين",
@@ -789,7 +790,8 @@
     "question": "سؤال",
     "submit": "إرسال",
     "submitError": "فشل في إرسال التمرين.",
-    "typeAnswer": "اكتب إجابتك هنا..."
+    "typeAnswer": "اكتب إجابتك هنا...",
+    "orderingHint": "اسحب العناصر وأفلتها بالترتيب الصحيح."
   },
   "progress": {
     "title": "تقارير التقدم",

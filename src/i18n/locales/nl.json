@@ -778,7 +778,8 @@
     "open_text": "Open tekst",
     "audio_upload": "Audio-opname",
     "video_upload": "Video-opname",
-    "file_upload": "Bestand uploaden"
+    "file_upload": "Bestand uploaden",
+    "ordering": "Rangschikken (slepen)"
   },
   "exercises": {
     "submitted": "Oefening ingediend",
@@ -791,7 +792,8 @@
     "question": "Vraag",
     "submit": "Verzenden",
     "submitError": "Oefening verzenden mislukt.",
-    "typeAnswer": "Typ je antwoord hier..."
+    "typeAnswer": "Typ je antwoord hier...",
+    "orderingHint": "Sleep de items in de juiste volgorde."
   },
   "progress": {
     "title": "Voortgangsrapporten",

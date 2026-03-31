@@ -26,6 +26,7 @@ import { OpenTextQuestion } from "@/components/exercises/questions/OpenTextQuest
 import { AudioUploadQuestion } from "@/components/exercises/questions/AudioUploadQuestion";
 import { VideoUploadQuestion } from "@/components/exercises/questions/VideoUploadQuestion";
 import { FileUploadQuestion } from "@/components/exercises/questions/FileUploadQuestion";
+import { OrderingQuestion } from "@/components/exercises/questions/OrderingQuestion";
 
 interface Question {
   id: string;
@@ -175,6 +176,16 @@ export default function ExercisePage() {
             totalScore += question.points;
           }
         }
+        else if (question.type === "ordering" && answer && question.options) {
+          const correctOrder = question.options.map((o: any) => o.value || o.label);
+          const answerArray = Array.isArray(answer) ? answer : [];
+          if (
+            correctOrder.length === answerArray.length &&
+            correctOrder.every((v: string, i: number) => v === answerArray[i])
+          ) {
+            totalScore += question.points;
+          }
+        }
         // Open text, audio, video questions need teacher review
       }
 
@@ -189,12 +200,17 @@ export default function ExercisePage() {
         answer_text: typeof answers[q.id] === "string" ? (answers[q.id] as string) : null,
         answer_data: Array.isArray(answers[q.id]) ? { selected: answers[q.id] } : null,
         is_correct:
-          q.type === "multiple_choice" || q.type === "checkbox"
+          q.type === "multiple_choice" || q.type === "checkbox" || q.type === "ordering"
             ? (() => {
                 const ans = answers[q.id];
                 if (!ans || !q.options) return false;
                 if (q.type === "multiple_choice") {
                   return q.options.find((o) => o.isCorrect)?.value === ans;
+                }
+                if (q.type === "ordering") {
+                  const correctOrder = q.options.map((o: any) => o.value || o.label);
+                  const ansArray = Array.isArray(ans) ? ans : [];
+                  return correctOrder.length === ansArray.length && correctOrder.every((v: string, i: number) => v === ansArray[i]);
                 }
                 const correctValues = q.options.filter((o) => o.isCorrect).map((o) => o.value);
                 const ansArray = Array.isArray(ans) ? ans : [ans];
@@ -419,6 +435,19 @@ export default function ExercisePage() {
                   onChange={(url) => handleAnswerChange(currentQuestion.id, url)}
                   attemptId={attemptId}
                   questionId={currentQuestion.id}
+                />
+              )}
+              {currentQuestion.type === "ordering" && (
+                <OrderingQuestion
+                  options={(currentQuestion.options || []).map((o: any, i: number) => ({
+                    label: o.label || o[i18n.language] || o.en || o.nl || "",
+                    value: o.value || o.label || o[i18n.language] || o.en || String(i),
+                    order: o.order ?? i,
+                    image_url: o.image_url,
+                  }))}
+                  value={answers[currentQuestion.id] as string[]}
+                  onChange={(value) => handleAnswerChange(currentQuestion.id, value)}
+                  attemptId={attemptId}
                 />
               )}
             </CardContent>

@@ -782,7 +782,8 @@
     "open_text": "Open Text",
     "audio_upload": "Audio Recording",
     "video_upload": "Video Recording",
-    "file_upload": "File Upload"
+    "file_upload": "File Upload",
+    "ordering": "Ordering (Drag & Drop)"
   },
   "exercises": {
     "submitted": "Exercise Submitted",
@@ -795,7 +796,8 @@
     "question": "Question",
     "submit": "Submit",
     "submitError": "Failed to submit exercise.",
-    "typeAnswer": "Type your answer here..."
+    "typeAnswer": "Type your answer here...",
+    "orderingHint": "Drag and drop the items into the correct order."
   },
   "progress": {
     "title": "Progress Reports",
