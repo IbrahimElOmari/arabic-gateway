@@ -167,14 +167,18 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
         correctAnswer = form.correct_answer;
       } else if (form.type === "checkbox") {
         correctAnswer = form.correct_answers;
+      } else if (form.type === "ordering") {
+        correctAnswer = form.options.map((o: any) => o.value || o.label);
       } else {
         correctAnswer = null;
       }
 
+      const hasOptions = ["multiple_choice", "checkbox", "ordering"].includes(form.type);
+
       await apiMutate("questions", (q) => q.update({
         type: form.type,
         question_text: form.question_text,
-        options: form.type === "multiple_choice" || form.type === "checkbox" ? form.options : null,
+        options: hasOptions ? form.options : null,
         correct_answer: correctAnswer,
         points: form.points,
         explanation: form.explanation || null,
