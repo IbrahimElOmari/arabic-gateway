@@ -423,6 +423,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
                     <SelectItem value="audio_upload">{t("questionTypes.audio_upload", "Audio Recording")}</SelectItem>
                     <SelectItem value="video_upload">{t("questionTypes.video_upload", "Video Recording")}</SelectItem>
                     <SelectItem value="file_upload">{t("questionTypes.file_upload", "File Upload")}</SelectItem>
+                    <SelectItem value="ordering">{t("questionTypes.ordering", "Ordering (Drag & Drop)")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
