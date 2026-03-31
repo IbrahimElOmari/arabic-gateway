@@ -796,7 +796,8 @@
     "question": "Question",
     "submit": "Submit",
     "submitError": "Failed to submit exercise.",
-    "typeAnswer": "Type your answer here..."
+    "typeAnswer": "Type your answer here...",
+    "orderingHint": "Drag and drop the items into the correct order."
   },
   "progress": {
     "title": "Progress Reports",
