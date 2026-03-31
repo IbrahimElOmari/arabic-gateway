@@ -50,7 +50,7 @@ interface ExerciseBuilderProps {
   onBack: () => void;
 }
 
-type QuestionType = "multiple_choice" | "checkbox" | "open_text" | "audio_upload" | "video_upload" | "file_upload";
+type QuestionType = "multiple_choice" | "checkbox" | "open_text" | "audio_upload" | "video_upload" | "file_upload" | "ordering";
 
 const questionTypeIcons: Record<QuestionType, React.ElementType> = {
   multiple_choice: ListChecks,
@@ -59,6 +59,7 @@ const questionTypeIcons: Record<QuestionType, React.ElementType> = {
   audio_upload: Mic,
   video_upload: Video,
   file_upload: Upload,
+  ordering: GripVertical,
 };
 
 function getMediaType(url: string): "image" | "audio" | "video" | "file" {
