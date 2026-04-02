@@ -142,6 +142,34 @@ export default function ContentReportsPage() {
     return labels[type] || type;
   };
 
+  /** Fetch the actual reported content from its source table */
+  const fetchReportedContent = async (report: any) => {
+    setLoadingContent(true);
+    setReportedContent(null);
+    try {
+      const tableMap: Record<string, { table: string; col: string }> = {
+        forum_post: { table: "forum_posts", col: "content" },
+        forum_comment: { table: "forum_comments", col: "content" },
+        chat_message: { table: "chat_messages", col: "content" },
+      };
+      const mapping = tableMap[report.content_type];
+      if (mapping) {
+        const { data } = await supabase
+          .from(mapping.table as any)
+          .select(mapping.col)
+          .eq("id", report.content_id)
+          .maybeSingle();
+        setReportedContent((data as any)?.[mapping.col] ?? t("moderation.contentDeleted", "Content has been deleted or is no longer available."));
+      } else {
+        setReportedContent(t("moderation.unknownType", "Unknown content type."));
+      }
+    } catch {
+      setReportedContent(t("moderation.contentLoadError", "Failed to load content."));
+    } finally {
+      setLoadingContent(false);
+    }
+  };
+
   const handleReview = (status: string) => {
     if (selectedReport) {
       updateReportMutation.mutate({
@@ -150,6 +178,15 @@ export default function ContentReportsPage() {
         notes: reviewNotes,
       });
     }
+  };
+
+  /** Helper to get a ticket number for a report based on its position in the list */
+  const getTicketNumber = (report: any) => {
+    if (!reports) return "RPT-?????";
+    // Use created_at ordering – reports are already sorted desc, so reverse index for ascending number
+    const idx = reports.indexOf(report);
+    const total = reports.length;
+    return reportTicketNumber(total - 1 - idx);
   };
 
   return (
