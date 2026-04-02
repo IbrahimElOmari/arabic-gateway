@@ -236,6 +236,7 @@ export default function ContentReportsPage() {
               ) : reports && reports.length > 0 ? (
                 reports.map((report) => (
                   <TableRow key={report.id}>
+                    <TableCell className="font-mono text-xs text-muted-foreground">{getTicketNumber(report)}</TableCell>
                     <TableCell>{getContentTypeLabel(report.content_type)}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{getReasonLabel(report.reason)}</Badge>
@@ -250,6 +251,7 @@ export default function ContentReportsPage() {
                           setSelectedReport(report);
                           setReviewNotes(report.review_notes || "");
                           setNewStatus(report.status);
+                          fetchReportedContent(report);
                         }}
                       >
                         <Eye className="h-4 w-4 mr-1" />
