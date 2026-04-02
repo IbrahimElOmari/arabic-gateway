@@ -287,13 +287,18 @@ export default function ContentReportsPage() {
 
       {/* Review Dialog */}
       <Dialog open={!!selectedReport} onOpenChange={() => setSelectedReport(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{t("moderation.reviewReport", "Review Report")}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              {t("moderation.reviewReport", "Review Report")}
+              {selectedReport && (
+                <Badge variant="outline" className="font-mono text-xs">{getTicketNumber(selectedReport)}</Badge>
+              )}
+            </DialogTitle>
             <DialogDescription>
               {selectedReport && (
                 <>
-                  {getContentTypeLabel(selectedReport.content_type)} - {getReasonLabel(selectedReport.reason)}
+                  {getContentTypeLabel(selectedReport.content_type)} — {getReasonLabel(selectedReport.reason)}
                 </>
               )}
             </DialogDescription>
@@ -301,6 +306,21 @@ export default function ContentReportsPage() {
 
           {selectedReport && (
             <div className="space-y-4">
+              {/* Reported content body */}
+              <div>
+                <p className="text-sm font-medium mb-1">{t("moderation.reportedContent", "Reported content:")}</p>
+                {loadingContent ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted p-3 rounded-md">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t("common.loading", "Loading...")}
+                  </div>
+                ) : (
+                  <p className="text-sm bg-muted p-3 rounded-md border border-border whitespace-pre-wrap break-words max-h-40 overflow-y-auto">
+                    {reportedContent}
+                  </p>
+                )}
+              </div>
+
               {selectedReport.description && (
                 <div>
                   <p className="text-sm font-medium mb-1">{t("moderation.reporterDescription", "Reporter's description:")}</p>
