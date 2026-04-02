@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiQuery, apiMutate } from "@/lib/supabase-api";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +46,11 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/date-utils";
 import { logAdminAction } from "@/lib/admin-log";
 
+/** Generate a short ticket-style reference from the report row number */
+function reportTicketNumber(index: number) {
+  return `RPT-${(index + 1).toString().padStart(5, "0")}`;
+}
+
 export default function ContentReportsPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -56,6 +62,8 @@ export default function ContentReportsPage() {
   const [newStatus, setNewStatus] = useState<string>("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [reportToDelete, setReportToDelete] = useState<any>(null);
+  const [reportedContent, setReportedContent] = useState<string | null>(null);
+  const [loadingContent, setLoadingContent] = useState(false);
 
   const { data: reports, isLoading } = useQuery({
     queryKey: ["content-reports", statusFilter],
@@ -134,6 +142,34 @@ export default function ContentReportsPage() {
     return labels[type] || type;
   };
 
+  /** Fetch the actual reported content from its source table */
+  const fetchReportedContent = async (report: any) => {
+    setLoadingContent(true);
+    setReportedContent(null);
+    try {
+      const tableMap: Record<string, { table: string; col: string }> = {
+        forum_post: { table: "forum_posts", col: "content" },
+        forum_comment: { table: "forum_comments", col: "content" },
+        chat_message: { table: "chat_messages", col: "content" },
+      };
+      const mapping = tableMap[report.content_type];
+      if (mapping) {
+        const { data } = await supabase
+          .from(mapping.table as any)
+          .select(mapping.col)
+          .eq("id", report.content_id)
+          .maybeSingle();
+        setReportedContent((data as any)?.[mapping.col] ?? t("moderation.contentDeleted", "Content has been deleted or is no longer available."));
+      } else {
+        setReportedContent(t("moderation.unknownType", "Unknown content type."));
+      }
+    } catch {
+      setReportedContent(t("moderation.contentLoadError", "Failed to load content."));
+    } finally {
+      setLoadingContent(false);
+    }
+  };
+
   const handleReview = (status: string) => {
     if (selectedReport) {
       updateReportMutation.mutate({
@@ -142,6 +178,15 @@ export default function ContentReportsPage() {
         notes: reviewNotes,
       });
     }
+  };
+
+  /** Helper to get a ticket number for a report based on its position in the list */
+  const getTicketNumber = (report: any) => {
+    if (!reports) return "RPT-?????";
+    // Use created_at ordering – reports are already sorted desc, so reverse index for ascending number
+    const idx = reports.indexOf(report);
+    const total = reports.length;
+    return reportTicketNumber(total - 1 - idx);
   };
 
   return (
@@ -173,6 +218,7 @@ export default function ContentReportsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>#</TableHead>
                 <TableHead>{t("moderation.contentType", "Content Type")}</TableHead>
                 <TableHead>{t("moderation.reason", "Reason")}</TableHead>
                 <TableHead>{t("moderation.status", "Status")}</TableHead>
@@ -183,13 +229,14 @@ export default function ContentReportsPage() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8">
+                  <TableCell colSpan={6} className="text-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : reports && reports.length > 0 ? (
                 reports.map((report) => (
                   <TableRow key={report.id}>
+                    <TableCell className="font-mono text-xs text-muted-foreground">{getTicketNumber(report)}</TableCell>
                     <TableCell>{getContentTypeLabel(report.content_type)}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{getReasonLabel(report.reason)}</Badge>
@@ -204,6 +251,7 @@ export default function ContentReportsPage() {
                           setSelectedReport(report);
                           setReviewNotes(report.review_notes || "");
                           setNewStatus(report.status);
+                          fetchReportedContent(report);
                         }}
                       >
                         <Eye className="h-4 w-4 mr-1" />
@@ -227,7 +275,7 @@ export default function ContentReportsPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     {t("moderation.noReports", "No reports found")}
                   </TableCell>
                 </TableRow>
@@ -239,13 +287,18 @@ export default function ContentReportsPage() {
 
       {/* Review Dialog */}
       <Dialog open={!!selectedReport} onOpenChange={() => setSelectedReport(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{t("moderation.reviewReport", "Review Report")}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              {t("moderation.reviewReport", "Review Report")}
+              {selectedReport && (
+                <Badge variant="outline" className="font-mono text-xs">{getTicketNumber(selectedReport)}</Badge>
+              )}
+            </DialogTitle>
             <DialogDescription>
               {selectedReport && (
                 <>
-                  {getContentTypeLabel(selectedReport.content_type)} - {getReasonLabel(selectedReport.reason)}
+                  {getContentTypeLabel(selectedReport.content_type)} — {getReasonLabel(selectedReport.reason)}
                 </>
               )}
             </DialogDescription>
@@ -253,6 +306,21 @@ export default function ContentReportsPage() {
 
           {selectedReport && (
             <div className="space-y-4">
+              {/* Reported content body */}
+              <div>
+                <p className="text-sm font-medium mb-1">{t("moderation.reportedContent", "Reported content:")}</p>
+                {loadingContent ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted p-3 rounded-md">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t("common.loading", "Loading...")}
+                  </div>
+                ) : (
+                  <p className="text-sm bg-muted p-3 rounded-md border border-border whitespace-pre-wrap break-words max-h-40 overflow-y-auto">
+                    {reportedContent}
+                  </p>
+                )}
+              </div>
+
               {selectedReport.description && (
                 <div>
                   <p className="text-sm font-medium mb-1">{t("moderation.reporterDescription", "Reporter's description:")}</p>
