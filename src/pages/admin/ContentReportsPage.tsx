@@ -275,7 +275,7 @@ export default function ContentReportsPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     {t("moderation.noReports", "No reports found")}
                   </TableCell>
                 </TableRow>
