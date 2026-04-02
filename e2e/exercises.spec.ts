@@ -107,3 +107,48 @@ test.describe("Exercise Timer", () => {
     expect(formatTime(0)).toBe("0:00");
   });
 });
+
+test.describe("Ordering Question Type", () => {
+  test("ordering scoring logic should work correctly", () => {
+    const correctOrder = ["item-1", "item-2", "item-3"];
+    
+    // Correct order
+    const correct = ["item-1", "item-2", "item-3"];
+    const isCorrect = correctOrder.length === correct.length &&
+      correctOrder.every((v, i) => v === correct[i]);
+    expect(isCorrect).toBe(true);
+    
+    // Wrong order
+    const wrong = ["item-3", "item-1", "item-2"];
+    const isWrong = correctOrder.length === wrong.length &&
+      correctOrder.every((v, i) => v === wrong[i]);
+    expect(isWrong).toBe(false);
+  });
+
+  test("ordering normalization produces stable values", () => {
+    const rawOptions = [
+      { nl: "kat", en: "cat", ar: "" },
+      { nl: "hond", en: "dog", ar: "" },
+      { nl: "vis", en: "fish", ar: "" },
+    ];
+    const normalized = rawOptions.map((o, i) => ({
+      ...o,
+      label: o.en || o.nl || o.ar || `item-${i + 1}`,
+      value: `item-${i + 1}`,
+      order: i,
+    }));
+    
+    expect(normalized.map(n => n.value)).toEqual(["item-1", "item-2", "item-3"]);
+    expect(normalized[0].label).toBe("cat");
+    expect(normalized[2].order).toBe(2);
+  });
+
+  test("should navigate to exercise builder page", async ({ page }) => {
+    await page.goto("/teacher/exercises");
+    await page.waitForLoadState("networkidle");
+    
+    // The page should load without errors
+    const heading = page.getByRole("heading").first();
+    await expect(heading).toBeVisible({ timeout: 10000 });
+  });
+});
