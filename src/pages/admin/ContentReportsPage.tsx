@@ -62,6 +62,8 @@ export default function ContentReportsPage() {
   const [newStatus, setNewStatus] = useState<string>("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [reportToDelete, setReportToDelete] = useState<any>(null);
+  const [reportedContent, setReportedContent] = useState<string | null>(null);
+  const [loadingContent, setLoadingContent] = useState(false);
 
   const { data: reports, isLoading } = useQuery({
     queryKey: ["content-reports", statusFilter],
