@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiQuery, apiMutate } from "@/lib/supabase-api";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +45,11 @@ import { Flag, CheckCircle, XCircle, Eye, Loader2, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/date-utils";
 import { logAdminAction } from "@/lib/admin-log";
+
+/** Generate a short ticket-style reference from the report row number */
+function reportTicketNumber(index: number) {
+  return `RPT-${(index + 1).toString().padStart(5, "0")}`;
+}
 
 export default function ContentReportsPage() {
   const { t } = useTranslation();
