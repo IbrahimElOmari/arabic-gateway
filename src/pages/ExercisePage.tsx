@@ -177,7 +177,8 @@ export default function ExercisePage() {
           }
         }
         else if (question.type === "ordering" && answer && question.options) {
-          const correctOrder = question.options.map((o: any) => o.value || o.label);
+          const sorted = [...question.options].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+          const correctOrder = sorted.map((o: any) => o.value);
           const answerArray = Array.isArray(answer) ? answer : [];
           if (
             correctOrder.length === answerArray.length &&
