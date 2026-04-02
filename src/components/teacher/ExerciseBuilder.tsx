@@ -113,28 +113,60 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
     ),
   });
 
+  const normalizeOrderingOptions = (options: any[]) => {
+    return options.map((o, i) => ({
+      ...o,
+      label: o.en || o.nl || o.ar || `item-${i + 1}`,
+      value: `item-${i + 1}`,
+      order: i,
+    }));
+  };
+
+  const validateOrderingItems = (options: any[]): string | null => {
+    if (options.length < 2) {
+      return t("teacher.orderingMinItems", "At least 2 items are required.");
+    }
+    const hasEmpty = options.some((o) => !o.nl && !o.en && !o.ar);
+    if (hasEmpty) {
+      return t("teacher.orderingEmptyItem", "Each item must have text in at least one language.");
+    }
+    return null;
+  };
+
+  const prepareFormData = (form: typeof questionForm) => {
+    let correctAnswer;
+    let options = form.options;
+
+    if (form.type === "ordering") {
+      options = normalizeOrderingOptions(form.options);
+      correctAnswer = options.map((o: any) => o.value);
+    } else if (form.type === "multiple_choice") {
+      correctAnswer = form.correct_answer;
+    } else if (form.type === "checkbox") {
+      correctAnswer = form.correct_answers;
+    } else {
+      correctAnswer = null;
+    }
+
+    const hasOptions = ["multiple_choice", "checkbox", "ordering"].includes(form.type);
+    return { options: hasOptions ? options : null, correctAnswer };
+  };
+
   const createQuestionMutation = useMutation({
     mutationFn: async (form: typeof questionForm) => {
-      const displayOrder = (questions?.length || 0) + 1;
-      
-      let correctAnswer;
-      if (form.type === "multiple_choice") {
-        correctAnswer = form.correct_answer;
-      } else if (form.type === "checkbox") {
-        correctAnswer = form.correct_answers;
-      } else if (form.type === "ordering") {
-        correctAnswer = form.options.map((o: any) => o.value || o.label);
-      } else {
-        correctAnswer = null;
+      if (form.type === "ordering") {
+        const validationError = validateOrderingItems(form.options);
+        if (validationError) throw new Error(validationError);
       }
 
-      const hasOptions = ["multiple_choice", "checkbox", "ordering"].includes(form.type);
+      const displayOrder = (questions?.length || 0) + 1;
+      const { options, correctAnswer } = prepareFormData(form);
 
       await apiMutate("questions", (q) => q.insert({
         exercise_id: exerciseId,
         type: form.type,
         question_text: form.question_text,
-        options: hasOptions ? form.options : null,
+        options,
         correct_answer: correctAnswer,
         points: form.points,
         explanation: form.explanation || null,
@@ -151,34 +183,28 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
         title: t("teacher.questionAdded", "Question Added"),
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         variant: "destructive",
         title: t("common.error", "Error"),
-        description: t("teacher.questionAddError", "Failed to add question."),
+        description: error.message || t("teacher.questionAddError", "Failed to add question."),
       });
     },
   });
 
   const updateQuestionMutation = useMutation({
     mutationFn: async ({ id, form }: { id: string; form: typeof questionForm }) => {
-      let correctAnswer;
-      if (form.type === "multiple_choice") {
-        correctAnswer = form.correct_answer;
-      } else if (form.type === "checkbox") {
-        correctAnswer = form.correct_answers;
-      } else if (form.type === "ordering") {
-        correctAnswer = form.options.map((o: any) => o.value || o.label);
-      } else {
-        correctAnswer = null;
+      if (form.type === "ordering") {
+        const validationError = validateOrderingItems(form.options);
+        if (validationError) throw new Error(validationError);
       }
 
-      const hasOptions = ["multiple_choice", "checkbox", "ordering"].includes(form.type);
+      const { options, correctAnswer } = prepareFormData(form);
 
       await apiMutate("questions", (q) => q.update({
         type: form.type,
         question_text: form.question_text,
-        options: hasOptions ? form.options : null,
+        options,
         correct_answer: correctAnswer,
         points: form.points,
         explanation: form.explanation || null,

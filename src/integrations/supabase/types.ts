@@ -2655,6 +2655,7 @@ export type Database = {
         | "audio_upload"
         | "video_upload"
         | "file_upload"
+        | "ordering"
       subscription_status:
         | "pending"
         | "active"
@@ -2870,6 +2871,7 @@ export const Constants = {
         "audio_upload",
         "video_upload",
         "file_upload",
+        "ordering",
       ],
       subscription_status: [
         "pending",

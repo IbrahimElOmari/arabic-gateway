@@ -118,6 +118,88 @@ describe("Exercise Scoring", () => {
     });
   });
 
+  describe("Ordering Scoring", () => {
+    const correctOrder = ["item-1", "item-2", "item-3"];
+
+    it("should mark ordering as correct when order matches exactly", () => {
+      const userAnswer = ["item-1", "item-2", "item-3"];
+      const isCorrect =
+        correctOrder.length === userAnswer.length &&
+        correctOrder.every((v, i) => v === userAnswer[i]);
+      expect(isCorrect).toBe(true);
+    });
+
+    it("should mark ordering as incorrect when order is wrong", () => {
+      const userAnswer = ["item-3", "item-1", "item-2"];
+      const isCorrect =
+        correctOrder.length === userAnswer.length &&
+        correctOrder.every((v, i) => v === userAnswer[i]);
+      expect(isCorrect).toBe(false);
+    });
+
+    it("should mark ordering as incorrect when items are missing", () => {
+      const userAnswer = ["item-1", "item-2"];
+      const isCorrect =
+        correctOrder.length === userAnswer.length &&
+        correctOrder.every((v, i) => v === userAnswer[i]);
+      expect(isCorrect).toBe(false);
+    });
+
+    it("should mark ordering as incorrect with extra items", () => {
+      const userAnswer = ["item-1", "item-2", "item-3", "item-4"];
+      const isCorrect =
+        correctOrder.length === userAnswer.length &&
+        correctOrder.every((v, i) => v === userAnswer[i]);
+      expect(isCorrect).toBe(false);
+    });
+  });
+
+  describe("Ordering Data Normalization", () => {
+    it("should normalize ordering options with stable value and order", () => {
+      const rawOptions = [
+        { nl: "kat", en: "cat", ar: "قط" },
+        { nl: "hond", en: "dog", ar: "كلب" },
+      ];
+      const normalized = rawOptions.map((o, i) => ({
+        ...o,
+        label: o.en || o.nl || o.ar || `item-${i + 1}`,
+        value: `item-${i + 1}`,
+        order: i,
+      }));
+
+      expect(normalized[0].value).toBe("item-1");
+      expect(normalized[0].label).toBe("cat");
+      expect(normalized[0].order).toBe(0);
+      expect(normalized[1].value).toBe("item-2");
+      expect(normalized[1].order).toBe(1);
+    });
+
+    it("should generate correct_answer as array of values", () => {
+      const options = [
+        { nl: "a", en: "a", ar: "", value: "item-1", order: 0 },
+        { nl: "b", en: "b", ar: "", value: "item-2", order: 1 },
+        { nl: "c", en: "c", ar: "", value: "item-3", order: 2 },
+      ];
+      const correctAnswer = options.map((o) => o.value);
+      expect(correctAnswer).toEqual(["item-1", "item-2", "item-3"]);
+    });
+
+    it("should reject ordering with fewer than 2 items", () => {
+      const options = [{ nl: "a", en: "a", ar: "" }];
+      const isValid = options.length >= 2;
+      expect(isValid).toBe(false);
+    });
+
+    it("should reject ordering with all-empty items", () => {
+      const options = [
+        { nl: "", en: "", ar: "" },
+        { nl: "", en: "", ar: "" },
+      ];
+      const hasEmpty = options.some((o) => !o.nl && !o.en && !o.ar);
+      expect(hasEmpty).toBe(true);
+    });
+  });
+
   describe("Timer Logic", () => {
     it("should format time correctly", () => {
       const formatTime = (seconds: number) => {

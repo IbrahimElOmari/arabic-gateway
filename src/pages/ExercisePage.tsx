@@ -177,7 +177,8 @@ export default function ExercisePage() {
           }
         }
         else if (question.type === "ordering" && answer && question.options) {
-          const correctOrder = question.options.map((o: any) => o.value || o.label);
+          const sorted = [...question.options].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+          const correctOrder = sorted.map((o: any) => o.value);
           const answerArray = Array.isArray(answer) ? answer : [];
           if (
             correctOrder.length === answerArray.length &&
@@ -208,7 +209,8 @@ export default function ExercisePage() {
                   return q.options.find((o) => o.isCorrect)?.value === ans;
                 }
                 if (q.type === "ordering") {
-                  const correctOrder = q.options.map((o: any) => o.value || o.label);
+                  const sorted = [...q.options!].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+                  const correctOrder = sorted.map((o: any) => o.value);
                   const ansArray = Array.isArray(ans) ? ans : [];
                   return correctOrder.length === ansArray.length && correctOrder.every((v: string, i: number) => v === ansArray[i]);
                 }
