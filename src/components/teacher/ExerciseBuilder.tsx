@@ -194,23 +194,17 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
 
   const updateQuestionMutation = useMutation({
     mutationFn: async ({ id, form }: { id: string; form: typeof questionForm }) => {
-      let correctAnswer;
-      if (form.type === "multiple_choice") {
-        correctAnswer = form.correct_answer;
-      } else if (form.type === "checkbox") {
-        correctAnswer = form.correct_answers;
-      } else if (form.type === "ordering") {
-        correctAnswer = form.options.map((o: any) => o.value || o.label);
-      } else {
-        correctAnswer = null;
+      if (form.type === "ordering") {
+        const validationError = validateOrderingItems(form.options);
+        if (validationError) throw new Error(validationError);
       }
 
-      const hasOptions = ["multiple_choice", "checkbox", "ordering"].includes(form.type);
+      const { options, correctAnswer } = prepareFormData(form);
 
       await apiMutate("questions", (q) => q.update({
         type: form.type,
         question_text: form.question_text,
-        options: hasOptions ? form.options : null,
+        options,
         correct_answer: correctAnswer,
         points: form.points,
         explanation: form.explanation || null,
