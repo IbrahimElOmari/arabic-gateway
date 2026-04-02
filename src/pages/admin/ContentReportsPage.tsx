@@ -218,6 +218,7 @@ export default function ContentReportsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>#</TableHead>
                 <TableHead>{t("moderation.contentType", "Content Type")}</TableHead>
                 <TableHead>{t("moderation.reason", "Reason")}</TableHead>
                 <TableHead>{t("moderation.status", "Status")}</TableHead>
