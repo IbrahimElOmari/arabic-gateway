@@ -59,7 +59,7 @@ export function TeacherLayout() {
   }
 
   if (role !== "teacher" && role !== "admin") {
-    console.warn(`[TeacherLayout] Redirecting: role="${role}" is not teacher/admin`);
+    // Redirect: unauthorized role
     return <Navigate to="/dashboard" replace />;
   }
 

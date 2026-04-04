@@ -22,6 +22,6 @@ export async function logAdminAction(
       }])
     );
   } catch (err) {
-    console.error("[AdminLog] Failed to log action:", err);
+    // Admin log failure is non-critical
   }
 }
