@@ -64,7 +64,7 @@ export function reportMessage(
   context?: Record<string, unknown>
 ): void {
   if (config.dsn) {
-    console.info(`[ErrorMonitor] ${level}: ${message}`, context);
+    logger.info(`[ErrorMonitor] ${level}: ${message}`, context);
   }
 }
 
