@@ -11,6 +11,7 @@
  *   When not set, errors go to the analytics edge function only.
  */
 import { logError } from './error-logger';
+import { logger } from './logger';
 
 interface ErrorMonitorConfig {
   dsn: string | null;
