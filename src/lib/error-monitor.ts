@@ -73,7 +73,7 @@ export function reportMessage(
  */
 export function setMonitorUser(user: { id: string; email?: string } | null): void {
   if (config.dsn && user) {
-    console.info('[ErrorMonitor] User context set', { id: user.id });
+    logger.info('[ErrorMonitor] User context set', { id: user.id });
   }
 }
 
