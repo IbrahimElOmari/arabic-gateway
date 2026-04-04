@@ -205,7 +205,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (currentRequestId !== roleRequestId.current) return;
         clearTimeout(timeoutId);
 
-        const ctx = data as { role: AppRole | null; profile: Profile | null } | null;
+        const ctx = data as unknown as { role: AppRole | null; profile: Profile | null } | null;
 
         if (error || !ctx?.role) {
           updateRole(null, 'error');
