@@ -46,7 +46,7 @@ export function TeacherLayout() {
         </div>
       );
     }
-    console.warn('[TeacherLayout] Role check timed out - role is still null after 15s');
+    // Role check timed out
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4">
         <p className="text-muted-foreground">{t('auth.roleLoadFailed', 'Rol kon niet geladen worden.')}</p>
@@ -59,7 +59,7 @@ export function TeacherLayout() {
   }
 
   if (role !== "teacher" && role !== "admin") {
-    console.warn(`[TeacherLayout] Redirecting: role="${role}" is not teacher/admin`);
+    // Redirect: unauthorized role
     return <Navigate to="/dashboard" replace />;
   }
 

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Bell, Check, CheckCheck } from 'lucide-react';
+import { Bell, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -20,7 +20,7 @@ const NOTIFICATION_ICONS: Record<string, string> = {
   lesson_reminder: '🔔',
 };
 
-function NotificationItem({
+const NotificationItem = React.memo(function NotificationItem({
   notification,
   onRead,
 }: {
@@ -54,9 +54,9 @@ function NotificationItem({
       )}
     </button>
   );
-}
+});
 
-export function NotificationBell() {
+export const NotificationBell = React.memo(function NotificationBell() {
   const { t } = useTranslation();
   const { notifications, unreadCount, markAsRead, markAllRead } = useNotifications();
   const [open, setOpen] = useState(false);
@@ -119,4 +119,4 @@ export function NotificationBell() {
       </PopoverContent>
     </Popover>
   );
-}
+});

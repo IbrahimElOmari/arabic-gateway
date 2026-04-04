@@ -11,6 +11,7 @@
  *   When not set, errors go to the analytics edge function only.
  */
 import { logError } from './error-logger';
+import { logger } from './logger';
 
 interface ErrorMonitorConfig {
   dsn: string | null;
@@ -42,7 +43,7 @@ export function reportError(
       // External service integration point
       // When Sentry or similar is configured, this would call:
       // Sentry.captureException(err, { extra: context });
-      console.info('[ErrorMonitor] Error reported to external service', {
+      logger.info('[ErrorMonitor] Error reported to external service', {
         message: err.message,
         environment: config.environment,
         release: config.release,
@@ -63,7 +64,7 @@ export function reportMessage(
   context?: Record<string, unknown>
 ): void {
   if (config.dsn) {
-    console.info(`[ErrorMonitor] ${level}: ${message}`, context);
+    logger.info(`[ErrorMonitor] ${level}: ${message}`, context);
   }
 }
 
@@ -72,7 +73,7 @@ export function reportMessage(
  */
 export function setMonitorUser(user: { id: string; email?: string } | null): void {
   if (config.dsn && user) {
-    console.info('[ErrorMonitor] User context set', { id: user.id });
+    logger.info('[ErrorMonitor] User context set', { id: user.id });
   }
 }
 

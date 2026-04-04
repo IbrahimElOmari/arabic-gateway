@@ -112,7 +112,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           .eq('user_id', user.id);
       }
     } catch (error) {
-      console.error('Failed to sync theme preference:', error);
+      // Theme sync failure is non-critical
     }
   };
 

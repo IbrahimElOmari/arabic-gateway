@@ -1,3 +1,4 @@
+import React from "react";
 import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
 
@@ -13,7 +14,7 @@ interface StatsCardProps {
   className?: string;
 }
 
-export function StatsCard({
+export const StatsCard = React.memo(function StatsCard({
   title,
   value,
   description,
@@ -39,7 +40,7 @@ export function StatsCard({
             <p
               className={cn(
                 "text-xs font-medium",
-                trend.isPositive ? "text-green-600" : "text-red-600"
+                trend.isPositive ? "text-success" : "text-destructive"
               )}
             >
               {trend.isPositive ? "+" : "-"}{Math.abs(trend.value)}%{" "}
@@ -53,4 +54,4 @@ export function StatsCard({
       </div>
     </div>
   );
-}
+});

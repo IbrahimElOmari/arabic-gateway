@@ -3,6 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
+import { logger } from '@/lib/logger';
 
 type AppRole = 'admin' | 'teacher' | 'student';
 type RoleStatus = 'loading' | 'ready' | 'error';
@@ -76,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       (event, currentSession) => {
         if (!mounted) return;
 
-        console.log('[Auth] event:', event, 'user:', !!currentSession?.user);
+        logger.log('[Auth] event:', event, 'user:', !!currentSession?.user);
 
         if (event === 'SIGNED_OUT') {
           setSession(null);
@@ -97,18 +98,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         // For INITIAL_SESSION and SIGNED_IN, mark auth as loaded
-        // (role resolution happens in Effect B via user dependency)
         if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
           setLoading(false);
         }
-        // TOKEN_REFRESHED: don't touch loading, don't touch role
       }
     );
 
     // Safety: if INITIAL_SESSION never fires (no session), force loaded after 3s
     const safetyTimeout = setTimeout(() => {
       if (mounted) {
-        console.warn('[Auth] Safety timeout – forcing loaded');
+        logger.warn('[Auth] Safety timeout – forcing loaded');
         setLoading(false);
       }
     }, 3000);
@@ -120,16 +119,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Effect B: Role resolution (fires when user.id changes) ──
+  // ── Effect B: Combined role + profile resolution via single RPC ──
   useEffect(() => {
     if (!user) {
-      // No user → reset role
       updateRole(null, 'loading');
+      setProfile(null);
       return;
     }
 
     // If role already resolved for this user, don't re-fetch
-    // (handles TOKEN_REFRESHED which updates user object but same id)
     if (roleRef.current !== null) {
       return;
     }
@@ -140,36 +138,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     const timeoutId = setTimeout(() => {
       if (!cancelled && currentRequestId === roleRequestId.current) {
-        console.error('[Auth] Role resolution timeout');
+        logger.error('[Auth] Role resolution timeout');
         updateRole(null, 'error');
       }
     }, 5000);
 
     (async () => {
       try {
-        const { data, error } = await supabase.rpc('get_user_role', { _user_id: user.id });
+        const { data, error } = await supabase.rpc('get_user_with_context', { _user_id: user.id });
         if (cancelled || currentRequestId !== roleRequestId.current) return;
 
         clearTimeout(timeoutId);
 
         if (error) {
-          console.error('[Auth] Role RPC error:', error);
+          logger.error('[Auth] Context RPC error:', error);
           updateRole(null, 'error');
           return;
         }
 
-        const fetchedRole = (data as AppRole) || null;
-        if (fetchedRole) {
-          updateRole(fetchedRole, 'ready');
+        const ctx = data as unknown as { role: AppRole | null; profile: Profile | null } | null;
+
+        // Handle profile
+        if (ctx?.profile) {
+          setProfile(ctx.profile);
+          if (ctx.profile.preferred_language && ctx.profile.preferred_language !== i18n.language) {
+            i18n.changeLanguage(ctx.profile.preferred_language);
+          }
+        }
+
+        // Handle role
+        if (ctx?.role) {
+          updateRole(ctx.role, 'ready');
         } else {
-          // User exists but has no role — treat as error for recovery UI
-          console.warn('[Auth] No role found for user');
+          logger.warn('[Auth] No role found for user');
           updateRole(null, 'error');
         }
       } catch (err) {
         if (cancelled || currentRequestId !== roleRequestId.current) return;
         clearTimeout(timeoutId);
-        console.error('[Auth] Role fetch exception:', err);
+        logger.error('[Auth] Context fetch exception:', err);
         updateRole(null, 'error');
       }
     })();
@@ -180,45 +187,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Effect C: Profile loading (non-blocking, independent of role) ──
-  useEffect(() => {
-    if (!user) {
-      setProfile(null);
-      return;
-    }
-
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (cancelled) return;
-        if (error) {
-          console.error('[Auth] Profile fetch error:', error);
-          return;
-        }
-
-        setProfile(data);
-
-        if (data?.preferred_language && data.preferred_language !== i18n.language) {
-          i18n.changeLanguage(data.preferred_language);
-        }
-      } catch (err) {
-        if (!cancelled) console.error('[Auth] Profile fetch exception:', err);
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const retryRoleResolution = useCallback(() => {
     if (!user) return;
-    // Force re-fetch by clearing current role and bumping request id
     roleRef.current = null;
     const currentRequestId = ++roleRequestId.current;
     updateRole(null, 'loading');
@@ -231,15 +201,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     (async () => {
       try {
-        const { data, error } = await supabase.rpc('get_user_role', { _user_id: user.id });
+        const { data, error } = await supabase.rpc('get_user_with_context', { _user_id: user.id });
         if (currentRequestId !== roleRequestId.current) return;
         clearTimeout(timeoutId);
 
-        if (error || !data) {
+        const ctx = data as unknown as { role: AppRole | null; profile: Profile | null } | null;
+
+        if (error || !ctx?.role) {
           updateRole(null, 'error');
           return;
         }
-        updateRole(data as AppRole, 'ready');
+
+        if (ctx.profile) setProfile(ctx.profile);
+        updateRole(ctx.role, 'ready');
       } catch {
         if (currentRequestId === roleRequestId.current) {
           clearTimeout(timeoutId);
@@ -259,7 +233,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .maybeSingle();
       if (!error && data) setProfile(data);
     } catch (err) {
-      console.error('[Auth] refreshProfile error:', err);
+      logger.error('[Auth] refreshProfile error:', err);
     }
   }, [user]);
 
@@ -329,14 +303,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
-      // Reset role before sign-out so UI doesn't flash stale data
       roleRef.current = null;
       updateRole(null, 'loading');
       setProfile(null);
       await supabase.auth.signOut();
       toast({ title: t('auth.logoutSuccess') });
     } catch (error) {
-      console.error('Error signing out:', error);
+      logger.error('Error signing out:', error);
     }
   }, [toast, t, updateRole]);
 

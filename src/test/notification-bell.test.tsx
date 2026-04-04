@@ -24,7 +24,7 @@ describe('NotificationBell', () => {
   it('exports NotificationBell component', async () => {
     const mod = await import('@/components/notifications/NotificationBell');
     expect(mod.NotificationBell).toBeDefined();
-    expect(typeof mod.NotificationBell).toBe('function');
+    expect(typeof mod.NotificationBell).toMatch(/function|object/);
   });
 
   it('notification icons are defined for known types', () => {
