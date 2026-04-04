@@ -43,7 +43,7 @@ export function reportError(
       // External service integration point
       // When Sentry or similar is configured, this would call:
       // Sentry.captureException(err, { extra: context });
-      console.info('[ErrorMonitor] Error reported to external service', {
+      logger.info('[ErrorMonitor] Error reported to external service', {
         message: err.message,
         environment: config.environment,
         release: config.release,
