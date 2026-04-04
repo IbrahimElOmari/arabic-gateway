@@ -156,7 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        const ctx = data as { role: AppRole | null; profile: Profile | null } | null;
+        const ctx = data as unknown as { role: AppRole | null; profile: Profile | null } | null;
 
         // Handle profile
         if (ctx?.profile) {
