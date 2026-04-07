@@ -49,10 +49,19 @@ export default function TeacherRecordingsPage() {
   });
 
   const { data: recordings, isLoading } = useQuery({
-    queryKey: ["teacher-recordings", user?.id],
-    queryFn: () => apiQuery<any[]>("lesson_recordings", (q) =>
-      q.select("*, lesson:lessons(title, class:classes(name))").eq("uploaded_by", user!.id).order("created_at", { ascending: false })
-    ),
+    queryKey: ["teacher-recordings", user?.id, isAdmin],
+    queryFn: () => {
+      if (isAdmin) {
+        // Admin sees all recordings
+        return apiQuery<any[]>("lesson_recordings", (q) =>
+          q.select("*, lesson:lessons(title, class:classes(name))").order("created_at", { ascending: false })
+        );
+      }
+      // Teacher sees only own uploads
+      return apiQuery<any[]>("lesson_recordings", (q) =>
+        q.select("*, lesson:lessons(title, class:classes(name))").eq("uploaded_by", user!.id).order("created_at", { ascending: false })
+      );
+    },
     enabled: !!user,
   });
 
