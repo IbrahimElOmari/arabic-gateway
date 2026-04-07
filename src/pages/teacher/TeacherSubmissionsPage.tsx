@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileCheck, Loader2, CheckCircle, XCircle, Play, FileText } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+
 import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
@@ -40,11 +40,39 @@ export default function TeacherSubmissionsPage() {
 
   const classIds = classes?.map(c => c.id) || [];
 
-  // Get pending submissions
-  const { data: pendingSubmissions, isLoading: pendingLoading } = useQuery({
-    queryKey: ["pending-submissions", classIds],
+  // Build exercise IDs for server-side filtering
+  const { data: classExerciseIds } = useQuery({
+    queryKey: ["class-exercise-ids", classIds],
     queryFn: async () => {
-      const data = await apiQuery<any[]>("student_answers", (q) =>
+      const data = await apiQuery<any[]>("exercises", (q) =>
+        q.select("id").in("class_id", classIds)
+      );
+      return data.map((e: any) => e.id);
+    },
+    enabled: classIds.length > 0,
+  });
+
+  const exerciseIds = classExerciseIds || [];
+
+  // Build question IDs for server-side filtering
+  const { data: classQuestionIds } = useQuery({
+    queryKey: ["class-question-ids", exerciseIds],
+    queryFn: async () => {
+      const data = await apiQuery<any[]>("questions", (q) =>
+        q.select("id").in("exercise_id", exerciseIds)
+      );
+      return data.map((q: any) => q.id);
+    },
+    enabled: exerciseIds.length > 0,
+  });
+
+  const questionIds = classQuestionIds || [];
+
+  // Get pending submissions – server-side filtered by question IDs
+  const { data: pendingSubmissions, isLoading: pendingLoading } = useQuery({
+    queryKey: ["pending-submissions", questionIds],
+    queryFn: () =>
+      apiQuery<any[]>("student_answers", (q) =>
         q.select(`
           *,
           student:profiles!student_answers_student_id_fkey(full_name),
@@ -56,17 +84,16 @@ export default function TeacherSubmissionsPage() {
           )
         `)
         .is("reviewed_at", null)
-      );
-      return data.filter((s: any) => classIds.includes(s.question?.exercise?.class_id));
-    },
-    enabled: classIds.length > 0,
+        .in("question_id", questionIds)
+      ),
+    enabled: questionIds.length > 0,
   });
 
-  // Get reviewed submissions
+  // Get reviewed submissions – server-side filtered
   const { data: reviewedSubmissions, isLoading: reviewedLoading } = useQuery({
-    queryKey: ["reviewed-submissions", classIds],
-    queryFn: async () => {
-      const data = await apiQuery<any[]>("student_answers", (q) =>
+    queryKey: ["reviewed-submissions", questionIds],
+    queryFn: () =>
+      apiQuery<any[]>("student_answers", (q) =>
         q.select(`
           *,
           student:profiles!student_answers_student_id_fkey(full_name),
@@ -78,12 +105,11 @@ export default function TeacherSubmissionsPage() {
           )
         `)
         .not("reviewed_at", "is", null)
+        .in("question_id", questionIds)
         .order("reviewed_at", { ascending: false })
         .limit(50)
-      );
-      return data.filter((s: any) => classIds.includes(s.question?.exercise?.class_id));
-    },
-    enabled: classIds.length > 0,
+      ),
+    enabled: questionIds.length > 0,
   });
 
   const reviewMutation = useMutation({
