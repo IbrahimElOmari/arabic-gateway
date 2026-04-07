@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { Video, Square, Upload, Loader2, Trash2, Camera, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface VideoUploadQuestionProps {
   value: string | undefined;

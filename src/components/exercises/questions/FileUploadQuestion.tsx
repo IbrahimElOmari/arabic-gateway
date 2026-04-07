@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, File, Loader2, Trash2, Download, Image, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface FileUploadQuestionProps {
   value: string | undefined;
