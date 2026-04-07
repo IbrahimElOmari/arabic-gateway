@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { Video, Square, Upload, Loader2, Trash2, Camera, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface VideoUploadQuestionProps {
   value: string | undefined;
@@ -28,6 +29,7 @@ export function VideoUploadQuestion({
 }: VideoUploadQuestionProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isRecording, setIsRecording] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -204,7 +206,7 @@ export function VideoUploadQuestion({
     setUploadProgress(0);
     
     try {
-      const fileName = `${attemptId}/${questionId}/video-${Date.now()}.webm`;
+      const fileName = `${user?.id}/${attemptId}/${questionId}/video-${Date.now()}.webm`;
       
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => Math.min(prev + 5, 90));

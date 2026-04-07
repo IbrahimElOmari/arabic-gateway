@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { Mic, Square, Play, Pause, Upload, Loader2, Trash2, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AudioUploadQuestionProps {
   value: string | undefined;
@@ -28,6 +29,7 @@ export function AudioUploadQuestion({
 }: AudioUploadQuestionProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -192,7 +194,7 @@ export function AudioUploadQuestion({
     setUploadProgress(0);
     
     try {
-      const fileName = `${attemptId}/${questionId}/audio-${Date.now()}.webm`;
+      const fileName = `${user?.id}/${attemptId}/${questionId}/audio-${Date.now()}.webm`;
       
       // Simulate progress
       const progressInterval = setInterval(() => {

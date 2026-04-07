@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, File, Loader2, Trash2, Download, Image, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface FileUploadQuestionProps {
   value: string | undefined;
@@ -16,6 +17,7 @@ interface FileUploadQuestionProps {
 export function FileUploadQuestion({ value, onChange, attemptId, questionId }: FileUploadQuestionProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -81,7 +83,7 @@ export function FileUploadQuestion({ value, onChange, attemptId, questionId }: F
     
     try {
       const ext = selectedFile.name.split(".").pop() || "file";
-      const fileName = `${attemptId}/${questionId}/file-${Date.now()}.${ext}`;
+      const fileName = `${user?.id}/${attemptId}/${questionId}/file-${Date.now()}.${ext}`;
       
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => Math.min(prev + 10, 90));
