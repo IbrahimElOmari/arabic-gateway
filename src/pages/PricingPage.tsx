@@ -103,15 +103,18 @@ export default function PricingPage() {
     setIsValidating(true);
     setDiscountError(null);
     try {
+      // First check if code exists at all (including inactive/expired)
       const data = await apiQuery<any>("discount_codes", (q) =>
-        q.select("*").eq("code", discountCode.toUpperCase()).eq("is_active", true).maybeSingle()
+        q.select("*").eq("code", discountCode.toUpperCase()).maybeSingle()
       );
-      if (!data) { setDiscountError(t("pricing.invalidCode", "Invalid discount code")); setAppliedDiscount(null); return; }
+      if (!data) { setDiscountError(t("pricing.unknownCode", "Onbekende kortingscode")); setAppliedDiscount(null); return; }
+      if (!data.is_active) { setDiscountError(t("pricing.codeInactive", "Deze kortingscode is niet meer actief")); setAppliedDiscount(null); return; }
       const now = new Date();
       const validFrom = new Date(data.valid_from);
       const validUntil = data.valid_until ? new Date(data.valid_until) : null;
-      if (now < validFrom || (validUntil && now > validUntil)) { setDiscountError(t("pricing.invalidCode", "Invalid discount code")); setAppliedDiscount(null); return; }
-      if (data.max_uses && data.current_uses >= data.max_uses) { setDiscountError(t("pricing.invalidCode", "Invalid discount code")); setAppliedDiscount(null); return; }
+      if (now < validFrom) { setDiscountError(t("pricing.codeNotYetValid", "Deze kortingscode is nog niet geldig")); setAppliedDiscount(null); return; }
+      if (validUntil && now > validUntil) { setDiscountError(t("pricing.codeExpired", "Deze kortingscode is verlopen")); setAppliedDiscount(null); return; }
+      if (data.max_uses && data.current_uses >= data.max_uses) { setDiscountError(t("pricing.codeMaxUsed", "Deze kortingscode is al volledig gebruikt")); setAppliedDiscount(null); return; }
       setAppliedDiscount({ code: data.code, type: data.discount_type as "percentage" | "fixed_amount", value: data.discount_value });
       setDiscountError(null);
     } catch { setDiscountError(t("common.error")); setAppliedDiscount(null); } finally { setIsValidating(false); }

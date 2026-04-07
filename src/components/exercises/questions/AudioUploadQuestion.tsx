@@ -194,7 +194,7 @@ export function AudioUploadQuestion({
     setUploadProgress(0);
     
     try {
-      const fileName = `${attemptId}/${questionId}/audio-${Date.now()}.webm`;
+      const fileName = `${user?.id}/${attemptId}/${questionId}/audio-${Date.now()}.webm`;
       
       // Simulate progress
       const progressInterval = setInterval(() => {

@@ -83,7 +83,7 @@ export function FileUploadQuestion({ value, onChange, attemptId, questionId }: F
     
     try {
       const ext = selectedFile.name.split(".").pop() || "file";
-      const fileName = `${attemptId}/${questionId}/file-${Date.now()}.${ext}`;
+      const fileName = `${user?.id}/${attemptId}/${questionId}/file-${Date.now()}.${ext}`;
       
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => Math.min(prev + 10, 90));

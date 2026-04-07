@@ -206,7 +206,7 @@ export function VideoUploadQuestion({
     setUploadProgress(0);
     
     try {
-      const fileName = `${attemptId}/${questionId}/video-${Date.now()}.webm`;
+      const fileName = `${user?.id}/${attemptId}/${questionId}/video-${Date.now()}.webm`;
       
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => Math.min(prev + 5, 90));
