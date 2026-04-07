@@ -48,6 +48,13 @@ export default function PricingPage() {
   const enrollMutation = useMutation({
     mutationFn: async ({ classId, isFree }: { classId: string; isFree: boolean }) => {
       if (!user) throw new Error("Not authenticated");
+      // Check if enrollment already exists
+      const existing = await apiQuery<any>("class_enrollments", (q) =>
+        q.select("id, status").eq("class_id", classId).eq("student_id", user.id).maybeSingle()
+      );
+      if (existing) {
+        throw new Error(existing.status === "enrolled" ? "already_enrolled" : "already_pending");
+      }
       await apiMutate("class_enrollments", (q) =>
         q.insert({ class_id: classId, student_id: user.id, status: isFree ? "enrolled" : "pending" })
       );
@@ -59,8 +66,14 @@ export default function PricingPage() {
         description: isFree ? t("pricing.enrollmentSuccessDesc", "Je hebt nu toegang tot deze klas.") : t("pricing.enrollmentPendingDesc", "Een beheerder zal je aanvraag beoordelen."),
       });
     },
-    onError: () => {
-      toast({ variant: "destructive", title: t("common.error", "Error"), description: t("pricing.enrollmentError", "Inschrijving mislukt. Probeer het opnieuw.") });
+    onError: (error: Error) => {
+      if (error.message === "already_enrolled") {
+        toast({ title: t("pricing.alreadyEnrolled", "Al ingeschreven"), description: t("pricing.alreadyEnrolledDesc", "Je bent al ingeschreven voor deze klas.") });
+      } else if (error.message === "already_pending") {
+        toast({ title: t("pricing.pendingApproval", "Wacht op goedkeuring"), description: t("pricing.alreadyPendingDesc", "Je hebt al een aanvraag ingediend voor deze klas.") });
+      } else {
+        toast({ variant: "destructive", title: t("common.error", "Error"), description: t("pricing.enrollmentError", "Inschrijving mislukt. Probeer het opnieuw.") });
+      }
     },
   });
 
