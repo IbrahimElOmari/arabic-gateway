@@ -85,7 +85,7 @@ export default function AdminDashboard() {
       )}
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 shadow-xl border-accent">
         <StatsCard
           title={t("admin.totalUsers", "Total Users")}
           value={stats?.totalUsers || 0}
