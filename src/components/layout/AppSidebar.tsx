@@ -164,7 +164,7 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
           to={item.to}
           end={item.end}
           className={cn(
-            'relative flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
+            'relative flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground shadow',
             collapsed && 'justify-center px-2'
           )}
           activeClassName="bg-primary/10 text-primary font-medium"
