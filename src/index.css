@@ -18,20 +18,20 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 200 60% 10%;
 
-    /* Primary: Deep teal/green */
-    --primary: 160 50% 35%;
+    /* Primary: Deep teal/green (WCAG AA on light bg) */
+    --primary: 160 50% 33%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary: Light blue-green */
     --secondary: 170 35% 92%;
     --secondary-foreground: 160 50% 25%;
 
-    /* Muted: Soft gray-green */
+    /* Muted: Soft gray-green (WCAG AA on card + sidebar bg) */
     --muted: 160 15% 93%;
-    --muted-foreground: 160 10% 45%;
+    --muted-foreground: 160 10% 38%;
 
-    /* Accent: Vibrant teal */
-    --accent: 175 60% 45%;
+    /* Accent: Deep teal (WCAG AA with white fg on hover) */
+    --accent: 175 60% 32%;
     --accent-foreground: 0 0% 100%;
 
     /* Success: Green */
@@ -51,15 +51,15 @@ All colors MUST be HSL.
 
     --radius: 0.5rem;
 
-    /* Sidebar colors */
+    /* Sidebar colors (WCAG AA) */
     --sidebar-background: 160 25% 97%;
     --sidebar-foreground: 200 40% 20%;
-    --sidebar-primary: 160 50% 35%;
+    --sidebar-primary: 160 50% 33%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 170 30% 92%;
-    --sidebar-accent-foreground: 160 50% 25%;
+    --sidebar-accent-foreground: 160 50% 22%;
     --sidebar-border: 170 20% 88%;
-    --sidebar-ring: 160 50% 45%;
+    --sidebar-ring: 160 50% 33%;
 
     /* Chart colors */
     --chart-1: 160 50% 40%;
