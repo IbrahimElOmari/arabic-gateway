@@ -18,8 +18,8 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 200 60% 10%;
 
-    /* Primary: Deep teal/green */
-    --primary: 160 50% 35%;
+    /* Primary: Deep teal/green (WCAG AA on light bg) */
+    --primary: 160 50% 33%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary: Light blue-green */
