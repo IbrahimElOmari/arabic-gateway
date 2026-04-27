@@ -88,6 +88,15 @@ describe('visual snapshots', () => {
     expect(container.firstChild).toMatchSnapshot();
   });
 
+  it('admin StatsCard – RTL Arabic typography', () => {
+    const { container } = render(
+      <div dir="rtl" lang="ar" className="font-sans">
+        <StatsCard title="إجمالي المستخدمين" value={42} icon={Users} description="المستخدمون المسجلون" />
+      </div>
+    );
+    expect(container.firstChild).toMatchSnapshot();
+  });
+
   it('admin stats grid wrapper className', () => {
     // Locks the responsive shadow/border composition used in AdminDashboard.
     const wrapperClass =
