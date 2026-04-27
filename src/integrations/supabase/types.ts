@@ -913,6 +913,78 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback_rubrics: {
+        Row: {
+          created_at: string
+          criteria: Json
+          description: string | null
+          id: string
+          is_active: boolean
+          is_default: boolean
+          owner_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          criteria?: Json
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          owner_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          criteria?: Json
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          owner_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      feedback_templates: {
+        Row: {
+          body: string
+          category: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_default: boolean
+          owner_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          owner_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          owner_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       final_exam_attempts: {
         Row: {
           attempt_number: number
@@ -1302,6 +1374,45 @@ export type Database = {
           },
         ]
       }
+      learning_recommendations: {
+        Row: {
+          created_at: string
+          exercise_id: string
+          id: string
+          metadata: Json
+          priority: number
+          reason: string
+          source: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          exercise_id: string
+          id?: string
+          metadata?: Json
+          priority?: number
+          reason: string
+          source?: string
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          exercise_id?: string
+          id?: string
+          metadata?: Json
+          priority?: number
+          reason?: string
+          source?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       lesson_attendance: {
         Row: {
           attended: boolean
@@ -1561,6 +1672,57 @@ export type Database = {
           name_en?: string
           name_nl?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      notification_events: {
+        Row: {
+          channel: string
+          created_at: string
+          event_type: string
+          id: string
+          message: string
+          metadata: Json
+          related_id: string | null
+          related_table: string | null
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          event_type: string
+          id?: string
+          message: string
+          metadata?: Json
+          related_id?: string | null
+          related_table?: string | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          message?: string
+          metadata?: Json
+          related_id?: string | null
+          related_table?: string | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -2101,6 +2263,48 @@ export type Database = {
           },
         ]
       }
+      submission_feedback: {
+        Row: {
+          created_at: string
+          feedback_text: string
+          id: string
+          rubric_id: string | null
+          rubric_scores: Json
+          status: string
+          student_answer_id: string
+          student_id: string
+          teacher_id: string
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          feedback_text: string
+          id?: string
+          rubric_id?: string | null
+          rubric_scores?: Json
+          status?: string
+          student_answer_id: string
+          student_id: string
+          teacher_id: string
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          feedback_text?: string
+          id?: string
+          rubric_id?: string | null
+          rubric_scores?: Json
+          status?: string
+          student_answer_id?: string
+          student_id?: string
+          teacher_id?: string
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           class_id: string
@@ -2402,6 +2606,42 @@ export type Database = {
           },
         ]
       }
+      user_onboarding_state: {
+        Row: {
+          completed_at: string | null
+          completed_steps: string[]
+          created_at: string
+          dismissed: boolean
+          dismissed_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_steps?: string[]
+          created_at?: string
+          dismissed?: boolean
+          dismissed_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_steps?: string[]
+          created_at?: string
+          dismissed?: boolean
+          dismissed_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_points: {
         Row: {
           current_streak: number
@@ -2546,6 +2786,20 @@ export type Database = {
       }
       cancel_user_deletion: { Args: { p_user_id: string }; Returns: undefined }
       count_unassigned_students: { Args: never; Returns: number }
+      create_notification_event: {
+        Args: {
+          p_channel: string
+          p_event_type: string
+          p_message: string
+          p_metadata?: Json
+          p_related_id?: string
+          p_related_table?: string
+          p_scheduled_for?: string
+          p_title: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       generate_ticket_number: { Args: never; Returns: string }
       get_upcoming_deletions: {
         Args: { days_ahead?: number }

@@ -26,6 +26,7 @@ const NOTIFICATION_PREFERENCE_MAP: Record<string, string> = {
   lesson_reminder: 'lesson_reminders',
   enrollment_approved: 'email_notifications',
   enrollment_rejected: 'email_notifications',
+  submission_feedback: 'exercise_notifications',
 };
 
 export function useNotifications() {

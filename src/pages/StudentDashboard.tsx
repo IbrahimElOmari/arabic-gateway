@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useQuery } from '@tanstack/react-query';
-import { apiQuery } from '@/lib/supabase-api';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { apiMutate, apiQuery } from '@/lib/supabase-api';
 import { BookOpen, Calendar, TrendingUp, Flame, Trophy, MessageCircle, Shield, Palette, PlayCircle, Bell, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -87,6 +87,24 @@ export default function StudentDashboard() {
         attempts.filter(a => a.passed).map(a => a.id)
       )
     : null;
+
+  const recommendationMutation = useMutation({
+    mutationFn: (recommendation: NonNullable<typeof recommendedExercise>) => apiMutate('learning_recommendations', (q) => q.upsert({
+      student_id: user!.id,
+      exercise_id: recommendation.id,
+      reason: recommendation.reason,
+      priority: recommendation.reason === 'weakest_category' ? 90 : 60,
+      source: 'rule_based',
+      status: 'active',
+      metadata: { category_name: recommendation.category_name, title: recommendation.title },
+    }, { onConflict: 'student_id,exercise_id,source' })),
+  });
+
+  useEffect(() => {
+    if (user && recommendedExercise && !recommendationMutation.isPending) {
+      recommendationMutation.mutate(recommendedExercise);
+    }
+  }, [user?.id, recommendedExercise?.id]);
 
   const totalExercises = attempts?.length || 0;
   const passedExercises = attempts?.filter(a => a.passed)?.length || 0;
@@ -188,7 +206,7 @@ export default function StudentDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">{t('gamification.currentStreak')}</CardTitle>
-            <Flame className="h-4 w-4 text-orange-500" />
+            <Flame className="h-4 w-4 text-warning" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{userPoints?.current_streak || 0} {t('gamification.days')}</div>
@@ -199,7 +217,7 @@ export default function StudentDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">{t('gamification.totalPoints')}</CardTitle>
-            <Trophy className="h-4 w-4 text-yellow-500" />
+            <Trophy className="h-4 w-4 text-warning" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{userPoints?.total_points || 0}</div>

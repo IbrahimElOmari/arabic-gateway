@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileCheck, Loader2, CheckCircle, XCircle, Play, FileText } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -24,6 +25,12 @@ export default function TeacherSubmissionsPage() {
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [feedback, setFeedback] = useState("");
   const [score, setScore] = useState("");
+  const [selectedRubricId, setSelectedRubricId] = useState("");
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [rubricScores, setRubricScores] = useState<Record<string, number>>({});
+  const [newTemplateTitle, setNewTemplateTitle] = useState("");
+  const [newTemplateBody, setNewTemplateBody] = useState("");
+  const [newRubricTitle, setNewRubricTitle] = useState("");
 
   // Get teacher's classes (admin sees all)
   const { data: classes } = useQuery({
@@ -75,7 +82,7 @@ export default function TeacherSubmissionsPage() {
       apiQuery<any[]>("student_answers", (q) =>
         q.select(`
           *,
-          student:profiles!student_answers_student_id_fkey(full_name),
+          student:profiles!student_answers_student_id_fkey(full_name, email),
           question:questions(
             question_text,
             points,
@@ -96,7 +103,7 @@ export default function TeacherSubmissionsPage() {
       apiQuery<any[]>("student_answers", (q) =>
         q.select(`
           *,
-          student:profiles!student_answers_student_id_fkey(full_name),
+          student:profiles!student_answers_student_id_fkey(full_name, email),
           question:questions(
             question_text,
             points,
@@ -112,6 +119,46 @@ export default function TeacherSubmissionsPage() {
     enabled: questionIds.length > 0,
   });
 
+  const { data: rubrics = [] } = useQuery({
+    queryKey: ["feedback-rubrics", user?.id],
+    queryFn: () => apiQuery<any[]>("feedback_rubrics", (q) => q.select("*").eq("is_active", true).order("is_default", { ascending: false })),
+    enabled: !!user,
+  });
+
+  const { data: templates = [] } = useQuery({
+    queryKey: ["feedback-templates", user?.id],
+    queryFn: () => apiQuery<any[]>("feedback_templates", (q) => q.select("*").eq("is_active", true).order("is_default", { ascending: false })),
+    enabled: !!user,
+  });
+
+  const createTemplateMutation = useMutation({
+    mutationFn: () => apiMutate("feedback_templates", (q) => q.insert({ owner_id: user!.id, title: newTemplateTitle, body: newTemplateBody, category: "teacher_feedback" })),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feedback-templates", user?.id] });
+      setNewTemplateTitle("");
+      setNewTemplateBody("");
+      toast({ title: t("teacher.templateSaved", "Template opgeslagen") });
+    },
+  });
+
+  const createRubricMutation = useMutation({
+    mutationFn: () => apiMutate("feedback_rubrics", (q) => q.insert({
+      owner_id: user!.id,
+      title: newRubricTitle,
+      description: t("teacher.defaultRubricDescription", "Standaard rubric voor taalvaardigheid"),
+      criteria: [
+        { name: t("teacher.rubricAccuracy", "Nauwkeurigheid"), max: 4 },
+        { name: t("teacher.rubricFluency", "Vloeiendheid"), max: 4 },
+        { name: t("teacher.rubricStructure", "Structuur"), max: 4 },
+      ],
+    })),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feedback-rubrics", user?.id] });
+      setNewRubricTitle("");
+      toast({ title: t("teacher.rubricSaved", "Rubric opgeslagen") });
+    },
+  });
+
   const reviewMutation = useMutation({
     mutationFn: async ({ id, score, feedback, isCorrect }: { id: string; score: number; feedback: string; isCorrect: boolean }) => {
       await apiMutate("student_answers", (q) =>
@@ -123,6 +170,35 @@ export default function TeacherSubmissionsPage() {
           reviewed_at: new Date().toISOString(),
         }).eq("id", id)
       );
+      await apiMutate("submission_feedback", (q) => q.upsert({
+        student_answer_id: id,
+        student_id: selectedSubmission.student_id,
+        teacher_id: user!.id,
+        rubric_id: selectedRubricId || null,
+        template_id: selectedTemplateId || null,
+        rubric_scores: rubricScores,
+        feedback_text: feedback,
+        status: "published",
+      }, { onConflict: "student_answer_id" }));
+      await apiMutate("notifications", (q) => q.insert({
+        user_id: selectedSubmission.student_id,
+        type: "submission_feedback",
+        title: t("teacher.feedbackPublished", "Nieuwe feedback beschikbaar"),
+        message: t("teacher.feedbackPublishedMessage", "Je docent heeft feedback geplaatst op je inzending."),
+        data: { student_answer_id: id },
+      }));
+      await apiMutate("notification_events", (q) => q.insert({
+        user_id: selectedSubmission.student_id,
+        event_type: "submission_feedback",
+        channel: "in_app",
+        title: t("teacher.feedbackPublished", "Nieuwe feedback beschikbaar"),
+        message: t("teacher.feedbackPublishedMessage", "Je docent heeft feedback geplaatst op je inzending."),
+        related_table: "student_answers",
+        related_id: id,
+        status: "sent",
+        sent_at: new Date().toISOString(),
+        metadata: { has_rubric: !!selectedRubricId, has_template: !!selectedTemplateId },
+      }));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pending-submissions"] });
@@ -130,6 +206,9 @@ export default function TeacherSubmissionsPage() {
       setSelectedSubmission(null);
       setFeedback("");
       setScore("");
+      setSelectedRubricId("");
+      setSelectedTemplateId("");
+      setRubricScores({});
       toast({ title: t("teacher.submissionReviewed", "Submission reviewed") });
     },
   });
@@ -161,6 +240,9 @@ export default function TeacherSubmissionsPage() {
       setSelectedSubmission(submission);
       setFeedback(submission.feedback || "");
       setScore(submission.score?.toString() || "");
+      setSelectedRubricId("");
+      setSelectedTemplateId("");
+      setRubricScores({});
     }}>
       <CardHeader>
         <div className="flex items-start justify-between">
@@ -195,6 +277,24 @@ export default function TeacherSubmissionsPage() {
         <p className="text-muted-foreground">{t("teacher.reviewStudentWork", "Review student work and provide feedback")}</p>
       </div>
 
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader><CardTitle>{t("teacher.feedbackTemplates", "Feedbacktemplates")}</CardTitle><CardDescription>{t("teacher.feedbackTemplatesDesc", "Sla snelle, herbruikbare feedback op.")}</CardDescription></CardHeader>
+          <CardContent className="space-y-3">
+            <Input value={newTemplateTitle} onChange={(event) => setNewTemplateTitle(event.target.value)} placeholder={t("teacher.templateTitle", "Titel")} />
+            <Textarea value={newTemplateBody} onChange={(event) => setNewTemplateBody(event.target.value)} placeholder={t("teacher.templateBody", "Feedbacktekst")} rows={2} />
+            <Button onClick={() => createTemplateMutation.mutate()} disabled={!newTemplateTitle || !newTemplateBody || createTemplateMutation.isPending}>{t("teacher.saveTemplate", "Template opslaan")}</Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle>{t("teacher.rubrics", "Rubrics")}</CardTitle><CardDescription>{t("teacher.rubricsDesc", "Maak vaste beoordelingscriteria voor consistente feedback.")}</CardDescription></CardHeader>
+          <CardContent className="space-y-3">
+            <Input value={newRubricTitle} onChange={(event) => setNewRubricTitle(event.target.value)} placeholder={t("teacher.rubricTitle", "Rubric titel")} />
+            <Button onClick={() => createRubricMutation.mutate()} disabled={!newRubricTitle || createRubricMutation.isPending}>{t("teacher.saveRubric", "Rubric opslaan")}</Button>
+          </CardContent>
+        </Card>
+      </div>
+
       <Tabs defaultValue="pending">
         <TabsList>
           <TabsTrigger value="pending">
@@ -220,7 +320,7 @@ export default function TeacherSubmissionsPage() {
           ) : (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
+                <CheckCircle className="h-12 w-12 text-success mb-4" />
                 <h3 className="text-lg font-semibold">{t("teacher.allReviewed", "All caught up!")}</h3>
                 <p className="text-muted-foreground">{t("teacher.noPendingSubmissions", "No pending submissions to review")}</p>
               </CardContent>
@@ -300,6 +400,39 @@ export default function TeacherSubmissionsPage() {
                       rows={3}
                     />
                   </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>{t("teacher.feedbackTemplate", "Feedbacktemplate")}</Label>
+                      <Select value={selectedTemplateId} onValueChange={(value) => {
+                        setSelectedTemplateId(value);
+                        const template = templates.find((item) => item.id === value);
+                        if (template?.body) setFeedback((current) => current ? `${current}\n\n${template.body}` : template.body);
+                      }}>
+                        <SelectTrigger><SelectValue placeholder={t("teacher.chooseTemplate", "Kies template")} /></SelectTrigger>
+                        <SelectContent>{templates.map((template) => <SelectItem key={template.id} value={template.id}>{template.title}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("teacher.rubric", "Rubric")}</Label>
+                      <Select value={selectedRubricId} onValueChange={(value) => setSelectedRubricId(value)}>
+                        <SelectTrigger><SelectValue placeholder={t("teacher.chooseRubric", "Kies rubric")} /></SelectTrigger>
+                        <SelectContent>{rubrics.map((rubric) => <SelectItem key={rubric.id} value={rubric.id}>{rubric.title}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {selectedRubricId && (
+                    <div className="space-y-3 rounded-md border p-3">
+                      <Label>{t("teacher.rubricScores", "Rubric-scores")}</Label>
+                      {(rubrics.find((rubric) => rubric.id === selectedRubricId)?.criteria || []).map((criterion: any) => (
+                        <div key={criterion.name} className="grid gap-2 sm:grid-cols-[1fr_120px] sm:items-center">
+                          <span className="text-sm text-muted-foreground">{criterion.name}</span>
+                          <Input type="number" min={0} max={criterion.max || selectedSubmission.question?.points || 1} value={rubricScores[criterion.name] ?? ""} onChange={(event) => setRubricScores((current) => ({ ...current, [criterion.name]: Number(event.target.value) }))} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   <div>
                     <Label>{t("teacher.partialScore", "Partial Score (optional)")}</Label>
