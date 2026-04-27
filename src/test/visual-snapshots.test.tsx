@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { Home, Users } from 'lucide-react';
 import { StatsCard } from '@/components/admin/StatsCard';
 import { cn } from '@/lib/utils';
+import fs from 'node:fs';
 
 /**
  * Visual regression snapshots for the navigation link styling and admin
@@ -19,9 +20,9 @@ function SidebarLinkSample({ collapsed = false, active = false }: { collapsed?: 
     <a
       href="/sample"
       className={cn(
-        'relative flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground sm:shadow-sm hover:shadow-md',
+        'relative flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:shadow-sm hover:shadow-md',
         collapsed && 'justify-center px-2',
-        active && 'bg-primary/10 text-primary font-medium'
+        active && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
       )}
     >
       <Home className="h-5 w-5 shrink-0" aria-hidden="true" />
@@ -58,6 +59,15 @@ describe('visual snapshots', () => {
     expect(container.firstChild).toMatchSnapshot();
   });
 
+  it('sidebar link – RTL Arabic state', () => {
+    const { container } = render(
+      <div dir="rtl" lang="ar" className="font-sans">
+        <SidebarLinkSample active />
+      </div>
+    );
+    expect(container.firstChild).toMatchSnapshot();
+  });
+
   it('admin StatsCard – basic', () => {
     const { container } = render(
       <StatsCard title="Total Users" value={42} icon={Users} description="Registered users" />
@@ -78,10 +88,29 @@ describe('visual snapshots', () => {
     expect(container.firstChild).toMatchSnapshot();
   });
 
+  it('admin StatsCard – RTL Arabic typography', () => {
+    const { container } = render(
+      <div dir="rtl" lang="ar" className="font-sans">
+        <StatsCard title="إجمالي المستخدمين" value={42} icon={Users} description="المستخدمون المسجلون" />
+      </div>
+    );
+    expect(container.firstChild).toMatchSnapshot();
+  });
+
   it('admin stats grid wrapper className', () => {
     // Locks the responsive shadow/border composition used in AdminDashboard.
     const wrapperClass =
       'grid gap-4 md:grid-cols-2 lg:grid-cols-4 rounded-xl p-1 shadow-md sm:shadow-lg lg:shadow-xl border border-transparent sm:border-accent/40 lg:border-accent';
     expect(wrapperClass).toMatchSnapshot();
+  });
+
+  it('light-mode visual token contract', () => {
+    const css = fs.readFileSync('src/index.css', 'utf8');
+    const rootBlock = css.match(/:root\s*\{([\s\S]*?)\n\s*\}/)?.[1] ?? '';
+    const tokenContract = Array.from(
+      rootBlock.matchAll(/--(primary|accent|muted-foreground|success|destructive|input|ring|sidebar-accent|sidebar-accent-foreground):\s*([^;]+);/g)
+    ).map(([, name, value]) => `${name}: ${value.trim()}`);
+
+    expect(tokenContract).toMatchSnapshot();
   });
 });
