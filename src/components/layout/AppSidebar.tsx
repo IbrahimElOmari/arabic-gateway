@@ -164,7 +164,7 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
           to={item.to}
           end={item.end}
           className={cn(
-            'relative flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:shadow-sm hover:shadow-md',
+            'relative flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:shadow-sm hover:shadow-md',
             collapsed && 'justify-center px-2'
           )}
           activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"

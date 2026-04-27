@@ -24,8 +24,9 @@ export const StatsCard = React.memo(function StatsCard({
 }: StatsCardProps) {
   return (
     <div
+      tabIndex={0}
       className={cn(
-        "rounded-lg border bg-card p-6 shadow-sm transition-shadow hover:shadow-md focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-card",
+        "rounded-lg border bg-card p-4 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:p-6",
         className
       )}
     >
