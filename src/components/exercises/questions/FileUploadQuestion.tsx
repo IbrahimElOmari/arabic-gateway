@@ -186,7 +186,7 @@ export function FileUploadQuestion({ value, onChange, attemptId, questionId }: F
             {previewUrl ? (
               <img 
                 src={previewUrl} 
-                alt="Preview" 
+                alt={t("exercises.filePreview", "File preview")}
                 className="w-20 h-20 object-cover rounded-lg"
               />
             ) : (
@@ -243,9 +243,9 @@ export function FileUploadQuestion({ value, onChange, attemptId, questionId }: F
 
       {/* Uploaded confirmation */}
       {value && (
-        <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+        <div className="rounded-lg border border-success/30 bg-success/10 p-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-green-700 dark:text-green-300">
+            <p className="text-sm font-medium text-success">
               ✓ {t("exercises.fileSaved", "File has been saved successfully")}
             </p>
             <a 
