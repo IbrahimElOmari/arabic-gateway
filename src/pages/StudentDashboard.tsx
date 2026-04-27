@@ -6,12 +6,12 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useQuery } from '@tanstack/react-query';
 import { apiQuery } from '@/lib/supabase-api';
-import { supabase } from '@/integrations/supabase/client';
 import { BookOpen, Calendar, TrendingUp, Flame, Trophy, MessageCircle, Shield, Palette, PlayCircle, Bell, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { getRecommendedExercise } from '@/lib/learning-recommendations';
 import { RoleOnboardingChecklist } from '@/components/onboarding/RoleOnboardingChecklist';
+import { formatDate } from '@/lib/date-utils';
 
 export default function StudentDashboard() {
   const { t } = useTranslation();
@@ -249,7 +249,7 @@ export default function StudentDashboard() {
             {upcomingLessons && upcomingLessons.length > 0 ? upcomingLessons.map((lesson) => (
               <div key={lesson.id} className="flex items-center justify-between gap-3 border-b pb-3 last:border-0">
                 <div><p className="font-medium">{lesson.title}</p><p className="text-sm text-muted-foreground">{lesson.class?.name}</p></div>
-                <p className="text-sm text-muted-foreground">{new Date(lesson.scheduled_at).toLocaleDateString()}</p>
+                <p className="text-sm text-muted-foreground">{formatDate(lesson.scheduled_at, 'PPP')}</p>
               </div>
             )) : <p className="text-sm text-muted-foreground">{t('dashboard.noUpcomingLessons', 'Geen komende live lessen.')}</p>}
           </CardContent>
