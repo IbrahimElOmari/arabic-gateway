@@ -25,7 +25,7 @@ export const StatsCard = React.memo(function StatsCard({
   return (
     <div
       className={cn(
-        "rounded-lg border bg-card p-6 shadow-sm transition-shadow hover:shadow-md",
+        "rounded-lg border bg-card p-6 shadow-sm transition-shadow hover:shadow-md focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-card",
         className
       )}
     >
