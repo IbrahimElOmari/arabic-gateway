@@ -39,7 +39,9 @@ serve(async (req: Request) => {
             profiles:student_id (
               email,
               full_name,
-              preferred_language
+              preferred_language,
+              lesson_reminders,
+              email_notifications
             )
           )
         )
@@ -62,15 +64,8 @@ serve(async (req: Request) => {
     }
 
     let remindersSent = 0;
+    let inAppRemindersCreated = 0;
     const resendKey = Deno.env.get("RESEND_API_KEY");
-
-    if (!resendKey) {
-      console.log("RESEND_API_KEY not configured, skipping email notifications");
-      return new Response(
-        JSON.stringify({ message: "Email not configured", count: 0 }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
     for (const lesson of upcomingLessons) {
       const classData = lesson.classes as any;
@@ -82,12 +77,45 @@ serve(async (req: Request) => {
       for (const enrollment of classData.class_enrollments) {
         const profile = enrollment.profiles;
         if (!profile?.email) continue;
+        if (profile.lesson_reminders === false) continue;
 
         const lang = profile.preferred_language || "nl";
         const scheduledTime = lessonDate.toLocaleString(
           lang === "ar" ? "ar-SA" : lang === "en" ? "en-US" : "nl-NL",
           { dateStyle: "short", timeStyle: "short" }
         );
+
+        const title = lang === "en" ? "Lesson starts soon" : lang === "ar" ? "سيبدأ الدرس قريباً" : "Les start binnenkort";
+        const message = lang === "en"
+          ? `${lesson.title} starts at ${scheduledTime}.`
+          : lang === "ar"
+            ? `${lesson.title} يبدأ في ${scheduledTime}.`
+            : `${lesson.title} start om ${scheduledTime}.`;
+
+        const { data: existingReminder } = await supabase
+          .from("notification_events")
+          .select("id")
+          .eq("user_id", enrollment.student_id)
+          .eq("event_type", "lesson_reminder")
+          .eq("related_id", lesson.id)
+          .eq("channel", "in_app")
+          .maybeSingle();
+
+        if (!existingReminder) {
+          await supabase.rpc("create_notification_event", {
+            p_user_id: enrollment.student_id,
+            p_event_type: "lesson_reminder",
+            p_channel: "in_app",
+            p_title: title,
+            p_message: message,
+            p_related_table: "lessons",
+            p_related_id: lesson.id,
+            p_metadata: { lessonTitle: lesson.title, scheduledTime, meetLink: lesson.meet_link },
+          });
+          inAppRemindersCreated++;
+        }
+
+        if (!resendKey || profile.email_notifications === false) continue;
 
         try {
           await fetch(`${supabaseUrl}/functions/v1/send-email`, {
@@ -117,12 +145,13 @@ serve(async (req: Request) => {
       }
     }
 
-    console.log(`Sent ${remindersSent} lesson reminders for ${upcomingLessons.length} lessons`);
+    console.log(`Created ${inAppRemindersCreated} in-app reminders and sent ${remindersSent} emails for ${upcomingLessons.length} lessons`);
 
     return new Response(
       JSON.stringify({ 
         message: "Reminders sent successfully", 
         lessonsProcessed: upcomingLessons.length,
+        inAppRemindersCreated,
         remindersSent: remindersSent
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
