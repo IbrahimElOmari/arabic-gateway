@@ -40,23 +40,6 @@ const contrastRatio = (foreground: Hsl, background: Hsl) => {
   return (Math.max(fg, bg) + 0.05) / (Math.min(fg, bg) + 0.05);
 };
 
-const blend = (foreground: Hsl, background: Hsl, alpha: number): Hsl => {
-  const fg = toRgb(foreground);
-  const bg = toRgb(background);
-  const mixed = fg.map((value, index) => value * alpha + bg[index] * (1 - alpha)) as [number, number, number];
-  const max = Math.max(...mixed);
-  const min = Math.min(...mixed);
-  const l = (max + min) / 2;
-  const d = max - min;
-  const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
-  const h = d === 0 ? 0 : max === mixed[0]
-    ? 60 * (((mixed[1] - mixed[2]) / d) % 6)
-    : max === mixed[1]
-      ? 60 * ((mixed[2] - mixed[0]) / d + 2)
-      : 60 * ((mixed[0] - mixed[1]) / d + 4);
-  return { h: h < 0 ? h + 360 : h, s: s * 100, l: l * 100 };
-};
-
 const requiredPairs: Array<[string, Hsl, Hsl, number]> = [
   ['body text', tokens.foreground, tokens.background, 4.5],
   ['card text', tokens['card-foreground'], tokens.card, 4.5],
@@ -70,7 +53,7 @@ const requiredPairs: Array<[string, Hsl, Hsl, number]> = [
   ['success trend', tokens.success, tokens.card, 4.5],
   ['warning badge', tokens['warning-foreground'], tokens.warning, 4.5],
   ['sidebar text', tokens['sidebar-foreground'], tokens['sidebar-background'], 4.5],
-  ['sidebar active text', tokens['sidebar-primary'], blend(tokens.primary, tokens['sidebar-background'], 0.1), 4.5],
+  ['sidebar active text', tokens['sidebar-accent-foreground'], tokens['sidebar-accent'], 4.5],
   ['sidebar hover text', tokens['sidebar-accent-foreground'], tokens['sidebar-accent'], 4.5],
   ['focus ring on page', tokens.ring, tokens.background, 3],
   ['focus ring on card', tokens.ring, tokens.card, 3],
