@@ -1,9 +1,13 @@
-import { CheckCircle2, ClipboardList, GraduationCap, ShieldCheck } from "lucide-react";
+import { CheckCircle2, ClipboardList, GraduationCap, ShieldCheck, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { apiMutate, apiQuery } from "@/lib/supabase-api";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 type Role = "student" | "teacher" | "admin";
 
@@ -22,6 +26,28 @@ interface RoleOnboardingChecklistProps {
 
 export function RoleOnboardingChecklist({ role, completedCount = 0, classCount = 0, pendingCount = 0 }: RoleOnboardingChecklistProps) {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: onboardingState } = useQuery({
+    queryKey: ["onboarding-state", user?.id, role],
+    queryFn: () => apiQuery<any>("user_onboarding_state", (q) => q.select("*").eq("user_id", user!.id).eq("role", role).maybeSingle()),
+    enabled: !!user,
+  });
+
+  const dismissMutation = useMutation({
+    mutationFn: () => apiMutate("user_onboarding_state", (q) => q.upsert({
+      user_id: user!.id,
+      role,
+      dismissed: true,
+      dismissed_at: new Date().toISOString(),
+    }, { onConflict: "user_id" })),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["onboarding-state", user?.id, role] });
+      toast({ title: t("onboarding.dismissed", "Checklist verborgen") });
+    },
+  });
 
   const roleConfig = {
     student: {
@@ -61,6 +87,8 @@ export function RoleOnboardingChecklist({ role, completedCount = 0, classCount =
   const doneCount = config.items.filter((item) => item.done).length;
   const progress = Math.round((doneCount / config.items.length) * 100);
 
+  if (onboardingState?.dismissed) return null;
+
   return (
     <Card className="border-primary/20 bg-primary/5">
       <CardHeader className="space-y-3">
@@ -72,7 +100,12 @@ export function RoleOnboardingChecklist({ role, completedCount = 0, classCount =
             </CardTitle>
             <CardDescription>{config.description}</CardDescription>
           </div>
-          <span className="text-sm font-medium text-primary">{progress}%</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-primary">{progress}%</span>
+            <Button variant="ghost" size="icon" onClick={() => dismissMutation.mutate()} disabled={dismissMutation.isPending} aria-label={t("onboarding.dismiss", "Verberg checklist")}>
+              <X className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          </div>
         </div>
         <Progress value={progress} className="h-2" />
       </CardHeader>
