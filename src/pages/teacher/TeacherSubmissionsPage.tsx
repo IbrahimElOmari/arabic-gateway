@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileCheck, Loader2, CheckCircle, XCircle, Play, FileText } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -24,6 +25,9 @@ export default function TeacherSubmissionsPage() {
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [feedback, setFeedback] = useState("");
   const [score, setScore] = useState("");
+  const [selectedRubricId, setSelectedRubricId] = useState("");
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [rubricScores, setRubricScores] = useState<Record<string, number>>({});
 
   // Get teacher's classes (admin sees all)
   const { data: classes } = useQuery({
@@ -75,7 +79,7 @@ export default function TeacherSubmissionsPage() {
       apiQuery<any[]>("student_answers", (q) =>
         q.select(`
           *,
-          student:profiles!student_answers_student_id_fkey(full_name),
+          student:profiles!student_answers_student_id_fkey(full_name, email),
           question:questions(
             question_text,
             points,
@@ -96,7 +100,7 @@ export default function TeacherSubmissionsPage() {
       apiQuery<any[]>("student_answers", (q) =>
         q.select(`
           *,
-          student:profiles!student_answers_student_id_fkey(full_name),
+          student:profiles!student_answers_student_id_fkey(full_name, email),
           question:questions(
             question_text,
             points,
@@ -112,6 +116,18 @@ export default function TeacherSubmissionsPage() {
     enabled: questionIds.length > 0,
   });
 
+  const { data: rubrics = [] } = useQuery({
+    queryKey: ["feedback-rubrics", user?.id],
+    queryFn: () => apiQuery<any[]>("feedback_rubrics", (q) => q.select("*").eq("is_active", true).order("is_default", { ascending: false })),
+    enabled: !!user,
+  });
+
+  const { data: templates = [] } = useQuery({
+    queryKey: ["feedback-templates", user?.id],
+    queryFn: () => apiQuery<any[]>("feedback_templates", (q) => q.select("*").eq("is_active", true).order("is_default", { ascending: false })),
+    enabled: !!user,
+  });
+
   const reviewMutation = useMutation({
     mutationFn: async ({ id, score, feedback, isCorrect }: { id: string; score: number; feedback: string; isCorrect: boolean }) => {
       await apiMutate("student_answers", (q) =>
@@ -123,6 +139,35 @@ export default function TeacherSubmissionsPage() {
           reviewed_at: new Date().toISOString(),
         }).eq("id", id)
       );
+      await apiMutate("submission_feedback", (q) => q.upsert({
+        student_answer_id: id,
+        student_id: selectedSubmission.student_id,
+        teacher_id: user!.id,
+        rubric_id: selectedRubricId || null,
+        template_id: selectedTemplateId || null,
+        rubric_scores: rubricScores,
+        feedback_text: feedback,
+        status: "published",
+      }, { onConflict: "student_answer_id" }));
+      await apiMutate("notifications", (q) => q.insert({
+        user_id: selectedSubmission.student_id,
+        type: "submission_feedback",
+        title: t("teacher.feedbackPublished", "Nieuwe feedback beschikbaar"),
+        message: t("teacher.feedbackPublishedMessage", "Je docent heeft feedback geplaatst op je inzending."),
+        data: { student_answer_id: id },
+      }));
+      await apiMutate("notification_events", (q) => q.insert({
+        user_id: selectedSubmission.student_id,
+        event_type: "submission_feedback",
+        channel: "in_app",
+        title: t("teacher.feedbackPublished", "Nieuwe feedback beschikbaar"),
+        message: t("teacher.feedbackPublishedMessage", "Je docent heeft feedback geplaatst op je inzending."),
+        related_table: "student_answers",
+        related_id: id,
+        status: "sent",
+        sent_at: new Date().toISOString(),
+        metadata: { has_rubric: !!selectedRubricId, has_template: !!selectedTemplateId },
+      }));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pending-submissions"] });
@@ -130,6 +175,9 @@ export default function TeacherSubmissionsPage() {
       setSelectedSubmission(null);
       setFeedback("");
       setScore("");
+      setSelectedRubricId("");
+      setSelectedTemplateId("");
+      setRubricScores({});
       toast({ title: t("teacher.submissionReviewed", "Submission reviewed") });
     },
   });
