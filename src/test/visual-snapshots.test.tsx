@@ -19,7 +19,7 @@ function SidebarLinkSample({ collapsed = false, active = false }: { collapsed?: 
     <a
       href="/sample"
       className={cn(
-        'relative flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground sm:shadow-sm hover:shadow-md',
+        'relative flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:shadow-sm hover:shadow-md',
         collapsed && 'justify-center px-2',
         active && 'bg-primary/10 text-primary font-medium'
       )}
