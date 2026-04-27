@@ -143,6 +143,7 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
     { to: '/admin/invitations', icon: Mail, label: t('admin.invitations', 'Invitations') },
     { to: '/admin/analytics', icon: BarChart3, label: t('admin.analytics', 'Analytics') },
     { to: '/admin/final-exams', icon: GraduationCap, label: t('admin.finalExams', 'Final Exams') },
+    { to: '/admin/design-system', icon: Palette, label: t('admin.designSystem', 'Design System') },
   ];
 
   const handleNavClick = () => {
