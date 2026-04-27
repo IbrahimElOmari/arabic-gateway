@@ -249,6 +249,8 @@ export default function ExercisePage() {
         q.update({ submitted_at: new Date().toISOString(), total_score: scorePercent, passed }).eq("id", attemptId)
       );
 
+      if (draftKey) window.localStorage.removeItem(draftKey);
+
       setResults({ score: scorePercent, passed });
       setIsCompleted(true);
 
@@ -290,12 +292,10 @@ export default function ExercisePage() {
           <Card className="max-w-lg mx-auto">
             <CardHeader className="text-center">
               <div
-                className={`mx-auto rounded-full p-6 ${
-                  results.passed ? "bg-green-100 dark:bg-green-900/20" : "bg-red-100 dark:bg-red-900/20"
-                }`}
+                className={`mx-auto rounded-full p-6 ${results.passed ? "bg-success/10" : "bg-destructive/10"}`}
               >
                 <CheckCircle
-                  className={`h-12 w-12 ${results.passed ? "text-green-600" : "text-red-600"}`}
+                  className={`h-12 w-12 ${results.passed ? "text-success" : "text-destructive"}`}
                 />
               </div>
               <CardTitle className="text-2xl mt-4">
