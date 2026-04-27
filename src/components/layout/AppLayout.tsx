@@ -118,11 +118,12 @@ function UserAvatarMenu() {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const mobileSheetSide: 'left' | 'right' = i18n.dir() === 'rtl' ? 'right' : 'left';
 
   if (isMobile) {
     return (
@@ -154,7 +155,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
         {/* Mobile sidebar sheet */}
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetContent side="left" className="p-0 w-64 [&>button]:hidden">
+          <SheetContent side={mobileSheetSide} className="p-0 w-64 [&>button]:hidden">
             <AppSidebar
               collapsed={false}
               onToggle={() => setMobileOpen(false)}

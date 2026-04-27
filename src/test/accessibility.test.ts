@@ -1,4 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
+import fs from "node:fs";
 
 /**
  * Accessibility Testing Guidelines
@@ -79,9 +80,16 @@ describe("Accessibility Requirements", () => {
     });
 
     it("should provide visible focus indicators", () => {
-      // Focus indicators should be visible (ring-2, ring-primary, etc.)
-      const focusClasses = ["focus:ring-2", "focus:ring-primary", "focus-visible:ring-2"];
-      expect(focusClasses.length).toBeGreaterThan(0);
+      const files = [
+        "src/components/ui/button.tsx",
+        "src/components/ui/input.tsx",
+        "src/components/layout/AppSidebar.tsx",
+        "src/components/admin/StatsCard.tsx",
+      ];
+
+      for (const file of files) {
+        expect(fs.readFileSync(file, "utf8"), file).toMatch(/focus-visible:ring-2/);
+      }
     });
 
     it("should support Enter and Space for button activation", () => {
@@ -160,6 +168,12 @@ describe("Accessibility Requirements", () => {
     it("should use correct text direction", () => {
       const directionAttribute = "dir='rtl'";
       expect(directionAttribute).toBe("dir='rtl'");
+    });
+
+    it("should open mobile navigation from the mirrored side in RTL", () => {
+      const layoutSource = fs.readFileSync("src/components/layout/AppLayout.tsx", "utf8");
+      expect(layoutSource).toContain("i18n.dir() === 'rtl' ? 'right' : 'left'");
+      expect(layoutSource).toContain("side={mobileSheetSide}");
     });
   });
 

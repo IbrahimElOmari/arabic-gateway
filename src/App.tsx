@@ -44,6 +44,7 @@ const ContentReportsPage = React.lazy(() => import("./pages/admin/ContentReports
 const AdminInvitationsPage = React.lazy(() => import("./pages/admin/AdminInvitationsPage"));
 const FinalExamsPage = React.lazy(() => import("./pages/admin/FinalExamsPage"));
 const EnrollmentRequestsPage = React.lazy(() => import("./pages/admin/EnrollmentRequestsPage"));
+const DesignSystemPage = React.lazy(() => import("./pages/admin/DesignSystemPage"));
 
 // Teacher pages
 const TeacherDashboard = React.lazy(() => import("./pages/teacher/TeacherDashboard"));
@@ -178,6 +179,7 @@ const App = () => (
                       <Route path="/admin/invitations" element={<ProtectedRoute requiredRole="admin"><AdminInvitationsPage /></ProtectedRoute>} />
                       <Route path="/admin/final-exams" element={<ProtectedRoute requiredRole="admin"><FinalExamsPage /></ProtectedRoute>} />
                       <Route path="/admin/enrollments" element={<ProtectedRoute requiredRole="admin"><EnrollmentRequestsPage /></ProtectedRoute>} />
+                      <Route path="/admin/design-system" element={<ProtectedRoute requiredRole="admin"><DesignSystemPage /></ProtectedRoute>} />
                       {/* Catch-all */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
