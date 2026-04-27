@@ -137,6 +137,59 @@ exports[`visual snapshots > admin StatsCard – with positive trend 1`] = `
 
 exports[`visual snapshots > admin stats grid wrapper className 1`] = `"grid gap-4 md:grid-cols-2 lg:grid-cols-4 rounded-xl p-1 shadow-md sm:shadow-lg lg:shadow-xl border border-transparent sm:border-accent/40 lg:border-accent"`;
 
+exports[`visual snapshots > light-mode visual token contract 1`] = `
+[
+  "primary: 160 50% 33%",
+  "muted-foreground: 160 10% 38%",
+  "accent: 175 60% 32%",
+  "success: 142 70% 30%",
+  "destructive: 0 84% 45%",
+  "input: 170 20% 50%",
+  "ring: 160 50% 35%",
+  "sidebar-accent: 170 30% 92%",
+  "sidebar-accent-foreground: 160 50% 22%",
+]
+`;
+
+exports[`visual snapshots > sidebar link – RTL Arabic state 1`] = `
+<div
+  class="font-sans"
+  dir="rtl"
+  lang="ar"
+>
+  <a
+    class="relative flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:shadow-sm hover:shadow-md bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+    href="/sample"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-house h-5 w-5 shrink-0"
+      fill="none"
+      height="24"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      viewBox="0 0 24 24"
+      width="24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"
+      />
+      <path
+        d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+      />
+    </svg>
+    <span
+      class="truncate flex-1"
+    >
+      Sample link
+    </span>
+  </a>
+</div>
+`;
+
 exports[`visual snapshots > sidebar link – active state 1`] = `
 <a
   class="relative flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:shadow-sm hover:shadow-md bg-sidebar-accent text-sidebar-accent-foreground font-medium"
