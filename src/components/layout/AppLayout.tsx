@@ -123,7 +123,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const isMobile = useIsMobile();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const mobileSheetSide = i18n.dir() === 'rtl' ? 'right' : 'left';
+  const mobileSheetSide: 'left' | 'right' = i18n.dir() === 'rtl' ? 'right' : 'left';
 
   if (isMobile) {
     return (

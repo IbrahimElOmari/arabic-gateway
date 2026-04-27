@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { Home, Users } from 'lucide-react';
 import { StatsCard } from '@/components/admin/StatsCard';
 import { cn } from '@/lib/utils';
+import DesignSystemPage from '@/pages/admin/DesignSystemPage';
 import fs from 'node:fs';
 
 /**
@@ -20,7 +21,7 @@ function SidebarLinkSample({ collapsed = false, active = false }: { collapsed?: 
     <a
       href="/sample"
       className={cn(
-        'relative flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:shadow-sm hover:shadow-md',
+        'relative flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:shadow-sm hover:shadow-md',
         collapsed && 'justify-center px-2',
         active && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
       )}
@@ -112,5 +113,10 @@ describe('visual snapshots', () => {
     ).map(([, name, value]) => `${name}: ${value.trim()}`);
 
     expect(tokenContract).toMatchSnapshot();
+  });
+
+  it('admin Design System page – Sprint 1 showcase', () => {
+    const { container } = render(<DesignSystemPage />);
+    expect(container.firstChild).toMatchSnapshot();
   });
 });
