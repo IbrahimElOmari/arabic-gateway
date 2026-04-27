@@ -209,6 +209,9 @@ export default function TeacherSubmissionsPage() {
       setSelectedSubmission(submission);
       setFeedback(submission.feedback || "");
       setScore(submission.score?.toString() || "");
+      setSelectedRubricId("");
+      setSelectedTemplateId("");
+      setRubricScores({});
     }}>
       <CardHeader>
         <div className="flex items-start justify-between">
@@ -268,7 +271,7 @@ export default function TeacherSubmissionsPage() {
           ) : (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
+                <CheckCircle className="h-12 w-12 text-success mb-4" />
                 <h3 className="text-lg font-semibold">{t("teacher.allReviewed", "All caught up!")}</h3>
                 <p className="text-muted-foreground">{t("teacher.noPendingSubmissions", "No pending submissions to review")}</p>
               </CardContent>
@@ -348,6 +351,39 @@ export default function TeacherSubmissionsPage() {
                       rows={3}
                     />
                   </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>{t("teacher.feedbackTemplate", "Feedbacktemplate")}</Label>
+                      <Select value={selectedTemplateId} onValueChange={(value) => {
+                        setSelectedTemplateId(value);
+                        const template = templates.find((item) => item.id === value);
+                        if (template?.body) setFeedback((current) => current ? `${current}\n\n${template.body}` : template.body);
+                      }}>
+                        <SelectTrigger><SelectValue placeholder={t("teacher.chooseTemplate", "Kies template")} /></SelectTrigger>
+                        <SelectContent>{templates.map((template) => <SelectItem key={template.id} value={template.id}>{template.title}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("teacher.rubric", "Rubric")}</Label>
+                      <Select value={selectedRubricId} onValueChange={(value) => setSelectedRubricId(value)}>
+                        <SelectTrigger><SelectValue placeholder={t("teacher.chooseRubric", "Kies rubric")} /></SelectTrigger>
+                        <SelectContent>{rubrics.map((rubric) => <SelectItem key={rubric.id} value={rubric.id}>{rubric.title}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {selectedRubricId && (
+                    <div className="space-y-3 rounded-md border p-3">
+                      <Label>{t("teacher.rubricScores", "Rubric-scores")}</Label>
+                      {(rubrics.find((rubric) => rubric.id === selectedRubricId)?.criteria || []).map((criterion: any) => (
+                        <div key={criterion.name} className="grid gap-2 sm:grid-cols-[1fr_120px] sm:items-center">
+                          <span className="text-sm text-muted-foreground">{criterion.name}</span>
+                          <Input type="number" min={0} max={criterion.max || selectedSubmission.question?.points || 1} value={rubricScores[criterion.name] ?? ""} onChange={(event) => setRubricScores((current) => ({ ...current, [criterion.name]: Number(event.target.value) }))} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   <div>
                     <Label>{t("teacher.partialScore", "Partial Score (optional)")}</Label>
