@@ -7,10 +7,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useQuery } from '@tanstack/react-query';
 import { apiQuery } from '@/lib/supabase-api';
 import { supabase } from '@/integrations/supabase/client';
-import { BookOpen, Calendar, TrendingUp, Flame, Trophy, MessageCircle, Shield, Palette, Lightbulb } from 'lucide-react';
+import { BookOpen, Calendar, TrendingUp, Flame, Trophy, MessageCircle, Shield, Palette, PlayCircle, Bell, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { getRecommendedExercise } from '@/lib/learning-recommendations';
+import { RoleOnboardingChecklist } from '@/components/onboarding/RoleOnboardingChecklist';
 
 export default function StudentDashboard() {
   const { t } = useTranslation();
@@ -68,6 +69,17 @@ export default function StudentDashboard() {
     enabled: !!user,
   });
 
+  const { data: upcomingLessons } = useQuery({
+    queryKey: ['student-upcoming-lessons', user?.id],
+    queryFn: () => apiQuery<any[]>('lessons', q =>
+      q.select('id, title, scheduled_at, class:classes(name)')
+        .gte('scheduled_at', new Date().toISOString())
+        .order('scheduled_at', { ascending: true })
+        .limit(3)
+    ),
+    enabled: !!user,
+  });
+
   const recommendedExercise = attempts && exercises 
     ? getRecommendedExercise(
         analytics || { weakest_category: null, strongest_category: null, exercises_attempted: 0 },
@@ -121,6 +133,10 @@ export default function StudentDashboard() {
           </AlertDescription>
         </Alert>
       )}
+
+      <div className="mb-6">
+        <RoleOnboardingChecklist role="student" completedCount={passedExercises} classCount={enrollments?.length || 0} />
+      </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {recommendedExercise && (
@@ -188,6 +204,64 @@ export default function StudentDashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{userPoints?.total_points || 0}</div>
             <p className="text-xs text-muted-foreground">{studyHours}h {t('dashboard.studyTime').toLowerCase()}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><PlayCircle className="h-5 w-5 text-primary" />{t('dashboard.continueLearning', 'Ga verder waar je gebleven was')}</CardTitle>
+            <CardDescription>{t('dashboard.continueLearningDesc', 'Je eerstvolgende beste actie staat klaar.')}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-medium text-foreground">{recommendedExercise?.title || t('dashboard.startSelfStudy', 'Start met zelfstudie')}</p>
+              <p className="text-sm text-muted-foreground">{t('dashboard.adaptivePath', 'Gebaseerd op voortgang, klasstatus en beschikbare oefeningen.')}</p>
+            </div>
+            <Button asChild>
+              <Link to={recommendedExercise ? `/self-study/${recommendedExercise.category_name || 'reading'}/${recommendedExercise.id}` : '/self-study'}>
+                <PlayCircle className="h-4 w-4" />{t('common.start', 'Start')}
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Target className="h-5 w-5 text-primary" />{t('dashboard.weekFocus', 'Focus deze week')}</CardTitle>
+            <CardDescription>{t('dashboard.weekFocusDesc', 'Houd je leerreeks actief.')}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div className="flex items-center justify-between"><span className="text-muted-foreground">{t('dashboard.weakestSkill', 'Zwakste onderdeel')}</span><span className="font-medium">{analytics?.weakest_category || t('common.notAvailable', 'Nog onbekend')}</span></div>
+            <div className="flex items-center justify-between"><span className="text-muted-foreground">{t('dashboard.studyTime', 'Study Time')}</span><span className="font-medium">{studyHours}h</span></div>
+            <div className="flex items-center justify-between"><span className="text-muted-foreground">{t('gamification.currentStreak', 'Current Streak')}</span><span className="font-medium">{userPoints?.current_streak || 0}</span></div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5 text-primary" />{t('dashboard.nextLiveLessons', 'Volgende live lessen')}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {upcomingLessons && upcomingLessons.length > 0 ? upcomingLessons.map((lesson) => (
+              <div key={lesson.id} className="flex items-center justify-between gap-3 border-b pb-3 last:border-0">
+                <div><p className="font-medium">{lesson.title}</p><p className="text-sm text-muted-foreground">{lesson.class?.name}</p></div>
+                <p className="text-sm text-muted-foreground">{new Date(lesson.scheduled_at).toLocaleDateString()}</p>
+              </div>
+            )) : <p className="text-sm text-muted-foreground">{t('dashboard.noUpcomingLessons', 'Geen komende live lessen.')}</p>}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5 text-primary" />{t('dashboard.feedbackHub', 'Feedback & meldingen')}</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3 sm:grid-cols-2">
+            <Button variant="outline" className="justify-start" asChild><Link to="/progress"><TrendingUp className="h-4 w-4" />{t('dashboard.viewFeedback', 'Bekijk feedback')}</Link></Button>
+            <Button variant="outline" className="justify-start" asChild><Link to="/chat"><MessageCircle className="h-4 w-4" />{t('nav.chat', 'Chat')}</Link></Button>
           </CardContent>
         </Card>
       </div>
