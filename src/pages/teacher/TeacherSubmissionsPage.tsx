@@ -28,6 +28,9 @@ export default function TeacherSubmissionsPage() {
   const [selectedRubricId, setSelectedRubricId] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [rubricScores, setRubricScores] = useState<Record<string, number>>({});
+  const [newTemplateTitle, setNewTemplateTitle] = useState("");
+  const [newTemplateBody, setNewTemplateBody] = useState("");
+  const [newRubricTitle, setNewRubricTitle] = useState("");
 
   // Get teacher's classes (admin sees all)
   const { data: classes } = useQuery({
@@ -126,6 +129,34 @@ export default function TeacherSubmissionsPage() {
     queryKey: ["feedback-templates", user?.id],
     queryFn: () => apiQuery<any[]>("feedback_templates", (q) => q.select("*").eq("is_active", true).order("is_default", { ascending: false })),
     enabled: !!user,
+  });
+
+  const createTemplateMutation = useMutation({
+    mutationFn: () => apiMutate("feedback_templates", (q) => q.insert({ owner_id: user!.id, title: newTemplateTitle, body: newTemplateBody, category: "teacher_feedback" })),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feedback-templates", user?.id] });
+      setNewTemplateTitle("");
+      setNewTemplateBody("");
+      toast({ title: t("teacher.templateSaved", "Template opgeslagen") });
+    },
+  });
+
+  const createRubricMutation = useMutation({
+    mutationFn: () => apiMutate("feedback_rubrics", (q) => q.insert({
+      owner_id: user!.id,
+      title: newRubricTitle,
+      description: t("teacher.defaultRubricDescription", "Standaard rubric voor taalvaardigheid"),
+      criteria: [
+        { name: t("teacher.rubricAccuracy", "Nauwkeurigheid"), max: 4 },
+        { name: t("teacher.rubricFluency", "Vloeiendheid"), max: 4 },
+        { name: t("teacher.rubricStructure", "Structuur"), max: 4 },
+      ],
+    })),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feedback-rubrics", user?.id] });
+      setNewRubricTitle("");
+      toast({ title: t("teacher.rubricSaved", "Rubric opgeslagen") });
+    },
   });
 
   const reviewMutation = useMutation({
@@ -244,6 +275,24 @@ export default function TeacherSubmissionsPage() {
       <div>
         <h1 className="text-3xl font-bold">{t("teacher.submissions", "Submissions")}</h1>
         <p className="text-muted-foreground">{t("teacher.reviewStudentWork", "Review student work and provide feedback")}</p>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader><CardTitle>{t("teacher.feedbackTemplates", "Feedbacktemplates")}</CardTitle><CardDescription>{t("teacher.feedbackTemplatesDesc", "Sla snelle, herbruikbare feedback op.")}</CardDescription></CardHeader>
+          <CardContent className="space-y-3">
+            <Input value={newTemplateTitle} onChange={(event) => setNewTemplateTitle(event.target.value)} placeholder={t("teacher.templateTitle", "Titel")} />
+            <Textarea value={newTemplateBody} onChange={(event) => setNewTemplateBody(event.target.value)} placeholder={t("teacher.templateBody", "Feedbacktekst")} rows={2} />
+            <Button onClick={() => createTemplateMutation.mutate()} disabled={!newTemplateTitle || !newTemplateBody || createTemplateMutation.isPending}>{t("teacher.saveTemplate", "Template opslaan")}</Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle>{t("teacher.rubrics", "Rubrics")}</CardTitle><CardDescription>{t("teacher.rubricsDesc", "Maak vaste beoordelingscriteria voor consistente feedback.")}</CardDescription></CardHeader>
+          <CardContent className="space-y-3">
+            <Input value={newRubricTitle} onChange={(event) => setNewRubricTitle(event.target.value)} placeholder={t("teacher.rubricTitle", "Rubric titel")} />
+            <Button onClick={() => createRubricMutation.mutate()} disabled={!newRubricTitle || createRubricMutation.isPending}>{t("teacher.saveRubric", "Rubric opslaan")}</Button>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs defaultValue="pending">
