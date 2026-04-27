@@ -2,7 +2,7 @@
 
 exports[`visual snapshots > admin StatsCard – basic 1`] = `
 <div
-  class="rounded-lg border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
+  class="rounded-lg border bg-card p-6 shadow-sm transition-shadow hover:shadow-md focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-card"
 >
   <div
     class="flex items-center justify-between"
@@ -63,7 +63,7 @@ exports[`visual snapshots > admin StatsCard – basic 1`] = `
 
 exports[`visual snapshots > admin StatsCard – with positive trend 1`] = `
 <div
-  class="rounded-lg border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
+  class="rounded-lg border bg-card p-6 shadow-sm transition-shadow hover:shadow-md focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-card"
 >
   <div
     class="flex items-center justify-between"
@@ -139,7 +139,7 @@ exports[`visual snapshots > admin stats grid wrapper className 1`] = `"grid gap-
 
 exports[`visual snapshots > sidebar link – active state 1`] = `
 <a
-  class="relative flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-accent hover:text-accent-foreground sm:shadow-sm hover:shadow-md bg-primary/10 text-primary font-medium"
+  class="relative flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:shadow-sm hover:shadow-md bg-sidebar-accent text-sidebar-accent-foreground font-medium"
   href="/sample"
 >
   <svg
@@ -172,7 +172,7 @@ exports[`visual snapshots > sidebar link – active state 1`] = `
 
 exports[`visual snapshots > sidebar link – collapsed state 1`] = `
 <a
-  class="relative flex items-center gap-3 rounded-lg py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground sm:shadow-sm hover:shadow-md justify-center px-2"
+  class="relative flex items-center gap-3 rounded-lg py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:shadow-sm hover:shadow-md justify-center px-2"
   href="/sample"
 >
   <svg
@@ -200,7 +200,7 @@ exports[`visual snapshots > sidebar link – collapsed state 1`] = `
 
 exports[`visual snapshots > sidebar link – default state 1`] = `
 <a
-  class="relative flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground sm:shadow-sm hover:shadow-md"
+  class="relative flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:shadow-sm hover:shadow-md"
   href="/sample"
 >
   <svg
