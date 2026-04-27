@@ -403,8 +403,8 @@ export function VideoUploadQuestion({
 
       {/* Uploaded confirmation */}
       {value && (
-        <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-          <p className="text-sm text-green-700 dark:text-green-300">
+        <div className="rounded-lg border border-success/30 bg-success/10 p-3">
+          <p className="text-sm font-medium text-success">
             ✓ {t("exercises.videoSaved", "Video has been saved successfully")}
           </p>
         </div>

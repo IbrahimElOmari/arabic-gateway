@@ -16,7 +16,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { ArrowLeft, ArrowRight, Clock, Send, Loader2, CheckCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Clock, Send, Loader2, CheckCircle, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 // Question components
@@ -53,6 +53,7 @@ export default function ExercisePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [results, setResults] = useState<{ score: number; passed: boolean } | null>(null);
+  const draftKey = user && exerciseId ? `exercise-draft:${user.id}:${exerciseId}` : null;
 
   // Fetch exercise
   const { data: exercise } = useQuery({
@@ -97,6 +98,24 @@ export default function ExercisePage() {
 
     createAttempt();
   }, [user, exerciseId, exercise, attemptId]);
+
+  useEffect(() => {
+    if (!draftKey) return;
+    const savedDraft = window.localStorage.getItem(draftKey);
+    if (!savedDraft) return;
+    try {
+      const parsed = JSON.parse(savedDraft) as { answers?: Record<string, string | string[]>; currentQuestionIndex?: number };
+      if (parsed.answers) setAnswers(parsed.answers);
+      if (typeof parsed.currentQuestionIndex === "number") setCurrentQuestionIndex(parsed.currentQuestionIndex);
+    } catch {
+      window.localStorage.removeItem(draftKey);
+    }
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!draftKey || isCompleted) return;
+    window.localStorage.setItem(draftKey, JSON.stringify({ answers, currentQuestionIndex, savedAt: new Date().toISOString() }));
+  }, [answers, currentQuestionIndex, draftKey, isCompleted]);
 
   // Timer countdown
   useEffect(() => {
@@ -230,6 +249,8 @@ export default function ExercisePage() {
         q.update({ submitted_at: new Date().toISOString(), total_score: scorePercent, passed }).eq("id", attemptId)
       );
 
+      if (draftKey) window.localStorage.removeItem(draftKey);
+
       setResults({ score: scorePercent, passed });
       setIsCompleted(true);
 
@@ -271,12 +292,10 @@ export default function ExercisePage() {
           <Card className="max-w-lg mx-auto">
             <CardHeader className="text-center">
               <div
-                className={`mx-auto rounded-full p-6 ${
-                  results.passed ? "bg-green-100 dark:bg-green-900/20" : "bg-red-100 dark:bg-red-900/20"
-                }`}
+                className={`mx-auto rounded-full p-6 ${results.passed ? "bg-success/10" : "bg-destructive/10"}`}
               >
                 <CheckCircle
-                  className={`h-12 w-12 ${results.passed ? "text-green-600" : "text-red-600"}`}
+                  className={`h-12 w-12 ${results.passed ? "text-success" : "text-destructive"}`}
                 />
               </div>
               <CardTitle className="text-2xl mt-4">
@@ -348,11 +367,17 @@ export default function ExercisePage() {
               {t("exercises.question", "Question")} {currentQuestionIndex + 1} {t("common.of", "of")}{" "}
               {totalQuestions}
             </p>
+            {Object.keys(answers).length > 0 && (
+              <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                <Save className="h-3 w-3" aria-hidden="true" />
+                {t("exercises.autosaved", "Autosaved")}
+              </p>
+            )}
           </div>
           {timeLeft !== null && (
             <div
               className={`flex items-center gap-2 text-lg font-mono ${
-                timeLeft < 60 ? "text-red-600" : "text-foreground"
+                timeLeft < 60 ? "text-destructive" : "text-foreground"
               }`}
             >
               <Clock className="h-5 w-5" />

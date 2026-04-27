@@ -17,6 +17,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiQuery } from "@/lib/supabase-api";
 import { supabase } from "@/integrations/supabase/client";
+import { RoleOnboardingChecklist } from "@/components/onboarding/RoleOnboardingChecklist";
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
@@ -111,6 +112,8 @@ export default function AdminDashboard() {
           description={t("admin.teacherApplications", "Teacher applications")}
         />
       </div>
+
+      <RoleOnboardingChecklist role="admin" pendingCount={(stats?.pendingTeachers || 0) + (unassignedCount || 0)} />
 
       {/* Recent Activity */}
       <div className="grid gap-4 lg:grid-cols-2">

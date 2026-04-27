@@ -4,10 +4,11 @@ import { StatsCard } from "@/components/admin/StatsCard";
 import { useQuery } from "@tanstack/react-query";
 import { apiQuery } from "@/lib/supabase-api";
 import { useAuth } from "@/contexts/AuthContext";
-import { Calendar, Users, Video, FileCheck, BookOpen } from "lucide-react";
+import { Calendar, Users, Video, FileCheck, BookOpen, MessageCircle, AlertTriangle, Upload } from "lucide-react";
 import { formatDate } from "@/lib/date-utils";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { RoleOnboardingChecklist } from "@/components/onboarding/RoleOnboardingChecklist";
 
 export default function TeacherDashboard() {
   const { t } = useTranslation();
@@ -85,6 +86,32 @@ export default function TeacherDashboard() {
         <StatsCard title={t("teacher.pendingReviews", "Pending Reviews")} value={pendingSubmissions?.length || 0} icon={FileCheck} />
         <StatsCard title={t("teacher.recordings", "Recordings")} value={recordingsCount || 0} icon={Video} />
       </div>
+
+      <RoleOnboardingChecklist role="teacher" classCount={classes?.length || 0} pendingCount={pendingSubmissions?.length || 0} />
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-primary" />
+            {t("teacher.actionCenter", "Actiecentrum")}
+          </CardTitle>
+          <CardDescription>{t("teacher.actionCenterDesc", "De belangrijkste docentacties voor vandaag.")}</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+          <Button variant="outline" className="h-auto justify-start py-4 text-start" asChild>
+            <Link to="/teacher/submissions"><FileCheck className="h-4 w-4" />{t("teacher.pendingReviews", "Pending Reviews")} ({pendingSubmissions?.length || 0})</Link>
+          </Button>
+          <Button variant="outline" className="h-auto justify-start py-4 text-start" asChild>
+            <Link to="/teacher/content-studio"><BookOpen className="h-4 w-4" />{t("teacher.contentStudio", "Content Studio")}</Link>
+          </Button>
+          <Button variant="outline" className="h-auto justify-start py-4 text-start" asChild>
+            <Link to="/teacher/materials"><Upload className="h-4 w-4" />{t("teacher.uploadMaterials", "Materiaal uploaden")}</Link>
+          </Button>
+          <Button variant="outline" className="h-auto justify-start py-4 text-start" asChild>
+            <Link to="/chat"><MessageCircle className="h-4 w-4" />{t("teacher.messageStudents", "Bericht sturen")}</Link>
+          </Button>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
