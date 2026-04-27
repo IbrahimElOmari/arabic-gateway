@@ -367,11 +367,17 @@ export default function ExercisePage() {
               {t("exercises.question", "Question")} {currentQuestionIndex + 1} {t("common.of", "of")}{" "}
               {totalQuestions}
             </p>
+            {Object.keys(answers).length > 0 && (
+              <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                <Save className="h-3 w-3" aria-hidden="true" />
+                {t("exercises.autosaved", "Autosaved")}
+              </p>
+            )}
           </div>
           {timeLeft !== null && (
             <div
               className={`flex items-center gap-2 text-lg font-mono ${
-                timeLeft < 60 ? "text-red-600" : "text-foreground"
+                timeLeft < 60 ? "text-destructive" : "text-foreground"
               }`}
             >
               <Clock className="h-5 w-5" />
