@@ -16,7 +16,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { ArrowLeft, ArrowRight, Clock, Send, Loader2, CheckCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Clock, Send, Loader2, CheckCircle, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 // Question components
@@ -53,6 +53,7 @@ export default function ExercisePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [results, setResults] = useState<{ score: number; passed: boolean } | null>(null);
+  const draftKey = user && exerciseId ? `exercise-draft:${user.id}:${exerciseId}` : null;
 
   // Fetch exercise
   const { data: exercise } = useQuery({
@@ -97,6 +98,24 @@ export default function ExercisePage() {
 
     createAttempt();
   }, [user, exerciseId, exercise, attemptId]);
+
+  useEffect(() => {
+    if (!draftKey) return;
+    const savedDraft = window.localStorage.getItem(draftKey);
+    if (!savedDraft) return;
+    try {
+      const parsed = JSON.parse(savedDraft) as { answers?: Record<string, string | string[]>; currentQuestionIndex?: number };
+      if (parsed.answers) setAnswers(parsed.answers);
+      if (typeof parsed.currentQuestionIndex === "number") setCurrentQuestionIndex(parsed.currentQuestionIndex);
+    } catch {
+      window.localStorage.removeItem(draftKey);
+    }
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!draftKey || isCompleted) return;
+    window.localStorage.setItem(draftKey, JSON.stringify({ answers, currentQuestionIndex, savedAt: new Date().toISOString() }));
+  }, [answers, currentQuestionIndex, draftKey, isCompleted]);
 
   // Timer countdown
   useEffect(() => {
