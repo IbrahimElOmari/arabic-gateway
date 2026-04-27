@@ -57,6 +57,7 @@ const requiredPairs: Array<[string, Hsl, Hsl, number]> = [
   ['sidebar hover text', tokens['sidebar-accent-foreground'], tokens['sidebar-accent'], 4.5],
   ['focus ring on page', tokens.ring, tokens.background, 3],
   ['focus ring on card', tokens.ring, tokens.card, 3],
+  ['input border on page', tokens.input, tokens.background, 3],
   ['sidebar focus ring', tokens['sidebar-ring'], tokens['sidebar-background'], 3],
 ];
 
