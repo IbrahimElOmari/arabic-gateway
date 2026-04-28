@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Mic, Square, Play, Pause, Upload, Loader2, Trash2, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { buildStudentUploadPath } from "@/lib/student-upload-path";
 
 interface AudioUploadQuestionProps {
   value: string | undefined;
@@ -204,7 +205,7 @@ export function AudioUploadQuestion({
     setUploadProgress(0);
     
     try {
-      const fileName = `${user.id}/${attemptId}/${questionId}/audio-${Date.now()}.webm`;
+      const fileName = buildStudentUploadPath({ userId: user.id, attemptId, questionId, prefix: "audio", extension: "webm" });
       
       // Simulate progress
       const progressInterval = setInterval(() => {
