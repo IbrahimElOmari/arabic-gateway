@@ -63,7 +63,9 @@
     "copied": "Gekopieerd!",
     "noData": "Geen gegevens beschikbaar",
     "title": "Titel",
-    "upload": "Uploaden"
+    "upload": "Uploaden",
+    "done": "Klaar",
+    "verify": "Verifiëren"
   },
   "auth": {
     "login": "Inloggen",
@@ -243,7 +245,49 @@
     "title": "Installeer de App",
     "description": "Installeer Huis van het Arabisch op je apparaat voor een betere ervaring",
     "button": "Installeren",
-    "iosInstructions": "Tik op het deel-icoon en selecteer 'Zet op beginscherm'"
+    "iosInstructions": "Tik op het deel-icoon en selecteer 'Zet op beginscherm'",
+    "alreadyInstalled": "App al geïnstalleerd",
+    "alreadyInstalledDescription": "Je gebruikt de geïnstalleerde versie al.",
+    "androidInstructions": "Volg deze stappen om de app op Android te installeren.",
+    "android": {
+      "step1": "Open het menu van je browser.",
+      "step2": "Tik op “App installeren” of “Toevoegen aan startscherm”.",
+      "step3": "Bevestig de installatie."
+    },
+    "comingSoon": "Binnenkort beschikbaar",
+    "connectionStatus": "Verbindingsstatus",
+    "desktopInstructions": "Volg deze stappen om de app op je computer te installeren.",
+    "desktop": {
+      "step1": "Open de app in een ondersteunde browser.",
+      "step2": "Klik op het installatie-icoon in de adresbalk.",
+      "step3": "Bevestig de installatie."
+    },
+    "deviceType": "Apparaattype",
+    "feature": {
+      "fast": "Snel starten",
+      "fastDescription": "Open de app direct vanaf je startscherm.",
+      "native": "App-ervaring",
+      "nativeDescription": "Gebruik de app in een eigen venster zonder browserafleiding.",
+      "notifications": "Meldingen",
+      "notificationsDescription": "Ontvang belangrijke updates en lesherinneringen.",
+      "offline": "Offline toegang",
+      "offlineDescription": "Blijf basispagina’s openen wanneer je verbinding wegvalt."
+    },
+    "features": "Voordelen",
+    "howToInstall": "Installeren",
+    "howToInstallDescription": "Kies je apparaat en volg de stappen.",
+    "installNow": "Nu installeren",
+    "ios": {
+      "step1": "Open Safari op je iPhone of iPad.",
+      "step2": "Tik op de deelknop.",
+      "step3": "Kies “Zet op beginscherm”.",
+      "step4": "Tik op “Voeg toe”."
+    },
+    "nativeAppSoon": "Native app binnenkort",
+    "nativeAppSoonDescription": "Een aparte mobiele app volgt later.",
+    "offline": "Offline",
+    "oneClick": "Eén klik",
+    "online": "Online"
   },
   "forum": {
     "title": "Forum",
@@ -971,7 +1015,14 @@
       "rare": "Zeldzaam",
       "epic": "Episch",
       "legendary": "Legendarisch"
-    }
+    },
+    "allBadges": "Alle badges",
+    "badgesDescription": "Bekijk alle badges die je kunt verdienen.",
+    "badgesEarned": "Badges verdiend",
+    "leaderboardDescription": "Vergelijk je voortgang met andere studenten.",
+    "weekly": "Wekelijks",
+    "monthly": "Maandelijks",
+    "allTime": "Altijd"
   },
   "helpdesk": {
     "title": "Helpdesk",
@@ -990,7 +1041,9 @@
       "billing": "Facturatie",
       "course_content": "Cursusinhoud",
       "account": "Account",
-      "other": "Overig"
+      "other": "Overig",
+      "content": "Inhoud",
+      "feedback": "Feedback"
     },
     "priorities": {
       "low": "Laag",
@@ -1003,7 +1056,9 @@
       "in_progress": "In Behandeling",
       "waiting": "Wacht op Antwoord",
       "resolved": "Opgelost",
-      "closed": "Gesloten"
+      "closed": "Gesloten",
+      "inProgress": "In behandeling",
+      "waitingResponse": "Wacht op antwoord"
     },
     "ticketCreated": "Ticket aangemaakt",
     "ticketUpdated": "Ticket bijgewerkt",
@@ -1021,7 +1076,22 @@
     "yourTickets": "Jouw Tickets",
     "allTickets": "Alle Tickets",
     "filterByStatus": "Filter op status",
-    "filterByCategory": "Filter op categorie"
+    "filterByCategory": "Filter op categorie",
+    "allStatuses": "Alle statussen",
+    "createDescription": "Maak een supportticket aan en beschrijf je vraag zo duidelijk mogelijk.",
+    "createError": "Ticket kon niet worden aangemaakt.",
+    "createdBy": "Aangemaakt door",
+    "descriptionLabel": "Beschrijving",
+    "fillAllFields": "Vul alle verplichte velden in.",
+    "internal": "Intern",
+    "internalNote": "Interne notitie",
+    "replyPlaceholder": "Typ je antwoord...",
+    "responseError": "Reactie kon niet worden verzonden.",
+    "selectCategory": "Selecteer een categorie",
+    "selectTicket": "Selecteer een ticket",
+    "sendReply": "Antwoord verzenden",
+    "submit": "Ticket indienen",
+    "tickets": "Tickets"
   },
   "analytics": {
     "title": "Analytics",
@@ -1153,7 +1223,11 @@
     "start": "Start",
     "attempts": "Attempts",
     "autosaved": "Autosaved",
-    "viewAttachment": "View attachment"
+    "viewAttachment": "View attachment",
+    "audioLimits": "Maximale duur: {{duration}} min | Maximale grootte: {{size}}MB",
+    "videoLimits": "Maximale duur: {{duration}} min | Maximale grootte: {{size}}MB",
+    "maxAudioSize": "Maximale audiogrootte is {{size}}MB.",
+    "maxFileSize": "Maximale bestandsgrootte is {{size}}MB."
   },
   "progress": {
     "title": "Voortgangsrapporten",
@@ -1413,5 +1487,30 @@
   },
   "recordings": {
     "showTranscript": "Show Transcript"
+  },
+  "security": {
+    "twoFactor": {
+      "title": "Twee-factor-authenticatie",
+      "description": "Bescherm je account met een extra beveiligingslaag.",
+      "enabled": "2FA is ingeschakeld",
+      "enabledDescription": "Je account is beschermd met twee-factor-authenticatie.",
+      "disabled": "2FA is uitgeschakeld",
+      "required": "2FA is verplicht",
+      "requiredWarning": "Voor jouw accounttype is twee-factor-authenticatie verplicht.",
+      "setup": "2FA instellen",
+      "scanQR": "Scan de QR-code met je authenticatie-app.",
+      "manualEntry": "Handmatige invoer",
+      "enterCode": "Voer de 6-cijferige code in",
+      "saveBackupCodes": "Bewaar je back-upcodes",
+      "copyBackupCodes": "Back-upcodes kopiëren",
+      "backupCodesRemaining": "{{count}} back-upcodes over",
+      "disable": "2FA uitschakelen",
+      "disableTitle": "2FA uitschakelen?",
+      "disableDescription": "Je account is daarna minder goed beschermd.",
+      "confirmDisable": "Ja, 2FA uitschakelen",
+      "invalidCode": "Ongeldige code",
+      "invalidBackupCode": "Ongeldige back-upcode",
+      "backupUsed": "Back-upcode gebruikt"
+    }
   }
 }
