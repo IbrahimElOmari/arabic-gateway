@@ -170,6 +170,16 @@ serve(async (req: Request) => {
         if (!resendKey || profile.email_notifications === false) continue;
 
         try {
+          const email = buildLessonReminderEmail({
+            lang,
+            name: profile.full_name,
+            lessonTitle: lesson.title,
+            className: classData.name,
+            scheduledTime,
+            minutesBefore,
+            meetLink: lesson.meet_link,
+          });
+
           await fetch(`${supabaseUrl}/functions/v1/send-email`, {
             method: "POST",
             headers: {
@@ -177,17 +187,9 @@ serve(async (req: Request) => {
               "Authorization": `Bearer ${supabaseKey}`,
             },
             body: JSON.stringify({
-              type: "lesson_reminder",
               to: profile.email,
-              language: lang,
-              data: {
-                name: profile.full_name,
-                lessonTitle: lesson.title,
-                className: classData.name,
-                scheduledTime: scheduledTime,
-                minutesBefore: minutesBefore,
-                meetLink: lesson.meet_link,
-              },
+              subject: email.subject,
+              html: email.html,
             }),
           });
           remindersSent++;
