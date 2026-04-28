@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Upload, File, Loader2, Trash2, Download, Image, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { buildStudentUploadPath } from "@/lib/student-upload-path";
 
 interface FileUploadQuestionProps {
   value: string | undefined;
@@ -93,7 +94,7 @@ export function FileUploadQuestion({ value, onChange, attemptId, questionId }: F
     
     try {
       const ext = selectedFile.name.split(".").pop() || "file";
-      const fileName = `${user.id}/${attemptId}/${questionId}/file-${Date.now()}.${ext}`;
+      const fileName = buildStudentUploadPath({ userId: user.id, attemptId, questionId, prefix: "file", extension: ext });
       
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => Math.min(prev + 10, 90));
