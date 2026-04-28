@@ -1,55 +1,35 @@
+## Diagnose
 
+De fout ontstaat niet in de login-formulierlogica zelf. De preview crasht al vóórdat `LoginPage.tsx` kan renderen, omdat de route via `React.lazy(() => import("./pages/LoginPage"))` dynamisch wordt ingeladen. In de Lovable preview faalt die dynamische module-aanvraag voor `/src/pages/LoginPage.tsx`, waardoor de globale ErrorBoundary de melding “Er ging iets mis” toont.
 
-## Fix: Student Uploads, Kortingscodes & Inschrijving
+Daarnaast probeert de error logger die fout naar analytics te sturen, maar die request faalt ook. Dat is secundair en niet de oorzaak van het witte foutscherm.
 
-### Oorzaken
+## Oplossing
 
-**1. Audio/Video/File upload faalt (RLS fout)**
-- De uploadpath is `${attemptId}/${questionId}/bestand.webm`
-- De RLS-policy "Students can upload their own files" vereist dat de **eerste map** in het pad gelijk is aan `auth.uid()` (de user ID)
-- Omdat `attemptId` de eerste map is (niet de user ID), faalt die policy
-- De andere policy "Student upload validation" zou moeten werken, maar alle drie componenten gebruiken `upsert: true`, wat een **UPDATE** vereist — en er bestaat geen UPDATE-policy voor `student-uploads`
-- **Fix:** Twee aanpassingen:
-  - Wijzig het uploadpad naar `${userId}/${attemptId}/${questionId}/bestand` in alle 3 componenten (AudioUploadQuestion, VideoUploadQuestion, FileUploadQuestion)
-  - Voeg een UPDATE-policy toe voor `student-uploads` zodat upsert werkt
+1. **Login-route robuust maken**
+   - `LoginPage` niet langer lazy-loaden, maar statisch importeren in `src/App.tsx`.
+   - Daardoor is `/login` onderdeel van de hoofdmodule en hoeft de browser geen aparte dynamische `LoginPage.tsx` module op te halen.
 
-**2. Kortingscode "Ongeldige kortingscode"**
-- De enige code in de database is `SAVE20`, maar die is verlopen (`valid_until: 2026-02-13`). De gebruiker probeerde `korting20%` wat sowieso niet bestaat
-- De validatielogica is correct, maar de foutmelding onderscheidt niet tussen "code bestaat niet" en "code verlopen"
-- **Fix:** Voeg een betere foutmelding toe voor verlopen codes versus onbekende codes
+2. **Auth-routes preventief beschermen**
+   - Ook `RegisterPage`, `ForgotPasswordPage` en `ResetPasswordPage` statisch importeren, omdat dit dezelfde publieke auth-flow is en dezelfde lazy-load-fout kan krijgen.
+   - De overige grote pagina’s blijven lazy-loaded, zodat performance behouden blijft.
 
-**3. Inschrijving faalt**
-- De RLS INSERT policy op `class_enrollments` vereist `status IN ('pending', 'enrolled')` — dit klopt met de code
-- Waarschijnlijke oorzaak: UNIQUE constraint `(class_id, student_id)` — als de student eerder al eens heeft geprobeerd in te schrijven (ook met een mislukte poging), faalt de insert
-- **Fix:** Gebruik `upsert` of voeg een ON CONFLICT handler toe, en verbeter de foutmelding
+3. **Fallback verbeteren bij toekomstige lazy-load failures**
+   - Een kleine helper toevoegen voor lazy imports die bij chunk/module-load fouten één keer automatisch een harde refresh probeert.
+   - Zo krijgt de gebruiker bij verouderde preview-cache of tijdelijke module-mismatch niet direct een permanent foutscherm.
 
----
+4. **ErrorBoundary retry zinvoller maken**
+   - De “Opnieuw proberen”-knop bij module-load fouten een volledige pagina-refresh laten doen in plaats van alleen React state resetten. Bij deze fout helpt een lokale state-reset meestal niet.
 
-### Wijzigingen
+## Technische details
 
-#### Database migratie
-- Voeg UPDATE-policy toe voor `student-uploads` bucket: `bucket_id = 'student-uploads' AND auth.uid()::text = (storage.foldername(name))[1]`
+Te wijzigen bestanden:
+- `src/App.tsx`
+- `src/components/ErrorBoundary.tsx`
+- eventueel nieuw: `src/lib/lazy-retry.ts`
 
-#### Bestanden die aangepast worden
-1. **`src/components/exercises/questions/AudioUploadQuestion.tsx`**
-   - Wijzig uploadpad naar `${userId}/${attemptId}/${questionId}/audio-...`
-   - Verwijder `upsert: true` (of behoud met werkende UPDATE-policy)
+Geen databasewijzigingen nodig. Geen wijziging aan e-mailconfiguratie of Sprint 2/3 functionaliteit.
 
-2. **`src/components/exercises/questions/VideoUploadQuestion.tsx`**
-   - Zelfde padfix als audio
+## Verwacht resultaat
 
-3. **`src/components/exercises/questions/FileUploadQuestion.tsx`**
-   - Zelfde padfix als audio
-
-4. **`src/pages/PricingPage.tsx`**
-   - Verbeter foutmeldingen voor kortingscodes (verlopen vs onbekend)
-   - Fix inschrijving: gebruik `.upsert()` met `onConflict: 'class_id,student_id'` of vang de unique violation fout op met een specifieke melding ("Je hebt al een aanvraag ingediend")
-
-5. **`src/pages/ExercisePage.tsx`**
-   - Geef `userId` door als prop aan Audio/Video/File upload componenten (of haal het op via `useAuth` in de componenten zelf)
-
-#### Tests
-- Breid bestaande tests uit voor upload-padvalidatie
-- Voeg test toe voor kortingscode-validatie (verlopen code scenario)
-- Voeg test toe voor duplicate enrollment afhandeling
-
+Na implementatie opent `/login` weer normaal. Als later een dynamisch ingeladen route tijdelijk niet opgehaald kan worden, krijgt de app een automatische herstelpoging en een betere retry-flow in plaats van direct vast te lopen op het foutscherm.
