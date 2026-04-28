@@ -1,12 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 
-vi.mock('react-i18next', async (importOriginal) => {
-  const actual = await importOriginal() as any;
-  return {
-    ...actual,
-    useTranslation: () => ({ t: (key: string, fallback: string) => fallback }),
-  };
-});
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (_key: string, fallback?: string) => fallback || _key }),
+}));
 
 vi.mock('@/hooks/use-notifications', () => ({
   useNotifications: () => ({
