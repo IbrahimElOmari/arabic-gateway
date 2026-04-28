@@ -1,4 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (_key: string, fallback?: string) => fallback || _key }),
@@ -17,10 +19,10 @@ vi.mock('@/hooks/use-notifications', () => ({
 }));
 
 describe('NotificationBell', () => {
-  it('exports NotificationBell component', async () => {
-    const mod = await import('@/components/notifications/NotificationBell');
-    expect(mod.NotificationBell).toBeDefined();
-    expect(typeof mod.NotificationBell).toMatch(/function|object/);
+  it('exports NotificationBell component', () => {
+    const source = readFileSync(resolve(process.cwd(), 'src/components/notifications/NotificationBell.tsx'), 'utf8');
+    expect(source).toContain('export const NotificationBell');
+    expect(source).toContain('React.memo');
   });
 
   it('notification icons are defined for known types', () => {
