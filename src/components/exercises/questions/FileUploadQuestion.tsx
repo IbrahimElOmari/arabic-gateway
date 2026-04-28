@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -27,14 +27,14 @@ export function FileUploadQuestion({ value, onChange, attemptId, questionId }: F
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useState(() => {
+  useEffect(() => {
     if (!value || value.startsWith("http") || value.startsWith("blob:")) return;
 
     supabase.storage
       .from("student-uploads")
       .createSignedUrl(value, 60 * 60)
       .then(({ data }) => setSavedFileUrl(data?.signedUrl || null));
-  });
+  }, [value]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
