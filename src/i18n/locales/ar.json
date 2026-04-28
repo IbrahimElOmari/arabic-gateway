@@ -63,7 +63,9 @@
     "copied": "تم النسخ!",
     "noData": "لا توجد بيانات متاحة",
     "title": "العنوان",
-    "upload": "رفع"
+    "upload": "رفع",
+    "done": "تم",
+    "verify": "تحقق"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -243,7 +245,49 @@
     "title": "تثبيت التطبيق",
     "description": "ثبّت بيت العربية على جهازك للحصول على تجربة أفضل",
     "button": "تثبيت",
-    "iosInstructions": "اضغط على أيقونة المشاركة واختر 'إضافة إلى الشاشة الرئيسية'"
+    "iosInstructions": "اضغط على أيقونة المشاركة واختر 'إضافة إلى الشاشة الرئيسية'",
+    "alreadyInstalled": "التطبيق مثبت بالفعل",
+    "alreadyInstalledDescription": "أنت تستخدم النسخة المثبتة بالفعل.",
+    "androidInstructions": "اتبع هذه الخطوات لتثبيت التطبيق على Android.",
+    "android": {
+      "step1": "افتح قائمة المتصفح.",
+      "step2": "اضغط على “تثبيت التطبيق” أو “إضافة إلى الشاشة الرئيسية”.",
+      "step3": "أكد التثبيت."
+    },
+    "comingSoon": "قريباً",
+    "connectionStatus": "حالة الاتصال",
+    "desktopInstructions": "اتبع هذه الخطوات لتثبيت التطبيق على جهاز الكمبيوتر.",
+    "desktop": {
+      "step1": "افتح التطبيق في متصفح مدعوم.",
+      "step2": "انقر على رمز التثبيت في شريط العنوان.",
+      "step3": "أكد التثبيت."
+    },
+    "deviceType": "نوع الجهاز",
+    "feature": {
+      "fast": "تشغيل سريع",
+      "fastDescription": "افتح التطبيق مباشرة من شاشتك الرئيسية.",
+      "native": "تجربة تطبيق",
+      "nativeDescription": "استخدم التطبيق في نافذته الخاصة بدون تشتيت المتصفح.",
+      "notifications": "الإشعارات",
+      "notificationsDescription": "استلم التحديثات المهمة وتذكيرات الدروس.",
+      "offline": "وصول دون اتصال",
+      "offlineDescription": "استمر في فتح الصفحات الأساسية عند انقطاع الاتصال."
+    },
+    "features": "المزايا",
+    "howToInstall": "طريقة التثبيت",
+    "howToInstallDescription": "اختر جهازك واتبع الخطوات.",
+    "installNow": "ثبّت الآن",
+    "ios": {
+      "step1": "افتح Safari على iPhone أو iPad.",
+      "step2": "اضغط على زر المشاركة.",
+      "step3": "اختر “إضافة إلى الشاشة الرئيسية”.",
+      "step4": "اضغط على “إضافة”."
+    },
+    "nativeAppSoon": "تطبيق أصلي قريباً",
+    "nativeAppSoonDescription": "سيتم توفير تطبيق جوال مستقل لاحقاً.",
+    "offline": "غير متصل",
+    "oneClick": "نقرة واحدة",
+    "online": "متصل"
   },
   "forum": {
     "title": "المنتدى",
@@ -771,8 +815,8 @@
     "unlimited": "غير محدود",
     "activeImmediately": "نشط فوراً",
     "designSystem": "تصميم النظام",
-    "unassignedStudentsAlert": "طلاب {{count}}",
-    "viewUnassigned": "عنصر",
+    "unassignedStudentsAlert": "{{count}} طالب/طلاب بدون فصل. قم بتعيينهم إلى فصل.",
+    "viewUnassigned": "عرض",
     "enrollments": "عنصر",
     "stripeNotConfigured": "غير",
     "stripeDescription": "وصف وصف",
@@ -971,7 +1015,14 @@
       "rare": "نادر",
       "epic": "ملحمي",
       "legendary": "أسطوري"
-    }
+    },
+    "allBadges": "كل الشارات",
+    "badgesDescription": "اعرض كل الشارات التي يمكنك كسبها.",
+    "badgesEarned": "الشارات المكتسبة",
+    "leaderboardDescription": "قارن تقدمك مع الطلاب الآخرين.",
+    "weekly": "أسبوعي",
+    "monthly": "شهري",
+    "allTime": "كل الوقت"
   },
   "helpdesk": {
     "title": "مركز المساعدة",
@@ -990,7 +1041,9 @@
       "billing": "الفواتير",
       "course_content": "محتوى الدورة",
       "account": "الحساب",
-      "other": "أخرى"
+      "other": "أخرى",
+      "content": "المحتوى",
+      "feedback": "التعليقات"
     },
     "priorities": {
       "low": "منخفضة",
@@ -1003,7 +1056,9 @@
       "in_progress": "قيد المعالجة",
       "waiting": "في انتظار الرد",
       "resolved": "تم الحل",
-      "closed": "مغلقة"
+      "closed": "مغلقة",
+      "inProgress": "قيد المعالجة",
+      "waitingResponse": "بانتظار الرد"
     },
     "ticketCreated": "تم إنشاء التذكرة",
     "ticketUpdated": "تم تحديث التذكرة",
@@ -1021,7 +1076,22 @@
     "yourTickets": "تذاكرك",
     "allTickets": "جميع التذاكر",
     "filterByStatus": "تصفية حسب الحالة",
-    "filterByCategory": "تصفية حسب الفئة"
+    "filterByCategory": "تصفية حسب الفئة",
+    "allStatuses": "كل الحالات",
+    "createDescription": "أنشئ تذكرة دعم واشرح سؤالك بوضوح قدر الإمكان.",
+    "createError": "تعذر إنشاء التذكرة.",
+    "createdBy": "أنشئت بواسطة",
+    "descriptionLabel": "الوصف",
+    "fillAllFields": "املأ جميع الحقول المطلوبة.",
+    "internal": "داخلي",
+    "internalNote": "ملاحظة داخلية",
+    "replyPlaceholder": "اكتب ردك...",
+    "responseError": "تعذر إرسال الرد.",
+    "selectCategory": "اختر فئة",
+    "selectTicket": "اختر تذكرة",
+    "sendReply": "إرسال الرد",
+    "submit": "إرسال التذكرة",
+    "tickets": "التذاكر"
   },
   "analytics": {
     "title": "التحليلات",
@@ -1153,7 +1223,11 @@
     "start": "بدء",
     "attempts": "محاولات",
     "autosaved": "عنصر",
-    "viewAttachment": "مرفق"
+    "viewAttachment": "مرفق",
+    "audioLimits": "المدة القصوى: {{duration}} دقيقة | الحجم الأقصى: {{size}}MB",
+    "videoLimits": "المدة القصوى: {{duration}} دقيقة | الحجم الأقصى: {{size}}MB",
+    "maxAudioSize": "الحجم الأقصى للصوت هو {{size}}MB.",
+    "maxFileSize": "الحجم الأقصى للملف هو {{size}}MB."
   },
   "progress": {
     "title": "تقارير التقدم",
@@ -1413,5 +1487,30 @@
   },
   "recordings": {
     "showTranscript": "عرض النص"
+  },
+  "security": {
+    "twoFactor": {
+      "title": "المصادقة الثنائية",
+      "description": "احمِ حسابك بطبقة أمان إضافية.",
+      "enabled": "تم تفعيل المصادقة الثنائية",
+      "enabledDescription": "حسابك محمي بالمصادقة الثنائية.",
+      "disabled": "المصادقة الثنائية معطلة",
+      "required": "المصادقة الثنائية مطلوبة",
+      "requiredWarning": "المصادقة الثنائية مطلوبة لنوع حسابك.",
+      "setup": "إعداد المصادقة الثنائية",
+      "scanQR": "امسح رمز QR باستخدام تطبيق المصادقة.",
+      "manualEntry": "إدخال يدوي",
+      "enterCode": "أدخل الرمز المكون من 6 أرقام",
+      "saveBackupCodes": "احفظ رموز النسخ الاحتياطي",
+      "copyBackupCodes": "نسخ رموز النسخ الاحتياطي",
+      "backupCodesRemaining": "تبقى {{count}} رمزاً احتياطياً",
+      "disable": "تعطيل المصادقة الثنائية",
+      "disableTitle": "تعطيل المصادقة الثنائية؟",
+      "disableDescription": "سيصبح حسابك أقل حماية بعد ذلك.",
+      "confirmDisable": "نعم، عطّل المصادقة الثنائية",
+      "invalidCode": "رمز غير صالح",
+      "invalidBackupCode": "رمز احتياطي غير صالح",
+      "backupUsed": "تم استخدام رمز احتياطي"
+    }
   }
 }

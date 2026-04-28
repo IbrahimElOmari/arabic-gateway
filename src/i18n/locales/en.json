@@ -63,7 +63,9 @@
     "copied": "Copied!",
     "noData": "No data available",
     "title": "Title",
-    "upload": "Upload"
+    "upload": "Upload",
+    "done": "Done",
+    "verify": "Verify"
   },
   "auth": {
     "login": "Login",
@@ -243,7 +245,49 @@
     "title": "Install the App",
     "description": "Install House of Arabic on your device for a better experience",
     "button": "Install",
-    "iosInstructions": "Tap the share icon and select 'Add to Home Screen'"
+    "iosInstructions": "Tap the share icon and select 'Add to Home Screen'",
+    "alreadyInstalled": "App already installed",
+    "alreadyInstalledDescription": "You are already using the installed version.",
+    "androidInstructions": "Follow these steps to install the app on Android.",
+    "android": {
+      "step1": "Open your browser menu.",
+      "step2": "Tap “Install app” or “Add to Home screen”.",
+      "step3": "Confirm the installation."
+    },
+    "comingSoon": "Coming soon",
+    "connectionStatus": "Connection status",
+    "desktopInstructions": "Follow these steps to install the app on your computer.",
+    "desktop": {
+      "step1": "Open the app in a supported browser.",
+      "step2": "Click the install icon in the address bar.",
+      "step3": "Confirm the installation."
+    },
+    "deviceType": "Device type",
+    "feature": {
+      "fast": "Fast launch",
+      "fastDescription": "Open the app directly from your home screen.",
+      "native": "App experience",
+      "nativeDescription": "Use the app in its own window without browser distractions.",
+      "notifications": "Notifications",
+      "notificationsDescription": "Receive important updates and lesson reminders.",
+      "offline": "Offline access",
+      "offlineDescription": "Keep opening core pages when your connection drops."
+    },
+    "features": "Benefits",
+    "howToInstall": "How to install",
+    "howToInstallDescription": "Choose your device and follow the steps.",
+    "installNow": "Install now",
+    "ios": {
+      "step1": "Open Safari on your iPhone or iPad.",
+      "step2": "Tap the share button.",
+      "step3": "Choose “Add to Home Screen”.",
+      "step4": "Tap “Add”."
+    },
+    "nativeAppSoon": "Native app coming soon",
+    "nativeAppSoonDescription": "A separate mobile app will follow later.",
+    "offline": "Offline",
+    "oneClick": "One click",
+    "online": "Online"
   },
   "forum": {
     "title": "Forum",
@@ -771,8 +815,8 @@
     "unlimited": "Unlimited",
     "activeImmediately": "Active immediately",
     "designSystem": "Design System",
-    "unassignedStudentsAlert": "{{count}} student(en) zonder klas. Wijs ze toe aan een klas.",
-    "viewUnassigned": "Bekijken",
+    "unassignedStudentsAlert": "{{count}} student(s) without a class. Assign them to a class.",
+    "viewUnassigned": "View",
     "enrollments": "Enrollments",
     "stripeNotConfigured": "Stripe Not Configured",
     "stripeDescription": "Add your Stripe API key to enable payment processing. Manual payments are available.",
@@ -971,7 +1015,14 @@
       "rare": "Rare",
       "epic": "Epic",
       "legendary": "Legendary"
-    }
+    },
+    "allBadges": "All badges",
+    "badgesDescription": "View all badges you can earn.",
+    "badgesEarned": "Badges earned",
+    "leaderboardDescription": "Compare your progress with other students.",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "allTime": "All time"
   },
   "helpdesk": {
     "title": "Helpdesk",
@@ -990,7 +1041,9 @@
       "billing": "Billing",
       "course_content": "Course Content",
       "account": "Account",
-      "other": "Other"
+      "other": "Other",
+      "content": "Content",
+      "feedback": "Feedback"
     },
     "priorities": {
       "low": "Low",
@@ -1003,7 +1056,9 @@
       "in_progress": "In Progress",
       "waiting": "Waiting for Reply",
       "resolved": "Resolved",
-      "closed": "Closed"
+      "closed": "Closed",
+      "inProgress": "In progress",
+      "waitingResponse": "Waiting for response"
     },
     "ticketCreated": "Ticket created",
     "ticketUpdated": "Ticket updated",
@@ -1021,7 +1076,22 @@
     "yourTickets": "Your Tickets",
     "allTickets": "All Tickets",
     "filterByStatus": "Filter by status",
-    "filterByCategory": "Filter by category"
+    "filterByCategory": "Filter by category",
+    "allStatuses": "All statuses",
+    "createDescription": "Create a support ticket and describe your question as clearly as possible.",
+    "createError": "Could not create ticket.",
+    "createdBy": "Created by",
+    "descriptionLabel": "Description",
+    "fillAllFields": "Fill in all required fields.",
+    "internal": "Internal",
+    "internalNote": "Internal note",
+    "replyPlaceholder": "Type your reply...",
+    "responseError": "Could not send reply.",
+    "selectCategory": "Select a category",
+    "selectTicket": "Select a ticket",
+    "sendReply": "Send reply",
+    "submit": "Submit ticket",
+    "tickets": "Tickets"
   },
   "analytics": {
     "title": "Analytics",
@@ -1153,7 +1223,11 @@
     "start": "Start",
     "attempts": "Attempts",
     "autosaved": "Autosaved",
-    "viewAttachment": "View attachment"
+    "viewAttachment": "View attachment",
+    "audioLimits": "Max duration: {{duration}} min | Max size: {{size}}MB",
+    "videoLimits": "Max duration: {{duration}} min | Max size: {{size}}MB",
+    "maxAudioSize": "Maximum audio size is {{size}}MB.",
+    "maxFileSize": "Maximum file size is {{size}}MB."
   },
   "progress": {
     "title": "Progress Reports",
@@ -1381,22 +1455,22 @@
     "selectClass": "Select a class..."
   },
   "applyTeacher": {
-    "submitted": "Aanvraag ingediend",
-    "submittedDesc": "Je aanvraag wordt beoordeeld door een beheerder.",
-    "submitError": "Aanvraag kon niet worden ingediend.",
-    "approved": "Aanvraag goedgekeurd!",
-    "pending": "Aanvraag in behandeling",
-    "approvedDesc": "Je hebt de rol van docent ontvangen.",
-    "pendingDesc": "Je aanvraag wordt momenteel beoordeeld door een beheerder.",
+    "submitted": "Application submitted",
+    "submittedDesc": "Your application will be reviewed by an administrator.",
+    "submitError": "Application could not be submitted.",
+    "approved": "Application approved!",
+    "pending": "Application pending",
+    "approvedDesc": "You have received the teacher role.",
+    "pendingDesc": "Your application is currently being reviewed by an administrator.",
     "reviewNotes": "Feedback",
-    "title": "Word docent",
-    "description": "Dien een aanvraag in om les te geven op ons platform.",
+    "title": "Become a teacher",
+    "description": "Submit an application to teach on our platform.",
     "qualifications": "Kwalificaties",
     "qualificationsPlaceholder": "Beschrijf je diploma",
     "experience": "Ervaring",
     "experiencePlaceholder": "Beschrijf je leservaring, met name in het Arabisch onderwijs...",
     "preferredLevels": "Gewenste niveaus",
-    "submit": "Aanvraag indienen"
+    "submit": "Submit application"
   },
   "faq": {
     "feedbackThanks": "Thank you!",
@@ -1413,5 +1487,30 @@
   },
   "recordings": {
     "showTranscript": "Show Transcript"
+  },
+  "security": {
+    "twoFactor": {
+      "title": "Two-factor authentication",
+      "description": "Protect your account with an extra security layer.",
+      "enabled": "2FA is enabled",
+      "enabledDescription": "Your account is protected with two-factor authentication.",
+      "disabled": "2FA is disabled",
+      "required": "2FA is required",
+      "requiredWarning": "Two-factor authentication is required for your account type.",
+      "setup": "Set up 2FA",
+      "scanQR": "Scan the QR code with your authenticator app.",
+      "manualEntry": "Manual entry",
+      "enterCode": "Enter the 6-digit code",
+      "saveBackupCodes": "Save your backup codes",
+      "copyBackupCodes": "Copy backup codes",
+      "backupCodesRemaining": "{{count}} backup codes remaining",
+      "disable": "Disable 2FA",
+      "disableTitle": "Disable 2FA?",
+      "disableDescription": "Your account will be less protected afterward.",
+      "confirmDisable": "Yes, disable 2FA",
+      "invalidCode": "Invalid code",
+      "invalidBackupCode": "Invalid backup code",
+      "backupUsed": "Backup code used"
+    }
   }
 }
