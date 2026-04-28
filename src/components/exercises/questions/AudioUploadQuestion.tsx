@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Mic, Square, Play, Pause, Upload, Loader2, Trash2, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { buildStudentUploadPath } from "@/lib/student-upload-path";
 
 interface AudioUploadQuestionProps {
   value: string | undefined;
@@ -36,6 +37,7 @@ export function AudioUploadQuestion({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(value || null);
+  const [savedAudioUrl, setSavedAudioUrl] = useState<string | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
   
@@ -55,6 +57,15 @@ export function AudioUploadQuestion({
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!value || value.startsWith("http") || value.startsWith("blob:")) return;
+
+    supabase.storage
+      .from("student-uploads")
+      .createSignedUrl(value, 60 * 60)
+      .then(({ data }) => setSavedAudioUrl(data?.signedUrl || null));
+  }, [value]);
 
   // Auto-stop recording when max duration reached
   useEffect(() => {
@@ -188,13 +199,13 @@ export function AudioUploadQuestion({
   };
 
   const uploadAudio = async () => {
-    if (!audioBlob || !attemptId) return;
+    if (!audioBlob || !attemptId || !user?.id) return;
     
     setIsUploading(true);
     setUploadProgress(0);
     
     try {
-      const fileName = `${user?.id}/${attemptId}/${questionId}/audio-${Date.now()}.webm`;
+      const fileName = buildStudentUploadPath({ userId: user.id, attemptId, questionId, prefix: "audio", extension: "webm" });
       
       // Simulate progress
       const progressInterval = setInterval(() => {
@@ -205,19 +216,19 @@ export function AudioUploadQuestion({
         .from("student-uploads")
         .upload(fileName, audioBlob, {
           contentType: audioBlob.type,
-          upsert: true,
         });
       
       clearInterval(progressInterval);
       
       if (error) throw error;
       
-      const { data: { publicUrl } } = supabase.storage
+      const { data: signedData } = await supabase.storage
         .from("student-uploads")
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 60 * 60);
       
       setUploadProgress(100);
-      onChange(publicUrl);
+      setSavedAudioUrl(signedData?.signedUrl || null);
+      onChange(fileName);
       
       toast({
         title: t("exercises.audioUploaded", "Audio Uploaded"),
@@ -324,7 +335,7 @@ export function AudioUploadQuestion({
           
           <audio 
             ref={audioRef} 
-            src={audioUrl}
+            src={savedAudioUrl || audioUrl || undefined}
             onEnded={() => setIsPlaying(false)}
             className="hidden"
           />

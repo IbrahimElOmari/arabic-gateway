@@ -48,16 +48,23 @@ export default function PricingPage() {
   const enrollMutation = useMutation({
     mutationFn: async ({ classId, isFree }: { classId: string; isFree: boolean }) => {
       if (!user) throw new Error("Not authenticated");
-      // Check if enrollment already exists
-      const existing = await apiQuery<any>("class_enrollments", (q) =>
-        q.select("id, status").eq("class_id", classId).eq("student_id", user.id).maybeSingle()
-      );
-      if (existing) {
-        throw new Error(existing.status === "enrolled" ? "already_enrolled" : "already_pending");
+      try {
+        const existing = await apiQuery<any>("class_enrollments", (q) =>
+          q.select("id, status").eq("class_id", classId).eq("student_id", user.id).maybeSingle()
+        );
+        if (existing) {
+          throw new Error(existing.status === "enrolled" ? "already_enrolled" : "already_pending");
+        }
+        await apiMutate("class_enrollments", (q) =>
+          q.insert({ class_id: classId, student_id: user.id, status: isFree ? "enrolled" : "pending" })
+        );
+      } catch (error: any) {
+        if (error?.message === "already_enrolled" || error?.message === "already_pending") throw error;
+        if (error?.message?.includes("duplicate key") || error?.code === "23505") {
+          throw new Error("already_pending");
+        }
+        throw error;
       }
-      await apiMutate("class_enrollments", (q) =>
-        q.insert({ class_id: classId, student_id: user.id, status: isFree ? "enrolled" : "pending" })
-      );
     },
     onSuccess: (_, { isFree }) => {
       queryClient.invalidateQueries({ queryKey: ["my-enrollments"] });
@@ -106,8 +113,9 @@ export default function PricingPage() {
       const data = await apiQuery<any>("discount_codes", (q) =>
         q.select("*").eq("code", discountCode.toUpperCase()).maybeSingle()
       );
-      // RLS filters out inactive/expired codes, so null means unknown OR expired/inactive
-      if (!data) { setDiscountError(t("pricing.invalidCode", "Ongeldige of verlopen kortingscode")); setAppliedDiscount(null); return; }
+      if (!data) { setDiscountError(t("pricing.unknownCode", "Deze kortingscode bestaat niet")); setAppliedDiscount(null); return; }
+      if (data.valid_until && new Date(data.valid_until) <= new Date()) { setDiscountError(t("pricing.expiredCode", "Deze kortingscode is verlopen")); setAppliedDiscount(null); return; }
+      if (data.valid_from && new Date(data.valid_from) > new Date()) { setDiscountError(t("pricing.notYetValidCode", "Deze kortingscode is nog niet geldig")); setAppliedDiscount(null); return; }
       if (data.max_uses && data.current_uses >= data.max_uses) { setDiscountError(t("pricing.codeMaxUsed", "Deze kortingscode is al volledig gebruikt")); setAppliedDiscount(null); return; }
       setAppliedDiscount({ code: data.code, type: data.discount_type as "percentage" | "fixed_amount", value: data.discount_value });
       setDiscountError(null);

@@ -217,8 +217,9 @@ export default function ExercisePage() {
         question_id: q.id,
         student_id: user!.id,
         exercise_attempt_id: attemptId,
-        answer_text: typeof answers[q.id] === "string" ? (answers[q.id] as string) : null,
+        answer_text: typeof answers[q.id] === "string" && !["audio_upload", "video_upload", "file_upload"].includes(q.type) ? (answers[q.id] as string) : null,
         answer_data: Array.isArray(answers[q.id]) ? { selected: answers[q.id] } : null,
+        file_url: typeof answers[q.id] === "string" && ["audio_upload", "video_upload", "file_upload"].includes(q.type) ? (answers[q.id] as string) : null,
         is_correct:
           q.type === "multiple_choice" || q.type === "checkbox" || q.type === "ordering"
             ? (() => {

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Upload, File, Loader2, Trash2, Download, Image, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { buildStudentUploadPath } from "@/lib/student-upload-path";
 
 interface FileUploadQuestionProps {
   value: string | undefined;
@@ -23,8 +24,18 @@ export function FileUploadQuestion({ value, onChange, attemptId, questionId }: F
   const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [savedFileUrl, setSavedFileUrl] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!value || value.startsWith("http") || value.startsWith("blob:")) return;
+
+    supabase.storage
+      .from("student-uploads")
+      .createSignedUrl(value, 60 * 60)
+      .then(({ data }) => setSavedFileUrl(data?.signedUrl || null));
+  }, [value]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -76,14 +87,14 @@ export function FileUploadQuestion({ value, onChange, attemptId, questionId }: F
   };
 
   const uploadFile = async () => {
-    if (!selectedFile || !attemptId) return;
+    if (!selectedFile || !attemptId || !user?.id) return;
     
     setIsUploading(true);
     setUploadProgress(0);
     
     try {
       const ext = selectedFile.name.split(".").pop() || "file";
-      const fileName = `${user?.id}/${attemptId}/${questionId}/file-${Date.now()}.${ext}`;
+      const fileName = buildStudentUploadPath({ userId: user.id, attemptId, questionId, prefix: "file", extension: ext });
       
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => Math.min(prev + 10, 90));
@@ -93,19 +104,19 @@ export function FileUploadQuestion({ value, onChange, attemptId, questionId }: F
         .from("student-uploads")
         .upload(fileName, selectedFile, {
           contentType: selectedFile.type,
-          upsert: true,
         });
       
       clearInterval(progressInterval);
       
       if (error) throw error;
       
-      const { data: { publicUrl } } = supabase.storage
+      const { data: signedData } = await supabase.storage
         .from("student-uploads")
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 60 * 60);
       
       setUploadProgress(100);
-      onChange(publicUrl);
+      setSavedFileUrl(signedData?.signedUrl || null);
+      onChange(fileName);
       
       toast({
         title: t("exercises.fileUploaded", "File Uploaded"),
@@ -249,7 +260,7 @@ export function FileUploadQuestion({ value, onChange, attemptId, questionId }: F
               ✓ {t("exercises.fileSaved", "File has been saved successfully")}
             </p>
             <a 
-              href={value} 
+              href={savedFileUrl || value} 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-sm text-primary hover:underline flex items-center gap-1"
