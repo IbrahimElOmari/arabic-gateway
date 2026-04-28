@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { logger } from '@/lib/logger';
+import { apiQuery, apiRpc } from '@/lib/supabase-api';
 
 type AppRole = 'admin' | 'teacher' | 'student';
 type RoleStatus = 'loading' | 'ready' | 'error';
@@ -145,16 +146,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     (async () => {
       try {
-        const { data, error } = await supabase.rpc('get_user_with_context', { _user_id: user.id });
+        const data = await apiRpc('get_user_with_context', { _user_id: user.id });
         if (cancelled || currentRequestId !== roleRequestId.current) return;
 
         clearTimeout(timeoutId);
-
-        if (error) {
-          logger.error('[Auth] Context RPC error:', error);
-          updateRole(null, 'error');
-          return;
-        }
 
         const ctx = data as unknown as { role: AppRole | null; profile: Profile | null } | null;
 
@@ -201,13 +196,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     (async () => {
       try {
-        const { data, error } = await supabase.rpc('get_user_with_context', { _user_id: user.id });
+        const data = await apiRpc('get_user_with_context', { _user_id: user.id });
         if (currentRequestId !== roleRequestId.current) return;
         clearTimeout(timeoutId);
 
         const ctx = data as unknown as { role: AppRole | null; profile: Profile | null } | null;
 
-        if (error || !ctx?.role) {
+        if (!ctx?.role) {
           updateRole(null, 'error');
           return;
         }
