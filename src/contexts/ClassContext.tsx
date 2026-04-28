@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { apiQuery } from '@/lib/supabase-api';
 
 const STORAGE_KEY = 'hva_active_class_id';
 
@@ -40,22 +40,16 @@ export function ClassProvider({ children }: { children: React.ReactNode }) {
       if (!user) return [];
       
       if (isAdmin) {
-        const { data, error } = await supabase
-          .from('classes')
-          .select('id, name, level:levels(name)')
-          .eq('is_active', true)
-          .order('name');
-        if (error) throw error;
-        return data || [];
+        return apiQuery<ClassInfo[]>('classes', (q) =>
+          q.select('id, name, level:levels(name)').eq('is_active', true).order('name')
+        );
       } else if (isTeacher) {
-        const { data, error } = await supabase
-          .from('classes')
-          .select('id, name, level:levels(name)')
-          .eq('teacher_id', user.id)
-          .eq('is_active', true)
-          .order('name');
-        if (error) throw error;
-        return data || [];
+        return apiQuery<ClassInfo[]>('classes', (q) =>
+          q.select('id, name, level:levels(name)')
+            .eq('teacher_id', user.id)
+            .eq('is_active', true)
+            .order('name')
+        );
       }
       
       return [];
