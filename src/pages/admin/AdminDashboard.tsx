@@ -15,8 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { apiQuery } from "@/lib/supabase-api";
-import { supabase } from "@/integrations/supabase/client";
+import { apiQuery, apiRpc } from "@/lib/supabase-api";
 import { RoleOnboardingChecklist } from "@/components/onboarding/RoleOnboardingChecklist";
 
 export default function AdminDashboard() {
@@ -50,8 +49,8 @@ export default function AdminDashboard() {
   const { data: unassignedCount } = useQuery({
     queryKey: ["admin-unassigned-students"],
     queryFn: async () => {
-      const { data } = await supabase.rpc('count_unassigned_students');
-      return (data as number) || 0;
+      const data = await apiRpc<number>('count_unassigned_students');
+      return data || 0;
     },
   });
 

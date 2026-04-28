@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { NavLink } from '@/components/NavLink';
-import { supabase } from '@/integrations/supabase/client';
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +10,7 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
-import { apiQuery } from '@/lib/supabase-api';
+import { apiQuery, apiRpc } from '@/lib/supabase-api';
 import {
   Home,
   LayoutDashboard,
@@ -80,8 +79,8 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
   const { data: unassignedCount } = useQuery({
     queryKey: ['unassigned-students-count'],
     queryFn: async () => {
-      const { data } = await supabase.rpc('count_unassigned_students');
-      return (data as number) || 0;
+      const data = await apiRpc<number>('count_unassigned_students');
+      return data || 0;
     },
     enabled: !!user && role === 'admin',
     refetchInterval: 30000,

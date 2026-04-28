@@ -14,16 +14,13 @@ interface StatsCardProps {
   className?: string;
 }
 
-export const StatsCard = React.memo(function StatsCard({
-  title,
-  value,
-  description,
-  icon: Icon,
-  trend,
-  className,
-}: StatsCardProps) {
+const StatsCardComponent = React.forwardRef<HTMLDivElement, StatsCardProps>(function StatsCard(
+  { title, value, description, icon: Icon, trend, className },
+  ref
+) {
   return (
     <div
+      ref={ref}
       tabIndex={0}
       className={cn(
         "rounded-lg border bg-card p-4 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:p-6",
@@ -56,3 +53,5 @@ export const StatsCard = React.memo(function StatsCard({
     </div>
   );
 });
+
+export const StatsCard = React.memo(StatsCardComponent);

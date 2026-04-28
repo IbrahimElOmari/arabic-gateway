@@ -205,7 +205,7 @@
     "dataExported": "Your data has been exported",
     "fontSize": "Font Size",
     "fontSize_normal": "Normal",
-    "fontSize_large": "Large", 
+    "fontSize_large": "Large",
     "fontSize_extra-large": "Extra Large"
   },
   "install": {
@@ -918,7 +918,20 @@
     "free": "Free",
     "maxStudents": "Max {{count}} students",
     "enroll": "Enroll",
-    "noClasses": "There are currently no active courses."
+    "noClasses": "There are currently no active courses.",
+    "enrolled": "Enrolled",
+    "alreadyEnrolled": "Already enrolled",
+    "pendingApproval": "Pending approval",
+    "enrollmentSuccess": "Enrollment successful!",
+    "enrollmentSuccessDesc": "You now have access to this class.",
+    "enrollmentPending": "Request submitted",
+    "enrollmentPendingDesc": "An administrator will review your request.",
+    "enrollmentError": "Enrollment failed. Please try again.",
+    "discountCode": "Discount code",
+    "applyCode": "Apply",
+    "invalidCode": "Invalid discount code",
+    "discountApplied": "Discount applied!",
+    "inclVat": "Incl. {{rate}}% VAT"
   },
   "help": {
     "faq": "FAQ / Knowledge Base",

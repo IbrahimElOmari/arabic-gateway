@@ -40,7 +40,13 @@
     "publish": "نشر",
     "unpublish": "إلغاء النشر",
     "saveChanges": "حفظ التغييرات",
-    "retry": "حاول مرة أخرى"
+    "retry": "حاول مرة أخرى",
+    "passed": "تم الاجتياز",
+    "exercises": "تمارين",
+    "category": "الفئة",
+    "date": "التاريخ",
+    "timeSpentMin": "الوقت (دقيقة)",
+    "totalLessons": "إجمالي الدروس"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -805,7 +811,13 @@
     "strongAreas": "نقاط القوة",
     "areasToImprove": "مجالات للتحسين",
     "noProgressData": "لا توجد بيانات تقدم بعد",
-    "startLearning": "ابدأ التعلم لرؤية تقدمك هنا"
+    "startLearning": "ابدأ التعلم لرؤية تقدمك هنا",
+    "categoryBreakdown": "تفصيل حسب الفئة",
+    "performanceByCategory": "أداؤك حسب الفئة",
+    "exercisesPerDay": "التمارين في اليوم",
+    "scoresTrend": "اتجاه الدرجات",
+    "averageScorePerDay": "متوسط الدرجة في اليوم",
+    "avg": "متوسط"
   },
   "finalExam": {
     "title": "الاختبار النهائي",
@@ -906,7 +918,20 @@
     "free": "مجاني",
     "maxStudents": "حد أقصى {{count}} طالب",
     "enroll": "التسجيل",
-    "noClasses": "لا توجد دورات نشطة حالياً."
+    "noClasses": "لا توجد دورات نشطة حالياً.",
+    "enrolled": "مسجل",
+    "alreadyEnrolled": "مسجل بالفعل",
+    "pendingApproval": "بانتظار الموافقة",
+    "enrollmentSuccess": "تم التسجيل بنجاح!",
+    "enrollmentSuccessDesc": "لديك الآن وصول إلى هذا الصف.",
+    "enrollmentPending": "تم إرسال الطلب",
+    "enrollmentPendingDesc": "سيقوم أحد المسؤولين بمراجعة طلبك.",
+    "enrollmentError": "فشل التسجيل. يرجى المحاولة مرة أخرى.",
+    "discountCode": "رمز الخصم",
+    "applyCode": "تطبيق",
+    "invalidCode": "رمز الخصم غير صالح",
+    "discountApplied": "تم تطبيق الخصم!",
+    "inclVat": "شامل ضريبة القيمة المضافة {{rate}}%"
   },
   "help": {
     "faq": "الأسئلة الشائعة / قاعدة المعرفة",

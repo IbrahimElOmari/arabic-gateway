@@ -202,7 +202,11 @@
     "playfulDescription": "Afgerond, kleurrijk ontwerp",
     "avatarUpdated": "Avatar bijgewerkt",
     "exportMyData": "Mijn gegevens exporteren",
-    "dataExported": "Je gegevens zijn geëxporteerd"
+    "dataExported": "Je gegevens zijn geëxporteerd",
+    "fontSize": "Lettergrootte",
+    "fontSize_normal": "Normaal",
+    "fontSize_large": "Groot",
+    "fontSize_extra-large": "Extra groot"
   },
   "install": {
     "title": "Installeer de App",
