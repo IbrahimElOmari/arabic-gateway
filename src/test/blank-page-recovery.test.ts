@@ -22,9 +22,11 @@ describe("blank page recovery safeguards", () => {
 
   it("does not configure vite-plugin-pwa or generate cache-first service worker assets", () => {
     const config = readFileSync(resolve(process.cwd(), "vite.config.ts"), "utf8");
+    const packageJson = readFileSync(resolve(process.cwd(), "package.json"), "utf8");
     expect(config).not.toContain("vite-plugin-pwa");
     expect(config).not.toContain("VitePWA");
     expect(config).not.toContain("CacheFirst");
     expect(config).not.toContain("navigateFallback");
+    expect(packageJson).not.toContain("vite-plugin-pwa");
   });
 });
