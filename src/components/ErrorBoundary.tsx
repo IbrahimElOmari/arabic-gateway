@@ -9,7 +9,7 @@ import React, { Component, ErrorInfo, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { logError } from "@/lib/error-logger";
-import { isLazyModuleLoadError } from "@/lib/lazy-retry";
+import { isLazyModuleLoadError, recoverFromLazyModuleLoadError } from "@/lib/lazy-retry";
 
 interface Props {
   children: ReactNode;
@@ -39,7 +39,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   private handleRetry = () => {
     if (isLazyModuleLoadError(this.state.error)) {
-      window.location.reload();
+      recoverFromLazyModuleLoadError();
       return;
     }
 

@@ -1,35 +1,37 @@
-## Diagnose
+Ik heb de preview en code gericht onderzocht. De eerdere fix heeft één symptoom opgelost (falende lazy import van `LoginPage.tsx`), maar niet de volledige onderliggende refresh/cache-route. Er zijn nu twee belangrijke bevindingen:
 
-De fout ontstaat niet in de login-formulierlogica zelf. De preview crasht al vóórdat `LoginPage.tsx` kan renderen, omdat de route via `React.lazy(() => import("./pages/LoginPage"))` dynamisch wordt ingeladen. In de Lovable preview faalt die dynamische module-aanvraag voor `/src/pages/LoginPage.tsx`, waardoor de globale ErrorBoundary de melding “Er ging iets mis” toont.
+1. De app zelf rendert in mijn browser-test wel, maar jouw screenshot toont de Lovable preview-iframe als volledig wit. Dat wijst eerder op boot/cache/service-worker/chunk-load rond de preview dan op een gewone React-routefout.
+2. In de code staat nog `vite-plugin-pwa` actief met automatische service-worker registratie en cache-first caching voor JS/CSS assets. Tegelijk staat er een handmatige cleanup in `index.html` én een losse `public/sw.js`. Dat is tegenstrijdig: de build kan opnieuw een service worker injecteren/activeren terwijl de runtime hem probeert te verwijderen. Dit verklaart goed waarom na meerdere refreshes soms een oude of ontbrekende chunk wordt geladen en de preview wit blijft.
 
-Daarnaast probeert de error logger die fout naar analytics te sturen, maar die request faalt ook. Dat is secundair en niet de oorzaak van het witte foutscherm.
+Daarnaast zag ik veel React ref-warnings vanuit de Lovable preview-instrumentatie, maar geen harde runtime error. Die warnings lijken niet de oorzaak van de witte pagina.
 
-## Oplossing
+Plan om dit definitief op te lossen:
 
-1. **Login-route robuust maken**
-   - `LoginPage` niet langer lazy-loaden, maar statisch importeren in `src/App.tsx`.
-   - Daardoor is `/login` onderdeel van de hoofdmodule en hoeft de browser geen aparte dynamische `LoginPage.tsx` module op te halen.
+1. PWA/service-worker caching uitschakelen als oorzaak
+   - Verwijder `VitePWA(...)` uit `vite.config.ts` en de import van `vite-plugin-pwa`.
+   - Laat geen nieuwe service worker of cache-first asset caching meer genereren.
+   - Behoud of vereenvoudig de bestaande cleanup zodat reeds geregistreerde service workers en oude caches bij gebruikers alsnog worden opgeruimd.
 
-2. **Auth-routes preventief beschermen**
-   - Ook `RegisterPage`, `ForgotPasswordPage` en `ResetPasswordPage` statisch importeren, omdat dit dezelfde publieke auth-flow is en dezelfde lazy-load-fout kan krijgen.
-   - De overige grote pagina’s blijven lazy-loaded, zodat performance behouden blijft.
+2. Boot fallback toevoegen zodat wit scherm zichtbaar herstelt
+   - Voeg in `index.html` een minimale fallback in `#root` toe: als JS niet start, ziet de gebruiker een laad/herstelmelding in plaats van een lege witte pagina.
+   - Voeg in `src/main.tsx` defensieve checks toe voor ontbrekende `#root` en boot-errors, met een zichtbare fallback in de DOM.
+   - Registreer `window.onerror` en `unhandledrejection` vóór het renderen, maar zorg dat logging zelf nooit de app-start blokkeert.
 
-3. **Fallback verbeteren bij toekomstige lazy-load failures**
-   - Een kleine helper toevoegen voor lazy imports die bij chunk/module-load fouten één keer automatisch een harde refresh probeert.
-   - Zo krijgt de gebruiker bij verouderde preview-cache of tijdelijke module-mismatch niet direct een permanent foutscherm.
+3. Lazy-load herstel robuuster maken
+   - Pas `src/lib/lazy-retry.ts` aan zodat module-load fouten niet alleen één reload proberen, maar ook een cache-bust URL gebruiken bij herstel.
+   - Voorkom refresh-loops met sessionStorage en toon daarna een duidelijke herstelmelding als het opnieuw mislukt.
 
-4. **ErrorBoundary retry zinvoller maken**
-   - De “Opnieuw proberen”-knop bij module-load fouten een volledige pagina-refresh laten doen in plaats van alleen React state resetten. Bij deze fout helpt een lokale state-reset meestal niet.
+4. Auth/routing fallback verbeteren
+   - Houd auth-pagina’s statisch geladen zoals nu.
+   - Voeg op kritieke routes een zichtbare recovery-state toe wanneer lazy loading of auth-resolutie blijft hangen, zodat de gebruiker nooit op een blanco pagina eindigt.
 
-## Technische details
+5. Tests toevoegen
+   - Voeg gerichte regressietests toe voor:
+     - lazy module load error detectie;
+     - geen oneindige reload-loop;
+     - boot fallback bij renderfout;
+     - geen PWA/service-worker configuratie meer in de Vite-config.
 
-Te wijzigen bestanden:
-- `src/App.tsx`
-- `src/components/ErrorBoundary.tsx`
-- eventueel nieuw: `src/lib/lazy-retry.ts`
-
-Geen databasewijzigingen nodig. Geen wijziging aan e-mailconfiguratie of Sprint 2/3 functionaliteit.
-
-## Verwacht resultaat
-
-Na implementatie opent `/login` weer normaal. Als later een dynamisch ingeladen route tijdelijk niet opgehaald kan worden, krijgt de app een automatische herstelpoging en een betere retry-flow in plaats van direct vast te lopen op het foutscherm.
+Rapport na uitvoering:
+- Ik rapporteer exact welke oorzaak is gevonden, welke bestanden aangepast zijn, en wat het verschil is tussen de vorige fix en deze definitieve fix.
+- Ik zal ook aangeven dat de externe e-maildomeinconfiguratie buiten scope blijft, zoals eerder afgesproken.
