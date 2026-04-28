@@ -36,6 +36,7 @@ export function VideoUploadQuestion({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(value || null);
+  const [savedVideoUrl, setSavedVideoUrl] = useState<string | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
   
@@ -55,6 +56,15 @@ export function VideoUploadQuestion({
       }
     };
   }, [stream]);
+
+  useEffect(() => {
+    if (!value || value.startsWith("http") || value.startsWith("blob:")) return;
+
+    supabase.storage
+      .from("student-uploads")
+      .createSignedUrl(value, 60 * 60)
+      .then(({ data }) => setSavedVideoUrl(data?.signedUrl || null));
+  }, [value]);
 
   // Auto-stop recording when max duration reached
   useEffect(() => {
@@ -200,13 +210,13 @@ export function VideoUploadQuestion({
   };
 
   const uploadVideo = async () => {
-    if (!videoBlob || !attemptId) return;
+    if (!videoBlob || !attemptId || !user?.id) return;
     
     setIsUploading(true);
     setUploadProgress(0);
     
     try {
-      const fileName = `${user?.id}/${attemptId}/${questionId}/video-${Date.now()}.webm`;
+      const fileName = `${user.id}/${attemptId}/${questionId}/video-${Date.now()}.webm`;
       
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => Math.min(prev + 5, 90));
@@ -216,19 +226,19 @@ export function VideoUploadQuestion({
         .from("student-uploads")
         .upload(fileName, videoBlob, {
           contentType: videoBlob.type,
-          upsert: true,
         });
       
       clearInterval(progressInterval);
       
       if (error) throw error;
       
-      const { data: { publicUrl } } = supabase.storage
+      const { data: signedData } = await supabase.storage
         .from("student-uploads")
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 60 * 60);
       
       setUploadProgress(100);
-      onChange(publicUrl);
+      setSavedVideoUrl(signedData?.signedUrl || null);
+      onChange(fileName);
       
       toast({
         title: t("exercises.videoUploaded", "Video Uploaded"),
@@ -294,7 +304,7 @@ export function VideoUploadQuestion({
         <div className="relative rounded-lg overflow-hidden bg-muted">
           <video
             ref={videoPlaybackRef}
-            src={videoUrl}
+            src={savedVideoUrl || videoUrl || undefined}
             controls
             className="w-full aspect-video"
           />
