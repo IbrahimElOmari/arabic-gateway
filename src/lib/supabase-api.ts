@@ -71,6 +71,27 @@ export async function apiMutate<T = any>(
 }
 
 /**
+ * Wrapper around supabase.rpc() calls with consistent error normalization.
+ */
+export async function apiRpc<T = any>(
+  functionName: string,
+  args?: Record<string, unknown>
+): Promise<T> {
+  try {
+    const { data, error } = await supabase.rpc(functionName as any, args as any);
+
+    if (error) {
+      throw normalizeError(error, `rpc:${functionName}`);
+    }
+
+    return data as T;
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw normalizeError(error, `rpc:${functionName}`);
+  }
+}
+
+/**
  * Wrapper around supabase.functions.invoke() with retry (1x on 5xx), timeout (15s),
  * version header, and error normalization.
  */
