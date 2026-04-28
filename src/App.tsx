@@ -48,43 +48,43 @@ const EnrollmentRequestsPage = lazyWithRetry(() => import("./pages/admin/Enrollm
 const DesignSystemPage = lazyWithRetry(() => import("./pages/admin/DesignSystemPage"));
 
 // Teacher pages
-const TeacherDashboard = React.lazy(() => import("./pages/teacher/TeacherDashboard"));
-const TeacherLessonsPage = React.lazy(() => import("./pages/teacher/TeacherLessonsPage"));
-const TeacherRecordingsPage = React.lazy(() => import("./pages/teacher/TeacherRecordingsPage"));
-const TeacherSubmissionsPage = React.lazy(() => import("./pages/teacher/TeacherSubmissionsPage"));
-const ContentStudioPage = React.lazy(() => import("./pages/teacher/ContentStudioPage"));
-const TeacherExercisesPage = React.lazy(() => import("./pages/teacher/TeacherExercisesPage"));
-const TeacherMaterialsPage = React.lazy(() => import("./pages/teacher/TeacherMaterialsPage"));
+const TeacherDashboard = lazyWithRetry(() => import("./pages/teacher/TeacherDashboard"));
+const TeacherLessonsPage = lazyWithRetry(() => import("./pages/teacher/TeacherLessonsPage"));
+const TeacherRecordingsPage = lazyWithRetry(() => import("./pages/teacher/TeacherRecordingsPage"));
+const TeacherSubmissionsPage = lazyWithRetry(() => import("./pages/teacher/TeacherSubmissionsPage"));
+const ContentStudioPage = lazyWithRetry(() => import("./pages/teacher/ContentStudioPage"));
+const TeacherExercisesPage = lazyWithRetry(() => import("./pages/teacher/TeacherExercisesPage"));
+const TeacherMaterialsPage = lazyWithRetry(() => import("./pages/teacher/TeacherMaterialsPage"));
 
 // Self-Study pages
-const SelfStudyPage = React.lazy(() => import("./pages/SelfStudyPage"));
-const CategoryPage = React.lazy(() => import("./pages/CategoryPage"));
-const ExercisePage = React.lazy(() => import("./pages/ExercisePage"));
-const FinalExamPage = React.lazy(() => import("./pages/FinalExamPage"));
+const SelfStudyPage = lazyWithRetry(() => import("./pages/SelfStudyPage"));
+const CategoryPage = lazyWithRetry(() => import("./pages/CategoryPage"));
+const ExercisePage = lazyWithRetry(() => import("./pages/ExercisePage"));
+const FinalExamPage = lazyWithRetry(() => import("./pages/FinalExamPage"));
 
 // Knowledge base
-const KnowledgeBasePage = React.lazy(() => import("./pages/KnowledgeBasePage"));
+const KnowledgeBasePage = lazyWithRetry(() => import("./pages/KnowledgeBasePage"));
 
 // Live Lessons pages
-const LiveLessonsPage = React.lazy(() => import("./pages/LiveLessonsPage"));
-const RecordingsPage = React.lazy(() => import("./pages/RecordingsPage"));
+const LiveLessonsPage = lazyWithRetry(() => import("./pages/LiveLessonsPage"));
+const RecordingsPage = lazyWithRetry(() => import("./pages/RecordingsPage"));
 
 // Calendar page
-const CalendarPage = React.lazy(() => import("./pages/CalendarPage"));
+const CalendarPage = lazyWithRetry(() => import("./pages/CalendarPage"));
 
 // Settings and Install pages
-const SettingsPage = React.lazy(() => import("./pages/SettingsPage"));
-const InstallPage = React.lazy(() => import("./pages/InstallPage"));
-const HelpdeskPage = React.lazy(() => import("./pages/HelpdeskPage"));
-const GamificationPage = React.lazy(() => import("./pages/GamificationPage"));
-const ProgressPage = React.lazy(() => import("./pages/ProgressPage"));
+const SettingsPage = lazyWithRetry(() => import("./pages/SettingsPage"));
+const InstallPage = lazyWithRetry(() => import("./pages/InstallPage"));
+const HelpdeskPage = lazyWithRetry(() => import("./pages/HelpdeskPage"));
+const GamificationPage = lazyWithRetry(() => import("./pages/GamificationPage"));
+const ProgressPage = lazyWithRetry(() => import("./pages/ProgressPage"));
 
 // Community pages
-const ForumPage = React.lazy(() => import("./pages/ForumPage"));
-const ForumRoomPage = React.lazy(() => import("./pages/ForumRoomPage"));
-const ForumPostPage = React.lazy(() => import("./pages/ForumPostPage"));
-const ChatPage = React.lazy(() => import("./pages/ChatPage"));
-const ApplyTeacherPage = React.lazy(() => import("./pages/ApplyTeacherPage"));
+const ForumPage = lazyWithRetry(() => import("./pages/ForumPage"));
+const ForumRoomPage = lazyWithRetry(() => import("./pages/ForumRoomPage"));
+const ForumPostPage = lazyWithRetry(() => import("./pages/ForumPostPage"));
+const ChatPage = lazyWithRetry(() => import("./pages/ChatPage"));
+const ApplyTeacherPage = lazyWithRetry(() => import("./pages/ApplyTeacherPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
