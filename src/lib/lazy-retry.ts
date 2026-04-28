@@ -3,6 +3,12 @@ import React from "react";
 const LAZY_RETRY_KEY = "app_lazy_retry_done";
 const LAZY_RETRY_PARAM = "_lazy_retry";
 
+export function buildLazyRetryUrl(currentHref: string, timestamp = Date.now()): string {
+  const url = new URL(currentHref);
+  url.searchParams.set(LAZY_RETRY_PARAM, timestamp.toString());
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
 function isModuleLoadError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
 
@@ -22,9 +28,7 @@ export function lazyWithRetry<T extends React.ComponentType<any>>(
     } catch (error) {
       if (isModuleLoadError(error) && sessionStorage.getItem(LAZY_RETRY_KEY) !== "true") {
         sessionStorage.setItem(LAZY_RETRY_KEY, "true");
-        const url = new URL(window.location.href);
-        url.searchParams.set(LAZY_RETRY_PARAM, Date.now().toString());
-        window.location.replace(`${url.pathname}${url.search}${url.hash}`);
+        window.location.replace(buildLazyRetryUrl(window.location.href));
       }
 
       throw error;
@@ -37,7 +41,5 @@ export function isLazyModuleLoadError(error: unknown): boolean {
 }
 
 export function recoverFromLazyModuleLoadError(): void {
-  const url = new URL(window.location.href);
-  url.searchParams.set(LAZY_RETRY_PARAM, Date.now().toString());
-  window.location.replace(`${url.pathname}${url.search}${url.hash}`);
+  window.location.replace(buildLazyRetryUrl(window.location.href));
 }
