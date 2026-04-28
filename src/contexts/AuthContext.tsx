@@ -221,12 +221,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshProfile = useCallback(async () => {
     if (!user) return;
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (!error && data) setProfile(data);
+      const data = await apiQuery<Profile | null>('profiles', (q) =>
+        q.select('*').eq('user_id', user.id).maybeSingle()
+      );
+      if (data) setProfile(data);
     } catch (err) {
       logger.error('[Auth] refreshProfile error:', err);
     }
