@@ -12,10 +12,34 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+
+function SubmissionFileLink({ fileUrl, isAudio }: { fileUrl: string; isAudio: boolean }) {
+  const { t } = useTranslation();
+  const [signedUrl, setSignedUrl] = useState(fileUrl.startsWith("http") ? fileUrl : "");
+
+  useEffect(() => {
+    if (!fileUrl || fileUrl.startsWith("http")) return;
+
+    supabase.storage
+      .from("student-uploads")
+      .createSignedUrl(fileUrl, 60 * 60)
+      .then(({ data }) => setSignedUrl(data?.signedUrl || ""));
+  }, [fileUrl]);
+
+  return (
+    <Button variant="outline" asChild disabled={!signedUrl}>
+      <a href={signedUrl || "#"} target="_blank" rel="noopener noreferrer">
+        {isAudio ? <Play className="h-4 w-4 mr-2" /> : <FileText className="h-4 w-4 mr-2" />}
+        {t("teacher.viewFile", "View File")}
+      </a>
+    </Button>
+  );
+}
 
 export default function TeacherSubmissionsPage() {
   const { t } = useTranslation();
@@ -373,16 +397,7 @@ export default function TeacherSubmissionsPage() {
                   <p className="p-3 bg-muted rounded-lg">{selectedSubmission.answer_text}</p>
                 ) : selectedSubmission.file_url ? (
                   <div className="flex gap-2">
-                    <Button variant="outline" asChild>
-                      <a href={selectedSubmission.file_url} target="_blank" rel="noopener noreferrer">
-                        {selectedSubmission.question?.type?.includes("audio") ? (
-                          <Play className="h-4 w-4 mr-2" />
-                        ) : (
-                          <FileText className="h-4 w-4 mr-2" />
-                        )}
-                        {t("teacher.viewFile", "View File")}
-                      </a>
-                    </Button>
+                    <SubmissionFileLink fileUrl={selectedSubmission.file_url} isAudio={selectedSubmission.question?.type?.includes("audio")} />
                   </div>
                 ) : (
                   <p className="text-muted-foreground">{t("teacher.noAnswer", "No answer provided")}</p>
