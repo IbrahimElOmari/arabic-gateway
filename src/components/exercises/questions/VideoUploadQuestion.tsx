@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Video, Square, Upload, Loader2, Trash2, Camera, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { buildStudentUploadPath } from "@/lib/student-upload-path";
 
 interface VideoUploadQuestionProps {
   value: string | undefined;
@@ -216,7 +217,7 @@ export function VideoUploadQuestion({
     setUploadProgress(0);
     
     try {
-      const fileName = `${user.id}/${attemptId}/${questionId}/video-${Date.now()}.webm`;
+      const fileName = buildStudentUploadPath({ userId: user.id, attemptId, questionId, prefix: "video", extension: "webm" });
       
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => Math.min(prev + 5, 90));
