@@ -42,7 +42,7 @@ export function RoleOnboardingChecklist({ role, completedCount = 0, classCount =
       role,
       dismissed: true,
       dismissed_at: new Date().toISOString(),
-    }, { onConflict: "user_id" })),
+    }, { onConflict: "user_id,role" })),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["onboarding-state", user?.id, role] });
       toast({ title: t("onboarding.dismissed", "Checklist verborgen") });

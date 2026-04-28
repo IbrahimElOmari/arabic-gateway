@@ -30,6 +30,15 @@ describe('getRecommendedExercise', () => {
     expect(result?.reason).toBe('next_available');
   });
 
+  it('expects completed ids to be exercise ids, not attempt ids', () => {
+    const analytics = { weakest_category: 'cat-write', strongest_category: 'cat-read', exercises_attempted: 5 };
+    const completedExerciseIds = [{ id: 'attempt-9', exercise_id: '2', passed: true }]
+      .filter((attempt) => attempt.passed)
+      .map((attempt) => attempt.exercise_id);
+    const result = getRecommendedExercise(analytics, exercises, completedExerciseIds);
+    expect(result?.id).not.toBe('2');
+  });
+
   it('returns first available when no analytics', () => {
     const result = getRecommendedExercise(null, exercises);
     expect(result?.id).toBe('1');

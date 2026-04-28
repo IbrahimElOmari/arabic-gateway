@@ -7,6 +7,58 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function escapeHtml(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function buildLessonReminderEmail(params: {
+  lang: string;
+  name?: string | null;
+  lessonTitle: string;
+  className?: string | null;
+  scheduledTime: string;
+  minutesBefore: number;
+  meetLink?: string | null;
+}) {
+  const safeName = escapeHtml(params.name || (params.lang === "en" ? "student" : params.lang === "ar" ? "الطالب" : "student"));
+  const safeTitle = escapeHtml(params.lessonTitle);
+  const safeClass = escapeHtml(params.className || "");
+  const safeTime = escapeHtml(params.scheduledTime);
+  const safeMeetLink = params.meetLink ? escapeHtml(params.meetLink) : "";
+
+  const subject = params.lang === "en"
+    ? `Reminder: ${params.lessonTitle} starts soon`
+    : params.lang === "ar"
+      ? `تذكير: ${params.lessonTitle} سيبدأ قريباً`
+      : `Herinnering: ${params.lessonTitle} start binnenkort`;
+
+  const intro = params.lang === "en"
+    ? `Your lesson starts in about ${params.minutesBefore} minutes.`
+    : params.lang === "ar"
+      ? `سيبدأ درسك خلال حوالي ${params.minutesBefore} دقيقة.`
+      : `Je les start over ongeveer ${params.minutesBefore} minuten.`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1f2937;">
+      <p>${params.lang === "ar" ? "مرحباً" : "Hallo"} ${safeName},</p>
+      <p>${escapeHtml(intro)}</p>
+      <ul>
+        <li><strong>${params.lang === "en" ? "Lesson" : params.lang === "ar" ? "الدرس" : "Les"}:</strong> ${safeTitle}</li>
+        ${safeClass ? `<li><strong>${params.lang === "en" ? "Class" : params.lang === "ar" ? "الصف" : "Klas"}:</strong> ${safeClass}</li>` : ""}
+        <li><strong>${params.lang === "en" ? "Time" : params.lang === "ar" ? "الوقت" : "Tijd"}:</strong> ${safeTime}</li>
+      </ul>
+      ${safeMeetLink ? `<p><a href="${safeMeetLink}" style="color: #2563eb;">${params.lang === "en" ? "Join lesson" : params.lang === "ar" ? "انضم إلى الدرس" : "Deelnemen aan les"}</a></p>` : ""}
+    </div>
+  `;
+
+  return { subject, html };
+}
+
 serve(async (req: Request) => {
   const logger = createLogger("send-lesson-reminders", req);
   if (req.method === "OPTIONS") {
@@ -118,6 +170,16 @@ serve(async (req: Request) => {
         if (!resendKey || profile.email_notifications === false) continue;
 
         try {
+          const email = buildLessonReminderEmail({
+            lang,
+            name: profile.full_name,
+            lessonTitle: lesson.title,
+            className: classData.name,
+            scheduledTime,
+            minutesBefore,
+            meetLink: lesson.meet_link,
+          });
+
           await fetch(`${supabaseUrl}/functions/v1/send-email`, {
             method: "POST",
             headers: {
@@ -125,17 +187,9 @@ serve(async (req: Request) => {
               "Authorization": `Bearer ${supabaseKey}`,
             },
             body: JSON.stringify({
-              type: "lesson_reminder",
               to: profile.email,
-              language: lang,
-              data: {
-                name: profile.full_name,
-                lessonTitle: lesson.title,
-                className: classData.name,
-                scheduledTime: scheduledTime,
-                minutesBefore: minutesBefore,
-                meetLink: lesson.meet_link,
-              },
+              subject: email.subject,
+              html: email.html,
             }),
           });
           remindersSent++;

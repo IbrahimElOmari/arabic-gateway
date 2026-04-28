@@ -32,7 +32,7 @@ export default function StudentDashboard() {
   const { data: attempts } = useQuery({
     queryKey: ['my-attempts', user?.id],
     queryFn: () => apiQuery<any[]>('exercise_attempts', q =>
-      q.select('id, passed, time_spent_seconds').eq('student_id', user!.id)
+      q.select('id, exercise_id, passed, time_spent_seconds').eq('student_id', user!.id)
     ),
     enabled: !!user,
   });
@@ -84,7 +84,7 @@ export default function StudentDashboard() {
     ? getRecommendedExercise(
         analytics || { weakest_category: null, strongest_category: null, exercises_attempted: 0 },
         exercises,
-        attempts.filter(a => a.passed).map(a => a.id)
+        attempts.filter(a => a.passed).map(a => a.exercise_id)
       )
     : null;
 
