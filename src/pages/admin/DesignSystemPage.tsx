@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { AlertCircle, CheckCircle2, LayoutDashboard, Save, Search, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,43 +11,45 @@ const sidebarLinkClass =
   "relative flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:shadow-sm hover:shadow-md";
 
 export default function DesignSystemPage() {
+  const { t } = useTranslation();
+
   return (
     <main className="container space-y-8 py-6">
       <header className="space-y-2">
-        <Badge variant="secondary" className="w-fit">Sprint 1</Badge>
-        <h1 className="text-3xl font-bold text-foreground">Design System Showcase</h1>
+        <Badge variant="secondary" className="w-fit">{t('designSystemPage.sprint')}</Badge>
+        <h1 className="text-3xl font-bold text-foreground">{t('designSystemPage.title')}</h1>
         <p className="max-w-3xl text-muted-foreground">
-          Visuele controlepagina voor kerncomponenten, states, mobile spacing en Arabic/RTL-weergave.
+          {t('designSystemPage.description')}
         </p>
       </header>
 
       <section className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Buttons, badges en inputs</CardTitle>
-            <CardDescription>Light-mode contrast, focus rings, hover states en disabled states.</CardDescription>
+            <CardTitle>{t('designSystemPage.buttonsTitle')}</CardTitle>
+            <CardDescription>{t('designSystemPage.buttonsDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex flex-wrap gap-3">
-              <Button><Save className="h-4 w-4" />Opslaan</Button>
-              <Button variant="secondary">Secundair</Button>
-              <Button variant="outline">Outline</Button>
-              <Button variant="destructive">Verwijderen</Button>
-              <Button variant="ghost">Ghost</Button>
-              <Button variant="link">Link actie</Button>
-              <Button disabled>Uitgeschakeld</Button>
+              <Button><Save className="h-4 w-4" />{t('designSystemPage.save')}</Button>
+              <Button variant="secondary">{t('designSystemPage.secondary')}</Button>
+              <Button variant="outline">{t('designSystemPage.outline')}</Button>
+              <Button variant="destructive">{t('designSystemPage.delete')}</Button>
+              <Button variant="ghost">{t('designSystemPage.ghost')}</Button>
+              <Button variant="link">{t('designSystemPage.linkAction')}</Button>
+              <Button disabled>{t('designSystemPage.disabled')}</Button>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Badge>Standaard</Badge>
-              <Badge variant="secondary">Concept</Badge>
-              <Badge variant="destructive">Actie nodig</Badge>
-              <Badge variant="outline">Outline</Badge>
+              <Badge>{t('designSystemPage.badgeDefault')}</Badge>
+              <Badge variant="secondary">{t('designSystemPage.badgeDraft')}</Badge>
+              <Badge variant="destructive">{t('designSystemPage.badgeAction')}</Badge>
+              <Badge variant="outline">{t('designSystemPage.badgeOutline')}</Badge>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Input aria-label="Zoeken" placeholder="Zoek studenten, lessen of betalingen" />
+              <Input aria-label={t('designSystemPage.searchAriaLabel')} placeholder={t('designSystemPage.searchPlaceholder')} />
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input aria-label="Zoeken met icoon" className="pl-9" placeholder="Snelle zoekactie" />
+                <Input aria-label={t('designSystemPage.quickSearchAriaLabel')} className="pl-9" placeholder={t('designSystemPage.quickSearchPlaceholder')} />
               </div>
             </div>
           </CardContent>
@@ -54,19 +57,19 @@ export default function DesignSystemPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Alerts</CardTitle>
-            <CardDescription>Statusmeldingen met semantische tokens.</CardDescription>
+            <CardTitle>{t('designSystemPage.alertsTitle')}</CardTitle>
+            <CardDescription>{t('designSystemPage.alertsDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <Alert>
               <CheckCircle2 className="h-4 w-4" />
-              <AlertTitle>Succesvol opgeslagen</AlertTitle>
-              <AlertDescription>De wijzigingen zijn klaar voor review.</AlertDescription>
+              <AlertTitle>{t('designSystemPage.successTitle')}</AlertTitle>
+              <AlertDescription>{t('designSystemPage.successDescription')}</AlertDescription>
             </Alert>
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Controle vereist</AlertTitle>
-              <AlertDescription>Deze flow bevat nog openstaande validatie.</AlertDescription>
+              <AlertTitle>{t('designSystemPage.checkRequiredTitle')}</AlertTitle>
+              <AlertDescription>{t('designSystemPage.checkRequiredDescription')}</AlertDescription>
             </Alert>
           </CardContent>
         </Card>
@@ -74,42 +77,42 @@ export default function DesignSystemPage() {
 
       <section className="space-y-4">
         <div>
-          <h2 className="text-2xl font-semibold text-foreground">Admin dashboard widgets</h2>
-          <p className="text-muted-foreground">Responsieve stats cards met keyboard focus en compacte mobile padding.</p>
+          <h2 className="text-2xl font-semibold text-foreground">{t('designSystemPage.widgetsTitle')}</h2>
+          <p className="text-muted-foreground">{t('designSystemPage.widgetsDescription')}</p>
         </div>
         <div className="grid gap-4 rounded-xl border border-transparent p-1 shadow-md sm:grid-cols-2 sm:border-accent/40 sm:shadow-lg lg:grid-cols-4 lg:border-accent lg:shadow-xl">
-          <StatsCard title="Gebruikers" value={1280} icon={Users} description="Geregistreerde gebruikers" trend={{ value: 12, isPositive: true }} />
-          <StatsCard title="Dashboard" value="98%" icon={LayoutDashboard} description="Gezonde sessies" />
-          <StatsCard title="Inschrijvingen" value={42} icon={CheckCircle2} description="Deze week verwerkt" />
-          <StatsCard title="Actie nodig" value={7} icon={AlertCircle} description="Openstaande controles" trend={{ value: 3, isPositive: false }} />
+          <StatsCard title={t('designSystemPage.statUsers')} value={1280} icon={Users} description={t('designSystemPage.statUsersDesc')} trend={{ value: 12, isPositive: true }} />
+          <StatsCard title={t('designSystemPage.statDashboard')} value="98%" icon={LayoutDashboard} description={t('designSystemPage.statDashboardDesc')} />
+          <StatsCard title={t('designSystemPage.statEnrollments')} value={42} icon={CheckCircle2} description={t('designSystemPage.statEnrollmentsDesc')} />
+          <StatsCard title={t('designSystemPage.statActionRequired')} value={7} icon={AlertCircle} description={t('designSystemPage.statActionRequiredDesc')} trend={{ value: 3, isPositive: false }} />
         </div>
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Sidebar states</CardTitle>
-            <CardDescription>Default, hover/focus-contract en active state.</CardDescription>
+            <CardTitle>{t('designSystemPage.sidebarTitle')}</CardTitle>
+            <CardDescription>{t('designSystemPage.sidebarDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
-            <a href="#" className={sidebarLinkClass}><LayoutDashboard className="h-5 w-5" />Dashboard</a>
-            <a href="#" className={`${sidebarLinkClass} bg-sidebar-accent text-sidebar-accent-foreground font-medium`}><Users className="h-5 w-5" />Gebruikers</a>
-            <a href="#" className={`${sidebarLinkClass} justify-center px-2 sm:w-12`} aria-label="Collapsed dashboard"><LayoutDashboard className="h-5 w-5" /></a>
+            <a href="#" className={sidebarLinkClass}><LayoutDashboard className="h-5 w-5" />{t('designSystemPage.sidebarDashboard')}</a>
+            <a href="#" className={`${sidebarLinkClass} bg-sidebar-accent text-sidebar-accent-foreground font-medium`}><Users className="h-5 w-5" />{t('designSystemPage.sidebarUsers')}</a>
+            <a href="#" className={`${sidebarLinkClass} justify-center px-2 sm:w-12`} aria-label={t('designSystemPage.sidebarCollapsedAria')}><LayoutDashboard className="h-5 w-5" /></a>
           </CardContent>
         </Card>
 
         <Card dir="rtl" lang="ar" className="font-sans">
           <CardHeader>
-            <CardTitle>معاينة عربية</CardTitle>
-            <CardDescription>اختبار الاتجاه، المسافات، المحاذاة والطباعة العربية.</CardDescription>
+            <CardTitle>{t('designSystemPage.arabicPreviewTitle')}</CardTitle>
+            <CardDescription>{t('designSystemPage.arabicPreviewDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <a href="#" className={`${sidebarLinkClass} bg-sidebar-accent text-sidebar-accent-foreground font-medium`}><LayoutDashboard className="h-5 w-5" />لوحة التحكم</a>
+            <a href="#" className={`${sidebarLinkClass} bg-sidebar-accent text-sidebar-accent-foreground font-medium`}><LayoutDashboard className="h-5 w-5" />{t('designSystemPage.arabicDashboard')}</a>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Input aria-label="بحث عربي" placeholder="ابحث عن طالب أو درس" />
-              <Button><Save className="h-4 w-4" />حفظ التغييرات</Button>
+              <Input aria-label={t('designSystemPage.arabicSearchAriaLabel')} placeholder={t('designSystemPage.arabicSearchPlaceholder')} />
+              <Button><Save className="h-4 w-4" />{t('designSystemPage.arabicSave')}</Button>
             </div>
-            <StatsCard title="إجمالي المستخدمين" value={1280} icon={Users} description="المستخدمون المسجلون" />
+            <StatsCard title={t('designSystemPage.arabicTotalUsers')} value={1280} icon={Users} description={t('designSystemPage.arabicTotalUsersDesc')} />
           </CardContent>
         </Card>
       </section>
