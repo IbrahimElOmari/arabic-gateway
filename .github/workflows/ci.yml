@@ -19,6 +19,7 @@ jobs:
       - run: npm run lint --if-present
       - run: npx tsc --noEmit
       - run: ./scripts/lint-colors.sh
+      - run: npm run check:i18n
 
   security-audit:
     runs-on: ubuntu-latest
