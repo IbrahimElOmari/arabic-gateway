@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "check:i18n": "node scripts/check-i18n.mjs"
+    "check:i18n": "node scripts/check-i18n.mjs",
+    "fix:i18n": "node scripts/check-i18n.mjs --fix"
   },
   "dependencies": {
     "@capacitor/cli": "^8.0.2",
