@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Loader2, Download, Sparkles, AlertTriangle, CheckCircle2, ShieldAlert } from "lucide-react";
+import { Loader2, Download, Sparkles, AlertTriangle, CheckCircle2, ShieldAlert, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
