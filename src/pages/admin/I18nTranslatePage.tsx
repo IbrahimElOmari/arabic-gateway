@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Loader2, Download, Sparkles, AlertTriangle, CheckCircle2, ShieldAlert } from "lucide-react";
+import { Loader2, Download, Sparkles, AlertTriangle, CheckCircle2, ShieldAlert, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -119,6 +119,8 @@ export default function I18nTranslatePage() {
   const [batches, setBatches] = useState<BatchStatus[]>([]);
   const [results, setResults] = useState<RunResult[]>([]);
   const [confirmTarget, setConfirmTarget] = useState<RunResult | null>(null);
+  const [skippedFilter, setSkippedFilter] = useState<Record<string, string>>({});
+  const [skippedScope, setSkippedScope] = useState<Record<string, string>>({});
 
   const missingEn = useMemo(() => pickMissing(nlFlat, enFlat), [nlFlat, enFlat]);
   const missingAr = useMemo(() => pickMissing(nlFlat, arFlat), [nlFlat, arFlat]);
@@ -545,20 +547,84 @@ export default function I18nTranslatePage() {
                       </AlertDescription>
                     </Alert>
                   )}
-                  {r.skipped.length > 0 && (
-                    <div className="rounded-lg border">
-                      <div className="px-3 py-2 border-b bg-muted/30 text-sm font-medium">
-                        {t("i18nAdmin.skipped", "Overgeslagen sleutels")}
+                  {r.skipped.length > 0 && (() => {
+                    const query = (skippedFilter[r.target] ?? "").trim().toLowerCase();
+                    const scope = skippedScope[r.target] ?? "";
+                    const topLevels = Array.from(
+                      new Set(r.skipped.map((k) => k.split(".")[0]))
+                    ).sort();
+                    const filtered = r.skipped.filter((k) => {
+                      if (scope && !k.startsWith(scope + ".") && k !== scope) return false;
+                      if (query && !k.toLowerCase().includes(query)) return false;
+                      return true;
+                    });
+                    return (
+                      <div className="rounded-lg border">
+                        <div className="px-3 py-2 border-b bg-muted/30 flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-medium">
+                            {t("i18nAdmin.skipped", "Overgeslagen sleutels")}
+                          </span>
+                          <Badge variant="outline" className="text-xs">
+                            {filtered.length}/{r.skipped.length}
+                          </Badge>
+                          <div className="ms-auto flex flex-wrap items-center gap-2">
+                            <div className="relative">
+                              <Search className="absolute start-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                              <Input
+                                value={skippedFilter[r.target] ?? ""}
+                                onChange={(e) =>
+                                  setSkippedFilter((p) => ({ ...p, [r.target]: e.target.value }))
+                                }
+                                placeholder={t("i18nAdmin.searchKeys", "Zoek sleutel...")}
+                                className="h-8 ps-7 pe-7 w-56 text-xs"
+                              />
+                              {(skippedFilter[r.target] ?? "") && (
+                                <button
+                                  type="button"
+                                  aria-label={t("common.clear", "Wissen")}
+                                  onClick={() =>
+                                    setSkippedFilter((p) => ({ ...p, [r.target]: "" }))
+                                  }
+                                  className="absolute end-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </div>
+                            <select
+                              value={scope}
+                              onChange={(e) =>
+                                setSkippedScope((p) => ({ ...p, [r.target]: e.target.value }))
+                              }
+                              className="h-8 rounded-md border bg-background px-2 text-xs"
+                            >
+                              <option value="">
+                                {t("i18nAdmin.allNamespaces", "Alle namespaces")}
+                              </option>
+                              {topLevels.map((ns) => (
+                                <option key={ns} value={ns}>
+                                  {ns}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                        <ScrollArea className="h-40">
+                          {filtered.length > 0 ? (
+                            <ul className="p-3 space-y-1 text-xs font-mono text-muted-foreground">
+                              {filtered.map((k) => (
+                                <li key={k}>{k}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <div className="p-4 text-xs text-muted-foreground text-center">
+                              {t("i18nAdmin.noMatches", "Geen sleutels gevonden voor deze filter.")}
+                            </div>
+                          )}
+                        </ScrollArea>
                       </div>
-                      <ScrollArea className="h-40">
-                        <ul className="p-3 space-y-1 text-xs font-mono text-muted-foreground">
-                          {r.skipped.map((k) => (
-                            <li key={k}>{k}</li>
-                          ))}
-                        </ul>
-                      </ScrollArea>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </TabsContent>
               ))}
             </Tabs>
