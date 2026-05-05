@@ -37,6 +37,7 @@ import {
   UserCheck,
   ClipboardList,
   Flag,
+  Languages,
   ChevronLeft,
   ChevronRight,
   DollarSign,
@@ -143,6 +144,7 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
     { to: '/admin/analytics', icon: BarChart3, label: t('admin.analytics', 'Analytics') },
     { to: '/admin/final-exams', icon: GraduationCap, label: t('admin.finalExams', 'Final Exams') },
     { to: '/admin/design-system', icon: Palette, label: t('admin.designSystem', 'Design System') },
+    { to: '/admin/i18n', icon: Languages, label: t('admin.i18nTranslate', 'AI Translations') },
   ];
 
   const handleNavClick = () => {
