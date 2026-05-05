@@ -17,6 +17,7 @@ import {
   HelpCircle,
   Flag,
   Mail,
+  Languages,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -47,6 +48,7 @@ export function AdminSidebar({ collapsed, onToggle }: AdminSidebarProps) {
     { to: "/admin/analytics", icon: BarChart3, label: t("admin.analytics", "Analytics") },
     { to: "/admin/final-exams", icon: GraduationCap, label: t("admin.finalExams", "Final Exams") },
     { to: "/admin/enrollments", icon: Users, label: t("admin.enrollmentRequests", "Enrollments") },
+    { to: "/admin/i18n", icon: Languages, label: t("admin.i18nTranslate", "AI Translations") },
   ];
 
   return (

@@ -46,6 +46,7 @@ const AdminInvitationsPage = lazyWithRetry(() => import("./pages/admin/AdminInvi
 const FinalExamsPage = lazyWithRetry(() => import("./pages/admin/FinalExamsPage"));
 const EnrollmentRequestsPage = lazyWithRetry(() => import("./pages/admin/EnrollmentRequestsPage"));
 const DesignSystemPage = lazyWithRetry(() => import("./pages/admin/DesignSystemPage"));
+const I18nTranslatePage = lazyWithRetry(() => import("./pages/admin/I18nTranslatePage"));
 
 // Teacher pages
 const TeacherDashboard = lazyWithRetry(() => import("./pages/teacher/TeacherDashboard"));
@@ -181,6 +182,7 @@ const App = () => (
                       <Route path="/admin/final-exams" element={<ProtectedRoute requiredRole="admin"><FinalExamsPage /></ProtectedRoute>} />
                       <Route path="/admin/enrollments" element={<ProtectedRoute requiredRole="admin"><EnrollmentRequestsPage /></ProtectedRoute>} />
                       <Route path="/admin/design-system" element={<ProtectedRoute requiredRole="admin"><DesignSystemPage /></ProtectedRoute>} />
+                      <Route path="/admin/i18n" element={<ProtectedRoute requiredRole="admin"><I18nTranslatePage /></ProtectedRoute>} />
                       {/* Catch-all */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
