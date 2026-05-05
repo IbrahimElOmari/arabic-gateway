@@ -132,6 +132,18 @@ export default function I18nTranslatePage() {
     return Math.round((done / batches.length) * 100);
   }, [batches]);
 
+  // Defense-in-depth guard (after all hooks).
+  if (roleStatus === "loading") {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+  if (!user || !isAdmin || role !== "admin") {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   async function runForTarget(
     target: Target,
     sourceFlat: FlatMap,
