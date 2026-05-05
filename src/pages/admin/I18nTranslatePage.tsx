@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Loader2, Download, Sparkles, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Loader2, Download, Sparkles, AlertTriangle, CheckCircle2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,8 +11,21 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { apiInvoke } from "@/lib/supabase-api";
+import { logAdminAction } from "@/lib/admin-log";
 import nl from "@/i18n/locales/nl.json";
 import en from "@/i18n/locales/en.json";
 import ar from "@/i18n/locales/ar.json";
@@ -26,11 +40,8 @@ function flatten(obj: any, prefix = ""): FlatMap {
   const out: FlatMap = {};
   for (const [k, v] of Object.entries(obj ?? {})) {
     const key = prefix ? `${prefix}.${k}` : k;
-    if (v && typeof v === "object" && !Array.isArray(v)) {
-      Object.assign(out, flatten(v, key));
-    } else if (typeof v === "string") {
-      out[key] = v;
-    }
+    if (v && typeof v === "object" && !Array.isArray(v)) Object.assign(out, flatten(v, key));
+    else if (typeof v === "string") out[key] = v;
   }
   return out;
 }
@@ -71,6 +82,17 @@ function chunk<T extends Record<string, string>>(obj: T, size: number): T[] {
   return out;
 }
 
+interface BatchStatus {
+  target: Target;
+  index: number;
+  total: number;
+  size: number;
+  status: "pending" | "running" | "ok" | "error";
+  accepted: number;
+  skipped: number;
+  error?: string;
+}
+
 interface RunResult {
   target: Target;
   added: Array<{ key: string; source: string; translation: string }>;
@@ -82,6 +104,7 @@ interface RunResult {
 export default function I18nTranslatePage() {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { user, role, roleStatus, isAdmin } = useAuth();
 
   const nlFlat = useMemo(() => flatten(nl), []);
   const enFlat = useMemo(() => flatten(en), []);
@@ -93,62 +116,163 @@ export default function I18nTranslatePage() {
   const [limit, setLimit] = useState<string>("");
 
   const [running, setRunning] = useState(false);
-  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [batches, setBatches] = useState<BatchStatus[]>([]);
   const [results, setResults] = useState<RunResult[]>([]);
+  const [confirmTarget, setConfirmTarget] = useState<RunResult | null>(null);
 
   const missingEn = useMemo(() => pickMissing(nlFlat, enFlat), [nlFlat, enFlat]);
   const missingAr = useMemo(() => pickMissing(nlFlat, arFlat), [nlFlat, arFlat]);
 
-  const totalMissing = (doEn ? Object.keys(missingEn).length : 0) + (doAr ? Object.keys(missingAr).length : 0);
+  const totalMissing =
+    (doEn ? Object.keys(missingEn).length : 0) + (doAr ? Object.keys(missingAr).length : 0);
 
-  async function runForTarget(target: Target, sourceFlat: FlatMap, currentFlat: FlatMap, lim: number): Promise<RunResult> {
+  const overallProgress = useMemo(() => {
+    if (batches.length === 0) return 0;
+    const done = batches.filter((b) => b.status === "ok" || b.status === "error").length;
+    return Math.round((done / batches.length) * 100);
+  }, [batches]);
+
+  // Defense-in-depth guard (after all hooks).
+  if (roleStatus === "loading") {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+  if (!user || !isAdmin || role !== "admin") {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  async function runForTarget(
+    target: Target,
+    sourceFlat: FlatMap,
+    currentFlat: FlatMap,
+    lim: number,
+    startIndex: number
+  ): Promise<{ result: RunResult; nextIndex: number }> {
     const missing = pickMissing(sourceFlat, currentFlat, lim);
-    const batches = chunk(missing, BATCH_SIZE);
+    const parts = chunk(missing, BATCH_SIZE);
     const added: RunResult["added"] = [];
     const skipped: string[] = [];
     let merged: FlatMap = { ...currentFlat };
 
-    for (let i = 0; i < batches.length; i++) {
+    for (let i = 0; i < parts.length; i++) {
+      const idx = startIndex + i;
+      setBatches((prev) => prev.map((b, k) => (k === idx ? { ...b, status: "running" } : b)));
       try {
         const res = await apiInvoke<{ translations: Record<string, string>; skipped: string[] }>(
           "ai-translate-i18n",
-          { target, entries: batches[i] },
+          { target, entries: parts[i] },
           { timeoutMs: 60_000 }
         );
+        let acc = 0;
         for (const [k, v] of Object.entries(res.translations || {})) {
           if (k in merged) continue;
           merged[k] = `${AI_PREFIX}${v}`;
-          added.push({ key: k, source: batches[i][k], translation: v });
+          added.push({ key: k, source: parts[i][k], translation: v });
+          acc++;
         }
-        for (const k of res.skipped || []) skipped.push(k);
+        const sk = res.skipped || [];
+        for (const k of sk) skipped.push(k);
+        setBatches((prev) =>
+          prev.map((b, k) =>
+            k === idx ? { ...b, status: "ok", accepted: acc, skipped: sk.length } : b
+          )
+        );
       } catch (e: any) {
+        const msg = e?.message || String(e);
+        setBatches((prev) =>
+          prev.map((b, k) => (k === idx ? { ...b, status: "error", error: msg } : b))
+        );
         return {
-          target,
-          added,
-          skipped,
-          merged,
-          error: e?.message || String(e),
+          result: { target, added, skipped, merged, error: msg },
+          nextIndex: startIndex + parts.length,
         };
       }
-      setProgress((p) => (p ? { ...p, done: p.done + Object.keys(batches[i]).length } : p));
     }
-    return { target, added, skipped, merged };
+    return { result: { target, added, skipped, merged }, nextIndex: startIndex + parts.length };
   }
 
   async function handleRun() {
     if (!doEn && !doAr) {
-      toast({ title: t("i18nAdmin.selectTarget", "Selecteer minstens één taal"), variant: "destructive" });
+      toast({
+        title: t("i18nAdmin.selectTarget", "Selecteer minstens één taal"),
+        variant: "destructive",
+      });
       return;
     }
     setRunning(true);
     setResults([]);
-    setProgress({ done: 0, total: totalMissing });
     const lim = limit ? Math.max(1, parseInt(limit, 10)) : Infinity;
+
+    // Pre-compute all batch slots so the user sees the full plan up-front.
+    const planned: BatchStatus[] = [];
+    if (doEn) {
+      const parts = chunk(pickMissing(nlFlat, enFlat, lim), BATCH_SIZE);
+      parts.forEach((p, i) =>
+        planned.push({
+          target: "en",
+          index: i,
+          total: parts.length,
+          size: Object.keys(p).length,
+          status: "pending",
+          accepted: 0,
+          skipped: 0,
+        })
+      );
+    }
+    if (doAr) {
+      const parts = chunk(pickMissing(nlFlat, arFlat, lim), BATCH_SIZE);
+      parts.forEach((p, i) =>
+        planned.push({
+          target: "ar",
+          index: i,
+          total: parts.length,
+          size: Object.keys(p).length,
+          status: "pending",
+          accepted: 0,
+          skipped: 0,
+        })
+      );
+    }
+    setBatches(planned);
+
+    // Audit: run started.
+    void logAdminAction(user!.id, "i18n_translate_run_started", "i18n", undefined, {
+      dryRun,
+      targets: { en: doEn, ar: doAr },
+      limit: lim === Infinity ? null : lim,
+      plannedBatches: planned.length,
+      totalMissing,
+    });
+
     const out: RunResult[] = [];
+    let cursor = 0;
     try {
-      if (doEn) out.push(await runForTarget("en", nlFlat, enFlat, lim));
-      if (doAr) out.push(await runForTarget("ar", nlFlat, arFlat, lim));
+      if (doEn) {
+        const r = await runForTarget("en", nlFlat, enFlat, lim, cursor);
+        cursor = r.nextIndex;
+        out.push(r.result);
+      }
+      if (doAr) {
+        const r = await runForTarget("ar", nlFlat, arFlat, lim, cursor);
+        cursor = r.nextIndex;
+        out.push(r.result);
+      }
       setResults(out);
+
+      const totals = out.map((r) => ({
+        target: r.target,
+        added: r.added.length,
+        skipped: r.skipped.length,
+        error: r.error || null,
+      }));
+      void logAdminAction(user!.id, "i18n_translate_run_completed", "i18n", undefined, {
+        dryRun,
+        totals,
+      });
+
       const totalAdded = out.reduce((s, r) => s + r.added.length, 0);
       toast({
         title: dryRun
@@ -158,19 +282,35 @@ export default function I18nTranslatePage() {
       });
     } finally {
       setRunning(false);
-      setProgress(null);
     }
   }
 
-  function downloadJson(target: Target, merged: FlatMap) {
-    const json = JSON.stringify(unflatten(merged), null, 2) + "\n";
+  function performDownload(r: RunResult) {
+    const json = JSON.stringify(unflatten(r.merged), null, 2) + "\n";
     const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${target}.json`;
+    a.download = `${r.target}.json`;
     a.click();
     URL.revokeObjectURL(url);
+
+    void logAdminAction(user!.id, "i18n_translate_saved", "i18n", undefined, {
+      target: r.target,
+      addedCount: r.added.length,
+      skippedCount: r.skipped.length,
+      mode: dryRun ? "dry-run-export" : "save-export",
+      filename: `${r.target}.json`,
+    });
+
+    toast({
+      title: t("i18nAdmin.downloaded", "Bestand gedownload"),
+      description: `${r.target}.json`,
+    });
+  }
+
+  function requestDownload(r: RunResult) {
+    setConfirmTarget(r);
   }
 
   return (
@@ -249,11 +389,6 @@ export default function I18nTranslatePage() {
               {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               {t("i18nAdmin.runBtn", "Vertaling starten")}
             </Button>
-            {progress && (
-              <span className="text-sm text-muted-foreground">
-                {progress.done}/{progress.total}
-              </span>
-            )}
           </div>
           <Alert>
             <AlertTriangle className="h-4 w-4" />
@@ -267,6 +402,62 @@ export default function I18nTranslatePage() {
         </CardContent>
       </Card>
 
+      {batches.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("i18nAdmin.batchStatus", "Batchstatus")}</CardTitle>
+            <CardDescription>
+              {t("i18nAdmin.batchProgress", "Voortgang per batch ({{size}} keys per call)", {
+                size: BATCH_SIZE,
+              })}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Progress value={overallProgress} />
+            <div className="text-xs text-muted-foreground">
+              {batches.filter((b) => b.status === "ok" || b.status === "error").length}/{batches.length}{" "}
+              {t("i18nAdmin.batchesDone", "batches verwerkt")}
+            </div>
+            <div className="rounded-lg border divide-y max-h-72 overflow-auto">
+              {batches.map((b, i) => (
+                <div key={i} className="flex items-center justify-between px-3 py-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">{b.target.toUpperCase()}</Badge>
+                    <span className="font-mono text-xs">
+                      #{b.index + 1}/{b.total}
+                    </span>
+                    <span className="text-muted-foreground">· {b.size} keys</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {b.status === "pending" && (
+                      <span className="text-muted-foreground text-xs">
+                        {t("i18nAdmin.pending", "wacht")}
+                      </span>
+                    )}
+                    {b.status === "running" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    {b.status === "ok" && (
+                      <>
+                        <Badge variant="secondary" className="text-xs">+{b.accepted}</Badge>
+                        {b.skipped > 0 && (
+                          <Badge variant="outline" className="text-xs">⚠ {b.skipped}</Badge>
+                        )}
+                        <CheckCircle2 className="h-4 w-4 text-success" />
+                      </>
+                    )}
+                    {b.status === "error" && (
+                      <span className="text-destructive text-xs flex items-center gap-1">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        {b.error?.slice(0, 60)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {results.length > 0 && (
         <Card>
           <CardHeader>
@@ -278,13 +469,9 @@ export default function I18nTranslatePage() {
                 {results.map((r) => (
                   <TabsTrigger key={r.target} value={r.target}>
                     {r.target.toUpperCase()}{" "}
-                    <Badge variant="secondary" className="ms-2">
-                      +{r.added.length}
-                    </Badge>
+                    <Badge variant="secondary" className="ms-2">+{r.added.length}</Badge>
                     {r.skipped.length > 0 && (
-                      <Badge variant="outline" className="ms-1">
-                        ⚠ {r.skipped.length}
-                      </Badge>
+                      <Badge variant="outline" className="ms-1">⚠ {r.skipped.length}</Badge>
                     )}
                   </TabsTrigger>
                 ))}
@@ -308,7 +495,7 @@ export default function I18nTranslatePage() {
                     <Button
                       variant={dryRun ? "outline" : "default"}
                       size="sm"
-                      onClick={() => downloadJson(r.target, r.merged)}
+                      onClick={() => requestDownload(r)}
                       disabled={r.added.length === 0}
                     >
                       <Download className="h-4 w-4" />
@@ -347,9 +534,21 @@ export default function I18nTranslatePage() {
                   )}
 
                   {r.skipped.length > 0 && (
+                    <Alert>
+                      <ShieldAlert className="h-4 w-4" />
+                      <AlertDescription>
+                        {t(
+                          "i18nAdmin.skippedHint",
+                          "{{n}} sleutels overgeslagen omdat de placeholders niet matchten of de AI geen geldige output gaf.",
+                          { n: r.skipped.length }
+                        )}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  {r.skipped.length > 0 && (
                     <div className="rounded-lg border">
                       <div className="px-3 py-2 border-b bg-muted/30 text-sm font-medium">
-                        {t("i18nAdmin.skipped", "Overgeslagen (placeholder mismatch of leeg)")}
+                        {t("i18nAdmin.skipped", "Overgeslagen sleutels")}
                       </div>
                       <ScrollArea className="h-40">
                         <ul className="p-3 space-y-1 text-xs font-mono text-muted-foreground">
@@ -366,6 +565,62 @@ export default function I18nTranslatePage() {
           </CardContent>
         </Card>
       )}
+
+      <AlertDialog open={!!confirmTarget} onOpenChange={(o) => !o && setConfirmTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("i18nAdmin.confirmTitle", "Wijzigingen bevestigen voor {{lang}}", {
+                lang: confirmTarget?.target.toUpperCase() ?? "",
+              })}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>
+                  {dryRun
+                    ? t(
+                        "i18nAdmin.confirmDry",
+                        "Dry-run modus: het bestand wordt alleen lokaal gedownload. Niets in de live app verandert tot je het commit."
+                      )
+                    : t(
+                        "i18nAdmin.confirmSave",
+                        "Bewaar-modus: download het bestand en commit het naar de repo om de wijzigingen door te voeren."
+                      )}
+                </p>
+                <ul className="list-disc ms-5 space-y-1">
+                  <li>
+                    {t("i18nAdmin.summaryAdded", "Toegevoegde sleutels: {{n}}", {
+                      n: confirmTarget?.added.length ?? 0,
+                    })}
+                  </li>
+                  <li>
+                    {t("i18nAdmin.summarySkipped", "Overgeslagen: {{n}}", {
+                      n: confirmTarget?.skipped.length ?? 0,
+                    })}
+                  </li>
+                  <li>
+                    {t("i18nAdmin.summaryPrefix", "Alle waarden krijgen prefix ⟦AI⟧ voor review")}
+                  </li>
+                  <li>
+                    {t("i18nAdmin.summaryAudit", "Deze actie wordt vastgelegd in de admin-auditlog")}
+                  </li>
+                </ul>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel", "Annuleren")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmTarget) performDownload(confirmTarget);
+                setConfirmTarget(null);
+              }}
+            >
+              {t("i18nAdmin.confirmDownload", "Download bestand")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
