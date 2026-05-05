@@ -119,6 +119,8 @@ export default function I18nTranslatePage() {
   const [batches, setBatches] = useState<BatchStatus[]>([]);
   const [results, setResults] = useState<RunResult[]>([]);
   const [confirmTarget, setConfirmTarget] = useState<RunResult | null>(null);
+  const [skippedFilter, setSkippedFilter] = useState<Record<string, string>>({});
+  const [skippedScope, setSkippedScope] = useState<Record<string, string>>({});
 
   const missingEn = useMemo(() => pickMissing(nlFlat, enFlat), [nlFlat, enFlat]);
   const missingAr = useMemo(() => pickMissing(nlFlat, arFlat), [nlFlat, arFlat]);
