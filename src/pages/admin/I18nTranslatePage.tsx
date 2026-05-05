@@ -120,18 +120,6 @@ export default function I18nTranslatePage() {
   const [results, setResults] = useState<RunResult[]>([]);
   const [confirmTarget, setConfirmTarget] = useState<RunResult | null>(null);
 
-  // Defense-in-depth: block render even if router somehow allowed access.
-  if (roleStatus === "loading") {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-  if (!user || !isAdmin || role !== "admin") {
-    return <Navigate to="/dashboard" replace />;
-  }
-
   const missingEn = useMemo(() => pickMissing(nlFlat, enFlat), [nlFlat, enFlat]);
   const missingAr = useMemo(() => pickMissing(nlFlat, arFlat), [nlFlat, arFlat]);
 
