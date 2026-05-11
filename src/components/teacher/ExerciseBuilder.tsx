@@ -44,16 +44,6 @@ interface ExerciseBuilderProps {
 
 type QuestionType = "multiple_choice" | "checkbox" | "open_text" | "audio_upload" | "video_upload" | "file_upload" | "ordering";
 
-const questionTypeIcons: Record<QuestionType, React.ElementType> = {
-  multiple_choice: ListChecks,
-  checkbox: CheckSquare,
-  open_text: FileText,
-  audio_upload: Mic,
-  video_upload: Video,
-  file_upload: Upload,
-  ordering: GripVertical,
-};
-
 function getMediaType(url: string): "image" | "audio" | "video" | "file" {
   const ext = url.split(".").pop()?.toLowerCase() || "";
   if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext)) return "image";
