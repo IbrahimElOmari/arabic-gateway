@@ -25,25 +25,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  ArrowLeft, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  GripVertical, 
+import {
+  Plus,
   Loader2,
-  ListChecks,
-  CheckSquare,
   FileText,
-  Upload,
-  Mic,
-  Video,
-  ImageIcon,
   X,
   FileUp,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { validateUpload } from "@/lib/upload-validation";
+import { ExerciseMetadataPanel } from "./ExerciseMetadataPanel";
+import { QuestionListPanel } from "./QuestionListPanel";
 
 interface ExerciseBuilderProps {
   exerciseId: string;
@@ -51,16 +43,6 @@ interface ExerciseBuilderProps {
 }
 
 type QuestionType = "multiple_choice" | "checkbox" | "open_text" | "audio_upload" | "video_upload" | "file_upload" | "ordering";
-
-const questionTypeIcons: Record<QuestionType, React.ElementType> = {
-  multiple_choice: ListChecks,
-  checkbox: CheckSquare,
-  open_text: FileText,
-  audio_upload: Mic,
-  video_upload: Video,
-  file_upload: Upload,
-  ordering: GripVertical,
-};
 
 function getMediaType(url: string): "image" | "audio" | "video" | "file" {
   const ext = url.split(".").pop()?.toLowerCase() || "";
@@ -318,14 +300,6 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
     setQuestionForm({ ...questionForm, options: newOptions });
   };
 
-  const getQuestionText = (question: any) => {
-    const lang = i18n.language;
-    const text = question.question_text;
-    if (lang === "nl") return text?.nl || text?.en;
-    if (lang === "ar") return text?.ar || text?.en;
-    return text?.en || text?.nl;
-  };
-
   const toggleCorrectAnswer = (index: number) => {
     if (questionForm.correct_answers.includes(index)) {
       setQuestionForm({
@@ -342,85 +316,22 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={onBack} aria-label={t("common.back", "Back")}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold">{exercise?.title}</h1>
-          <p className="text-muted-foreground">{exercise?.class?.name}</p>
-        </div>
-      </div>
+      <ExerciseMetadataPanel
+        title={exercise?.title}
+        className={exercise?.class?.name}
+        questionCount={questions?.length || 0}
+        onBack={onBack}
+        onAddQuestion={() => { resetForm(); setEditingQuestion(null); setShowQuestionDialog(true); }}
+      />
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">
-            {questions?.length || 0} {t("teacher.questions", "questions")}
-          </span>
-        </div>
-        <Button onClick={() => { resetForm(); setEditingQuestion(null); setShowQuestionDialog(true); }}>
-          <Plus className="h-4 w-4 mr-2" />
-          {t("teacher.addQuestion", "Add Question")}
-        </Button>
-      </div>
-
-      {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : questions && questions.length > 0 ? (
-        <div className="space-y-4">
-          {questions.map((question, index) => {
-            const Icon = questionTypeIcons[question.type as QuestionType] || FileText;
-            return (
-              <Card key={question.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-4">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <GripVertical className="h-5 w-5 cursor-grab" />
-                      <span className="font-mono text-sm">{index + 1}</span>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Icon className="h-4 w-4 text-primary" />
-                        <span className="text-xs text-muted-foreground uppercase">
-                          {String(t(`questionTypes.${question.type}`, question.type))}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          • {question.points} {t("common.points", "points")}
-                        </span>
-                      </div>
-                      <p className="font-medium">{getQuestionText(question)}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => openEditDialog(question)} aria-label={t("common.edit", "Edit")}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => deleteQuestionMutation.mutate(question.id)} aria-label={t("common.delete", "Delete")}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      ) : (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <ListChecks className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">{t("teacher.noQuestions", "No questions yet")}</h3>
-            <p className="text-muted-foreground mb-4">
-              {t("teacher.noQuestionsDescription", "Add questions to your exercise to get started.")}
-            </p>
-            <Button onClick={() => { resetForm(); setShowQuestionDialog(true); }}>
-              <Plus className="h-4 w-4 mr-2" />
-              {t("teacher.addFirstQuestion", "Add First Question")}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+      <QuestionListPanel
+        questions={questions}
+        isLoading={isLoading}
+        language={i18n.language}
+        onAddFirst={() => { resetForm(); setShowQuestionDialog(true); }}
+        onEdit={openEditDialog}
+        onDelete={(id) => deleteQuestionMutation.mutate(id)}
+      />
 
       {/* Question Dialog */}
       <Dialog open={showQuestionDialog} onOpenChange={setShowQuestionDialog}>
