@@ -300,14 +300,6 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
     setQuestionForm({ ...questionForm, options: newOptions });
   };
 
-  const getQuestionText = (question: any) => {
-    const lang = i18n.language;
-    const text = question.question_text;
-    if (lang === "nl") return text?.nl || text?.en;
-    if (lang === "ar") return text?.ar || text?.en;
-    return text?.en || text?.nl;
-  };
-
   const toggleCorrectAnswer = (index: number) => {
     if (questionForm.correct_answers.includes(index)) {
       setQuestionForm({
