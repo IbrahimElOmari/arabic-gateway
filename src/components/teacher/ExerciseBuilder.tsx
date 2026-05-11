@@ -25,25 +25,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  ArrowLeft, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  GripVertical, 
+import {
+  Plus,
   Loader2,
-  ListChecks,
-  CheckSquare,
   FileText,
-  Upload,
-  Mic,
-  Video,
-  ImageIcon,
   X,
   FileUp,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { validateUpload } from "@/lib/upload-validation";
+import { ExerciseMetadataPanel } from "./ExerciseMetadataPanel";
+import { QuestionListPanel } from "./QuestionListPanel";
 
 interface ExerciseBuilderProps {
   exerciseId: string;
