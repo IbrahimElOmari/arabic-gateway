@@ -45,7 +45,7 @@ All colors MUST be HSL.
     --destructive: 0 84% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 170 20% 88%;
+    --border: 170 15% 50%;
     --input: 170 20% 50%;
     --ring: 160 50% 35%;
 
@@ -58,7 +58,7 @@ All colors MUST be HSL.
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 170 30% 92%;
     --sidebar-accent-foreground: 160 50% 22%;
-    --sidebar-border: 170 20% 88%;
+    --sidebar-border: 170 15% 50%;
     --sidebar-ring: 160 50% 33%;
 
     /* Chart colors */
@@ -107,7 +107,7 @@ All colors MUST be HSL.
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 200 35% 20%;
+    --border: 200 25% 40%;
     --input: 200 35% 20%;
     --ring: 160 45% 55%;
 
@@ -118,7 +118,7 @@ All colors MUST be HSL.
     --sidebar-primary-foreground: 200 50% 8%;
     --sidebar-accent: 180 30% 18%;
     --sidebar-accent-foreground: 150 30% 85%;
-    --sidebar-border: 200 35% 20%;
+    --sidebar-border: 200 25% 40%;
     --sidebar-ring: 160 45% 60%;
 
     /* Chart colors - dark */
