@@ -118,7 +118,7 @@ All colors MUST be HSL.
     --sidebar-primary-foreground: 200 50% 8%;
     --sidebar-accent: 180 30% 18%;
     --sidebar-accent-foreground: 150 30% 85%;
-    --sidebar-border: 200 35% 20%;
+    --sidebar-border: 200 25% 40%;
     --sidebar-ring: 160 45% 60%;
 
     /* Chart colors - dark */
