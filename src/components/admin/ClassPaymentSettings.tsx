@@ -160,29 +160,31 @@ export function ClassPaymentSettings({ classId, className, currentPrice, currenc
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5" />{t("admin.installmentPlans", "Installment Plans")}</CardTitle>
-          <CardDescription>{t("admin.installmentPlansDescription", "Available payment plans for students")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {installmentPlans && installmentPlans.length > 0 ? (
-            <div className="space-y-2">
-              {installmentPlans.map((plan) => (
-                <div key={plan.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">{plan.name}</p>
-                    <p className="text-sm text-muted-foreground">{plan.total_installments} {t("admin.payments", "payments")} / {plan.interval_months} {t("admin.monthsInterval", "month(s)")}</p>
+      {isFeatureEnabled("INSTALLMENT_PLANS") && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5" />{t("admin.installmentPlans", "Installment Plans")}</CardTitle>
+            <CardDescription>{t("admin.installmentPlansDescription", "Available payment plans for students")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {installmentPlans && installmentPlans.length > 0 ? (
+              <div className="space-y-2">
+                {installmentPlans.map((plan) => (
+                  <div key={plan.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">{plan.name}</p>
+                      <p className="text-sm text-muted-foreground">{plan.total_installments} {t("admin.payments", "payments")} / {plan.interval_months} {t("admin.monthsInterval", "month(s)")}</p>
+                    </div>
+                    <Badge variant="outline">{t("admin.active", "Active")}</Badge>
                   </div>
-                  <Badge variant="outline">{t("admin.active", "Active")}</Badge>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-muted-foreground text-center py-4">{t("admin.noInstallmentPlans", "No installment plans configured. Configure them in Payments settings.")}</p>
-          )}
-        </CardContent>
-      </Card>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-4">{t("admin.noInstallmentPlans", "No installment plans configured. Configure them in Payments settings.")}</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Dialog open={showPriceDialog} onOpenChange={setShowPriceDialog}>
         <DialogContent className="max-w-sm">
