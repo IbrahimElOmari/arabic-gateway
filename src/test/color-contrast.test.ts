@@ -49,21 +49,21 @@ const AA_LARGE  = 3.0;
 // Keep these in sync with the CSS variables. Update here if tokens change.
 
 const C = {
-  background:          '#fafcfb',
+  background:          '#f8faf9',
   card:                '#ffffff',
-  muted:               '#ebf0ee',
-  foreground:          '#0a1f29',
-  mutedForeground:     '#586d65',
-  cardForeground:      '#0a1f29',
-  primary:             '#2a8769',
+  muted:               '#eaefee',
+  foreground:          '#0a1e28',
+  mutedForeground:     '#576a64',
+  cardForeground:      '#0a1e28',
+  primary:             '#2a7e62',
   primaryForeground:   '#ffffff',
-  secondary:           '#e0efeb',
-  secondaryForeground: '#205441',
-  destructive:         '#bf1717',
+  secondary:           '#e3f1ef',
+  secondaryForeground: '#1f5f4a',
+  destructive:         '#d31212',
   destructiveForeground: '#ffffff',
-  accent:              '#208482',
+  accent:              '#20827a',
   accentForeground:    '#ffffff',
-  border:              '#cce0db',
+  border:              '#dae6e4',
 };
 
 // ── Tests ──────────────────────────────────────────────────────────────────
