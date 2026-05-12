@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, Loader2, CreditCard, Percent, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 
 interface ClassPaymentSettingsProps {
   classId: string;
