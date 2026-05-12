@@ -63,7 +63,7 @@ const C = {
   destructiveForeground: '#ffffff',
   accent:              '#20827a',
   accentForeground:    '#ffffff',
-  border:              '#dae6e4',
+  border:              '#6c938c',
 };
 
 // ── Tests ──────────────────────────────────────────────────────────────────
