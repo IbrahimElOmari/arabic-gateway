@@ -304,8 +304,8 @@ function PrivateChatTab() {
 
   const startConversation = useMutation({
     mutationFn: async (targetUserId: string) => {
-      const { data: roomId, error: roomError } = await supabase
-        .rpc('create_private_chat_room', { p_other_user_id: targetUserId });
+      const { data: roomId, error: roomError } = await (supabase
+        .rpc as any)('create_private_chat_room', { p_other_user_id: targetUserId });
       if (roomError) {
         console.error('Failed to create chat room:', roomError);
         throw roomError;
