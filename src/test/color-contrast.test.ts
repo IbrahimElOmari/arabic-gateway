@@ -99,10 +99,7 @@ describe('WCAG AA — Large text & UI components (>= 3.0:1)', () => {
   it('destructive on background (inline error, large)', () => {
     expect(contrast(C.destructive, C.background)).toBeGreaterThanOrEqual(AA_LARGE);
   });
-  // NOTE: The current --border token (#dae6e4 on #f8faf9) is decorative and does not
-  // meet WCAG 1.4.11 (3:1) against the background. Skipped pending a design-token
-  // change in src/index.css (out of scope for this fix).
-  it.skip('border on background (WCAG 1.4.11 non-text contrast)', () => {
+  it('border on background (WCAG 1.4.11 non-text contrast)', () => {
     expect(contrast(C.border, C.background)).toBeGreaterThanOrEqual(AA_LARGE);
   });
   it('muted foreground on muted background (de-emphasised label)', () => {
