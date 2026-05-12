@@ -45,6 +45,7 @@ export function ClassPaymentSettings({ classId, className, currentPrice, currenc
   const { data: installmentPlans } = useQuery({
     queryKey: ["installment-plans"],
     queryFn: () => apiQuery<any[]>("installment_plans", (q) => q.select("*").eq("is_active", true).order("total_installments")),
+    enabled: isFeatureEnabled("INSTALLMENT_PLANS"),
   });
 
   const updatePriceMutation = useMutation({
