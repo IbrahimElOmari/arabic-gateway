@@ -1,85 +1,52 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiQuery, apiMutate } from "@/lib/supabase-api";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Plus,
-  Loader2,
-  FileText,
-  X,
-  FileUp,
-} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { validateUpload } from "@/lib/upload-validation";
 import { ExerciseMetadataPanel } from "./ExerciseMetadataPanel";
 import { QuestionListPanel } from "./QuestionListPanel";
+import { QuestionFormDialog } from "./QuestionFormDialog";
 
 interface ExerciseBuilderProps {
   exerciseId: string;
   onBack: () => void;
 }
 
-type QuestionType = "multiple_choice" | "checkbox" | "open_text" | "audio_upload" | "video_upload" | "file_upload" | "ordering";
+type QuestionType =
+  | "multiple_choice"
+  | "checkbox"
+  | "open_text"
+  | "audio_upload"
+  | "video_upload"
+  | "file_upload"
+  | "ordering";
 
-function getMediaType(url: string): "image" | "audio" | "video" | "file" {
-  const ext = url.split(".").pop()?.toLowerCase() || "";
-  if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext)) return "image";
-  if (["mp3", "wav", "ogg", "webm", "m4a"].includes(ext)) return "audio";
-  if (["mp4", "webm", "mov", "avi"].includes(ext)) return "video";
-  return "file";
-}
+const emptyForm = {
+  type: "multiple_choice" as QuestionType,
+  question_text: { nl: "", en: "", ar: "" },
+  options: [
+    { nl: "", en: "", ar: "" },
+    { nl: "", en: "", ar: "" },
+    { nl: "", en: "", ar: "" },
+    { nl: "", en: "", ar: "" },
+  ],
+  correct_answer: 0,
+  correct_answers: [] as number[],
+  points: 1,
+  explanation: "",
+  time_limit_seconds: null as number | null,
+  requires_manual_grading: false,
+  media_url: null as string | null,
+};
 
 export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
   const { t, i18n } = useTranslation();
-  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showQuestionDialog, setShowQuestionDialog] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<any>(null);
-  const [mediaUploading, setMediaUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [questionForm, setQuestionForm] = useState({
-    type: "multiple_choice" as QuestionType,
-    question_text: { nl: "", en: "", ar: "" },
-    options: [
-      { nl: "", en: "", ar: "" },
-      { nl: "", en: "", ar: "" },
-      { nl: "", en: "", ar: "" },
-      { nl: "", en: "", ar: "" },
-    ],
-    correct_answer: 0,
-    correct_answers: [] as number[],
-    points: 1,
-    explanation: "",
-    time_limit_seconds: null as number | null,
-    requires_manual_grading: false,
-    media_url: null as string | null,
-  });
+  const [questionForm, setQuestionForm] = useState(emptyForm);
 
-  // Get exercise details
   const { data: exercise } = useQuery({
     queryKey: ["exercise", exerciseId],
     queryFn: () => apiQuery<any>("exercises", (q) =>
@@ -87,7 +54,6 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
     ),
   });
 
-  // Get questions for this exercise
   const { data: questions, isLoading } = useQuery({
     queryKey: ["exercise-questions", exerciseId],
     queryFn: () => apiQuery<any[]>("questions", (q) =>
@@ -95,30 +61,24 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
     ),
   });
 
-  const normalizeOrderingOptions = (options: any[]) => {
-    return options.map((o, i) => ({
+  const normalizeOrderingOptions = (options: any[]) =>
+    options.map((o, i) => ({
       ...o,
       label: o.en || o.nl || o.ar || `item-${i + 1}`,
       value: `item-${i + 1}`,
       order: i,
     }));
-  };
 
   const validateOrderingItems = (options: any[]): string | null => {
-    if (options.length < 2) {
-      return t("teacher.orderingMinItems", "At least 2 items are required.");
-    }
-    const hasEmpty = options.some((o) => !o.nl && !o.en && !o.ar);
-    if (hasEmpty) {
+    if (options.length < 2) return t("teacher.orderingMinItems", "At least 2 items are required.");
+    if (options.some((o) => !o.nl && !o.en && !o.ar))
       return t("teacher.orderingEmptyItem", "Each item must have text in at least one language.");
-    }
     return null;
   };
 
   const prepareFormData = (form: typeof questionForm) => {
     let correctAnswer;
     let options = form.options;
-
     if (form.type === "ordering") {
       options = normalizeOrderingOptions(form.options);
       correctAnswer = options.map((o: any) => o.value);
@@ -129,7 +89,6 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
     } else {
       correctAnswer = null;
     }
-
     const hasOptions = ["multiple_choice", "checkbox", "ordering"].includes(form.type);
     return { options: hasOptions ? options : null, correctAnswer };
   };
@@ -140,10 +99,8 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
         const validationError = validateOrderingItems(form.options);
         if (validationError) throw new Error(validationError);
       }
-
       const displayOrder = (questions?.length || 0) + 1;
       const { options, correctAnswer } = prepareFormData(form);
-
       await apiMutate("questions", (q) => q.insert({
         exercise_id: exerciseId,
         type: form.type,
@@ -161,9 +118,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
       queryClient.invalidateQueries({ queryKey: ["exercise-questions", exerciseId] });
       setShowQuestionDialog(false);
       resetForm();
-      toast({
-        title: t("teacher.questionAdded", "Question Added"),
-      });
+      toast({ title: t("teacher.questionAdded", "Question Added") });
     },
     onError: (error: Error) => {
       toast({
@@ -180,9 +135,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
         const validationError = validateOrderingItems(form.options);
         if (validationError) throw new Error(validationError);
       }
-
       const { options, correctAnswer } = prepareFormData(form);
-
       await apiMutate("questions", (q) => q.update({
         type: form.type,
         question_text: form.question_text,
@@ -199,9 +152,7 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
       setShowQuestionDialog(false);
       setEditingQuestion(null);
       resetForm();
-      toast({
-        title: t("teacher.questionUpdated", "Question Updated"),
-      });
+      toast({ title: t("teacher.questionUpdated", "Question Updated") });
     },
   });
 
@@ -209,31 +160,11 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
     mutationFn: (id: string) => apiMutate("questions", (q) => q.delete().eq("id", id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["exercise-questions", exerciseId] });
-      toast({
-        title: t("teacher.questionDeleted", "Question Deleted"),
-      });
+      toast({ title: t("teacher.questionDeleted", "Question Deleted") });
     },
   });
 
-  const resetForm = () => {
-    setQuestionForm({
-      type: "multiple_choice",
-      question_text: { nl: "", en: "", ar: "" },
-      options: [
-        { nl: "", en: "", ar: "" },
-        { nl: "", en: "", ar: "" },
-        { nl: "", en: "", ar: "" },
-        { nl: "", en: "", ar: "" },
-      ],
-      correct_answer: 0,
-      correct_answers: [],
-      points: 1,
-      explanation: "",
-      time_limit_seconds: null,
-      requires_manual_grading: false,
-      media_url: null,
-    });
-  };
+  const resetForm = () => setQuestionForm(emptyForm);
 
   const openEditDialog = (question: any) => {
     setEditingQuestion(question);
@@ -257,60 +188,11 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
     setShowQuestionDialog(true);
   };
 
-  const handleMediaUpload = async (file: File) => {
-    const validation = validateUpload(file, "exercise-media");
-    if (!validation.valid) {
-      toast({ variant: "destructive", title: t("common.error", "Error"), description: validation.error });
-      return;
-    }
-
-    setMediaUploading(true);
-    try {
-      const timestamp = Date.now();
-      const filePath = `${exerciseId}/${timestamp}-${file.name}`;
-      const { error } = await supabase.storage.from("exercise-media").upload(filePath, file);
-      if (error) throw error;
-
-      const { data: urlData } = supabase.storage.from("exercise-media").getPublicUrl(filePath);
-      setQuestionForm((prev) => ({ ...prev, media_url: urlData.publicUrl }));
-      toast({ title: t("teacher.mediaUploaded", "Media uploaded") });
-    } catch (error) {
-      console.error("Media upload error:", error);
-      toast({ variant: "destructive", title: t("common.error", "Error"), description: t("teacher.mediaUploadError", "Failed to upload media.") });
-    } finally {
-      setMediaUploading(false);
-    }
-  };
-
-  const handleRemoveMedia = () => {
-    setQuestionForm((prev) => ({ ...prev, media_url: null }));
-  };
-
   const handleSubmit = () => {
     if (editingQuestion) {
       updateQuestionMutation.mutate({ id: editingQuestion.id, form: questionForm });
     } else {
       createQuestionMutation.mutate(questionForm);
-    }
-  };
-
-  const updateOption = (index: number, lang: string, value: string) => {
-    const newOptions = [...questionForm.options];
-    newOptions[index] = { ...newOptions[index], [lang]: value };
-    setQuestionForm({ ...questionForm, options: newOptions });
-  };
-
-  const toggleCorrectAnswer = (index: number) => {
-    if (questionForm.correct_answers.includes(index)) {
-      setQuestionForm({
-        ...questionForm,
-        correct_answers: questionForm.correct_answers.filter((i) => i !== index),
-      });
-    } else {
-      setQuestionForm({
-        ...questionForm,
-        correct_answers: [...questionForm.correct_answers, index],
-      });
     }
   };
 
@@ -333,278 +215,16 @@ export function ExerciseBuilder({ exerciseId, onBack }: ExerciseBuilderProps) {
         onDelete={(id) => deleteQuestionMutation.mutate(id)}
       />
 
-      {/* Question Dialog */}
-      <Dialog open={showQuestionDialog} onOpenChange={setShowQuestionDialog}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingQuestion ? t("teacher.editQuestion", "Edit Question") : t("teacher.addQuestion", "Add Question")}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>{t("teacher.questionType", "Question Type")}</Label>
-                <Select
-                  value={questionForm.type}
-                  onValueChange={(v: QuestionType) => setQuestionForm({ ...questionForm, type: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="multiple_choice">{t("questionTypes.multiple_choice", "Multiple Choice")}</SelectItem>
-                    <SelectItem value="checkbox">{t("questionTypes.checkbox", "Checkbox (Multiple Answers)")}</SelectItem>
-                    <SelectItem value="open_text">{t("questionTypes.open_text", "Open Text")}</SelectItem>
-                    <SelectItem value="audio_upload">{t("questionTypes.audio_upload", "Audio Recording")}</SelectItem>
-                    <SelectItem value="video_upload">{t("questionTypes.video_upload", "Video Recording")}</SelectItem>
-                    <SelectItem value="file_upload">{t("questionTypes.file_upload", "File Upload")}</SelectItem>
-                    <SelectItem value="ordering">{t("questionTypes.ordering", "Ordering (Drag & Drop)")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>{t("common.points", "Points")}</Label>
-                <Input
-                  type="number"
-                  value={questionForm.points}
-                  onChange={(e) => setQuestionForm({ ...questionForm, points: parseInt(e.target.value) || 1 })}
-                />
-              </div>
-            </div>
-
-            <Tabs defaultValue="en" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="en">English</TabsTrigger>
-                <TabsTrigger value="nl">Nederlands</TabsTrigger>
-                <TabsTrigger value="ar">العربية</TabsTrigger>
-              </TabsList>
-              
-              {["en", "nl", "ar"].map((lang) => (
-                <TabsContent key={lang} value={lang} className="space-y-4" dir={lang === "ar" ? "rtl" : "ltr"}>
-                  <div>
-                    <Label>{t("teacher.questionText", "Question Text")} ({lang.toUpperCase()})</Label>
-                    <Textarea
-                      value={questionForm.question_text[lang as keyof typeof questionForm.question_text]}
-                      onChange={(e) =>
-                        setQuestionForm({
-                          ...questionForm,
-                          question_text: { ...questionForm.question_text, [lang]: e.target.value },
-                        })
-                      }
-                      rows={2}
-                    />
-                  </div>
-
-                  {(questionForm.type === "multiple_choice" || questionForm.type === "checkbox") && (
-                    <div className="space-y-2">
-                      <Label>{t("teacher.answerOptions", "Answer Options")} ({lang.toUpperCase()})</Label>
-                      {questionForm.options.map((option, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          {questionForm.type === "multiple_choice" ? (
-                            <input
-                              type="radio"
-                              name={`correct-${lang}`}
-                              checked={questionForm.correct_answer === index}
-                              onChange={() => setQuestionForm({ ...questionForm, correct_answer: index })}
-                              className="h-4 w-4"
-                            />
-                          ) : (
-                            <input
-                              type="checkbox"
-                              checked={questionForm.correct_answers.includes(index)}
-                              onChange={() => toggleCorrectAnswer(index)}
-                              className="h-4 w-4"
-                            />
-                          )}
-                          <Input
-                            value={option[lang as keyof typeof option]}
-                            onChange={(e) => updateOption(index, lang, e.target.value)}
-                            placeholder={`${t("teacher.option", "Option")} ${index + 1}`}
-                          />
-                        </div>
-                      ))}
-                      <p className="text-xs text-muted-foreground">
-                        {questionForm.type === "multiple_choice"
-                          ? t("teacher.selectCorrectAnswer", "Select the correct answer")
-                          : t("teacher.selectCorrectAnswers", "Select all correct answers")}
-                      </p>
-                    </div>
-                  )}
-
-                  {questionForm.type === "ordering" && (
-                    <div className="space-y-2">
-                      <Label>{t("teacher.orderItems", "Items in Correct Order")} ({lang.toUpperCase()})</Label>
-                      <p className="text-xs text-muted-foreground">
-                        {t("teacher.orderingDescription", "Enter items in the correct order. Students will see them shuffled.")}
-                      </p>
-                      {questionForm.options.map((option, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <span className="text-sm font-mono text-muted-foreground w-6 text-center shrink-0">{index + 1}</span>
-                          <Input
-                            value={option[lang as keyof typeof option] || ""}
-                            onChange={(e) => updateOption(index, lang, e.target.value)}
-                            placeholder={`${t("teacher.item", "Item")} ${index + 1}`}
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="shrink-0"
-                            onClick={() => {
-                              const newOptions = questionForm.options.filter((_, i) => i !== index);
-                              setQuestionForm({ ...questionForm, options: newOptions });
-                            }}
-                            disabled={questionForm.options.length <= 2}
-                          >
-                            <X className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      ))}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setQuestionForm({
-                            ...questionForm,
-                            options: [...questionForm.options, { nl: "", en: "", ar: "" }],
-                          });
-                        }}
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        {t("teacher.addOrderItem", "Add Item")}
-                      </Button>
-                    </div>
-                  )}
-                </TabsContent>
-              ))}
-            </Tabs>
-
-            {/* Reference Media Upload */}
-            <div>
-              <Label>{t("teacher.referenceMedia", "Reference Media")} ({t("common.optional", "optional")})</Label>
-              <p className="text-xs text-muted-foreground mb-2">
-                {t("teacher.referenceMediaHint", "Attach an image, audio, video, or PDF that students will see with this question.")}
-              </p>
-              {questionForm.media_url ? (
-                <div className="border rounded-lg p-3 bg-muted/30 space-y-2">
-                  {(() => {
-                    const type = getMediaType(questionForm.media_url);
-                    if (type === "image") return <img src={questionForm.media_url} alt="" className="max-h-40 rounded object-contain" />;
-                    if (type === "audio") return <audio controls src={questionForm.media_url} className="w-full" />;
-                    if (type === "video") return <video controls src={questionForm.media_url} className="max-h-40 rounded" />;
-                    return (
-                      <a href={questionForm.media_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary underline">
-                        <FileText className="h-4 w-4" /> {t("teacher.viewFile", "View file")}
-                      </a>
-                    );
-                  })()}
-                  <Button type="button" variant="ghost" size="sm" onClick={handleRemoveMedia} className="text-destructive">
-                    <X className="h-4 w-4 mr-1" /> {t("teacher.removeMedia", "Remove")}
-                  </Button>
-                </div>
-              ) : (
-                <div
-                  className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  {mediaUploading ? (
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto" />
-                  ) : (
-                    <>
-                      <FileUp className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">
-                        {t("teacher.clickToUpload", "Click to upload")} — max 50MB
-                      </p>
-                    </>
-                  )}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    className="hidden"
-                    accept="image/*,audio/*,video/*,application/pdf"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleMediaUpload(file);
-                      e.target.value = "";
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Timer per vraag */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>{t("teacher.timeLimit", "Time Limit per Question")} ({t("common.seconds", "seconds")})</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={questionForm.time_limit_seconds || ""}
-                  onChange={(e) => setQuestionForm({ 
-                    ...questionForm, 
-                    time_limit_seconds: e.target.value ? parseInt(e.target.value) : null 
-                  })}
-                  placeholder={t("teacher.noTimeLimit", "No limit")}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t("teacher.timeLimitHint", "Leave empty for no time limit")}
-                </p>
-              </div>
-              <div>
-                <Label>{t("teacher.correctionType", "Correction Type")}</Label>
-                <Select
-                  value={questionForm.requires_manual_grading ? "manual" : "auto"}
-                  onValueChange={(v) => setQuestionForm({ 
-                    ...questionForm, 
-                    requires_manual_grading: v === "manual" 
-                  })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="auto">{t("teacher.autoCorrection", "Automatic")}</SelectItem>
-                    <SelectItem value="manual">{t("teacher.manualCorrection", "Manual by Teacher")}</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {questionForm.requires_manual_grading 
-                    ? t("teacher.manualCorrectionHint", "Teacher will review and grade")
-                    : t("teacher.autoCorrectionHint", "System grades automatically")}
-                </p>
-              </div>
-            </div>
-
-            <div>
-              <Label>{t("teacher.explanation", "Explanation (shown after answer)")}</Label>
-              <Textarea
-                value={questionForm.explanation}
-                onChange={(e) => setQuestionForm({ ...questionForm, explanation: e.target.value })}
-                rows={2}
-                placeholder={t("teacher.explanationPlaceholder", "Optional explanation for the correct answer...")}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowQuestionDialog(false)}>
-              {t("common.cancel", "Cancel")}
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={createQuestionMutation.isPending || updateQuestionMutation.isPending}
-            >
-              {(createQuestionMutation.isPending || updateQuestionMutation.isPending) && (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              )}
-              {editingQuestion ? t("common.save", "Save") : t("common.add", "Add")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <QuestionFormDialog
+        open={showQuestionDialog}
+        onOpenChange={setShowQuestionDialog}
+        editingQuestion={editingQuestion}
+        questionForm={questionForm}
+        setQuestionForm={setQuestionForm}
+        onSubmit={handleSubmit}
+        isSubmitting={createQuestionMutation.isPending || updateQuestionMutation.isPending}
+        exerciseId={exerciseId}
+      />
     </div>
   );
 }

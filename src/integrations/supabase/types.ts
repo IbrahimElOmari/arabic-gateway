@@ -2800,6 +2800,10 @@ export type Database = {
         }
         Returns: string
       }
+      create_private_chat_room: {
+        Args: { p_other_user_id: string }
+        Returns: string
+      }
       generate_ticket_number: { Args: never; Returns: string }
       get_upcoming_deletions: {
         Args: { days_ahead?: number }

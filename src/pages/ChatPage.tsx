@@ -304,36 +304,13 @@ function PrivateChatTab() {
 
   const startConversation = useMutation({
     mutationFn: async (targetUserId: string) => {
-      // Check if room already exists between these two users
-      const myRooms = await apiQuery<any[]>("private_chat_participants", (q) =>
-        q.select("room_id").eq("user_id", user!.id)
-      );
-      for (const r of myRooms || []) {
-        const otherInRoom = await apiQuery<any[]>("private_chat_participants", (q) =>
-          q.select("user_id").eq("room_id", r.room_id).eq("user_id", targetUserId)
-        );
-        if (otherInRoom && otherInRoom.length > 0) {
-          // Room exists, check it's a 1-on-1
-          const allInRoom = await apiQuery<any[]>("private_chat_participants", (q) =>
-            q.select("user_id").eq("room_id", r.room_id)
-          );
-          if (allInRoom && allInRoom.length === 2) {
-            return r.room_id;
-          }
-        }
+      const { data: roomId, error: roomError } = await (supabase
+        .rpc as any)('create_private_chat_room', { p_other_user_id: targetUserId });
+      if (roomError) {
+        console.error('Failed to create chat room:', roomError);
+        throw roomError;
       }
-      // Create new room
-      const roomData = await apiMutate("private_chat_rooms", (q) =>
-        q.insert({ is_group: false }).select("id").single()
-      );
-      const roomId = (roomData as any).id;
-      await apiMutate("private_chat_participants", (q) =>
-        q.insert([
-          { room_id: roomId, user_id: user!.id },
-          { room_id: roomId, user_id: targetUserId },
-        ])
-      );
-      return roomId;
+      return roomId as string;
     },
     onSuccess: (roomId) => {
       setSelectedRoom(roomId);
