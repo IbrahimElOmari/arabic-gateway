@@ -141,11 +141,11 @@ export default function StudentDashboard() {
         <Alert className="mb-6 border-destructive/30 bg-destructive/5">
           <BookOpen className="h-4 w-4" />
           <AlertDescription className="flex flex-wrap items-center gap-3">
-            <span>{t('dashboard.noClassAssigned', 'Je bent nog niet ingeschreven voor een klas. Schrijf je in om te beginnen met leren.')}</span>
+            <span>{t('dashboard.noClassAssigned')}</span>
             <Button size="sm" asChild>
               <Link to="/pricing">
                 <BookOpen className="h-4 w-4 mr-1" />
-                {t('dashboard.goToPricing', 'Bekijk klassen')}
+                {t('dashboard.goToPricing')}
               </Link>
             </Button>
           </AlertDescription>
@@ -235,7 +235,7 @@ export default function StudentDashboard() {
           <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-medium text-foreground">{recommendedExercise?.title || t('dashboard.startSelfStudy', 'Start met zelfstudie')}</p>
-              <p className="text-sm text-muted-foreground">{t('dashboard.adaptivePath', 'Gebaseerd op voortgang, klasstatus en beschikbare oefeningen.')}</p>
+              <p className="text-sm text-muted-foreground">{t('dashboard.adaptivePath')}</p>
             </div>
             <Button asChild>
               <Link to={recommendedExercise ? `/self-study/${recommendedExercise.category_name || 'reading'}/${recommendedExercise.id}` : '/self-study'}>
@@ -261,7 +261,7 @@ export default function StudentDashboard() {
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5 text-primary" />{t('dashboard.nextLiveLessons', 'Volgende live lessen')}</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5 text-primary" />{t('dashboard.nextLiveLessons')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {upcomingLessons && upcomingLessons.length > 0 ? upcomingLessons.map((lesson) => (
@@ -269,13 +269,13 @@ export default function StudentDashboard() {
                 <div><p className="font-medium">{lesson.title}</p><p className="text-sm text-muted-foreground">{lesson.class?.name}</p></div>
                 <p className="text-sm text-muted-foreground">{formatDate(lesson.scheduled_at, 'PPP')}</p>
               </div>
-            )) : <p className="text-sm text-muted-foreground">{t('dashboard.noUpcomingLessons', 'Geen komende live lessen.')}</p>}
+            )) : <p className="text-sm text-muted-foreground">{t('dashboard.noUpcomingLessons')}</p>}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5 text-primary" />{t('dashboard.feedbackHub', 'Feedback & meldingen')}</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5 text-primary" />{t('dashboard.feedbackHub')}</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
             <Button variant="outline" className="justify-start" asChild><Link to="/progress"><TrendingUp className="h-4 w-4" />{t('dashboard.viewFeedback', 'Bekijk feedback')}</Link></Button>

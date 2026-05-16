@@ -43,8 +43,8 @@ export default function ApplyTeacherPage() {
       ),
     onSuccess: () => {
       toast({
-        title: t("applyTeacher.submitted", "Aanvraag ingediend"),
-        description: t("applyTeacher.submittedDesc", "Je aanvraag wordt beoordeeld door een beheerder."),
+        title: t("applyTeacher.submitted"),
+        description: t("applyTeacher.submittedDesc"),
       });
       navigate("/settings");
     },
@@ -52,7 +52,7 @@ export default function ApplyTeacherPage() {
       toast({
         variant: "destructive",
         title: t("common.error", "Error"),
-        description: t("applyTeacher.submitError", "Aanvraag kon niet worden ingediend."),
+        description: t("applyTeacher.submitError"),
       });
     },
   });
@@ -89,13 +89,13 @@ export default function ApplyTeacherPage() {
             )}
             <CardTitle>
               {existingApplication.status === "approved"
-                ? t("applyTeacher.approved", "Aanvraag goedgekeurd!")
-                : t("applyTeacher.pending", "Aanvraag in behandeling")}
+                ? t("applyTeacher.approved")
+                : t("applyTeacher.pending")}
             </CardTitle>
             <CardDescription>
               {existingApplication.status === "approved"
-                ? t("applyTeacher.approvedDesc", "Je hebt de rol van docent ontvangen.")
-                : t("applyTeacher.pendingDesc", "Je aanvraag wordt momenteel beoordeeld door een beheerder.")}
+                ? t("applyTeacher.approvedDesc")
+                : t("applyTeacher.pendingDesc")}
             </CardDescription>
           </CardHeader>
           {existingApplication.review_notes && (
@@ -120,9 +120,9 @@ export default function ApplyTeacherPage() {
               <GraduationCap className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <CardTitle>{t("applyTeacher.title", "Word docent")}</CardTitle>
+              <CardTitle>{t("applyTeacher.title")}</CardTitle>
               <CardDescription>
-                {t("applyTeacher.description", "Dien een aanvraag in om les te geven op ons platform.")}
+                {t("applyTeacher.description")}
               </CardDescription>
             </div>
           </div>
@@ -192,7 +192,7 @@ export default function ApplyTeacherPage() {
               disabled={submitMutation.isPending || !qualifications.trim() || !experience.trim()}
             >
               {submitMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {t("applyTeacher.submit", "Aanvraag indienen")}
+              {t("applyTeacher.submit")}
             </Button>
           </form>
         </CardContent>

@@ -105,9 +105,9 @@ export default function ProgressPage() {
     <>
       <div className="container py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">{t("progress.title", "Mijn Voortgang")}</h1>
+          <h1 className="text-3xl font-bold">{t("progress.title")}</h1>
           <p className="text-muted-foreground mt-1">
-            {t("progress.subtitle", "Bekijk je voortgang en behaalde resultaten.")}
+            {t("progress.subtitle")}
           </p>
         </div>
 
@@ -119,7 +119,7 @@ export default function ProgressPage() {
               <div className="text-center py-12">
                 <BookOpenCheck className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
                 <p className="text-muted-foreground">
-                  {t("progress.noExercises", "Je hebt nog geen oefeningen gemaakt.")}
+                  {t("progress.noExercises")}
                 </p>
                 <Link to="/self-study" className="text-primary underline">
                   {t("progress.startLearning", "Begin met leren")}

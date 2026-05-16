@@ -61,8 +61,8 @@ export default function EnrollmentRequestsPage() {
         q.insert({
           user_id: studentId,
           type: approve ? "enrollment_approved" : "enrollment_rejected",
-          title: approve ? `Inschrijving goedgekeurd: ${enrollment?.className || ""}` : `Inschrijving afgewezen: ${enrollment?.className || ""}`,
-          message: approve ? "Je bent nu ingeschreven en hebt toegang tot de klas." : "Je inschrijving is helaas afgewezen.",
+          title: approve ? t("admin.enrollmentApprovedNotification", { className: enrollment?.className || "" }) : t("admin.enrollmentRejectedNotification", { className: enrollment?.className || "" }),
+          message: approve ? t("admin.enrollmentApprovedMessage") : t("admin.enrollmentRejectedMessage"),
           data: { class_id: classId },
         })
       );
@@ -71,7 +71,7 @@ export default function EnrollmentRequestsPage() {
       queryClient.invalidateQueries({ queryKey: ["pending-enrollments"] });
       queryClient.invalidateQueries({ queryKey: ["admin-classes"] });
       if (user) logAdminAction(user.id, variables.approve ? "approve_enrollment" : "reject_enrollment", "class_enrollments", variables.id, { student_id: variables.studentId, class_id: variables.classId });
-      toast({ title: variables.approve ? t("admin.enrollmentApproved", "Inschrijving goedgekeurd") : t("admin.enrollmentRejected", "Inschrijving afgewezen") });
+      toast({ title: variables.approve ? t("admin.enrollmentApproved") : t("admin.enrollmentRejected") });
     },
     onError: () => { toast({ variant: "destructive", title: t("common.error", "Error") }); },
   });
@@ -86,7 +86,7 @@ export default function EnrollmentRequestsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            {t("admin.pendingEnrollments", "Wachtende inschrijvingen")} ({pendingEnrollments?.length || 0})
+            {t("admin.pendingEnrollments")} ({pendingEnrollments?.length || 0})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -127,7 +127,7 @@ export default function EnrollmentRequestsPage() {
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
-              <p>{t("admin.noPendingEnrollments", "Geen wachtende inschrijvingen")}</p>
+              <p>{t("admin.noPendingEnrollments")}</p>
             </div>
           )}
         </CardContent>

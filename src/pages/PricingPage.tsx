@@ -69,17 +69,17 @@ export default function PricingPage() {
     onSuccess: (_, { isFree }) => {
       queryClient.invalidateQueries({ queryKey: ["my-enrollments"] });
       toast({
-        title: isFree ? t("pricing.enrollmentSuccess", "Inschrijving gelukt!") : t("pricing.enrollmentPending", "Aanvraag ingediend"),
-        description: isFree ? t("pricing.enrollmentSuccessDesc", "Je hebt nu toegang tot deze klas.") : t("pricing.enrollmentPendingDesc", "Een beheerder zal je aanvraag beoordelen."),
+        title: isFree ? t("pricing.enrollmentSuccess") : t("pricing.enrollmentPending"),
+        description: isFree ? t("pricing.enrollmentSuccessDesc") : t("pricing.enrollmentPendingDesc"),
       });
     },
     onError: (error: Error) => {
       if (error.message === "already_enrolled") {
-        toast({ title: t("pricing.alreadyEnrolled", "Al ingeschreven"), description: t("pricing.alreadyEnrolledDesc", "Je bent al ingeschreven voor deze klas.") });
+        toast({ title: t("pricing.alreadyEnrolled"), description: t("pricing.alreadyEnrolledDesc") });
       } else if (error.message === "already_pending") {
-        toast({ title: t("pricing.pendingApproval", "Wacht op goedkeuring"), description: t("pricing.alreadyPendingDesc", "Je hebt al een aanvraag ingediend voor deze klas.") });
+        toast({ title: t("pricing.pendingApproval"), description: t("pricing.alreadyPendingDesc") });
       } else {
-        toast({ variant: "destructive", title: t("common.error", "Error"), description: t("pricing.enrollmentError", "Inschrijving mislukt. Probeer het opnieuw.") });
+        toast({ variant: "destructive", title: t("common.error"), description: t("pricing.enrollmentError") });
       }
     },
   });
@@ -113,10 +113,10 @@ export default function PricingPage() {
       const data = await apiQuery<any>("discount_codes", (q) =>
         q.select("*").eq("code", discountCode.toUpperCase()).maybeSingle()
       );
-      if (!data) { setDiscountError(t("pricing.unknownCode", "Deze kortingscode bestaat niet")); setAppliedDiscount(null); return; }
-      if (data.valid_until && new Date(data.valid_until) <= new Date()) { setDiscountError(t("pricing.expiredCode", "Deze kortingscode is verlopen")); setAppliedDiscount(null); return; }
-      if (data.valid_from && new Date(data.valid_from) > new Date()) { setDiscountError(t("pricing.notYetValidCode", "Deze kortingscode is nog niet geldig")); setAppliedDiscount(null); return; }
-      if (data.max_uses && data.current_uses >= data.max_uses) { setDiscountError(t("pricing.codeMaxUsed", "Deze kortingscode is al volledig gebruikt")); setAppliedDiscount(null); return; }
+      if (!data) { setDiscountError(t("pricing.unknownCode")); setAppliedDiscount(null); return; }
+      if (data.valid_until && new Date(data.valid_until) <= new Date()) { setDiscountError(t("pricing.expiredCode")); setAppliedDiscount(null); return; }
+      if (data.valid_from && new Date(data.valid_from) > new Date()) { setDiscountError(t("pricing.notYetValidCode")); setAppliedDiscount(null); return; }
+      if (data.max_uses && data.current_uses >= data.max_uses) { setDiscountError(t("pricing.codeMaxUsed")); setAppliedDiscount(null); return; }
       setAppliedDiscount({ code: data.code, type: data.discount_type as "percentage" | "fixed_amount", value: data.discount_value });
       setDiscountError(null);
     } catch { setDiscountError(t("common.error")); setAppliedDiscount(null); } finally { setIsValidating(false); }

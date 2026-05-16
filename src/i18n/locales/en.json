@@ -342,7 +342,8 @@
     "searchUser": "Search for a user...",
     "noUsersFound": "No users found",
     "noConversations": "No conversations",
-    "selectConversation": "Select a conversation or start a new one"
+    "selectConversation": "Select a conversation or start a new one",
+    "notEnrolled": "You must be enrolled in a class to use chat."
   },
   "teacher": {
     "dashboard": "Teacher Dashboard",
@@ -954,7 +955,11 @@
     "enrollInClassHelp": "The student will be enrolled in this class.",
     "created": "Created",
     "type": "Type",
-    "uploaded": "Uploaded"
+    "uploaded": "Uploaded",
+    "enrollmentApprovedNotification": "Enrollment approved: {{className}}",
+    "enrollmentRejectedNotification": "Enrollment rejected: {{className}}",
+    "enrollmentApprovedMessage": "You are now enrolled and have access to the class.",
+    "enrollmentRejectedMessage": "Your enrollment has unfortunately been rejected."
   },
   "twoFactor": {
     "title": "Two-Factor Authentication",
@@ -1230,8 +1235,8 @@
     "maxFileSize": "Maximum file size is {{size}}MB."
   },
   "progress": {
-    "title": "Progress Reports",
-    "subtitle": "Track your learning journey",
+    "title": "My Progress",
+    "subtitle": "View your progress and achieved results.",
     "weeklyProgress": "Weekly Progress",
     "monthlyProgress": "Monthly Progress",
     "exercisesCompleted": "Exercises Completed",
@@ -1272,7 +1277,7 @@
     "points": "Points",
     "progress": "Progress",
     "noStudents": "No students enrolled in this class",
-    "noExercises": "You have not completed any exercises yet.",
+    "noExercises": "You haven't done any exercises yet.",
     "certificates": "Certificates",
     "downloadCertificates": "Download your earned certificates here.",
     "level": "Level",
@@ -1392,7 +1397,7 @@
     "enroll": "Enroll",
     "noClasses": "There are currently no active courses.",
     "enrolled": "Enrolled",
-    "alreadyEnrolled": "Already enrolled",
+    "alreadyEnrolled": "You are already enrolled in this class.",
     "pendingApproval": "Pending approval",
     "enrollmentSuccess": "Enrollment successful!",
     "enrollmentSuccessDesc": "You now have access to this class.",
@@ -1409,7 +1414,15 @@
     "unknownCode": "This discount code does not exist",
     "expiredCode": "This discount code has expired",
     "notYetValidCode": "This discount code is not valid yet",
-    "codeMaxUsed": "This discount code has already been fully used"
+    "codeMaxUsed": "This discount code has already been fully used",
+    "enrollSuccess": "Enrollment successful!",
+    "enrollSuccessDesc": "You now have access to this class.",
+    "alreadyApplied": "You have already applied for this class.",
+    "enrollFailed": "Enrollment failed. Please try again.",
+    "discountInvalid": "This discount code does not exist",
+    "discountExpired": "This discount code has expired",
+    "discountNotYetValid": "This discount code is not yet valid",
+    "discountUsedUp": "This discount code has been fully used"
   },
   "help": {
     "faq": "FAQ / Knowledge Base",
@@ -1447,7 +1460,21 @@
     "reviewUsers": "Check users and roles",
     "reviewEnrollments": "Process enrollment requests",
     "reviewDesign": "Check design-system regressions",
-    "dismiss": "Hide checklist"
+    "dismiss": "Hide checklist",
+    "student": {
+      "confirmClass": "Choose or confirm your class",
+      "firstExercise": "Start your first exercise",
+      "checkProgress": "Check your progress"
+    },
+    "teacher": {
+      "intro": "Create lesson material, plan lessons and grade submissions from a single starting point.",
+      "checkClasses": "Review your classes",
+      "planLesson": "Plan or manage a lesson"
+    },
+    "admin": {
+      "intro": "Review users, enrollments and operational status.",
+      "checkUsers": "Review users and roles"
+    }
   },
   "classSelector": {
     "noClassesAdmin": "No active classes. Create one in Admin → Classes first.",
@@ -1456,7 +1483,7 @@
   },
   "applyTeacher": {
     "submitted": "Application submitted",
-    "submittedDesc": "Your application will be reviewed by an administrator.",
+    "submittedDesc": "Your application is being reviewed by an administrator.",
     "submitError": "Application could not be submitted.",
     "approved": "Application approved!",
     "pending": "Application pending",
@@ -1470,7 +1497,10 @@
     "experience": "Ervaring",
     "experiencePlaceholder": "Beschrijf je leservaring, met name in het Arabisch onderwijs...",
     "preferredLevels": "Gewenste niveaus",
-    "submit": "Submit application"
+    "submit": "Submit application",
+    "submitFailed": "Application could not be submitted.",
+    "becomeTeacher": "Become a teacher",
+    "intro": "Submit an application to teach on our platform."
   },
   "faq": {
     "feedbackThanks": "Thank you!",
@@ -1563,5 +1593,42 @@
     "arabicSave": "Save changes",
     "arabicTotalUsers": "Total users",
     "arabicTotalUsersDesc": "Registered users"
+  },
+  "errors": {
+    "roleLoadFailed": "Something went wrong loading your role. Please try again.",
+    "loadFailed": "Something went wrong loading"
+  },
+  "certificate": {
+    "completedLevel": "has successfully completed the following level:"
+  },
+  "studentDashboard": {
+    "notEnrolled": "You are not enrolled in a class yet. Enroll to start learning.",
+    "viewClasses": "View classes",
+    "recommendationsDesc": "Based on progress, class status and available exercises.",
+    "upcomingLive": "Upcoming live lessons",
+    "noLive": "No upcoming live lessons.",
+    "feedbackTitle": "Feedback & notifications"
+  },
+  "adminDashboard": {
+    "unassignedStudents": "{{count}} student(s) without a class. Assign them to a class."
+  },
+  "enrollmentRequests": {
+    "approvedNotificationTitle": "Enrollment approved: {{className}}",
+    "approvedNotificationMessage": "You are now enrolled and have access to the class.",
+    "approvedToast": "Enrollment approved",
+    "title": "Pending enrollments",
+    "empty": "No pending enrollments"
+  },
+  "i18nAdmin": {
+    "dryRunDone": "Dry-run completed",
+    "translationDone": "Translation completed",
+    "dryRunLabel": "Dry-run (save nothing)",
+    "batchProgress": "Progress per batch ({{size}} keys per call)",
+    "confirmChanges": "Confirm changes for {{lang}}"
+  },
+  "teacherSubmissions": {
+    "feedbackNotification": "Your teacher has posted feedback on your submission.",
+    "saveTemplate": "Save template",
+    "saveRubric": "Save rubric"
   }
 }

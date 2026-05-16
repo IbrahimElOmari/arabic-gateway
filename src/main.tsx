@@ -18,14 +18,14 @@ window.addEventListener("unhandledrejection", (event) => {
   logError(event.reason, { source: "unhandledrejection" });
 });
 
-function showBootFallback(message = "De app kon niet worden geladen. Herlaad de pagina om het opnieuw te proberen.") {
+function showBootFallback(message = "De app kon niet worden geladen. Herlaad de pagina om het opnieuw te proberen.") {  // i18n-ignore
   const root = document.getElementById("root");
   if (!root) return;
 
   root.innerHTML = `
     <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f7fbf9;color:#0a2530;text-align:center;">
       <div style="max-width:28rem;">
-        <h1 style="margin:0 0 .75rem;font-size:1.375rem;">Er ging iets mis bij het laden</h1>
+        <h1 style="margin:0 0 .75rem;font-size:1.375rem;">Er ging iets mis bij het laden</h1>  // i18n-ignore
         <p style="margin:0 0 1rem;color:#55706b;">${message}</p>
         <button type="button" onclick="window.location.reload()" style="border:1px solid #2f7f68;background:#2f7f68;color:white;border-radius:.5rem;padding:.625rem 1rem;cursor:pointer;">Pagina herladen</button>
       </div>

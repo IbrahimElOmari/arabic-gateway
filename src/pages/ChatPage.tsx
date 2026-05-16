@@ -151,7 +151,7 @@ function GroupChatTab() {
       <Card><CardContent className="flex flex-col items-center justify-center py-12 text-center">
         <MessageCircle className="h-12 w-12 text-muted-foreground mb-4" />
         <h3 className="text-lg font-semibold">{t("chat.noClasses")}</h3>
-        <p className="text-muted-foreground">{t("chat.noClassesDescription", "Je moet ingeschreven zijn in een klas om de chat te gebruiken.")}</p>
+        <p className="text-muted-foreground">{t("chat.noClassesDescription")}</p>
       </CardContent></Card>
     );
   }
@@ -174,9 +174,9 @@ function GroupChatTab() {
             <div className="space-y-4">
               {hasMore && (
                 <div className="flex justify-center">
-                  <Button variant="ghost" size="sm" onClick={loadOlderMessages} disabled={loadingMore} aria-label={t("chat.loadOlder", "Oudere berichten laden")}>
+                  <Button variant="ghost" size="sm" onClick={loadOlderMessages} disabled={loadingMore} aria-label={t("chat.loadOlder")}>
                     {loadingMore ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ChevronUp className="h-4 w-4 mr-2" />}
-                    {t("chat.loadOlder", "Oudere berichten laden")}
+                    {t("chat.loadOlder")}
                   </Button>
                 </div>
               )}
@@ -341,7 +341,7 @@ function PrivateChatTab() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>{t("chat.startConversation", "Start een gesprek")}</DialogTitle></DialogHeader>
-            <Input placeholder={t("chat.searchUser", "Zoek een gebruiker...")} value={searchUser} onChange={(e) => setSearchUser(e.target.value)} />
+            <Input placeholder={t("chat.searchUser")} value={searchUser} onChange={(e) => setSearchUser(e.target.value)} />
             <div className="space-y-1 max-h-60 overflow-y-auto">
               {searchResults?.map((profile: any) => (
                 <button key={profile.user_id} onClick={() => startConversation.mutate(profile.user_id)} className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-muted text-left" disabled={startConversation.isPending}>
@@ -356,7 +356,7 @@ function PrivateChatTab() {
                 </button>
               ))}
               {searchUser.length >= 2 && (!searchResults || searchResults.length === 0) && (
-                <p className="text-sm text-muted-foreground text-center py-4">{t("chat.noUsersFound", "Geen gebruikers gevonden")}</p>
+                <p className="text-sm text-muted-foreground text-center py-4">{t("chat.noUsersFound")}</p>
               )}
             </div>
           </DialogContent>
@@ -450,7 +450,7 @@ function ChatBubble({ message, isOwn, onReaction, onReport }: { message: any; is
             <button key={emoji} onClick={() => onReaction(message.id, emoji)} className="text-xs bg-muted rounded-full px-2 py-0.5 hover:bg-muted/80" aria-label={t("chat.toggleReaction", "{{emoji}} reactie", { emoji })}>{emoji} {count as number}</button>
           ))}
           <Popover>
-            <PopoverTrigger asChild><button className="text-muted-foreground hover:text-foreground p-1" aria-label={t("chat.addReaction", "Reactie toevoegen")}><Smile className="h-3 w-3" /></button></PopoverTrigger>
+            <PopoverTrigger asChild><button className="text-muted-foreground hover:text-foreground p-1" aria-label={t("chat.addReaction")}><Smile className="h-3 w-3" /></button></PopoverTrigger>
             <PopoverContent className="w-auto p-2">
               <div className="flex gap-1">{EMOJIS.map((emoji) => (<button key={emoji} onClick={() => onReaction(message.id, emoji)} className="text-lg hover:bg-muted rounded p-1" aria-label={t("chat.reactWith", "Reageer met {{emoji}}", { emoji })}>{emoji}</button>))}</div>
             </PopoverContent>

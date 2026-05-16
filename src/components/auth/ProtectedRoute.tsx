@@ -56,7 +56,7 @@ export function ProtectedRoute({
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center space-y-4 max-w-sm">
           <p className="text-muted-foreground">
-            {t('common.roleLoadError', 'Er ging iets mis bij het laden van je rol. Probeer het opnieuw.')}
+            {t('common.roleLoadError')}
           </p>
           <div className="flex gap-2 justify-center">
             <Button onClick={retryRoleResolution} variant="default" size="sm">

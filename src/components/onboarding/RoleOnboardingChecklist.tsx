@@ -45,39 +45,39 @@ export function RoleOnboardingChecklist({ role, completedCount = 0, classCount =
     }, { onConflict: "user_id,role" })),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["onboarding-state", user?.id, role] });
-      toast({ title: t("onboarding.dismissed", "Checklist verborgen") });
+      toast({ title: t("onboarding.dismissed") });
     },
   });
 
   const roleConfig = {
     student: {
       icon: GraduationCap,
-      title: t("onboarding.studentTitle", "Start je leerpad"),
-      description: t("onboarding.studentDescription", "Rond je eerste acties af en ga direct verder met leren."),
+      title: t("onboarding.studentTitle"),
+      description: t("onboarding.studentDescription"),
       items: [
-        { label: t("onboarding.chooseClass", "Kies of bevestig je klas"), to: "/pricing", done: classCount > 0 },
-        { label: t("onboarding.startExercise", "Start je eerste oefening"), to: "/self-study", done: completedCount > 0 },
-        { label: t("onboarding.checkProgress", "Bekijk je voortgang"), to: "/progress", done: completedCount > 2 },
+        { label: t("onboarding.chooseClass"), to: "/pricing", done: classCount > 0 },
+        { label: t("onboarding.startExercise"), to: "/self-study", done: completedCount > 0 },
+        { label: t("onboarding.checkProgress"), to: "/progress", done: completedCount > 2 },
       ],
     },
     teacher: {
       icon: ClipboardList,
-      title: t("onboarding.teacherTitle", "Richt je klasomgeving in"),
-      description: t("onboarding.teacherDescription", "Maak lesmateriaal, plan lessen en beoordeel inzendingen vanuit één startpunt."),
+      title: t("onboarding.teacherTitle"),
+      description: t("onboarding.teacherDescription"),
       items: [
-        { label: t("onboarding.reviewClasses", "Controleer je klassen"), to: "/teacher", done: classCount > 0 },
-        { label: t("onboarding.createLesson", "Plan of beheer een les"), to: "/teacher/lessons" },
-        { label: t("onboarding.reviewSubmissions", "Beoordeel openstaande inzendingen"), to: "/teacher/submissions", done: pendingCount === 0 },
+        { label: t("onboarding.reviewClasses"), to: "/teacher", done: classCount > 0 },
+        { label: t("onboarding.createLesson"), to: "/teacher/lessons" },
+        { label: t("onboarding.reviewSubmissions"), to: "/teacher/submissions", done: pendingCount === 0 },
       ],
     },
     admin: {
       icon: ShieldCheck,
-      title: t("onboarding.adminTitle", "Platformcontrole"),
-      description: t("onboarding.adminDescription", "Controleer gebruikers, inschrijvingen en operationele status."),
+      title: t("onboarding.adminTitle"),
+      description: t("onboarding.adminDescription"),
       items: [
-        { label: t("onboarding.reviewUsers", "Controleer gebruikers en rollen"), to: "/admin/users" },
-        { label: t("onboarding.reviewEnrollments", "Werk inschrijvingsaanvragen af"), to: "/admin/enrollments", done: pendingCount === 0 },
-        { label: t("onboarding.reviewDesign", "Controleer design-system regressies"), to: "/admin/design-system" },
+        { label: t("onboarding.reviewUsers"), to: "/admin/users" },
+        { label: t("onboarding.reviewEnrollments"), to: "/admin/enrollments", done: pendingCount === 0 },
+        { label: t("onboarding.reviewDesign"), to: "/admin/design-system" },
       ],
     },
   } satisfies Record<Role, { icon: typeof GraduationCap; title: string; description: string; items: ChecklistItem[] }>;

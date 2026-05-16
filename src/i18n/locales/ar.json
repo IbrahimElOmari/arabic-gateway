@@ -334,7 +334,7 @@
     "toggleReaction": "تبديل تفاعل {{emoji}}",
     "reactWith": "تفاعل بـ {{emoji}}",
     "sendMessage": "إرسال رسالة",
-    "loadOlder": "تحميل رسائل أقدم",
+    "loadOlder": "تحميل الرسائل الأقدم",
     "groupChat": "دردشة جماعية",
     "privateChat": "دردشة خاصة",
     "newConversation": "محادثة جديدة",
@@ -342,7 +342,8 @@
     "searchUser": "ابحث عن مستخدم...",
     "noUsersFound": "لم يتم العثور على مستخدمين",
     "noConversations": "لا توجد محادثات",
-    "selectConversation": "اختر محادثة أو ابدأ محادثة جديدة"
+    "selectConversation": "اختر محادثة أو ابدأ محادثة جديدة",
+    "notEnrolled": "يجب أن تكون مسجّلاً في فصل لاستخدام الدردشة."
   },
   "teacher": {
     "dashboard": "لوحة تحكم المعلم",
@@ -954,7 +955,11 @@
     "enrollInClassHelp": "وصف تسجيل فصل",
     "created": "تم الإنشاء",
     "type": "نوع",
-    "uploaded": "تم الرفع"
+    "uploaded": "تم الرفع",
+    "enrollmentApprovedNotification": "تمت الموافقة على التسجيل: {{className}}",
+    "enrollmentRejectedNotification": "تم رفض التسجيل: {{className}}",
+    "enrollmentApprovedMessage": "أنت الآن مسجّل ولديك وصول إلى الفصل.",
+    "enrollmentRejectedMessage": "للأسف تم رفض تسجيلك."
   },
   "twoFactor": {
     "title": "المصادقة الثنائية",
@@ -1230,8 +1235,8 @@
     "maxFileSize": "الحجم الأقصى للملف هو {{size}}MB."
   },
   "progress": {
-    "title": "تقارير التقدم",
-    "subtitle": "تتبع رحلتك التعليمية",
+    "title": "تقدّمي",
+    "subtitle": "اطّلع على تقدّمك ونتائجك.",
     "weeklyProgress": "التقدم الأسبوعي",
     "monthlyProgress": "التقدم الشهري",
     "exercisesCompleted": "التمارين المكتملة",
@@ -1272,7 +1277,7 @@
     "points": "النقاط",
     "progress": "التقدم",
     "noStudents": "لا يوجد طلاب مسجلون في هذا الفصل",
-    "noExercises": "لم تكمل أي تمارين بعد.",
+    "noExercises": "لم تقم بأي تمارين بعد.",
     "certificates": "الشهادات",
     "downloadCertificates": "نزّل شهاداتك المكتسبة هنا.",
     "level": "المستوى",
@@ -1392,7 +1397,7 @@
     "enroll": "التسجيل",
     "noClasses": "لا توجد دورات نشطة حالياً.",
     "enrolled": "مسجل",
-    "alreadyEnrolled": "مسجل بالفعل",
+    "alreadyEnrolled": "أنت مسجّل بالفعل في هذا الفصل.",
     "pendingApproval": "بانتظار الموافقة",
     "enrollmentSuccess": "تم التسجيل بنجاح!",
     "enrollmentSuccessDesc": "لديك الآن وصول إلى هذا الصف.",
@@ -1409,7 +1414,15 @@
     "unknownCode": "رمز الخصم هذا غير موجود",
     "expiredCode": "انتهت صلاحية رمز الخصم هذا",
     "notYetValidCode": "رمز الخصم هذا غير صالح بعد",
-    "codeMaxUsed": "تم استخدام رمز الخصم هذا بالكامل"
+    "codeMaxUsed": "تم استخدام رمز الخصم هذا بالكامل",
+    "enrollSuccess": "تم التسجيل بنجاح!",
+    "enrollSuccessDesc": "لديك الآن وصول إلى هذا الفصل.",
+    "alreadyApplied": "لقد قدّمت طلباً بالفعل لهذا الفصل.",
+    "enrollFailed": "فشل التسجيل. يرجى المحاولة مرة أخرى.",
+    "discountInvalid": "رمز الخصم هذا غير موجود",
+    "discountExpired": "انتهت صلاحية رمز الخصم",
+    "discountNotYetValid": "رمز الخصم غير صالح بعد",
+    "discountUsedUp": "تم استخدام رمز الخصم بالكامل"
   },
   "help": {
     "faq": "الأسئلة الشائعة / قاعدة المعرفة",
@@ -1447,7 +1460,21 @@
     "reviewUsers": "تحقق من المستخدمين والأدوار",
     "reviewEnrollments": "معالجة طلبات التسجيل",
     "reviewDesign": "تحقق من اختبارات نظام التصميم",
-    "dismiss": "إخفاء القائمة"
+    "dismiss": "إخفاء القائمة",
+    "student": {
+      "confirmClass": "اختر أو أكّد فصلك",
+      "firstExercise": "ابدأ تمرينك الأول",
+      "checkProgress": "تابع تقدّمك"
+    },
+    "teacher": {
+      "intro": "أنشئ المواد الدراسية وخطّط الدروس وقيّم الواجبات من نقطة بداية واحدة.",
+      "checkClasses": "راجع فصولك",
+      "planLesson": "خطّط أو أدر درساً"
+    },
+    "admin": {
+      "intro": "راجع المستخدمين والتسجيلات والحالة التشغيلية.",
+      "checkUsers": "راجع المستخدمين والأدوار"
+    }
   },
   "classSelector": {
     "noClassesAdmin": "لا توجد فصول نشطة. أنشئ فصلاً من الإدارة أولاً.",
@@ -1455,13 +1482,13 @@
     "selectClass": "اختر فصلاً..."
   },
   "applyTeacher": {
-    "submitted": "تم إرسال الطلب",
-    "submittedDesc": "سيتم مراجعة طلبك من قبل المدير.",
+    "submitted": "تم تقديم الطلب",
+    "submittedDesc": "تتم مراجعة طلبك من قبل المسؤول.",
     "submitError": "تعذر إرسال الطلب.",
     "approved": "تمت الموافقة على الطلب!",
-    "pending": "الطلب قيد المراجعة",
-    "approvedDesc": "لقد حصلت على دور المعلم.",
-    "pendingDesc": "طلبك قيد المراجعة حالياً من قبل المدير.",
+    "pending": "الطلب قيد المعالجة",
+    "approvedDesc": "لقد حصلت على دور المعلّم.",
+    "pendingDesc": "تتم مراجعة طلبك حالياً من قبل المسؤول.",
     "reviewNotes": "التعليقات",
     "title": "كن معلماً",
     "description": "قدم طلباً للتدريس على منصتنا.",
@@ -1470,7 +1497,10 @@
     "experience": "الخبرة",
     "experiencePlaceholder": "صف خبرتك في التدريس، خاصة في تعليم العربية...",
     "preferredLevels": "المستويات المفضلة",
-    "submit": "إرسال الطلب"
+    "submit": "تقديم الطلب",
+    "submitFailed": "تعذّر تقديم الطلب.",
+    "becomeTeacher": "كن معلّماً",
+    "intro": "قدّم طلباً للتدريس على منصتنا."
   },
   "faq": {
     "feedbackThanks": "شكراً لك!",
@@ -1563,5 +1593,42 @@
     "arabicSave": "حفظ التغييرات",
     "arabicTotalUsers": "إجمالي المستخدمين",
     "arabicTotalUsersDesc": "المستخدمون المسجلون"
+  },
+  "errors": {
+    "roleLoadFailed": "حدث خطأ أثناء تحميل دورك. يرجى المحاولة مرة أخرى.",
+    "loadFailed": "حدث خطأ أثناء التحميل"
+  },
+  "certificate": {
+    "completedLevel": "أتمّ بنجاح المستوى التالي:"
+  },
+  "studentDashboard": {
+    "notEnrolled": "لست مسجّلاً في أي فصل بعد. سجّل لتبدأ التعلّم.",
+    "viewClasses": "عرض الفصول",
+    "recommendationsDesc": "بناءً على التقدّم وحالة الفصل والتمارين المتاحة.",
+    "upcomingLive": "الدروس المباشرة القادمة",
+    "noLive": "لا توجد دروس مباشرة قادمة.",
+    "feedbackTitle": "التعليقات والإشعارات"
+  },
+  "adminDashboard": {
+    "unassignedStudents": "{{count}} طالب/طلاب بدون فصل. عيّنهم إلى فصل."
+  },
+  "enrollmentRequests": {
+    "approvedNotificationTitle": "تمت الموافقة على التسجيل: {{className}}",
+    "approvedNotificationMessage": "أنت الآن مسجّل ولديك وصول إلى الفصل.",
+    "approvedToast": "تمت الموافقة على التسجيل",
+    "title": "التسجيلات المعلّقة",
+    "empty": "لا توجد تسجيلات معلّقة"
+  },
+  "i18nAdmin": {
+    "dryRunDone": "اكتمل التشغيل التجريبي",
+    "translationDone": "اكتملت الترجمة",
+    "dryRunLabel": "تشغيل تجريبي (بدون حفظ)",
+    "batchProgress": "التقدّم لكل دفعة ({{size}} مفتاح لكل استدعاء)",
+    "confirmChanges": "تأكيد التغييرات لـ {{lang}}"
+  },
+  "teacherSubmissions": {
+    "feedbackNotification": "نشر معلّمك ملاحظات على واجبك.",
+    "saveTemplate": "حفظ القالب",
+    "saveRubric": "حفظ المعيار"
   }
 }
