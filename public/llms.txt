@@ -1,0 +1,18 @@
+# Huis van het Arabisch
+
+> Blended learning platform om Arabisch te leren met passie en toewijding — zelfstudie, live lessen en begeleiding door docenten.
+
+Huis van het Arabisch (HVA) biedt een compleet leerplatform voor Arabisch met oefeningen voor lezen, schrijven, luisteren, spreken en grammatica, naast live lessen en voortgangsbegeleiding.
+
+## Pages
+
+- [Home](/): Overzicht van het platform en startpunt voor nieuwe leerlingen.
+- [Pricing](/pricing): Abonnementen en tarieven.
+- [Knowledge Base / FAQ](/faq): Veelgestelde vragen en uitleg over het platform.
+- [Register](/register): Account aanmaken om te starten.
+- [Login](/login): Inloggen voor bestaande leerlingen en docenten.
+
+## Optional
+
+- [Privacy Policy](/privacy): Privacybeleid.
+- [Terms of Service](/terms): Algemene voorwaarden.
