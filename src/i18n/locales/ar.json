@@ -955,7 +955,11 @@
     "enrollInClassHelp": "وصف تسجيل فصل",
     "created": "تم الإنشاء",
     "type": "نوع",
-    "uploaded": "تم الرفع"
+    "uploaded": "تم الرفع",
+    "enrollmentApprovedNotification": "تمت الموافقة على التسجيل: {{className}}",
+    "enrollmentRejectedNotification": "تم رفض التسجيل: {{className}}",
+    "enrollmentApprovedMessage": "أنت الآن مسجّل ولديك وصول إلى الفصل.",
+    "enrollmentRejectedMessage": "للأسف تم رفض تسجيلك."
   },
   "twoFactor": {
     "title": "المصادقة الثنائية",

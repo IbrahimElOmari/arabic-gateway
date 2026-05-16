@@ -955,7 +955,11 @@
     "enrollInClassHelp": "The student will be enrolled in this class.",
     "created": "Created",
     "type": "Type",
-    "uploaded": "Uploaded"
+    "uploaded": "Uploaded",
+    "enrollmentApprovedNotification": "Enrollment approved: {{className}}",
+    "enrollmentRejectedNotification": "Enrollment rejected: {{className}}",
+    "enrollmentApprovedMessage": "You are now enrolled and have access to the class.",
+    "enrollmentRejectedMessage": "Your enrollment has unfortunately been rejected."
   },
   "twoFactor": {
     "title": "Two-Factor Authentication",

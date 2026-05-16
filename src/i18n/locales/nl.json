@@ -955,7 +955,11 @@
     "enrollInClassHelp": "The student will be enrolled in this class.",
     "created": "Created",
     "type": "Type",
-    "uploaded": "Uploaded"
+    "uploaded": "Uploaded",
+    "enrollmentApprovedNotification": "Inschrijving goedgekeurd: {{className}}",
+    "enrollmentRejectedNotification": "Inschrijving afgewezen: {{className}}",
+    "enrollmentApprovedMessage": "Je bent nu ingeschreven en hebt toegang tot de klas.",
+    "enrollmentRejectedMessage": "Je inschrijving is helaas afgewezen."
   },
   "twoFactor": {
     "title": "Twee-Factor Authenticatie",
