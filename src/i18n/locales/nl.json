@@ -342,7 +342,8 @@
     "searchUser": "Zoek een gebruiker...",
     "noUsersFound": "Geen gebruikers gevonden",
     "noConversations": "Geen gesprekken",
-    "selectConversation": "Selecteer een gesprek of start een nieuw gesprek"
+    "selectConversation": "Selecteer een gesprek of start een nieuw gesprek",
+    "notEnrolled": "Je moet ingeschreven zijn in een klas om de chat te gebruiken."
   },
   "teacher": {
     "dashboard": "Docenten Dashboard",
@@ -1230,8 +1231,8 @@
     "maxFileSize": "Maximale bestandsgrootte is {{size}}MB."
   },
   "progress": {
-    "title": "Voortgangsrapporten",
-    "subtitle": "Volg je leerreis",
+    "title": "Mijn Voortgang",
+    "subtitle": "Bekijk je voortgang en behaalde resultaten.",
     "weeklyProgress": "Wekelijkse Voortgang",
     "monthlyProgress": "Maandelijkse Voortgang",
     "exercisesCompleted": "Oefeningen voltooid",
@@ -1392,7 +1393,7 @@
     "enroll": "Inschrijven",
     "noClasses": "Er zijn momenteel geen actieve cursussen.",
     "enrolled": "Ingeschreven",
-    "alreadyEnrolled": "Al ingeschreven",
+    "alreadyEnrolled": "Je bent al ingeschreven voor deze klas.",
     "pendingApproval": "Wacht op goedkeuring",
     "enrollmentSuccess": "Inschrijving gelukt!",
     "enrollmentSuccessDesc": "Je hebt nu toegang tot deze klas.",
@@ -1409,7 +1410,15 @@
     "unknownCode": "Deze kortingscode bestaat niet",
     "expiredCode": "Deze kortingscode is verlopen",
     "notYetValidCode": "Deze kortingscode is nog niet geldig",
-    "codeMaxUsed": "Deze kortingscode is al volledig gebruikt"
+    "codeMaxUsed": "Deze kortingscode is al volledig gebruikt",
+    "enrollSuccess": "Inschrijving gelukt!",
+    "enrollSuccessDesc": "Je hebt nu toegang tot deze klas.",
+    "alreadyApplied": "Je hebt al een aanvraag ingediend voor deze klas.",
+    "enrollFailed": "Inschrijving mislukt. Probeer het opnieuw.",
+    "discountInvalid": "Deze kortingscode bestaat niet",
+    "discountExpired": "Deze kortingscode is verlopen",
+    "discountNotYetValid": "Deze kortingscode is nog niet geldig",
+    "discountUsedUp": "Deze kortingscode is al volledig gebruikt"
   },
   "help": {
     "faq": "FAQ / Kennisbank",
@@ -1447,7 +1456,21 @@
     "reviewUsers": "Controleer gebruikers en rollen",
     "reviewEnrollments": "Werk inschrijvingsaanvragen af",
     "reviewDesign": "Controleer design-system regressies",
-    "dismiss": "Verberg checklist"
+    "dismiss": "Verberg checklist",
+    "student": {
+      "confirmClass": "Kies of bevestig je klas",
+      "firstExercise": "Start je eerste oefening",
+      "checkProgress": "Bekijk je voortgang"
+    },
+    "teacher": {
+      "intro": "Maak lesmateriaal, plan lessen en beoordeel inzendingen vanuit één startpunt.",
+      "checkClasses": "Controleer je klassen",
+      "planLesson": "Plan of beheer een les"
+    },
+    "admin": {
+      "intro": "Controleer gebruikers, inschrijvingen en operationele status.",
+      "checkUsers": "Controleer gebruikers en rollen"
+    }
   },
   "classSelector": {
     "noClassesAdmin": "No active classes. Create one in Admin → Classes first.",
@@ -1470,7 +1493,10 @@
     "experience": "Ervaring",
     "experiencePlaceholder": "Beschrijf je leservaring, met name in het Arabisch onderwijs...",
     "preferredLevels": "Gewenste niveaus",
-    "submit": "Aanvraag indienen"
+    "submit": "Aanvraag indienen",
+    "submitFailed": "Aanvraag kon niet worden ingediend.",
+    "becomeTeacher": "Word docent",
+    "intro": "Dien een aanvraag in om les te geven op ons platform."
   },
   "faq": {
     "feedbackThanks": "Thank you!",
@@ -1563,5 +1589,42 @@
     "arabicSave": "حفظ التغييرات",
     "arabicTotalUsers": "إجمالي المستخدمين",
     "arabicTotalUsersDesc": "المستخدمون المسجلون"
+  },
+  "errors": {
+    "roleLoadFailed": "Er ging iets mis bij het laden van je rol. Probeer het opnieuw.",
+    "loadFailed": "Er ging iets mis bij het laden"
+  },
+  "certificate": {
+    "completedLevel": "het volgende niveau succesvol heeft afgerond:"
+  },
+  "studentDashboard": {
+    "notEnrolled": "Je bent nog niet ingeschreven voor een klas. Schrijf je in om te beginnen met leren.",
+    "viewClasses": "Bekijk klassen",
+    "recommendationsDesc": "Gebaseerd op voortgang, klasstatus en beschikbare oefeningen.",
+    "upcomingLive": "Volgende live lessen",
+    "noLive": "Geen komende live lessen.",
+    "feedbackTitle": "Feedback & meldingen"
+  },
+  "adminDashboard": {
+    "unassignedStudents": "{{count}} student(en) zonder klas. Wijs ze toe aan een klas."
+  },
+  "enrollmentRequests": {
+    "approvedNotificationTitle": "Inschrijving goedgekeurd: {{className}}",
+    "approvedNotificationMessage": "Je bent nu ingeschreven en hebt toegang tot de klas.",
+    "approvedToast": "Inschrijving goedgekeurd",
+    "title": "Wachtende inschrijvingen",
+    "empty": "Geen wachtende inschrijvingen"
+  },
+  "i18nAdmin": {
+    "dryRunDone": "Dry-run voltooid",
+    "translationDone": "Vertaling voltooid",
+    "dryRunLabel": "Dry-run (niets opslaan)",
+    "batchProgress": "Voortgang per batch ({{size}} keys per call)",
+    "confirmChanges": "Wijzigingen bevestigen voor {{lang}}"
+  },
+  "teacherSubmissions": {
+    "feedbackNotification": "Je docent heeft feedback geplaatst op je inzending.",
+    "saveTemplate": "Template opslaan",
+    "saveRubric": "Rubric opslaan"
   }
 }
