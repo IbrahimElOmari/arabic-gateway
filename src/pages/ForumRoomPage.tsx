@@ -109,10 +109,8 @@ export default function ForumRoomPage() {
       const isLiked = userLikes?.includes(postId);
       if (isLiked) {
         await apiMutate("forum_likes", (q) => q.delete().eq("user_id", user!.id).eq("post_id", postId));
-        await apiMutate("forum_posts", (q) => q.update({ likes_count: (posts?.find((p: any) => p.id === postId)?.likes_count || 1) - 1 }).eq("id", postId));
       } else {
         await apiMutate("forum_likes", (q) => q.insert({ user_id: user!.id, post_id: postId }));
-        await apiMutate("forum_posts", (q) => q.update({ likes_count: (posts?.find((p: any) => p.id === postId)?.likes_count || 0) + 1 }).eq("id", postId));
       }
     },
     onSuccess: () => {
