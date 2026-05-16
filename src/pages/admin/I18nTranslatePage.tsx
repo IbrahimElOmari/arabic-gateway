@@ -278,8 +278,8 @@ export default function I18nTranslatePage() {
       const totalAdded = out.reduce((s, r) => s + r.added.length, 0);
       toast({
         title: dryRun
-          ? t("i18nAdmin.dryRunDone", "Dry-run voltooid")
-          : t("i18nAdmin.runDone", "Vertaling voltooid"),
+          ? t("i18nAdmin.dryRunDone")
+          : t("i18nAdmin.runDone"),
         description: t("i18nAdmin.addedCount", "{{n}} vertalingen voorgesteld", { n: totalAdded }),
       });
     } finally {
@@ -372,7 +372,7 @@ export default function I18nTranslatePage() {
             </label>
             <label className="flex items-center gap-2">
               <Checkbox checked={dryRun} onCheckedChange={(v) => setDryRun(!!v)} />
-              <span>{t("i18nAdmin.dryRun", "Dry-run (niets opslaan)")}</span>
+              <span>{t("i18nAdmin.dryRun")}</span>
             </label>
           </div>
           <div className="flex flex-col gap-2 max-w-xs">
@@ -409,7 +409,7 @@ export default function I18nTranslatePage() {
           <CardHeader>
             <CardTitle>{t("i18nAdmin.batchStatus", "Batchstatus")}</CardTitle>
             <CardDescription>
-              {t("i18nAdmin.batchProgress", "Voortgang per batch ({{size}} keys per call)", {
+              {t("i18nAdmin.batchProgress", {
                 size: BATCH_SIZE,
               })}
             </CardDescription>
@@ -636,7 +636,7 @@ export default function I18nTranslatePage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {t("i18nAdmin.confirmTitle", "Wijzigingen bevestigen voor {{lang}}", {
+              {t("i18nAdmin.confirmTitle", {
                 lang: confirmTarget?.target.toUpperCase() ?? "",
               })}
             </AlertDialogTitle>

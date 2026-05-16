@@ -208,7 +208,7 @@ export default function TeacherSubmissionsPage() {
         user_id: selectedSubmission.student_id,
         type: "submission_feedback",
         title: t("teacher.feedbackPublished", "Nieuwe feedback beschikbaar"),
-        message: t("teacher.feedbackPublishedMessage", "Je docent heeft feedback geplaatst op je inzending."),
+        message: t("teacher.feedbackPublishedMessage"),
         data: { student_answer_id: id },
       }));
       await apiMutate("notification_events", (q) => q.insert({
@@ -216,7 +216,7 @@ export default function TeacherSubmissionsPage() {
         event_type: "submission_feedback",
         channel: "in_app",
         title: t("teacher.feedbackPublished", "Nieuwe feedback beschikbaar"),
-        message: t("teacher.feedbackPublishedMessage", "Je docent heeft feedback geplaatst op je inzending."),
+        message: t("teacher.feedbackPublishedMessage"),
         related_table: "student_answers",
         related_id: id,
         status: "sent",
@@ -307,14 +307,14 @@ export default function TeacherSubmissionsPage() {
           <CardContent className="space-y-3">
             <Input value={newTemplateTitle} onChange={(event) => setNewTemplateTitle(event.target.value)} placeholder={t("teacher.templateTitle", "Titel")} />
             <Textarea value={newTemplateBody} onChange={(event) => setNewTemplateBody(event.target.value)} placeholder={t("teacher.templateBody", "Feedbacktekst")} rows={2} />
-            <Button onClick={() => createTemplateMutation.mutate()} disabled={!newTemplateTitle || !newTemplateBody || createTemplateMutation.isPending}>{t("teacher.saveTemplate", "Template opslaan")}</Button>
+            <Button onClick={() => createTemplateMutation.mutate()} disabled={!newTemplateTitle || !newTemplateBody || createTemplateMutation.isPending}>{t("teacher.saveTemplate")}</Button>
           </CardContent>
         </Card>
         <Card>
           <CardHeader><CardTitle>{t("teacher.rubrics", "Rubrics")}</CardTitle><CardDescription>{t("teacher.rubricsDesc", "Maak vaste beoordelingscriteria voor consistente feedback.")}</CardDescription></CardHeader>
           <CardContent className="space-y-3">
             <Input value={newRubricTitle} onChange={(event) => setNewRubricTitle(event.target.value)} placeholder={t("teacher.rubricTitle", "Rubric titel")} />
-            <Button onClick={() => createRubricMutation.mutate()} disabled={!newRubricTitle || createRubricMutation.isPending}>{t("teacher.saveRubric", "Rubric opslaan")}</Button>
+            <Button onClick={() => createRubricMutation.mutate()} disabled={!newRubricTitle || createRubricMutation.isPending}>{t("teacher.saveRubric")}</Button>
           </CardContent>
         </Card>
       </div>

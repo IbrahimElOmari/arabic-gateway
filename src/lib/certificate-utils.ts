@@ -1,3 +1,4 @@
+// i18n-ignore-file
 /**
  * Certificate generation with XSS protection.
  * Generates HTML for a completion certificate.

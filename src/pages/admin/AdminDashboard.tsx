@@ -72,7 +72,7 @@ export default function AdminDashboard() {
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription className="flex flex-wrap items-center gap-3">
             <span>
-              {t('admin.unassignedStudentsAlert', '{{count}} student(en) zonder klas. Wijs ze toe aan een klas.', { count: unassignedCount })}
+              {t('admin.unassignedStudentsAlert', { count: unassignedCount })}
             </span>
             <Button size="sm" variant="outline" asChild>
               <Link to="/admin/users?filter=unassigned">
