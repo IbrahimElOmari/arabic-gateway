@@ -47,6 +47,7 @@ const FinalExamsPage = lazyWithRetry(() => import("./pages/admin/FinalExamsPage"
 const EnrollmentRequestsPage = lazyWithRetry(() => import("./pages/admin/EnrollmentRequestsPage"));
 const DesignSystemPage = lazyWithRetry(() => import("./pages/admin/DesignSystemPage"));
 const I18nTranslatePage = lazyWithRetry(() => import("./pages/admin/I18nTranslatePage"));
+const CronJobsPage = lazyWithRetry(() => import("./pages/admin/CronJobsPage"));
 
 // Teacher pages
 const TeacherDashboard = lazyWithRetry(() => import("./pages/teacher/TeacherDashboard"));
