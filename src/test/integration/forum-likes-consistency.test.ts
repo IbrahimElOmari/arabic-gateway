@@ -139,9 +139,9 @@ d('forum likes_count trigger consistency', () => {
     const ops: Promise<unknown>[] = [];
     for (let round = 0; round < 3; round++) {
       for (const uid of userIds) {
-        ops.push(admin.from('forum_likes').insert({ post_id: postId, user_id: uid }));
+        ops.push(Promise.resolve(admin.from('forum_likes').insert({ post_id: postId, user_id: uid })));
         ops.push(
-          admin.from('forum_likes').delete().eq('post_id', postId).eq('user_id', uid),
+          Promise.resolve(admin.from('forum_likes').delete().eq('post_id', postId).eq('user_id', uid)),
         );
       }
     }
