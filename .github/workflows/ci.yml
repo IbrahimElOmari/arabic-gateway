@@ -19,7 +19,21 @@ jobs:
       - run: npm run lint --if-present
       - run: npx tsc --noEmit
       - run: ./scripts/lint-colors.sh
-      - run: npm run check:i18n
+
+  i18n-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      # Enforces: (1) nl/en/ar key parity, (2) no empty values,
+      # (3) no Dutch words leaking into en/ar, (4) no hardcoded Dutch UI text in src/**.
+      # Fails the build on any violation. Use `// i18n-ignore` to allowlist.
+      - name: i18n parity + hardcoded-string lint
+        run: npm run check:i18n
 
   security-audit:
     runs-on: ubuntu-latest
