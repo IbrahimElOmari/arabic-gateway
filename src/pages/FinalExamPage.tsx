@@ -179,7 +179,7 @@ export default function FinalExamPage() {
       const scorePercent = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
       const passed = scorePercent >= (exam.passing_score || 70);
 
-      let promotedToLevelId = null;
+      let promotedToLevelId: string | null = null;
 
       if (passed) {
         // Call the promotion function
@@ -198,7 +198,7 @@ export default function FinalExamPage() {
       await apiMutate("final_exam_attempts", (q) => q.update({ submitted_at: new Date().toISOString(), total_score: scorePercent, passed, promoted_to_level_id: promotedToLevelId }).eq("id", attemptId));
 
       // Get next level name if promoted
-      let promotedLevelName = null;
+      let promotedLevelName: string | null = null;
       if (promotedToLevelId) {
         const nextLevel = await apiQuery<any>("levels", (q) => q.select("*").eq("id", promotedToLevelId).single());
         promotedLevelName = getLevelName(nextLevel);

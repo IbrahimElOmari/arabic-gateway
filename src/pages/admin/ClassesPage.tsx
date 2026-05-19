@@ -102,7 +102,7 @@ export default function ClassesPage() {
             q.select("id", { count: "exact", head: true }).eq("class_id", cls.id).eq("status", "enrolled")
           );
 
-          let teacher = null;
+          let teacher: { full_name: string } | null = null;
           if (cls.teacher_id) {
             try {
               teacher = await apiQuery<{ full_name: string }>("profiles", (q) =>

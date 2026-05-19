@@ -13,7 +13,7 @@ shadow_port = 54320
 major_version = 15
 
 [db.pooler]
-enabled = false
+enabled = true
 port = 54329
 pool_mode = "transaction"
 default_pool_size = 20

@@ -110,7 +110,7 @@ export default function KnowledgeBasePage() {
     const { error } = await supabase
       .from("faq_articles")
       .update({
-        [helpful ? "helpful_count" : "not_helpful_count"]: articles?.find((a) => a.id === articleId)?.[helpful ? "helpful_count" : "not_helpful_count"] + 1,
+        [helpful ? "helpful_count" : "not_helpful_count"]: (articles?.find((a) => a.id === articleId)?.[helpful ? "helpful_count" : "not_helpful_count"] ?? 0) + 1,
       })
       .eq("id", articleId);
 

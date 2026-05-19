@@ -53,7 +53,7 @@ export default function TeacherApprovalsPage() {
 
       const applicationsWithProfiles = await Promise.all(
         (data || []).map(async (app: any) => {
-          let profile = null;
+          let profile: { full_name: string; email: string } | null = null;
           try {
             profile = await apiQuery<{ full_name: string; email: string }>("profiles", (q) =>
               q.select("full_name, email").eq("user_id", app.user_id).maybeSingle()
