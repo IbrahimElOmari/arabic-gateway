@@ -452,6 +452,48 @@ export type Database = {
         }
         Relationships: []
       }
+      cron_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          created_at: string
+          ended_at: string | null
+          id: string
+          jobid: number
+          jobname: string
+          return_message: string | null
+          runid: number | null
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          jobid: number
+          jobname: string
+          return_message?: string | null
+          runid?: number | null
+          started_at?: string | null
+          status: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          jobid?: number
+          jobname?: string
+          return_message?: string | null
+          runid?: number | null
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       data_retention_log: {
         Row: {
           action: string
@@ -882,6 +924,36 @@ export type Database = {
           name_ar?: string
           name_en?: string
           name_nl?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      feature_flags: {
+        Row: {
+          created_at: string
+          description: string
+          enabled: boolean
+          enabled_for_roles: string[]
+          key: string
+          rollout_percentage: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          enabled?: boolean
+          enabled_for_roles?: string[]
+          key: string
+          rollout_percentage?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          enabled?: boolean
+          enabled_for_roles?: string[]
+          key?: string
+          rollout_percentage?: number
           updated_at?: string
         }
         Relationships: []
@@ -2773,6 +2845,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      acknowledge_cron_alert: {
+        Args: { p_alert_id: string }
+        Returns: undefined
+      }
       anonymize_user_data: { Args: { p_user_id: string }; Returns: undefined }
       award_points: {
         Args: {
