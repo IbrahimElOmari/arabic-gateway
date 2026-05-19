@@ -119,10 +119,10 @@ jobs:
       - name: Check bundle size
         run: |
           TOTAL=$(du -sb dist/ | awk '{print $1}')
-          MAX=$((10 * 1024 * 1024))
+          MAX=$((5 * 1024 * 1024))
           echo "Bundle size: $TOTAL bytes (max: $MAX)"
           if [ "$TOTAL" -gt "$MAX" ]; then
-            echo "::error::Bundle exceeds 10MB limit ($TOTAL bytes)"
+            echo "::error::Bundle exceeds 5MB limit ($TOTAL bytes)"
             exit 1
           fi
 
