@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+// @ts-expect-error - .mjs script has no type declarations (allowed in tests)
 import { pickMissing, chunk, mergeTranslations, AI_PREFIX } from '../../scripts/ai-fill-i18n.mjs';
 
 describe('ai-fill-i18n helpers', () => {
