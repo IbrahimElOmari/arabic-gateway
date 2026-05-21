@@ -70,6 +70,10 @@ jobs:
 
   a11y-rtl-audit:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -80,14 +84,74 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run build
       # WCAG 2.1 AA via axe-core on LTR routes + RTL (Arabic) audit:
-      # checks dir/lang attrs, horizontal overflow, and axe critical violations.
+      # axe critical violations, dir/lang attrs, horizontal overflow,
+      # landmark/ARIA consistency per language, runtime language-switch,
+      # and keyboard/focus behaviour.
       - name: WCAG + RTL audit
+        id: a11y
         run: npm run a11y
+      - name: Publish PR summary
+        if: always()
+        run: node scripts/a11y-summary.mjs
+      - name: Upload a11y artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a11y-report
+          path: |
+            playwright-report/
+            a11y-results/
+          retention-days: 14
+      - name: Comment failure on PR
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let body = '## ❌ A11y / RTL audit failed\n\n';
+            try {
+              const files = fs.readdirSync('a11y-results').filter(f => f.endsWith('.json'));
+              const rows = files.map(f => JSON.parse(fs.readFileSync(`a11y-results/${f}`, 'utf8')));
+              const failing = rows.filter(r => (r.issues || []).length > 0);
+              body += `**${failing.length}** route(s) with issues out of **${rows.length}** audited.\n\n`;
+              for (const r of failing.slice(0, 10)) {
+                body += `- \`${r.lang}\` ${r.route} — ${r.issues.length} issue(s)\n`;
+              }
+            } catch (e) {
+              body += `_Could not parse audit artifacts: ${e.message}_\n`;
+            }
+            body += '\nSee the **a11y-report** artifact for axe violations & Playwright traces.';
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });
+
+  visual-regression-rtl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      # Visual regression for RTL (Arabic) — fails on >1% pixel diff
+      # against committed baselines in e2e/rtl-visual.spec.ts-snapshots/.
+      - name: RTL visual regression
+        run: npm run a11y:visual
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: a11y-report
-          path: playwright-report/
+          name: rtl-visual-diff
+          path: |
+            test-results/
+            playwright-report/
           retention-days: 14
 
   e2e-tests:

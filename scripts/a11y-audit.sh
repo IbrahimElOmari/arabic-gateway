@@ -1,18 +1,26 @@
 #!/usr/bin/env bash
-# WCAG 2.1 AA + RTL audit. Runs axe-core via Playwright over key public routes
-# in both LTR (default) and RTL (Arabic) modes.
-#
-# Usage: bash scripts/a11y-audit.sh
-# Exit code 0 = pass, non-zero = violations found.
+# Runs the full a11y + RTL audit suite (axe-core, landmarks, keyboard, runtime
+# switch, visual regression). Emits a markdown summary for GitHub PR checks.
 set -euo pipefail
 
-echo "▶ Running WCAG/RTL audit (Playwright + axe-core)"
-npx playwright install --with-deps chromium >/dev/null 2>&1 || true
+echo "▶ installing chromium…"
+npx --yes playwright install --with-deps chromium >/dev/null
 
-# Accessibility (LTR) + RTL specs only — fast, no auth required.
-npx playwright test --project=chromium \
+mkdir -p a11y-results
+
+echo "▶ running a11y + RTL Playwright suite…"
+set +e
+npx playwright test \
   e2e/accessibility.spec.ts \
   e2e/rtl.spec.ts \
-  --reporter=list
+  e2e/rtl-runtime-switch.spec.ts \
+  e2e/rtl-landmarks.spec.ts \
+  e2e/rtl-keyboard.spec.ts \
+  --project=chromium
+STATUS=$?
+set -e
 
-echo "✅ A11y/RTL audit passed"
+echo "▶ building PR summary…"
+node scripts/a11y-summary.mjs || true
+
+exit $STATUS
