@@ -17,7 +17,10 @@
     "ai:fill-i18n": "node scripts/ai-fill-i18n.mjs",
     "ai:fill-i18n:dry": "node scripts/ai-fill-i18n.mjs --dry-run",
     "a11y": "bash scripts/a11y-audit.sh",
-    "a11y:rtl": "playwright test e2e/rtl.spec.ts --project=chromium"
+    "a11y:rtl": "playwright test e2e/rtl.spec.ts e2e/rtl-runtime-switch.spec.ts e2e/rtl-landmarks.spec.ts e2e/rtl-keyboard.spec.ts --project=chromium",
+    "a11y:visual": "playwright test e2e/rtl-visual.spec.ts --project=chromium",
+    "a11y:visual:update": "playwright test e2e/rtl-visual.spec.ts --project=chromium --update-snapshots",
+    "a11y:summary": "node scripts/a11y-summary.mjs"
   },
   "dependencies": {
     "@capacitor/cli": "^8.0.2",
