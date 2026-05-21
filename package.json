@@ -15,7 +15,9 @@
     "check:i18n": "node scripts/check-i18n.mjs",
     "fix:i18n": "node scripts/check-i18n.mjs --fix",
     "ai:fill-i18n": "node scripts/ai-fill-i18n.mjs",
-    "ai:fill-i18n:dry": "node scripts/ai-fill-i18n.mjs --dry-run"
+    "ai:fill-i18n:dry": "node scripts/ai-fill-i18n.mjs --dry-run",
+    "a11y": "bash scripts/a11y-audit.sh",
+    "a11y:rtl": "playwright test e2e/rtl.spec.ts --project=chromium"
   },
   "dependencies": {
     "@capacitor/cli": "^8.0.2",
@@ -84,7 +86,9 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
     "@eslint/js": "^9.32.0",
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/typography": "^0.5.16",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^16.0.0",

@@ -68,6 +68,28 @@ jobs:
           path: coverage/
           retention-days: 7
 
+  a11y-rtl-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      # WCAG 2.1 AA via axe-core on LTR routes + RTL (Arabic) audit:
+      # checks dir/lang attrs, horizontal overflow, and axe critical violations.
+      - name: WCAG + RTL audit
+        run: npm run a11y
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: a11y-report
+          path: playwright-report/
+          retention-days: 14
+
   e2e-tests:
     runs-on: ubuntu-latest
     steps:
