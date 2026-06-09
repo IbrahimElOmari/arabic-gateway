@@ -986,7 +986,21 @@
     "cronStaleBadge": "Stale",
     "cronSucceeded": "Succeeded",
     "cronNeverRun": "Never run",
-    "cronLoadError": "Could not load cron job status."
+    "cronLoadError": "Could not load cron job status.",
+    "cronTabJobs": "Jobs",
+    "cronTabAlerts": "Alerts",
+    "cronTabDeadLetter": "Dead-letter",
+    "cronAlertsTitle": "Open Alerts",
+    "cronAlertsDescription": "Cron job failures that have not been acknowledged. Admins receive an in-app notification within 5 minutes.",
+    "cronAlertsEmpty": "No open alerts. 🎉",
+    "cronAlertAcked": "Alert acknowledged",
+    "cronAck": "Acknowledge",
+    "cronAttempts": "Attempts",
+    "cronCreatedAt": "Created",
+    "cronDeadLetterTitle": "Dead-letter Queue",
+    "cronDeadLetterDescription": "Alerts that could not be delivered after 3 attempts. Investigate manually.",
+    "cronDeadLetterEmpty": "Dead-letter queue is empty.",
+    "cronLastError": "Last Error"
   },
   "twoFactor": {
     "title": "Two-Factor Authentication",

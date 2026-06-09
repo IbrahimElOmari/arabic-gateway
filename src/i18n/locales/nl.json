@@ -986,7 +986,21 @@
     "cronStaleBadge": "Verouderd",
     "cronSucceeded": "Geslaagd",
     "cronNeverRun": "Nooit gedraaid",
-    "cronLoadError": "Kon cron job status niet laden."
+    "cronLoadError": "Kon cron job status niet laden.",
+    "cronTabJobs": "Jobs",
+    "cronTabAlerts": "Alerts",
+    "cronTabDeadLetter": "Dead-letter",
+    "cronAlertsTitle": "Openstaande alerts",
+    "cronAlertsDescription": "Cron job-failures die nog niet zijn bevestigd. Beheerders krijgen binnen 5 minuten een in-app notificatie.",
+    "cronAlertsEmpty": "Geen openstaande alerts. 🎉",
+    "cronAlertAcked": "Alert bevestigd",
+    "cronAck": "Bevestigen",
+    "cronAttempts": "Pogingen",
+    "cronCreatedAt": "Aangemaakt",
+    "cronDeadLetterTitle": "Dead-letter wachtrij",
+    "cronDeadLetterDescription": "Alerts die na 3 pogingen niet bezorgd konden worden. Onderzoek handmatig.",
+    "cronDeadLetterEmpty": "Dead-letter wachtrij is leeg.",
+    "cronLastError": "Laatste fout"
   },
   "twoFactor": {
     "title": "Twee-Factor Authenticatie",
