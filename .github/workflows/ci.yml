@@ -143,8 +143,28 @@ jobs:
       - run: npm run build
       # Visual regression for RTL (Arabic) — fails on >1% pixel diff
       # against committed baselines in e2e/rtl-visual.spec.ts-snapshots/.
+      # If no baselines are present yet, auto-generate them and upload as
+      # artifact so they can be committed in a follow-up PR.
+      - name: Check for RTL baselines
+        id: baselines
+        run: |
+          if [ -d "e2e/rtl-visual.spec.ts-snapshots" ] && [ -n "$(ls -A e2e/rtl-visual.spec.ts-snapshots 2>/dev/null)" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: RTL visual regression
+        if: steps.baselines.outputs.exists == 'true'
         run: npm run a11y:visual
+      - name: Bootstrap RTL baselines (first run)
+        if: steps.baselines.outputs.exists == 'false'
+        run: npm run a11y:visual:update
+      - uses: actions/upload-artifact@v4
+        if: steps.baselines.outputs.exists == 'false'
+        with:
+          name: rtl-visual-baselines
+          path: e2e/rtl-visual.spec.ts-snapshots/
+          retention-days: 30
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
