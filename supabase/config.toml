@@ -112,3 +112,7 @@ verify_jwt = true
 
 [functions.verify-2fa]
 verify_jwt = true
+
+[functions.verify-captcha]
+verify_jwt = false
+
