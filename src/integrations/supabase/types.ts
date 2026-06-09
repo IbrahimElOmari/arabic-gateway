@@ -2164,6 +2164,33 @@ export type Database = {
           },
         ]
       }
+      rate_limit_buckets: {
+        Row: {
+          action: string
+          id: string
+          identifier: string
+          last_refill: string
+          tokens: number
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          id?: string
+          identifier: string
+          last_refill?: string
+          tokens: number
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          id?: string
+          identifier?: string
+          last_refill?: string
+          tokens?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       student_analytics: {
         Row: {
           avg_score: number | null
@@ -2861,6 +2888,17 @@ export type Database = {
         Returns: number
       }
       cancel_user_deletion: { Args: { p_user_id: string }; Returns: undefined }
+      cleanup_rate_limit_buckets: { Args: never; Returns: number }
+      consume_rate_limit: {
+        Args: {
+          p_action: string
+          p_capacity: number
+          p_cost?: number
+          p_identifier: string
+          p_refill_per_sec: number
+        }
+        Returns: Json
+      }
       count_unassigned_students: { Args: never; Returns: number }
       create_notification_event: {
         Args: {
