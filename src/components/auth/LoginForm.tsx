@@ -24,6 +24,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { TurnstileWidget } from '@/components/security/TurnstileWidget';
+import { apiInvoke } from '@/lib/supabase-api';
+import { useToast } from '@/hooks/use-toast';
 
 type LoginFormValues = {
   email: string;
@@ -39,8 +42,11 @@ export function LoginForm() {
   });
   const { user, loading, signIn } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRequired = !!import.meta.env.VITE_TURNSTILE_SITE_KEY;
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -50,7 +56,6 @@ export function LoginForm() {
     },
   });
 
-  // Single effect: if user is authenticated, go to dashboard
   useEffect(() => {
     if (user && !loading) {
       navigate('/dashboard');
@@ -59,8 +64,25 @@ export function LoginForm() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
-    await signIn(data.email, data.password);
-    setIsLoading(false);
+    try {
+      if (captchaRequired && captchaToken) {
+        const result = await apiInvoke<{ success: boolean }>('verify-captcha', {
+          token: captchaToken,
+          action: 'login',
+        });
+        if (!result.success) {
+          toast({
+            variant: 'destructive',
+            title: t('auth.captchaFailed', 'Captcha verification failed'),
+          });
+          setCaptchaToken(null);
+          return;
+        }
+      }
+      await signIn(data.email, data.password);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -126,7 +148,12 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <TurnstileWidget action="login" onVerify={setCaptchaToken} onExpire={() => setCaptchaToken(null)} />
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading || (captchaRequired && !captchaToken)}
+            >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t('auth.login')}
             </Button>
