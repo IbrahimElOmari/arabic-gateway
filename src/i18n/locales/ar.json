@@ -986,7 +986,21 @@
     "cronStaleBadge": "قديم",
     "cronSucceeded": "ناجح",
     "cronNeverRun": "لم يتم التشغيل",
-    "cronLoadError": "تعذر تحميل حالة مهام Cron."
+    "cronLoadError": "تعذر تحميل حالة مهام Cron.",
+    "cronTabJobs": "المهام",
+    "cronTabAlerts": "التنبيهات",
+    "cronTabDeadLetter": "الرسائل الميتة",
+    "cronAlertsTitle": "تنبيهات مفتوحة",
+    "cronAlertsDescription": "حالات فشل مهام cron التي لم يتم الإقرار بها. يتلقى المسؤولون إشعارًا داخل التطبيق خلال 5 دقائق.",
+    "cronAlertsEmpty": "لا توجد تنبيهات مفتوحة. 🎉",
+    "cronAlertAcked": "تم الإقرار بالتنبيه",
+    "cronAck": "إقرار",
+    "cronAttempts": "المحاولات",
+    "cronCreatedAt": "تم الإنشاء",
+    "cronDeadLetterTitle": "قائمة الرسائل الميتة",
+    "cronDeadLetterDescription": "تنبيهات تعذر تسليمها بعد 3 محاولات. تحقق يدويًا.",
+    "cronDeadLetterEmpty": "قائمة الرسائل الميتة فارغة.",
+    "cronLastError": "آخر خطأ"
   },
   "twoFactor": {
     "title": "المصادقة الثنائية",
