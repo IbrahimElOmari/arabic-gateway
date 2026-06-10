@@ -121,7 +121,8 @@ export async function validateMagicBytes(file: File): Promise<ValidationResult> 
   if (!sigs) return { valid: true };
 
   const maxOffset = sigs.reduce((m, s) => Math.max(m, s.offset + s.bytes.length), 0);
-  const buf = new Uint8Array(await file.slice(0, maxOffset).arrayBuffer());
+  const fullBuf = new Uint8Array(await file.arrayBuffer());
+  const buf = fullBuf.subarray(0, maxOffset);
 
   for (const sig of sigs) {
     for (let i = 0; i < sig.bytes.length; i++) {
