@@ -1,6 +1,6 @@
 # TypeScript Strict Mode — Phased Activation Plan
 
-**Status:** ✅ **Voltooid op 19 mei 2026** — `strict: true` actief, `tsc --noEmit` groen.
+**Status:** ✅ **P3 voltooid op 10 jun 2026** — `strict: true` + `noUncheckedIndexedAccess: true` actief, `tsc --noEmit` groen, `any`-budget (≤190) gehandhaafd in CI.
 
 ## Eindstaat
 
