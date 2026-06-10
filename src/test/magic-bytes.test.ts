@@ -1,9 +1,10 @@
-// @vitest-environment node
 import { describe, it, expect } from 'vitest';
 import { validateMagicBytes, validateUploadStrict } from '@/lib/upload-validation';
 
 function fileFromBytes(bytes: number[], type: string, name = 'f'): File {
-  return new File([new Uint8Array(bytes)], name, { type });
+  // jsdom's Blob/File stringifies Uint8Array — pass the underlying ArrayBuffer.
+  const buf = new Uint8Array(bytes).buffer;
+  return new File([buf], name, { type });
 }
 
 describe('validateMagicBytes', () => {
