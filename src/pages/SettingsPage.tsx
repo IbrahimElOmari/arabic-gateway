@@ -11,7 +11,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Shield, User, Bell, Palette, Sun, Moon, Monitor, Briefcase, Sparkles, Loader2, Download, Type } from 'lucide-react';
+import { Shield, User, Bell, Palette, Sun, Moon, Monitor, Briefcase, Sparkles, Loader2, Download, Type, AlertTriangle } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { apiMutate, apiInvoke } from '@/lib/supabase-api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -33,6 +37,7 @@ export default function SettingsPage() {
   // Password form state
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState('');
 
   // Notification state
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -157,6 +162,21 @@ export default function SettingsPage() {
     },
     onError: () => {
       toast({ title: t('common.error'), variant: 'destructive' });
+    },
+  });
+
+  // GDPR Right to Erasure
+  const deleteAccountMutation = useMutation({
+    mutationFn: async () => {
+      await apiInvoke('delete-user-data', { confirm: 'DELETE' });
+    },
+    onSuccess: async () => {
+      toast({ title: t('settings.deleteAccountSuccess', 'Your account has been deleted.') });
+      await supabase.auth.signOut();
+      window.location.href = '/';
+    },
+    onError: () => {
+      toast({ title: t('settings.deleteAccountFailed', 'Failed to delete account.'), variant: 'destructive' });
     },
   });
 
