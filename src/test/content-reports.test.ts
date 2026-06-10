@@ -26,16 +26,16 @@ describe("Content Reports - Table Mapping", () => {
   };
 
   it("maps forum_post to forum_posts table", () => {
-    expect(tableMap["forum_post"].table).toBe("forum_posts");
-    expect(tableMap["forum_post"].col).toBe("content");
+    expect(tableMap["forum_post"]!.table).toBe("forum_posts");
+    expect(tableMap["forum_post"]!.col).toBe("content");
   });
 
   it("maps forum_comment to forum_comments table", () => {
-    expect(tableMap["forum_comment"].table).toBe("forum_comments");
+    expect(tableMap["forum_comment"]!.table).toBe("forum_comments");
   });
 
   it("maps chat_message to chat_messages table", () => {
-    expect(tableMap["chat_message"].table).toBe("chat_messages");
+    expect(tableMap["chat_message"]!.table).toBe("chat_messages");
   });
 
   it("returns undefined for unknown content types", () => {

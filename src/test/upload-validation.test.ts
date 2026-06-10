@@ -75,11 +75,11 @@ describe('Upload Validation', () => {
     });
 
     it('avatars max size is 5MB', () => {
-      expect(BUCKET_LIMITS.avatars.maxSizeBytes).toBe(5 * 1024 * 1024);
+      expect(BUCKET_LIMITS.avatars!.maxSizeBytes).toBe(5 * 1024 * 1024);
     });
 
     it('lesson-recordings max size is 500MB', () => {
-      expect(BUCKET_LIMITS['lesson-recordings'].maxSizeBytes).toBe(500 * 1024 * 1024);
+      expect(BUCKET_LIMITS['lesson-recordings']!.maxSizeBytes).toBe(500 * 1024 * 1024);
     });
   });
 });

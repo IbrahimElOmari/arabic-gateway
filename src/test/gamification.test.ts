@@ -112,9 +112,9 @@ describe("Gamification System", () => {
         { id: "3", points: 750 },
       ];
       const sorted = [...users].sort((a, b) => b.points - a.points);
-      expect(sorted[0].id).toBe("2");
-      expect(sorted[1].id).toBe("3");
-      expect(sorted[2].id).toBe("1");
+      expect(sorted[0]!.id).toBe("2");
+      expect(sorted[1]!.id).toBe("3");
+      expect(sorted[2]!.id).toBe("1");
     });
 
     it("should handle tie scores correctly", () => {
@@ -124,7 +124,7 @@ describe("Gamification System", () => {
       ];
       const sorted = [...users].sort((a, b) => b.points - a.points);
       expect(sorted.length).toBe(2);
-      expect(sorted[0].points).toBe(sorted[1].points);
+      expect(sorted[0]!.points).toBe(sorted[1]!.points);
     });
   });
 });
