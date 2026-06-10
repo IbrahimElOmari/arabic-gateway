@@ -307,6 +307,50 @@ export default function SettingsPage() {
                 </Button>
               </CardContent>
             </Card>
+
+            <Card className="border-destructive/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-destructive">
+                  <AlertTriangle className="h-5 w-5" />
+                  {t('settings.dangerZone', 'Danger zone')}
+                </CardTitle>
+                <CardDescription>{t('settings.dangerZoneDescription')}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="font-medium">{t('settings.deleteAccount')}</p>
+                  <p className="text-sm text-muted-foreground">{t('settings.deleteAccountDescription')}</p>
+                </div>
+                <AlertDialog onOpenChange={(o) => { if (!o) setDeleteConfirm(''); }}>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive">{t('settings.deleteAccount')}</Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{t('settings.deleteAccountConfirmTitle')}</AlertDialogTitle>
+                      <AlertDialogDescription>{t('settings.deleteAccountConfirmBody')}</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <Input
+                      value={deleteConfirm}
+                      onChange={(e) => setDeleteConfirm(e.target.value)}
+                      placeholder={t('settings.deleteAccountConfirmPlaceholder', 'Type DELETE')}
+                      autoComplete="off"
+                    />
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{t('common.cancel', 'Cancel')}</AlertDialogCancel>
+                      <AlertDialogAction
+                        disabled={deleteConfirm !== 'DELETE' || deleteAccountMutation.isPending}
+                        onClick={() => deleteAccountMutation.mutate()}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {deleteAccountMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                        {t('settings.deleteAccount')}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="notifications" className="space-y-6">
