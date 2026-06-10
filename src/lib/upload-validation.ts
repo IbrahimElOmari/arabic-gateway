@@ -112,6 +112,26 @@ const FILE_SIGNATURES: Record<string, Array<{ offset: number; bytes: number[] }>
 };
 
 /**
+ * Pure signature check — exported for testability. Pass the leading bytes
+ * of the file and the claimed MIME type.
+ */
+export function matchesSignature(bytes: Uint8Array, mimeType: string): ValidationResult {
+  const sigs = FILE_SIGNATURES[mimeType];
+  if (!sigs) return { valid: true };
+  for (const sig of sigs) {
+    for (let i = 0; i < sig.bytes.length; i++) {
+      if (bytes[sig.offset + i] !== sig.bytes[i]) {
+        return {
+          valid: false,
+          error: `File signature does not match declared type "${mimeType}". The file may be corrupted or misrepresented.`,
+        };
+      }
+    }
+  }
+  return { valid: true };
+}
+
+/**
  * Verify that the first bytes of a file match the claimed MIME type.
  * Returns `{ valid: true }` for MIME types we don't have a signature for
  * (e.g. SVG, plain text, office formats) so we don't reject legitimate uploads.
@@ -119,23 +139,12 @@ const FILE_SIGNATURES: Record<string, Array<{ offset: number; bytes: number[] }>
 export async function validateMagicBytes(file: File): Promise<ValidationResult> {
   const sigs = FILE_SIGNATURES[file.type];
   if (!sigs) return { valid: true };
-
   const maxOffset = sigs.reduce((m, s) => Math.max(m, s.offset + s.bytes.length), 0);
-  // Use Response() wrapper for portability — jsdom Files lack arrayBuffer().
-  const fullBuf = new Uint8Array(await new Response(file).arrayBuffer());
-  const buf = fullBuf.subarray(0, maxOffset);
-
-  for (const sig of sigs) {
-    for (let i = 0; i < sig.bytes.length; i++) {
-      if (buf[sig.offset + i] !== sig.bytes[i]) {
-        return {
-          valid: false,
-          error: `File signature does not match declared type "${file.type}". The file may be corrupted or misrepresented.`,
-        };
-      }
-    }
-  }
-  return { valid: true };
+  const ab = typeof file.arrayBuffer === 'function'
+    ? await file.arrayBuffer()
+    : await new Response(file).arrayBuffer();
+  const buf = new Uint8Array(ab).subarray(0, maxOffset);
+  return matchesSignature(buf, file.type);
 }
 
 /**
