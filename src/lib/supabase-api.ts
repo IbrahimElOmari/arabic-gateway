@@ -112,8 +112,15 @@ export async function apiInvoke<T>(
     try {
       const { data: sessionData } = await supabase.auth.getSession();
 
+      // Generate a per-request id for distributed tracing across frontend → edge → DB.
+      const requestId =
+        (globalThis.crypto && 'randomUUID' in globalThis.crypto)
+          ? globalThis.crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
       const headers: Record<string, string> = {
         'X-App-Version': appConfig.appNameShort + '/1.0',
+        'X-Request-Id': requestId,
         ...(sessionData.session?.access_token
           ? { Authorization: `Bearer ${sessionData.session.access_token}` }
           : {}),
