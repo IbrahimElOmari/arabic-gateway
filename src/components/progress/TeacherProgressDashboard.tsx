@@ -31,9 +31,9 @@
    });
  
    // Auto-select first class
-   if (classes?.length && !selectedClassId) {
-     setSelectedClassId(classes[0].id);
-   }
+    if (classes?.length && !selectedClassId) {
+      setSelectedClassId(classes[0]!.id);
+    }
  
    // Fetch enrolled students for selected class
    const { data: students, isLoading: studentsLoading } = useQuery({

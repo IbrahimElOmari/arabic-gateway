@@ -52,10 +52,11 @@ function unflatten(flat: FlatMap): any {
     const parts = k.split(".");
     let cur = out;
     for (let i = 0; i < parts.length - 1; i++) {
-      cur[parts[i]] ??= {};
-      cur = cur[parts[i]];
+      const p = parts[i]!;
+      cur[p] ??= {};
+      cur = cur[p];
     }
-    cur[parts[parts.length - 1]] = v;
+    cur[parts[parts.length - 1]!] = v;
   }
   return out;
 }
@@ -161,18 +162,19 @@ export default function I18nTranslatePage() {
 
     for (let i = 0; i < parts.length; i++) {
       const idx = startIndex + i;
+      const part = parts[i]!;
       setBatches((prev) => prev.map((b, k) => (k === idx ? { ...b, status: "running" } : b)));
       try {
         const res = await apiInvoke<{ translations: Record<string, string>; skipped: string[] }>(
           "ai-translate-i18n",
-          { target, entries: parts[i] },
+          { target, entries: part },
           { timeoutMs: 60_000 }
         );
         let acc = 0;
         for (const [k, v] of Object.entries(res.translations || {})) {
           if (k in merged) continue;
           merged[k] = `${AI_PREFIX}${v}`;
-          added.push({ key: k, source: parts[i][k], translation: v });
+          added.push({ key: k, source: part[k]!, translation: v });
           acc++;
         }
         const sk = res.skipped || [];
@@ -466,7 +468,7 @@ export default function I18nTranslatePage() {
             <CardTitle>{t("i18nAdmin.results", "Resultaten")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue={results[0].target}>
+            <Tabs defaultValue={results[0]!.target}>
               <TabsList>
                 {results.map((r) => (
                   <TabsTrigger key={r.target} value={r.target}>

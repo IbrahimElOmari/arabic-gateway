@@ -95,11 +95,11 @@ export default function TeacherMaterialsPage() {
     }
   };
 
-  const getFileIcon = (fileType: string) => {
-    if (fileType === "pdf") return fileTypeIcons.pdf;
-    if (["mp4", "webm", "mov"].includes(fileType)) return fileTypeIcons.video;
-    if (["doc", "docx"].includes(fileType)) return fileTypeIcons.document;
-    return fileTypeIcons.default;
+  const getFileIcon = (fileType: string): React.ElementType => {
+    if (fileType === "pdf") return fileTypeIcons.pdf ?? File;
+    if (["mp4", "webm", "mov"].includes(fileType)) return fileTypeIcons.video ?? File;
+    if (["doc", "docx"].includes(fileType)) return fileTypeIcons.document ?? File;
+    return fileTypeIcons.default ?? File;
   };
 
   return (
