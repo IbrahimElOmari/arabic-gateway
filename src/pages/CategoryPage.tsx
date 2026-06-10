@@ -67,7 +67,8 @@ export default function CategoryPage() {
       );
       const attemptsMap: Record<string, { completed: boolean; score: number; attempts: number }> = {};
       data?.forEach((a) => {
-        if (!attemptsMap[a.exercise_id] || a.attempt_number > attemptsMap[a.exercise_id].attempts) {
+        const existing = attemptsMap[a.exercise_id];
+        if (!existing || a.attempt_number > existing.attempts) {
           attemptsMap[a.exercise_id] = { completed: !!a.submitted_at, score: a.total_score || 0, attempts: a.attempt_number };
         }
       });

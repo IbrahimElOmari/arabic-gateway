@@ -77,7 +77,9 @@ function shuffleWithSeed(arr: OrderItem[], seed: string): OrderItem[] {
   for (let i = shuffled.length - 1; i > 0; i--) {
     hash = ((hash << 5) - hash + i) | 0;
     const j = Math.abs(hash) % (i + 1);
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    const tmp = shuffled[i]!;
+    shuffled[i] = shuffled[j]!;
+    shuffled[j] = tmp;
   }
   return shuffled;
 }

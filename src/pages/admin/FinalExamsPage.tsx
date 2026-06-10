@@ -76,13 +76,10 @@ export default function FinalExamsPage() {
       
       const counts: Record<string, { total: number; passed: number }> = {};
       data.forEach((attempt) => {
-        if (!counts[attempt.final_exam_id]) {
-          counts[attempt.final_exam_id] = { total: 0, passed: 0 };
-        }
-        counts[attempt.final_exam_id].total++;
-        if (attempt.passed) {
-          counts[attempt.final_exam_id].passed++;
-        }
+        const bucket = counts[attempt.final_exam_id] ?? { total: 0, passed: 0 };
+        bucket.total++;
+        if (attempt.passed) bucket.passed++;
+        counts[attempt.final_exam_id] = bucket;
       });
       return counts;
     },

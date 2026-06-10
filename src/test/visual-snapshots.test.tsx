@@ -110,7 +110,7 @@ describe('visual snapshots', () => {
     const rootBlock = css.match(/:root\s*\{([\s\S]*?)\n\s*\}/)?.[1] ?? '';
     const tokenContract = Array.from(
       rootBlock.matchAll(/--(primary|accent|muted-foreground|success|destructive|input|ring|sidebar-accent|sidebar-accent-foreground):\s*([^;]+);/g)
-    ).map(([, name, value]) => `${name}: ${value.trim()}`);
+    ).map(([, name, value]) => `${name}: ${(value ?? '').trim()}`);
 
     expect(tokenContract).toMatchSnapshot();
   });

@@ -74,13 +74,13 @@ describe("Helpdesk System", () => {
       ];
       
       const sorted = [...tickets].sort(
-        (a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]
+        (a, b) => priorityOrder[a.priority]! - priorityOrder[b.priority]!
       );
       
-      expect(sorted[0].id).toBe("2"); // critical
-      expect(sorted[1].id).toBe("4"); // high
-      expect(sorted[2].id).toBe("3"); // medium
-      expect(sorted[3].id).toBe("1"); // low
+      expect(sorted[0]!.id).toBe("2"); // critical
+      expect(sorted[1]!.id).toBe("4"); // high
+      expect(sorted[2]!.id).toBe("3"); // medium
+      expect(sorted[3]!.id).toBe("1"); // low
     });
   });
 

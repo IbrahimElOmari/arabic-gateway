@@ -30,7 +30,7 @@ function linearize(ch: number): number {
 }
 
 function luminance(hex: string): number {
-  const [r, g, b] = hexToRgb(hex).map(linearize);
+  const [r, g, b] = hexToRgb(hex).map(linearize) as [number, number, number];
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 

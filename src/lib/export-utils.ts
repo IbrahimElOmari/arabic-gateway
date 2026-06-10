@@ -11,7 +11,7 @@ function escapeHtml(text: string): string {
 export function exportToCSV(data: Record<string, any>[], filename: string, headers?: Record<string, string>) {
   if (data.length === 0) return;
 
-  const keys = headers ? Object.keys(headers) : Object.keys(data[0]);
+  const keys = headers ? Object.keys(headers) : Object.keys(data[0]!);
   const headerRow = headers ? Object.values(headers) : keys;
 
   const csvContent = [
@@ -91,7 +91,7 @@ export function generatePDFTable(
     <table>
       <thead>
         <tr>
-          ${keys.map((key) => `<th>${escapeHtml(headers[key])}</th>`).join("")}
+          ${keys.map((key) => `<th>${escapeHtml(headers[key] ?? key)}</th>`).join("")}
         </tr>
       </thead>
       <tbody>

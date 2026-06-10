@@ -20,8 +20,8 @@ describe('Scheduler Cron Fallback', () => {
 
     for (const target of SCHEDULER_TARGETS) {
       expect(mockResults[target]).toBeDefined();
-      expect(mockResults[target].status).toBe(200);
-      expect(typeof mockResults[target].message).toBe('string');
+      expect(mockResults[target]!.status).toBe(200);
+      expect(typeof mockResults[target]!.message).toBe('string');
     }
   });
 
@@ -32,8 +32,8 @@ describe('Scheduler Cron Fallback', () => {
     };
 
     // One failure should not prevent the other from running
-    expect(mockResults['release-exercises'].status).toBe(500);
-    expect(mockResults['send-lesson-reminders'].status).toBe(200);
+    expect(mockResults['release-exercises']!.status).toBe(500);
+    expect(mockResults['send-lesson-reminders']!.status).toBe(200);
   });
 
   it('scheduler logs activity', () => {

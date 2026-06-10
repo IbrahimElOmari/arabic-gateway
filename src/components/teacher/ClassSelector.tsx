@@ -50,10 +50,10 @@
      enabled: !!user,
    });
  
-   // Auto-select if only one class and no value set
-   if (classes?.length === 1 && !value) {
-     onChange(classes[0].id);
-   }
+    // Auto-select if only one class and no value set
+    if (classes?.length === 1 && !value) {
+      onChange(classes[0]!.id);
+    }
  
    if (isLoading) {
      return (
@@ -82,10 +82,10 @@
      return (
        <div className="space-y-2">
          {label && <Label>{label}</Label>}
-         <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
-           <span className="font-medium">{classes[0].name}</span>
-           <span className="text-sm text-muted-foreground">({classes[0].level?.name})</span>
-         </div>
+          <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+            <span className="font-medium">{classes[0]!.name}</span>
+            <span className="text-sm text-muted-foreground">({classes[0]!.level?.name})</span>
+          </div>
        </div>
      );
    }

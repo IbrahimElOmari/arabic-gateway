@@ -19,6 +19,7 @@ jobs:
       - run: npm run lint --if-present
       - run: npx tsc --noEmit
       - run: ./scripts/lint-colors.sh
+      - run: bash scripts/check-any-budget.sh
 
   i18n-lint:
     runs-on: ubuntu-latest

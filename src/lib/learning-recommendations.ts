@@ -54,10 +54,11 @@ export function getRecommendedExercise(
   }
 
   // Fallback: return the first available exercise
+  const first = remaining[0]!;
   return {
-    id: remaining[0].id,
-    title: remaining[0].title,
+    id: first.id,
+    title: first.title,
     reason: 'next_available',
-    category_name: remaining[0].category_name,
+    category_name: first.category_name,
   };
 }

@@ -167,11 +167,11 @@ describe("Exercise Scoring", () => {
         order: i,
       }));
 
-      expect(normalized[0].value).toBe("item-1");
-      expect(normalized[0].label).toBe("cat");
-      expect(normalized[0].order).toBe(0);
-      expect(normalized[1].value).toBe("item-2");
-      expect(normalized[1].order).toBe(1);
+      expect(normalized[0]!.value).toBe("item-1");
+      expect(normalized[0]!.label).toBe("cat");
+      expect(normalized[0]!.order).toBe(0);
+      expect(normalized[1]!.value).toBe("item-2");
+      expect(normalized[1]!.order).toBe(1);
     });
 
     it("should generate correct_answer as array of values", () => {

@@ -60,7 +60,7 @@ export function ClassProvider({ children }: { children: React.ReactNode }) {
   // Auto-select if only one class and none selected
   useEffect(() => {
     if (classes.length === 1 && !activeClassId) {
-      setActiveClassId(classes[0].id);
+      setActiveClassId(classes[0]!.id);
     }
   }, [classes, activeClassId]);
 
