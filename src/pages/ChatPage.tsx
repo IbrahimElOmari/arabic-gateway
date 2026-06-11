@@ -450,7 +450,21 @@ function PrivateChatTab() {
                 </div>
               )}
             </ScrollArea>
-            <div className="p-4 border-t">
+            <div className="p-4 border-t space-y-2">
+              {rtStatus === "error" && (
+                <div role="alert" className="flex items-center justify-between gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  <span className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+                    {t("chat.realtimeDisconnected", "Live-verbinding verbroken. Nieuwe berichten worden niet automatisch geladen.")}
+                  </span>
+                  <Button size="sm" variant="outline" onClick={retryRealtime} aria-label={t("chat.retryConnection", "Opnieuw verbinden")}>
+                    <RefreshCw className="h-3.5 w-3.5 mr-1" /> {t("chat.retry", "Opnieuw proberen")}
+                  </Button>
+                </div>
+              )}
+              {rtStatus === "connecting" && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> {t("chat.realtimeConnecting", "Verbinden…")}</p>
+              )}
               <div className="flex gap-2">
                 <label htmlFor="private-chat-input" className="sr-only">{t("chat.typeMessage")}</label>
                 <Input id="private-chat-input" aria-label={t("chat.messageInput", "Berichtinvoer")} placeholder={t("chat.typeMessage")} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendPrivate()} />
