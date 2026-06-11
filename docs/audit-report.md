@@ -950,4 +950,23 @@ python-app.yml, stale.yml, static.yml, terraform.yml, webpack.yml
 
 ---
 
-*Dit document dient als master reference voor het ontwikkelteam en management. Elk punt is afzonderlijk beoordeeld met verwijzing naar specifieke bestanden en regelnummers. Laatst bijgewerkt: 2026-02-21.*
+## ADDENDUM — Resolutiestatus P1–P7 (2026-06-11)
+
+| Fase | Scope | Status | Bewijs |
+|------|-------|--------|--------|
+| P1 | TypeScript strict fase 0-1, baseline | ✅ | `docs/typescript-strict-roadmap.md`, CI `tsc --noEmit` groen |
+| P2 | Staging + rate-limit + Turnstile + backups | ✅ | `docs/staging-environment.md`, `docs/backup-dr.md`, `supabase/functions/verify-captcha`, `_shared/rate-limit.ts` |
+| P3 | TS strict fase 2 (`any`-budget), CI hardening | ✅ | `scripts/check-any-budget.sh`, `eslint.config.js`, `tsconfig.app.json` |
+| P4 | GDPR (Art. 17 + 30), observability tracing, coverage 75% branches | ✅ | `supabase/functions/delete-user-data`, `docs/legal/processing-register.md`, `src/lib/supabase-api.ts` (X-Request-Id), `vitest.config.ts` |
+| P5 | Magic-byte uploads, realtime loadtest, WCAG audit | ✅ | `src/lib/upload-validation.ts`, `scripts/loadtest-realtime.js`, `docs/realtime-capacity.md`, `docs/wcag-audit.md` |
+| P6 | Storage RLS hardening, DB tuning, feature flags UI | ✅ | `user_can_access_lesson` fn, `docs/db-tuning.md`, `src/pages/admin/FeatureFlagsPage.tsx` |
+| P7 | Documentatie + soft-launch checklist | ✅ | `docs/soft-launch.md`, `CONTRIBUTING.md`, `docs/runbook.md`, `docs/api-contracts.md`, `docs/architecture.md` |
+
+**Resterend buiten scope (geparkeerd):** #2 E-mail infrastructuur, #3 Sentry/error monitoring. Ontgrendeld zodra TypeScript strict fase 3-4 (volledige `strict: true` + `noUncheckedIndexedAccess`) is afgerond.
+
+*Laatst bijgewerkt: 2026-06-11 — alle P1–P7 fasen afgerond.*
+
+---
+
+*Dit document dient als master reference voor het ontwikkelteam en management. Elk punt is afzonderlijk beoordeeld met verwijzing naar specifieke bestanden en regelnummers.*
+
