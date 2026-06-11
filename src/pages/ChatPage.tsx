@@ -208,12 +208,14 @@ function GroupChatTab() {
 function PrivateChatTab() {
   const { t } = useTranslation();
   const { user, role } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [newChatDialogOpen, setNewChatDialogOpen] = useState(false);
   const [searchUser, setSearchUser] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+
 
   // Get private chat rooms the user participates in
   const { data: rooms, isLoading: roomsLoading } = useQuery({
