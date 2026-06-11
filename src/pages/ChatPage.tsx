@@ -253,7 +253,7 @@ function PrivateChatTab() {
     enabled: !!user,
   });
 
-  // Messages for selected room
+  // Messages for selected room — with polling fallback when realtime is not live
   const { data: privateMessages, isLoading: pmLoading } = useQuery({
     queryKey: ["private-chat-messages", selectedRoom],
     queryFn: async () => {
@@ -268,7 +268,11 @@ function PrivateChatTab() {
       return (msgs || []).map((m: any) => ({ ...m, sender: profileMap.get(m.sender_id) || null }));
     },
     enabled: !!selectedRoom,
+    // Polling fallback: when realtime isn't live, poll every 4s so messages still arrive reliably.
+    refetchInterval: rtStatus === "live" ? false : 4000,
+    refetchIntervalInBackground: false,
   });
+
 
   // Realtime for private messages — only subscribe when selected room is actually in rooms list
   useEffect(() => {
