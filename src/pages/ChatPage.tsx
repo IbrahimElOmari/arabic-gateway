@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Send, Smile, Loader2, Flag, ChevronUp, Plus, User, Users } from "lucide-react";
+import { MessageCircle, Send, Smile, Loader2, Flag, ChevronUp, Plus, User, Users, AlertTriangle, RefreshCw } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ReportContentDialog } from "@/components/moderation/ReportContentDialog";
 import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import { useToast } from "@/hooks/use-toast";
+import { startChatTimer, recordRealtimeStatus } from "@/lib/chat-metrics";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
@@ -215,6 +216,8 @@ function PrivateChatTab() {
   const [newMessage, setNewMessage] = useState("");
   const [newChatDialogOpen, setNewChatDialogOpen] = useState(false);
   const [searchUser, setSearchUser] = useState("");
+  const [rtStatus, setRtStatus] = useState<"idle" | "connecting" | "live" | "error">("idle");
+  const [rtRetryKey, setRtRetryKey] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
 
@@ -268,17 +271,24 @@ function PrivateChatTab() {
 
   // Realtime for private messages — only subscribe when selected room is actually in rooms list
   useEffect(() => {
-    if (!selectedRoom) return;
-    if (!rooms?.some((r: any) => r.id === selectedRoom)) return;
+    if (!selectedRoom) { setRtStatus("idle"); return; }
+    if (!rooms?.some((r: any) => r.id === selectedRoom)) { setRtStatus("idle"); return; }
+    setRtStatus("connecting");
     const channel = supabase
       .channel(`private-chat-${selectedRoom}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "private_chat_messages", filter: `room_id=eq.${selectedRoom}` }, () => {
         queryClient.invalidateQueries({ queryKey: ["private-chat-messages", selectedRoom] });
         queryClient.invalidateQueries({ queryKey: ["private-chat-rooms", user?.id] });
       })
-      .subscribe();
+      .subscribe((status, err) => {
+        recordRealtimeStatus("private", status, err);
+        if (status === "SUBSCRIBED") setRtStatus("live");
+        else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") setRtStatus("error");
+      });
     return () => { supabase.removeChannel(channel); };
-  }, [selectedRoom, rooms, queryClient, user?.id]);
+  }, [selectedRoom, rooms, queryClient, user?.id, rtRetryKey]);
+
+  const retryRealtime = useCallback(() => setRtRetryKey((k) => k + 1), []);
 
   useEffect(() => {
     if (scrollRef.current && privateMessages) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -286,12 +296,19 @@ function PrivateChatTab() {
 
   const sendPrivateMessage = useMutation({
     mutationFn: async (content: string) => {
-      await apiMutate("private_chat_messages", (q) =>
-        q.insert({ room_id: selectedRoom!, sender_id: user!.id, content })
-      );
-      await apiMutate("private_chat_rooms", (q) =>
-        q.update({ updated_at: new Date().toISOString() }).eq("id", selectedRoom!)
-      );
+      const timer = startChatTimer("private", "send");
+      try {
+        await apiMutate("private_chat_messages", (q) =>
+          q.insert({ room_id: selectedRoom!, sender_id: user!.id, content })
+        );
+        await apiMutate("private_chat_rooms", (q) =>
+          q.update({ updated_at: new Date().toISOString() }).eq("id", selectedRoom!)
+        );
+        timer.end(true);
+      } catch (err) {
+        timer.end(false, err);
+        throw err;
+      }
     },
     onSuccess: () => { setNewMessage(""); },
     onError: (err: any) => {
@@ -433,7 +450,21 @@ function PrivateChatTab() {
                 </div>
               )}
             </ScrollArea>
-            <div className="p-4 border-t">
+            <div className="p-4 border-t space-y-2">
+              {rtStatus === "error" && (
+                <div role="alert" className="flex items-center justify-between gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  <span className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+                    {t("chat.realtimeDisconnected", "Live-verbinding verbroken. Nieuwe berichten worden niet automatisch geladen.")}
+                  </span>
+                  <Button size="sm" variant="outline" onClick={retryRealtime} aria-label={t("chat.retryConnection", "Opnieuw verbinden")}>
+                    <RefreshCw className="h-3.5 w-3.5 mr-1" /> {t("chat.retry", "Opnieuw proberen")}
+                  </Button>
+                </div>
+              )}
+              {rtStatus === "connecting" && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> {t("chat.realtimeConnecting", "Verbinden…")}</p>
+              )}
               <div className="flex gap-2">
                 <label htmlFor="private-chat-input" className="sr-only">{t("chat.typeMessage")}</label>
                 <Input id="private-chat-input" aria-label={t("chat.messageInput", "Berichtinvoer")} placeholder={t("chat.typeMessage")} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendPrivate()} />
