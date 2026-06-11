@@ -92,11 +92,15 @@ export function startChatTimer(
     end(ok, error) {
       const latency_ms = Math.round(performance.now() - start);
       const errMsg = error instanceof Error ? error.message : error ? String(error) : undefined;
-      history.push({ ts: Date.now(), channel, op, ok, latency_ms, correlation_id, attempt, error: errMsg });
-      pruneHistory(Date.now());
-      logger.info(`[chat-metrics] ${channel}.${op} cid=${correlation_id} attempt=${attempt} ok=${ok} ${latency_ms}ms`);
+      let sentry_event_id: string | undefined;
       if (!ok && error) {
-        reportError(error, { area: "chat", channel, op, latency_ms, correlation_id, attempt });
+        sentry_event_id = `evt_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+      }
+      history.push({ ts: Date.now(), channel, op, ok, latency_ms, correlation_id, attempt, error: errMsg, sentry_event_id });
+      pruneHistory(Date.now());
+      logger.info(`[chat-metrics] ${channel}.${op} cid=${correlation_id} attempt=${attempt} ok=${ok} ${latency_ms}ms${sentry_event_id ? ` sentry=${sentry_event_id}` : ""}`);
+      if (!ok && error) {
+        reportError(error, { area: "chat", channel, op, latency_ms, correlation_id, attempt, sentry_event_id });
       } else if (ok && latency_ms > SLO_LATENCY_MS) {
         reportMessage(`chat.${channel}.${op} slow: ${latency_ms}ms`, "warning", {
           channel, op, latency_ms, slo_ms: SLO_LATENCY_MS, correlation_id, attempt,
@@ -105,6 +109,7 @@ export function startChatTimer(
       maybeAlert(channel);
       return latency_ms;
     },
+
   };
 }
 
