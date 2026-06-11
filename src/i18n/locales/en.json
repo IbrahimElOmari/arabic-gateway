@@ -970,6 +970,17 @@
     "enrollmentApprovedMessage": "You are now enrolled and have access to the class.",
     "enrollmentRejectedMessage": "Your enrollment has unfortunately been rejected.",
     "cronJobs": "Cron Jobs",
+    "featureFlags": {
+      "nav": "Feature Flags",
+      "title": "Feature Flags",
+      "description": "Toggle features without redeploying. Changes propagate in realtime.",
+      "saved": "Flag updated",
+      "on": "ON",
+      "toggle": "Toggle flag",
+      "rollout": "Rollout percentage",
+      "roles": "Enabled for roles",
+      "empty": "No feature flags yet."
+    },
     "cronJobsTitle": "Cron Job Monitor",
     "cronJobsDescription": "Real-time status of scheduled background jobs",
     "cronFailuresTitle": "{{count}} cron job(s) failed",
