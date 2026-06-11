@@ -443,11 +443,18 @@ function PrivateChatTab() {
         {selectedRoom ? (
           <>
             <CardHeader className="py-3 border-b">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <User className="h-5 w-5" />
-                {getRoomDisplayName(rooms?.find((r: any) => r.id === selectedRoom) || {})}
+              <CardTitle className="text-lg flex items-center gap-2 justify-between">
+                <span className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  {getRoomDisplayName(rooms?.find((r: any) => r.id === selectedRoom) || {})}
+                </span>
+                <span className="flex items-center gap-2">
+                  <RealtimeBadge status={rtStatus} />
+                  <DiagnosticsButton />
+                </span>
               </CardTitle>
             </CardHeader>
+
             <ScrollArea className="flex-1 p-4" ref={scrollRef}>
               {pmLoading ? (
                 <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
