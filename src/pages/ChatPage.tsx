@@ -271,17 +271,24 @@ function PrivateChatTab() {
 
   // Realtime for private messages — only subscribe when selected room is actually in rooms list
   useEffect(() => {
-    if (!selectedRoom) return;
-    if (!rooms?.some((r: any) => r.id === selectedRoom)) return;
+    if (!selectedRoom) { setRtStatus("idle"); return; }
+    if (!rooms?.some((r: any) => r.id === selectedRoom)) { setRtStatus("idle"); return; }
+    setRtStatus("connecting");
     const channel = supabase
       .channel(`private-chat-${selectedRoom}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "private_chat_messages", filter: `room_id=eq.${selectedRoom}` }, () => {
         queryClient.invalidateQueries({ queryKey: ["private-chat-messages", selectedRoom] });
         queryClient.invalidateQueries({ queryKey: ["private-chat-rooms", user?.id] });
       })
-      .subscribe();
+      .subscribe((status, err) => {
+        recordRealtimeStatus("private", status, err);
+        if (status === "SUBSCRIBED") setRtStatus("live");
+        else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") setRtStatus("error");
+      });
     return () => { supabase.removeChannel(channel); };
-  }, [selectedRoom, rooms, queryClient, user?.id]);
+  }, [selectedRoom, rooms, queryClient, user?.id, rtRetryKey]);
+
+  const retryRealtime = useCallback(() => setRtRetryKey((k) => k + 1), []);
 
   useEffect(() => {
     if (scrollRef.current && privateMessages) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
