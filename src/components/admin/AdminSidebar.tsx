@@ -56,6 +56,7 @@ export function AdminSidebar({ collapsed, onToggle }: AdminSidebarProps) {
     { to: "/admin/cron-jobs", icon: Timer, label: t("admin.cronJobs", "Cron Jobs") },
     { to: "/admin/i18n", icon: Languages, label: t("admin.i18nTranslate", "AI Translations") },
     { to: "/admin/feature-flags", icon: ToggleLeft, label: t("admin.featureFlags.nav", "Feature Flags") },
+    { to: "/admin/chat-debug", icon: Activity, label: t("admin.chatDebug.nav", "Chat debug") },
 
   ];
 
