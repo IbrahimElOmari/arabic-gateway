@@ -21,7 +21,9 @@ export interface ChatSample {
   correlation_id: string;
   attempt: number;
   error?: string;
+  sentry_event_id?: string;
 }
+
 
 export interface RealtimeEvent {
   ts: number;
