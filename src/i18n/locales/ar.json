@@ -970,6 +970,17 @@
     "enrollmentApprovedMessage": "أنت الآن مسجّل ولديك وصول إلى الفصل.",
     "enrollmentRejectedMessage": "للأسف تم رفض تسجيلك.",
     "cronJobs": "مهام Cron",
+    "featureFlags": {
+      "nav": "أعلام الميزات",
+      "title": "أعلام الميزات",
+      "description": "قم بتفعيل/تعطيل الميزات دون إعادة النشر. تنتشر التغييرات في الوقت الفعلي.",
+      "saved": "تم تحديث العلم",
+      "on": "تشغيل",
+      "toggle": "تبديل العلم",
+      "rollout": "نسبة الطرح",
+      "roles": "مفعّل للأدوار",
+      "empty": "لا توجد أعلام بعد."
+    },
     "cronJobsTitle": "مراقب مهام Cron",
     "cronJobsDescription": "الحالة الفورية للمهام الخلفية المجدولة",
     "cronFailuresTitle": "{{count}} مهمة Cron فشلت",
