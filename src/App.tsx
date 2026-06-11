@@ -48,6 +48,8 @@ const EnrollmentRequestsPage = lazyWithRetry(() => import("./pages/admin/Enrollm
 const DesignSystemPage = lazyWithRetry(() => import("./pages/admin/DesignSystemPage"));
 const I18nTranslatePage = lazyWithRetry(() => import("./pages/admin/I18nTranslatePage"));
 const CronJobsPage = lazyWithRetry(() => import("./pages/admin/CronJobsPage"));
+const FeatureFlagsPage = lazyWithRetry(() => import("./pages/admin/FeatureFlagsPage"));
+
 
 // Teacher pages
 const TeacherDashboard = lazyWithRetry(() => import("./pages/teacher/TeacherDashboard"));
@@ -185,6 +187,8 @@ const App = () => (
                       <Route path="/admin/design-system" element={<ProtectedRoute requiredRole="admin"><DesignSystemPage /></ProtectedRoute>} />
                       <Route path="/admin/i18n" element={<ProtectedRoute requiredRole="admin"><I18nTranslatePage /></ProtectedRoute>} />
                       <Route path="/admin/cron-jobs" element={<ProtectedRoute requiredRole="admin"><CronJobsPage /></ProtectedRoute>} />
+                      <Route path="/admin/feature-flags" element={<ProtectedRoute requiredRole="admin"><FeatureFlagsPage /></ProtectedRoute>} />
+
                       {/* Catch-all */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>

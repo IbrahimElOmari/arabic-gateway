@@ -2978,6 +2978,10 @@ export type Database = {
         Returns: string
       }
       update_user_streak: { Args: { p_user_id: string }; Returns: number }
+      user_can_access_lesson: {
+        Args: { _lesson_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       analytics_event_type:

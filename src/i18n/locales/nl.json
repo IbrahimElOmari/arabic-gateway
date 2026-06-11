@@ -970,6 +970,18 @@
     "enrollmentApprovedMessage": "Je bent nu ingeschreven en hebt toegang tot de klas.",
     "enrollmentRejectedMessage": "Je inschrijving is helaas afgewezen.",
     "cronJobs": "Cron Jobs",
+    "featureFlags": {
+      "nav": "Feature Flags",
+      "title": "Feature Flags",
+      "description": "Schakel functies in/uit zonder deploy. Wijzigingen worden in realtime doorgevoerd.",
+      "saved": "Flag bijgewerkt",
+      "on": "AAN",
+      "toggle": "Flag omschakelen",
+      "rollout": "Uitrol-percentage",
+      "roles": "Ingeschakeld voor rollen",
+      "empty": "Nog geen feature flags."
+    },
+    
     "cronJobsTitle": "Cron Job Monitor",
     "cronJobsDescription": "Real-time status van geplande achtergrondtaken",
     "cronFailuresTitle": "{{count}} cron job(s) mislukt",
