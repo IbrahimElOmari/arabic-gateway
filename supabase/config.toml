@@ -119,3 +119,6 @@ verify_jwt = true
 [functions.verify-captcha]
 verify_jwt = false
 
+[functions.monitor-health]
+verify_jwt = false
+
