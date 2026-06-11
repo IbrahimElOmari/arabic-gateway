@@ -296,12 +296,19 @@ function PrivateChatTab() {
 
   const sendPrivateMessage = useMutation({
     mutationFn: async (content: string) => {
-      await apiMutate("private_chat_messages", (q) =>
-        q.insert({ room_id: selectedRoom!, sender_id: user!.id, content })
-      );
-      await apiMutate("private_chat_rooms", (q) =>
-        q.update({ updated_at: new Date().toISOString() }).eq("id", selectedRoom!)
-      );
+      const timer = startChatTimer("private", "send");
+      try {
+        await apiMutate("private_chat_messages", (q) =>
+          q.insert({ room_id: selectedRoom!, sender_id: user!.id, content })
+        );
+        await apiMutate("private_chat_rooms", (q) =>
+          q.update({ updated_at: new Date().toISOString() }).eq("id", selectedRoom!)
+        );
+        timer.end(true);
+      } catch (err) {
+        timer.end(false, err);
+        throw err;
+      }
     },
     onSuccess: () => { setNewMessage(""); },
     onError: (err: any) => {
