@@ -370,7 +370,14 @@ function PrivateChatTab() {
 
 
   const handleSendPrivate = () => {
-    if (newMessage.trim()) sendPrivateMessage.mutate(newMessage);
+    const content = newMessage.trim();
+    if (!content) return;
+    sendPrivateMessage.mutate({ content, correlationId: newCorrelationId() });
+  };
+
+  const handleRetryFailed = () => {
+    if (!lastFailed) return;
+    sendPrivateMessage.mutate({ content: lastFailed.content, correlationId: lastFailed.correlationId });
   };
 
   const getRoomDisplayName = (room: any) => {
