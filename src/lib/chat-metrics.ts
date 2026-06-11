@@ -142,6 +142,51 @@ export function getChatHistory(): { samples: ChatSample[]; realtime: RealtimeEve
   return { samples: [...history], realtime: [...realtimeHistory] };
 }
 
+export interface DiagnosticEntry {
+  correlation_id: string;
+  attempts: number;
+  last_latency_ms: number;
+  total_latency_ms: number;
+  ok: boolean;
+  error?: string;
+  sentry_event_id?: string;
+  last_ts: number;
+  channel: Channel;
+}
+
+/** Aggregate samples per correlationId for a given channel (most-recent first). */
+export function getDiagnosticsByCorrelation(channel: Channel, limit = 50): DiagnosticEntry[] {
+  pruneHistory(Date.now());
+  const map = new Map<string, DiagnosticEntry>();
+  for (const s of history) {
+    if (s.channel !== channel || s.op !== "send") continue;
+    const cur = map.get(s.correlation_id);
+    if (!cur) {
+      map.set(s.correlation_id, {
+        correlation_id: s.correlation_id,
+        attempts: 1,
+        last_latency_ms: s.latency_ms,
+        total_latency_ms: s.latency_ms,
+        ok: s.ok,
+        error: s.error,
+        sentry_event_id: s.sentry_event_id,
+        last_ts: s.ts,
+        channel: s.channel,
+      });
+    } else {
+      cur.attempts = Math.max(cur.attempts, s.attempt);
+      cur.total_latency_ms += s.latency_ms;
+      cur.last_latency_ms = s.latency_ms;
+      cur.ok = s.ok;
+      cur.error = s.error ?? cur.error;
+      cur.sentry_event_id = s.sentry_event_id ?? cur.sentry_event_id;
+      cur.last_ts = s.ts;
+    }
+  }
+  return [...map.values()].sort((a, b) => b.last_ts - a.last_ts).slice(0, limit);
+}
+
+
 /** Retry helper: exponential backoff capped at maxAttempts. */
 export async function sendWithRetry<T>(
   fn: (attempt: number, correlationId: string) => Promise<T>,
