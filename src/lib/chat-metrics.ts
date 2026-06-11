@@ -22,7 +22,7 @@ let lastAlertAt = 0;
 
 function prune(now: number) {
   const cutoff = now - WINDOW_MS;
-  while (samples.length && samples[0].ts < cutoff) samples.shift();
+  while (samples.length && samples[0]!.ts < cutoff) samples.shift();
 }
 
 function maybeAlert(channel: "private" | "group") {
