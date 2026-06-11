@@ -981,7 +981,7 @@
       "roles": "Ingeschakeld voor rollen",
       "empty": "Nog geen feature flags."
     },
-    "_cronJobs": "Cron Jobs",
+    
     "cronJobsTitle": "Cron Job Monitor",
     "cronJobsDescription": "Real-time status van geplande achtergrondtaken",
     "cronFailuresTitle": "{{count}} cron job(s) mislukt",
