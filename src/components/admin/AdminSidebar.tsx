@@ -20,6 +20,7 @@ import {
   Languages,
   Timer,
   ToggleLeft,
+  Activity,
 } from "lucide-react";
 
 
