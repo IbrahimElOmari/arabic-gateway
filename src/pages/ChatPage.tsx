@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ReportContentDialog } from "@/components/moderation/ReportContentDialog";
 import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import { useToast } from "@/hooks/use-toast";
-import { startChatTimer, recordRealtimeStatus, newCorrelationId, sendWithRetry } from "@/lib/chat-metrics";
+import { recordRealtimeStatus, newCorrelationId, sendWithRetry } from "@/lib/chat-metrics";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
