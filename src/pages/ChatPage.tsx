@@ -216,6 +216,8 @@ function PrivateChatTab() {
   const [newMessage, setNewMessage] = useState("");
   const [newChatDialogOpen, setNewChatDialogOpen] = useState(false);
   const [searchUser, setSearchUser] = useState("");
+  const [rtStatus, setRtStatus] = useState<"idle" | "connecting" | "live" | "error">("idle");
+  const [rtRetryKey, setRtRetryKey] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
 
