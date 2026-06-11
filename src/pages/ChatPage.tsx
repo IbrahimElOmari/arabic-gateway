@@ -485,6 +485,20 @@ function PrivateChatTab() {
               {rtStatus === "connecting" && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> {t("chat.realtimeConnecting", "Verbinden…")}</p>
               )}
+              {lastFailed && (
+                <div role="alert" data-testid="chat-send-failed" className="flex items-center justify-between gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  <span className="flex items-center gap-2 truncate">
+                    <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <span className="truncate">
+                      {t("chat.sendFailedRetry", "Verzenden mislukt")} ·
+                      <span className="font-mono text-xs ms-1 opacity-70">{lastFailed.correlationId.slice(0, 8)}</span>
+                    </span>
+                  </span>
+                  <Button size="sm" variant="outline" onClick={handleRetryFailed} disabled={sendPrivateMessage.isPending} data-testid="chat-send-retry">
+                    <RefreshCw className="h-3.5 w-3.5 mr-1" /> {t("chat.retry", "Opnieuw proberen")}
+                  </Button>
+                </div>
+              )}
               <div className="flex gap-2">
                 <label htmlFor="private-chat-input" className="sr-only">{t("chat.typeMessage")}</label>
                 <Input id="private-chat-input" aria-label={t("chat.messageInput", "Berichtinvoer")} placeholder={t("chat.typeMessage")} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendPrivate()} />
