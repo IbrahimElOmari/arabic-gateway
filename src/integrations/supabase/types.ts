@@ -2962,6 +2962,14 @@ export type Database = {
         Args: { p_unenrolled_at?: string; p_user_id: string }
         Returns: undefined
       }
+      private_chat_can_add_participant: {
+        Args: { _actor_id: string; _room_id: string }
+        Returns: boolean
+      }
+      private_chat_is_participant: {
+        Args: { _room_id: string; _user_id: string }
+        Returns: boolean
+      }
       process_data_retention: {
         Args: never
         Returns: {
