@@ -21,7 +21,9 @@ export interface ChatSample {
   correlation_id: string;
   attempt: number;
   error?: string;
+  sentry_event_id?: string;
 }
+
 
 export interface RealtimeEvent {
   ts: number;
@@ -90,11 +92,15 @@ export function startChatTimer(
     end(ok, error) {
       const latency_ms = Math.round(performance.now() - start);
       const errMsg = error instanceof Error ? error.message : error ? String(error) : undefined;
-      history.push({ ts: Date.now(), channel, op, ok, latency_ms, correlation_id, attempt, error: errMsg });
-      pruneHistory(Date.now());
-      logger.info(`[chat-metrics] ${channel}.${op} cid=${correlation_id} attempt=${attempt} ok=${ok} ${latency_ms}ms`);
+      let sentry_event_id: string | undefined;
       if (!ok && error) {
-        reportError(error, { area: "chat", channel, op, latency_ms, correlation_id, attempt });
+        sentry_event_id = `evt_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+      }
+      history.push({ ts: Date.now(), channel, op, ok, latency_ms, correlation_id, attempt, error: errMsg, sentry_event_id });
+      pruneHistory(Date.now());
+      logger.info(`[chat-metrics] ${channel}.${op} cid=${correlation_id} attempt=${attempt} ok=${ok} ${latency_ms}ms${sentry_event_id ? ` sentry=${sentry_event_id}` : ""}`);
+      if (!ok && error) {
+        reportError(error, { area: "chat", channel, op, latency_ms, correlation_id, attempt, sentry_event_id });
       } else if (ok && latency_ms > SLO_LATENCY_MS) {
         reportMessage(`chat.${channel}.${op} slow: ${latency_ms}ms`, "warning", {
           channel, op, latency_ms, slo_ms: SLO_LATENCY_MS, correlation_id, attempt,
@@ -103,6 +109,7 @@ export function startChatTimer(
       maybeAlert(channel);
       return latency_ms;
     },
+
   };
 }
 
@@ -134,6 +141,51 @@ export function getChatHistory(): { samples: ChatSample[]; realtime: RealtimeEve
   pruneHistory(Date.now());
   return { samples: [...history], realtime: [...realtimeHistory] };
 }
+
+export interface DiagnosticEntry {
+  correlation_id: string;
+  attempts: number;
+  last_latency_ms: number;
+  total_latency_ms: number;
+  ok: boolean;
+  error?: string;
+  sentry_event_id?: string;
+  last_ts: number;
+  channel: Channel;
+}
+
+/** Aggregate samples per correlationId for a given channel (most-recent first). */
+export function getDiagnosticsByCorrelation(channel: Channel, limit = 50): DiagnosticEntry[] {
+  pruneHistory(Date.now());
+  const map = new Map<string, DiagnosticEntry>();
+  for (const s of history) {
+    if (s.channel !== channel || s.op !== "send") continue;
+    const cur = map.get(s.correlation_id);
+    if (!cur) {
+      map.set(s.correlation_id, {
+        correlation_id: s.correlation_id,
+        attempts: 1,
+        last_latency_ms: s.latency_ms,
+        total_latency_ms: s.latency_ms,
+        ok: s.ok,
+        error: s.error,
+        sentry_event_id: s.sentry_event_id,
+        last_ts: s.ts,
+        channel: s.channel,
+      });
+    } else {
+      cur.attempts = Math.max(cur.attempts, s.attempt);
+      cur.total_latency_ms += s.latency_ms;
+      cur.last_latency_ms = s.latency_ms;
+      cur.ok = s.ok;
+      cur.error = s.error ?? cur.error;
+      cur.sentry_event_id = s.sentry_event_id ?? cur.sentry_event_id;
+      cur.last_ts = s.ts;
+    }
+  }
+  return [...map.values()].sort((a, b) => b.last_ts - a.last_ts).slice(0, limit);
+}
+
 
 /** Retry helper: exponential backoff capped at maxAttempts. */
 export async function sendWithRetry<T>(

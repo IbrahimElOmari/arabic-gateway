@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Send, Smile, Loader2, Flag, ChevronUp, Plus, User, Users, AlertTriangle, RefreshCw } from "lucide-react";
+import { MessageCircle, Send, Smile, Loader2, Flag, ChevronUp, Plus, User, Users, AlertTriangle, RefreshCw, Activity, Wifi, WifiOff } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,10 +15,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ReportContentDialog } from "@/components/moderation/ReportContentDialog";
 import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import { useToast } from "@/hooks/use-toast";
-import { recordRealtimeStatus, newCorrelationId, sendWithRetry } from "@/lib/chat-metrics";
+import { recordRealtimeStatus, newCorrelationId, sendWithRetry, getDiagnosticsByCorrelation, type DiagnosticEntry } from "@/lib/chat-metrics";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
+
 
 const EMOJIS = ["👍", "❤️", "😊", "🎉", "👏", "🙏", "💪", "✨"];
 const MESSAGES_PER_PAGE = 50;
@@ -252,7 +253,7 @@ function PrivateChatTab() {
     enabled: !!user,
   });
 
-  // Messages for selected room
+  // Messages for selected room — with polling fallback when realtime is not live
   const { data: privateMessages, isLoading: pmLoading } = useQuery({
     queryKey: ["private-chat-messages", selectedRoom],
     queryFn: async () => {
@@ -267,7 +268,11 @@ function PrivateChatTab() {
       return (msgs || []).map((m: any) => ({ ...m, sender: profileMap.get(m.sender_id) || null }));
     },
     enabled: !!selectedRoom,
+    // Polling fallback: when realtime isn't live, poll every 4s so messages still arrive reliably.
+    refetchInterval: rtStatus === "live" ? false : 4000,
+    refetchIntervalInBackground: false,
   });
+
 
   // Realtime for private messages — only subscribe when selected room is actually in rooms list
   useEffect(() => {
@@ -438,11 +443,18 @@ function PrivateChatTab() {
         {selectedRoom ? (
           <>
             <CardHeader className="py-3 border-b">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <User className="h-5 w-5" />
-                {getRoomDisplayName(rooms?.find((r: any) => r.id === selectedRoom) || {})}
+              <CardTitle className="text-lg flex items-center gap-2 justify-between">
+                <span className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  {getRoomDisplayName(rooms?.find((r: any) => r.id === selectedRoom) || {})}
+                </span>
+                <span className="flex items-center gap-2">
+                  <RealtimeBadge status={rtStatus} />
+                  <DiagnosticsButton />
+                </span>
               </CardTitle>
             </CardHeader>
+
             <ScrollArea className="flex-1 p-4" ref={scrollRef}>
               {pmLoading ? (
                 <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
@@ -517,9 +529,85 @@ function PrivateChatTab() {
   );
 }
 
+// ─── Realtime status badge ───
+function RealtimeBadge({ status }: { status: "idle" | "connecting" | "live" | "error" }) {
+  const map = {
+    idle: { label: "idle", cls: "bg-muted text-muted-foreground", Icon: WifiOff },
+    connecting: { label: "verbinden…", cls: "bg-amber-500/15 text-amber-700 dark:text-amber-300", Icon: Loader2 },
+    live: { label: "live", cls: "bg-success/15 text-success", Icon: Wifi },
+    error: { label: "offline (polling)", cls: "bg-destructive/15 text-destructive", Icon: WifiOff },
+  } as const;
+  const { label, cls, Icon } = map[status];
+  return (
+    <span data-testid="chat-realtime-status" data-status={status} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>
+      <Icon className={`h-3 w-3 ${status === "connecting" ? "animate-spin" : ""}`} aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
+
+// ─── Diagnostics panel — per-message correlationId, attempts, latency, sentryId ───
+function DiagnosticsButton() {
+  const [open, setOpen] = useState(false);
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    if (!open) return;
+    const id = setInterval(() => setTick((t) => t + 1), 2000);
+    return () => clearInterval(id);
+  }, [open]);
+  const entries: DiagnosticEntry[] = open ? getDiagnosticsByCorrelation("private", 50) : [];
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="ghost" data-testid="chat-open-diagnostics" aria-label="Chat diagnostiek">
+          <Activity className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Chat diagnostiek (privé) — tick #{tick}</DialogTitle>
+        </DialogHeader>
+        {entries.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-6 text-center">Nog geen verzonden berichten in deze sessie.</p>
+        ) : (
+          <div className="max-h-[60vh] overflow-auto">
+            <table className="w-full text-xs font-mono">
+              <thead className="text-muted-foreground">
+                <tr className="text-left border-b">
+                  <th className="py-2 pe-2">tijd</th>
+                  <th className="py-2 pe-2">correlationId</th>
+                  <th className="py-2 pe-2">attempts</th>
+                  <th className="py-2 pe-2">latency</th>
+                  <th className="py-2 pe-2">status</th>
+                  <th className="py-2 pe-2">sentry eventId</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((e) => (
+                  <tr key={e.correlation_id} className="border-b last:border-0">
+                    <td className="py-1.5 pe-2 text-muted-foreground">{new Date(e.last_ts).toLocaleTimeString()}</td>
+                    <td className="py-1.5 pe-2">{e.correlation_id}</td>
+                    <td className="py-1.5 pe-2">{e.attempts}</td>
+                    <td className="py-1.5 pe-2">{e.last_latency_ms}ms</td>
+                    <td className={`py-1.5 pe-2 ${e.ok ? "text-success" : "text-destructive"}`}>
+                      {e.ok ? "ok" : `error: ${e.error?.slice(0, 50) ?? ""}`}
+                    </td>
+                    <td className="py-1.5 pe-2 text-muted-foreground">{e.sentry_event_id ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Shared Chat Bubble ───
 function ChatBubble({ message, isOwn, onReaction, onReport }: { message: any; isOwn: boolean; onReaction: (id: string, emoji: string) => void; onReport: (id: string) => void }) {
   const { t } = useTranslation();
+
   const reactionGroups = message.reactions?.reduce((acc: Record<string, number>, r: any) => { acc[r.emoji] = (acc[r.emoji] || 0) + 1; return acc; }, {}) || {};
 
   return (
