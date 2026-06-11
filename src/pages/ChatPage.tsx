@@ -294,29 +294,42 @@ function PrivateChatTab() {
     if (scrollRef.current && privateMessages) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [privateMessages]);
 
-  const sendPrivateMessage = useMutation({
-    mutationFn: async (content: string) => {
-      const timer = startChatTimer("private", "send");
-      try {
+  // Track last failed send for retry UI
+  const [lastFailed, setLastFailed] = useState<{ content: string; correlationId: string; error: string } | null>(null);
+
+  const performSend = useCallback(async (content: string, correlationId: string) => {
+    await sendWithRetry(
+      async () => {
         await apiMutate("private_chat_messages", (q) =>
           q.insert({ room_id: selectedRoom!, sender_id: user!.id, content })
         );
         await apiMutate("private_chat_rooms", (q) =>
           q.update({ updated_at: new Date().toISOString() }).eq("id", selectedRoom!)
         );
-        timer.end(true);
-      } catch (err) {
-        timer.end(false, err);
-        throw err;
-      }
+      },
+      { correlationId, channel: "private", maxAttempts: 3, baseDelayMs: 400 },
+    );
+  }, [selectedRoom, user]);
+
+  const sendPrivateMessage = useMutation({
+    mutationFn: async (vars: { content: string; correlationId: string }) => {
+      console.info(`[chat] private send cid=${vars.correlationId}`);
+      await performSend(vars.content, vars.correlationId);
+      return vars;
     },
-    onSuccess: () => { setNewMessage(""); },
-    onError: (err: any) => {
-      console.error("sendPrivateMessage failed:", err);
+    onSuccess: (vars) => {
+      setNewMessage("");
+      setLastFailed(null);
+      console.info(`[chat] private send OK cid=${vars.correlationId}`);
+    },
+    onError: (err: any, vars) => {
+      const msg = err?.message || "Onbekende fout";
+      console.error(`[chat] private send FAILED cid=${vars.correlationId}:`, err);
+      setLastFailed({ content: vars.content, correlationId: vars.correlationId, error: msg });
       toast({
         variant: "destructive",
         title: t("chat.sendFailedTitle", "Bericht niet verzonden"),
-        description: err?.message || t("chat.sendFailedDesc", "Probeer het opnieuw."),
+        description: `${msg} (id: ${vars.correlationId.slice(0, 8)})`,
       });
     },
   });
