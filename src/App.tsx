@@ -49,6 +49,7 @@ const DesignSystemPage = lazyWithRetry(() => import("./pages/admin/DesignSystemP
 const I18nTranslatePage = lazyWithRetry(() => import("./pages/admin/I18nTranslatePage"));
 const CronJobsPage = lazyWithRetry(() => import("./pages/admin/CronJobsPage"));
 const FeatureFlagsPage = lazyWithRetry(() => import("./pages/admin/FeatureFlagsPage"));
+const ChatDebugPage = lazyWithRetry(() => import("./pages/admin/ChatDebugPage"));
 
 
 // Teacher pages
