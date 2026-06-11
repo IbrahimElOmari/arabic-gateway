@@ -266,9 +266,10 @@ function PrivateChatTab() {
     enabled: !!selectedRoom,
   });
 
-  // Realtime for private messages
+  // Realtime for private messages — only subscribe when selected room is actually in rooms list
   useEffect(() => {
     if (!selectedRoom) return;
+    if (!rooms?.some((r: any) => r.id === selectedRoom)) return;
     const channel = supabase
       .channel(`private-chat-${selectedRoom}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "private_chat_messages", filter: `room_id=eq.${selectedRoom}` }, () => {
@@ -277,7 +278,7 @@ function PrivateChatTab() {
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [selectedRoom, queryClient, user?.id]);
+  }, [selectedRoom, rooms, queryClient, user?.id]);
 
   useEffect(() => {
     if (scrollRef.current && privateMessages) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -288,12 +289,19 @@ function PrivateChatTab() {
       await apiMutate("private_chat_messages", (q) =>
         q.insert({ room_id: selectedRoom!, sender_id: user!.id, content })
       );
-      // Update room's updated_at
       await apiMutate("private_chat_rooms", (q) =>
         q.update({ updated_at: new Date().toISOString() }).eq("id", selectedRoom!)
       );
     },
     onSuccess: () => { setNewMessage(""); },
+    onError: (err: any) => {
+      console.error("sendPrivateMessage failed:", err);
+      toast({
+        variant: "destructive",
+        title: t("chat.sendFailedTitle", "Bericht niet verzonden"),
+        description: err?.message || t("chat.sendFailedDesc", "Probeer het opnieuw."),
+      });
+    },
   });
 
   // Search users for new conversation
@@ -321,7 +329,15 @@ function PrivateChatTab() {
       setSearchUser("");
       queryClient.invalidateQueries({ queryKey: ["private-chat-rooms", user?.id] });
     },
+    onError: (err: any) => {
+      toast({
+        variant: "destructive",
+        title: t("chat.startFailedTitle", "Gesprek kon niet worden gestart"),
+        description: err?.message || t("chat.startFailedDesc", "Probeer het opnieuw."),
+      });
+    },
   });
+
 
   const handleSendPrivate = () => {
     if (newMessage.trim()) sendPrivateMessage.mutate(newMessage);
