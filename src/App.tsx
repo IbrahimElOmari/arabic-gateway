@@ -49,6 +49,7 @@ const DesignSystemPage = lazyWithRetry(() => import("./pages/admin/DesignSystemP
 const I18nTranslatePage = lazyWithRetry(() => import("./pages/admin/I18nTranslatePage"));
 const CronJobsPage = lazyWithRetry(() => import("./pages/admin/CronJobsPage"));
 const FeatureFlagsPage = lazyWithRetry(() => import("./pages/admin/FeatureFlagsPage"));
+const ChatDebugPage = lazyWithRetry(() => import("./pages/admin/ChatDebugPage"));
 
 
 // Teacher pages
@@ -188,6 +189,7 @@ const App = () => (
                       <Route path="/admin/i18n" element={<ProtectedRoute requiredRole="admin"><I18nTranslatePage /></ProtectedRoute>} />
                       <Route path="/admin/cron-jobs" element={<ProtectedRoute requiredRole="admin"><CronJobsPage /></ProtectedRoute>} />
                       <Route path="/admin/feature-flags" element={<ProtectedRoute requiredRole="admin"><FeatureFlagsPage /></ProtectedRoute>} />
+                      <Route path="/admin/chat-debug" element={<ProtectedRoute requiredRole="admin"><ChatDebugPage /></ProtectedRoute>} />
 
                       {/* Catch-all */}
                       <Route path="*" element={<NotFound />} />

@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ReportContentDialog } from "@/components/moderation/ReportContentDialog";
 import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import { useToast } from "@/hooks/use-toast";
-import { startChatTimer, recordRealtimeStatus } from "@/lib/chat-metrics";
+import { recordRealtimeStatus, newCorrelationId, sendWithRetry } from "@/lib/chat-metrics";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
@@ -294,29 +294,42 @@ function PrivateChatTab() {
     if (scrollRef.current && privateMessages) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [privateMessages]);
 
-  const sendPrivateMessage = useMutation({
-    mutationFn: async (content: string) => {
-      const timer = startChatTimer("private", "send");
-      try {
+  // Track last failed send for retry UI
+  const [lastFailed, setLastFailed] = useState<{ content: string; correlationId: string; error: string } | null>(null);
+
+  const performSend = useCallback(async (content: string, correlationId: string) => {
+    await sendWithRetry(
+      async () => {
         await apiMutate("private_chat_messages", (q) =>
           q.insert({ room_id: selectedRoom!, sender_id: user!.id, content })
         );
         await apiMutate("private_chat_rooms", (q) =>
           q.update({ updated_at: new Date().toISOString() }).eq("id", selectedRoom!)
         );
-        timer.end(true);
-      } catch (err) {
-        timer.end(false, err);
-        throw err;
-      }
+      },
+      { correlationId, channel: "private", maxAttempts: 3, baseDelayMs: 400 },
+    );
+  }, [selectedRoom, user]);
+
+  const sendPrivateMessage = useMutation({
+    mutationFn: async (vars: { content: string; correlationId: string }) => {
+      console.info(`[chat] private send cid=${vars.correlationId}`);
+      await performSend(vars.content, vars.correlationId);
+      return vars;
     },
-    onSuccess: () => { setNewMessage(""); },
-    onError: (err: any) => {
-      console.error("sendPrivateMessage failed:", err);
+    onSuccess: (vars) => {
+      setNewMessage("");
+      setLastFailed(null);
+      console.info(`[chat] private send OK cid=${vars.correlationId}`);
+    },
+    onError: (err: any, vars) => {
+      const msg = err?.message || "Onbekende fout";
+      console.error(`[chat] private send FAILED cid=${vars.correlationId}:`, err);
+      setLastFailed({ content: vars.content, correlationId: vars.correlationId, error: msg });
       toast({
         variant: "destructive",
         title: t("chat.sendFailedTitle", "Bericht niet verzonden"),
-        description: err?.message || t("chat.sendFailedDesc", "Probeer het opnieuw."),
+        description: `${msg} (id: ${vars.correlationId.slice(0, 8)})`,
       });
     },
   });
@@ -357,7 +370,14 @@ function PrivateChatTab() {
 
 
   const handleSendPrivate = () => {
-    if (newMessage.trim()) sendPrivateMessage.mutate(newMessage);
+    const content = newMessage.trim();
+    if (!content) return;
+    sendPrivateMessage.mutate({ content, correlationId: newCorrelationId() });
+  };
+
+  const handleRetryFailed = () => {
+    if (!lastFailed) return;
+    sendPrivateMessage.mutate({ content: lastFailed.content, correlationId: lastFailed.correlationId });
   };
 
   const getRoomDisplayName = (room: any) => {
@@ -464,6 +484,20 @@ function PrivateChatTab() {
               )}
               {rtStatus === "connecting" && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> {t("chat.realtimeConnecting", "Verbinden…")}</p>
+              )}
+              {lastFailed && (
+                <div role="alert" data-testid="chat-send-failed" className="flex items-center justify-between gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  <span className="flex items-center gap-2 truncate">
+                    <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <span className="truncate">
+                      {t("chat.sendFailedRetry", "Verzenden mislukt")} ·
+                      <span className="font-mono text-xs ms-1 opacity-70">{lastFailed.correlationId.slice(0, 8)}</span>
+                    </span>
+                  </span>
+                  <Button size="sm" variant="outline" onClick={handleRetryFailed} disabled={sendPrivateMessage.isPending} data-testid="chat-send-retry">
+                    <RefreshCw className="h-3.5 w-3.5 mr-1" /> {t("chat.retry", "Opnieuw proberen")}
+                  </Button>
+                </div>
               )}
               <div className="flex gap-2">
                 <label htmlFor="private-chat-input" className="sr-only">{t("chat.typeMessage")}</label>
