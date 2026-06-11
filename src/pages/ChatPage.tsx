@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Send, Smile, Loader2, Flag, ChevronUp, Plus, User, Users } from "lucide-react";
+import { MessageCircle, Send, Smile, Loader2, Flag, ChevronUp, Plus, User, Users, AlertTriangle, RefreshCw } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ReportContentDialog } from "@/components/moderation/ReportContentDialog";
 import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import { useToast } from "@/hooks/use-toast";
+import { startChatTimer, recordRealtimeStatus } from "@/lib/chat-metrics";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
