@@ -67,20 +67,19 @@ async function handleSubscriptionCanceled(data: any, env: PaddleEnv) {
 }
 
 async function handleTransactionCompleted(data: any, env: PaddleEnv) {
-  // Log one-time purchases (extras). Subscription transactions are handled via subscription events.
   if (data.subscriptionId) return;
   const userId = data.customData?.userId;
   if (!userId) return;
-  await getSupabase().from('payments').insert({
+  const { error } = await getSupabase().from('payments').insert({
     user_id: userId,
     amount: Number(data.details?.totals?.total ?? 0) / 100,
     currency: data.currencyCode ?? 'EUR',
     status: 'completed',
-    provider: 'paddle',
-    provider_payment_id: data.id,
-    metadata: { environment: env, items: data.items, customData: data.customData },
-  } as any).then(() => {}, (e) => console.error('payments insert failed', e));
+    notes: `Paddle ${env} ${data.id}`,
+  } as any);
+  if (error) console.error('payments insert failed', error);
 }
+
 
 async function handleWebhook(req: Request, env: PaddleEnv) {
   const event = await verifyWebhook(req, env);
