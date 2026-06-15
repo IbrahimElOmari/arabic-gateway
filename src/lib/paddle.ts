@@ -44,6 +44,8 @@ export async function initializePaddle() {
 }
 
 export async function getPaddlePriceId(priceId: string): Promise<string> {
+  // Paddle internal IDs (returned by paddle-sync-product) can be used directly
+  if (priceId.startsWith("pri_")) return priceId;
   const environment = getPaddleEnvironment();
   const { data, error } = await supabase.functions.invoke("get-paddle-price", {
     body: { priceId, environment },
