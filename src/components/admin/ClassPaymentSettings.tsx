@@ -31,11 +31,27 @@ export function ClassPaymentSettings({ classId, className, currentPrice, currenc
   const queryClient = useQueryClient();
   const [showPriceDialog, setShowPriceDialog] = useState(false);
   const [showDiscountDialog, setShowDiscountDialog] = useState(false);
-  const [priceForm, setPriceForm] = useState({ price: currentPrice?.toString() || "", currency: currency || "EUR" });
+  const [priceForm, setPriceForm] = useState({
+    price_monthly: "",
+    price_yearly: "",
+    trial_days: "0",
+    currency: currency || "EUR",
+  });
   const [discountForm, setDiscountForm] = useState({
     code: "", discount_type: "percentage" as "percentage" | "fixed_amount",
     discount_value: "", valid_until: "", max_uses: "", is_active: true,
   });
+
+  const { data: classRow } = useQuery({
+    queryKey: ["admin-class-paddle", classId],
+    queryFn: () => apiQuery<any>("classes", (q) =>
+      q.select("id, name, description, price_monthly, price_yearly, trial_days, currency, paddle_product_id, paddle_price_id_monthly, paddle_price_id_yearly")
+        .eq("id", classId).maybeSingle()
+    ),
+  });
+
+
+
 
   const { data: discounts, isLoading } = useQuery({
     queryKey: ["class-discounts", classId],
@@ -48,15 +64,39 @@ export function ClassPaymentSettings({ classId, className, currentPrice, currenc
     enabled: isFeatureEnabled("INSTALLMENT_PLANS"),
   });
 
-  const updatePriceMutation = useMutation({
-    mutationFn: (data: typeof priceForm) =>
-      apiMutate("classes", (q) => q.update({ price: data.price ? parseFloat(data.price) : null, currency: data.currency }).eq("id", classId)),
+  const syncMutation = useMutation({
+    mutationFn: async (data: typeof priceForm) => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { getPaddleEnvironment } = await import("@/lib/paddle");
+      const { data: res, error } = await supabase.functions.invoke("paddle-sync-product", {
+        body: {
+          kind: "class",
+          id: classId,
+          environment: getPaddleEnvironment(),
+          name: className,
+          description: classRow?.description ?? null,
+          currency: data.currency,
+          trial_days: parseInt(data.trial_days || "0", 10) || 0,
+          price_monthly: data.price_monthly ? parseFloat(data.price_monthly) : null,
+          price_yearly: data.price_yearly ? parseFloat(data.price_yearly) : null,
+        },
+      });
+      if (error) throw error;
+      if ((res as any)?.error) throw new Error((res as any).error);
+      return res;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-classes"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-class-paddle", classId] });
+      queryClient.invalidateQueries({ queryKey: ["pricing-classes"] });
       setShowPriceDialog(false);
-      toast({ title: t("admin.priceUpdated", "Price Updated") });
+      toast({ title: t("admin.priceUpdated", "Prijzen gesynchroniseerd met Paddle") });
+    },
+    onError: (e: any) => {
+      toast({ variant: "destructive", title: t("common.error", "Fout"), description: e?.message });
     },
   });
+
 
   const createDiscountMutation = useMutation({
     mutationFn: (data: typeof discountForm) =>
@@ -105,16 +145,33 @@ export function ClassPaymentSettings({ classId, className, currentPrice, currenc
           <CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5" />{t("admin.classPricing", "Class Pricing")}</CardTitle>
           <CardDescription>{t("admin.classPricingDescription", "Set the enrollment price for")} {className}</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-2xl font-bold">{currentPrice ? `${currency} ${currentPrice.toFixed(2)}` : t("admin.noPrice", "No price set")}</p>
-              <p className="text-sm text-muted-foreground">{t("admin.currentEnrollmentPrice", "Current enrollment price")}</p>
+              <p className="text-xs text-muted-foreground">{t("admin.priceMonthly", "Maandprijs")}</p>
+              <p className="text-2xl font-bold">{classRow?.price_monthly ? `${classRow.currency || currency} ${Number(classRow.price_monthly).toFixed(2)}` : "—"}</p>
+              <p className="text-xs text-muted-foreground mt-1">{classRow?.paddle_price_id_monthly ? `✓ Paddle: ${classRow.paddle_price_id_monthly.slice(0, 16)}…` : t("admin.notSynced", "Niet gesynchroniseerd")}</p>
             </div>
-            <Button onClick={() => setShowPriceDialog(true)}><Edit className="h-4 w-4 mr-2" />{t("admin.editPrice", "Edit Price")}</Button>
+            <div>
+              <p className="text-xs text-muted-foreground">{t("admin.priceYearly", "Jaarprijs")}</p>
+              <p className="text-2xl font-bold">{classRow?.price_yearly ? `${classRow.currency || currency} ${Number(classRow.price_yearly).toFixed(2)}` : "—"}</p>
+              <p className="text-xs text-muted-foreground mt-1">{classRow?.paddle_price_id_yearly ? `✓ Paddle: ${classRow.paddle_price_id_yearly.slice(0, 16)}…` : t("admin.notSynced", "Niet gesynchroniseerd")}</p>
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={() => {
+              setPriceForm({
+                price_monthly: classRow?.price_monthly?.toString() || "",
+                price_yearly: classRow?.price_yearly?.toString() || "",
+                trial_days: (classRow?.trial_days ?? 0).toString(),
+                currency: classRow?.currency || currency || "EUR",
+              });
+              setShowPriceDialog(true);
+            }}><Edit className="h-4 w-4 mr-2" />{t("admin.editPrice", "Prijzen bewerken")}</Button>
           </div>
         </CardContent>
       </Card>
+
 
       <Card>
         <CardHeader>
@@ -187,19 +244,29 @@ export function ClassPaymentSettings({ classId, className, currentPrice, currenc
       )}
 
       <Dialog open={showPriceDialog} onOpenChange={setShowPriceDialog}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{t("admin.editPrice", "Edit Price")}</DialogTitle>
-            <DialogDescription>{t("admin.editPriceDescription", "Set the enrollment price for this class")}</DialogDescription>
+            <DialogTitle>{t("admin.editPrice", "Prijzen bewerken")}</DialogTitle>
+            <DialogDescription>{t("admin.editPriceDescription", "Stel maand- en jaarprijs in. Wordt direct gesynchroniseerd met Paddle.")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-2">
-              <div className="col-span-2">
-                <Label>{t("admin.price", "Price")}</Label>
-                <Input type="number" step="0.01" min={0} value={priceForm.price} onChange={(e) => setPriceForm({ ...priceForm, price: e.target.value })} placeholder="0.00" />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>{t("admin.priceMonthly", "Maandprijs")}</Label>
+                <Input type="number" step="0.01" min={0} value={priceForm.price_monthly} onChange={(e) => setPriceForm({ ...priceForm, price_monthly: e.target.value })} placeholder="0.00" />
               </div>
               <div>
-                <Label>{t("admin.currency", "Currency")}</Label>
+                <Label>{t("admin.priceYearly", "Jaarprijs")}</Label>
+                <Input type="number" step="0.01" min={0} value={priceForm.price_yearly} onChange={(e) => setPriceForm({ ...priceForm, price_yearly: e.target.value })} placeholder="0.00" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>{t("admin.trialDays", "Proefdagen")}</Label>
+                <Input type="number" min={0} value={priceForm.trial_days} onChange={(e) => setPriceForm({ ...priceForm, trial_days: e.target.value })} placeholder="0" />
+              </div>
+              <div>
+                <Label>{t("admin.currency", "Valuta")}</Label>
                 <Select value={priceForm.currency} onValueChange={(v) => setPriceForm({ ...priceForm, currency: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -210,15 +277,17 @@ export function ClassPaymentSettings({ classId, className, currentPrice, currenc
                 </Select>
               </div>
             </div>
+            <p className="text-xs text-muted-foreground">{t("admin.priceHint", "Laat een veld leeg om die optie te archiveren in Paddle.")}</p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPriceDialog(false)}>{t("common.cancel", "Cancel")}</Button>
-            <Button onClick={() => updatePriceMutation.mutate(priceForm)} disabled={updatePriceMutation.isPending}>
-              {updatePriceMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}{t("common.save", "Save")}
+            <Button variant="outline" onClick={() => setShowPriceDialog(false)}>{t("common.cancel", "Annuleren")}</Button>
+            <Button onClick={() => syncMutation.mutate(priceForm)} disabled={syncMutation.isPending}>
+              {syncMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}{t("admin.syncToPaddle", "Opslaan & sync naar Paddle")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
 
       <Dialog open={showDiscountDialog} onOpenChange={setShowDiscountDialog}>
         <DialogContent className="max-w-md">
