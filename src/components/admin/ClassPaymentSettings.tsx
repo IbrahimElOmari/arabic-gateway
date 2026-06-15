@@ -154,16 +154,33 @@ export function ClassPaymentSettings({ classId, className, currentPrice, currenc
           <CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5" />{t("admin.classPricing", "Class Pricing")}</CardTitle>
           <CardDescription>{t("admin.classPricingDescription", "Set the enrollment price for")} {className}</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-2xl font-bold">{currentPrice ? `${currency} ${currentPrice.toFixed(2)}` : t("admin.noPrice", "No price set")}</p>
-              <p className="text-sm text-muted-foreground">{t("admin.currentEnrollmentPrice", "Current enrollment price")}</p>
+              <p className="text-xs text-muted-foreground">{t("admin.priceMonthly", "Maandprijs")}</p>
+              <p className="text-2xl font-bold">{classRow?.price_monthly ? `${classRow.currency || currency} ${Number(classRow.price_monthly).toFixed(2)}` : "—"}</p>
+              <p className="text-xs text-muted-foreground mt-1">{classRow?.paddle_price_id_monthly ? `✓ Paddle: ${classRow.paddle_price_id_monthly.slice(0, 16)}…` : t("admin.notSynced", "Niet gesynchroniseerd")}</p>
             </div>
-            <Button onClick={() => setShowPriceDialog(true)}><Edit className="h-4 w-4 mr-2" />{t("admin.editPrice", "Edit Price")}</Button>
+            <div>
+              <p className="text-xs text-muted-foreground">{t("admin.priceYearly", "Jaarprijs")}</p>
+              <p className="text-2xl font-bold">{classRow?.price_yearly ? `${classRow.currency || currency} ${Number(classRow.price_yearly).toFixed(2)}` : "—"}</p>
+              <p className="text-xs text-muted-foreground mt-1">{classRow?.paddle_price_id_yearly ? `✓ Paddle: ${classRow.paddle_price_id_yearly.slice(0, 16)}…` : t("admin.notSynced", "Niet gesynchroniseerd")}</p>
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={() => {
+              setPriceForm({
+                price_monthly: classRow?.price_monthly?.toString() || "",
+                price_yearly: classRow?.price_yearly?.toString() || "",
+                trial_days: (classRow?.trial_days ?? 0).toString(),
+                currency: classRow?.currency || currency || "EUR",
+              });
+              setShowPriceDialog(true);
+            }}><Edit className="h-4 w-4 mr-2" />{t("admin.editPrice", "Prijzen bewerken")}</Button>
           </div>
         </CardContent>
       </Card>
+
 
       <Card>
         <CardHeader>
