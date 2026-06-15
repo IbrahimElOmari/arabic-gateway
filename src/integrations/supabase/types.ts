@@ -365,9 +365,15 @@ export type Database = {
           level_id: string
           max_students: number | null
           name: string
+          paddle_price_id_monthly: string | null
+          paddle_price_id_yearly: string | null
+          paddle_product_id: string | null
           price: number | null
+          price_monthly: number | null
+          price_yearly: number | null
           start_date: string | null
           teacher_id: string | null
+          trial_days: number
           updated_at: string
         }
         Insert: {
@@ -380,9 +386,15 @@ export type Database = {
           level_id: string
           max_students?: number | null
           name: string
+          paddle_price_id_monthly?: string | null
+          paddle_price_id_yearly?: string | null
+          paddle_product_id?: string | null
           price?: number | null
+          price_monthly?: number | null
+          price_yearly?: number | null
           start_date?: string | null
           teacher_id?: string | null
+          trial_days?: number
           updated_at?: string
         }
         Update: {
@@ -395,9 +407,15 @@ export type Database = {
           level_id?: string
           max_students?: number | null
           name?: string
+          paddle_price_id_monthly?: string | null
+          paddle_price_id_yearly?: string | null
+          paddle_product_id?: string | null
           price?: number | null
+          price_monthly?: number | null
+          price_yearly?: number | null
           start_date?: string | null
           teacher_id?: string | null
+          trial_days?: number
           updated_at?: string
         }
         Relationships: [
@@ -823,6 +841,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      extra_products: {
+        Row: {
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          paddle_price_id: string | null
+          paddle_product_id: string | null
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          paddle_price_id?: string | null
+          paddle_product_id?: string | null
+          price: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          paddle_price_id?: string | null
+          paddle_product_id?: string | null
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       faq_articles: {
         Row: {
@@ -2406,44 +2466,65 @@ export type Database = {
       }
       subscriptions: {
         Row: {
-          class_id: string
+          cancel_at_period_end: boolean
+          class_id: string | null
           created_at: string
           current_period_end: string | null
           current_period_start: string | null
+          environment: string
           id: string
           installment_plan_id: string | null
+          paddle_customer_id: string | null
+          paddle_subscription_id: string | null
           plan_type: Database["public"]["Enums"]["plan_type"]
+          price_id: string | null
+          product_id: string | null
           status: Database["public"]["Enums"]["subscription_status"]
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
+          trial_end: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
-          class_id: string
+          cancel_at_period_end?: boolean
+          class_id?: string | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          environment?: string
           id?: string
           installment_plan_id?: string | null
+          paddle_customer_id?: string | null
+          paddle_subscription_id?: string | null
           plan_type?: Database["public"]["Enums"]["plan_type"]
+          price_id?: string | null
+          product_id?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          trial_end?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
-          class_id?: string
+          cancel_at_period_end?: boolean
+          class_id?: string | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          environment?: string
           id?: string
           installment_plan_id?: string | null
+          paddle_customer_id?: string | null
+          paddle_subscription_id?: string | null
           plan_type?: Database["public"]["Enums"]["plan_type"]
+          price_id?: string | null
+          product_id?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          trial_end?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -2950,6 +3031,10 @@ export type Database = {
         Returns: Database["public"]["Enums"]["app_role"]
       }
       get_user_with_context: { Args: { _user_id: string }; Returns: Json }
+      has_active_subscription: {
+        Args: { check_env?: string; user_uuid: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
