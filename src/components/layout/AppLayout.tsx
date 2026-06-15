@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { AppSidebar } from './AppSidebar';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { PaymentTestModeBanner } from '@/components/PaymentTestModeBanner';
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -135,7 +136,10 @@ export function AppLayout({ children }: AppLayoutProps) {
           {t('accessibility.skipToMain', 'Skip to main content')}
         </a>
 
+        <PaymentTestModeBanner />
         <OfflineBanner />
+
+
 
         {/* Mobile top bar */}
         <div className="fixed top-0 left-0 right-0 z-40 h-14 border-b bg-card flex items-center px-4 gap-3">
@@ -185,7 +189,9 @@ export function AppLayout({ children }: AppLayoutProps) {
       >
         {t('accessibility.skipToMain', 'Skip to main content')}
       </a>
+      <PaymentTestModeBanner />
       <OfflineBanner />
+
       <AppSidebar
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}

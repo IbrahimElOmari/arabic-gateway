@@ -29,6 +29,7 @@ const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const PrivacyPage = lazyWithRetry(() => import("./pages/PrivacyPage"));
 const TermsPage = lazyWithRetry(() => import("./pages/TermsPage"));
 const PricingPage = lazyWithRetry(() => import("./pages/PricingPage"));
+const BillingPage = lazyWithRetry(() => import("./pages/BillingPage"));
 
 // Admin pages
 const AdminDashboard = lazyWithRetry(() => import("./pages/admin/AdminDashboard"));
@@ -154,6 +155,7 @@ const App = () => (
                       <Route path="/progress" element={<ProtectedRoute><ProgressPage /></ProtectedRoute>} />
                       <Route path="/profile" element={<Navigate to="/settings" replace />} />
                       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+                      <Route path="/billing" element={<ProtectedRoute><BillingPage /></ProtectedRoute>} />
                       <Route path="/helpdesk" element={<ProtectedRoute><HelpdeskPage /></ProtectedRoute>} />
                       <Route path="/gamification" element={<ProtectedRoute><GamificationPage /></ProtectedRoute>} />
                       <Route path="/install" element={<InstallPage />} />
