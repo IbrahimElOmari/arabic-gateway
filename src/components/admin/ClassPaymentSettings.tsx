@@ -31,10 +31,35 @@ export function ClassPaymentSettings({ classId, className, currentPrice, currenc
   const queryClient = useQueryClient();
   const [showPriceDialog, setShowPriceDialog] = useState(false);
   const [showDiscountDialog, setShowDiscountDialog] = useState(false);
-  const [priceForm, setPriceForm] = useState({ price: currentPrice?.toString() || "", currency: currency || "EUR" });
+  const [priceForm, setPriceForm] = useState({
+    price_monthly: "",
+    price_yearly: "",
+    trial_days: "0",
+    currency: currency || "EUR",
+  });
   const [discountForm, setDiscountForm] = useState({
     code: "", discount_type: "percentage" as "percentage" | "fixed_amount",
     discount_value: "", valid_until: "", max_uses: "", is_active: true,
+  });
+
+  const { data: classRow } = useQuery({
+    queryKey: ["admin-class-paddle", classId],
+    queryFn: () => apiQuery<any>("classes", (q) =>
+      q.select("id, name, description, price_monthly, price_yearly, trial_days, currency, paddle_product_id, paddle_price_id_monthly, paddle_price_id_yearly")
+        .eq("id", classId).maybeSingle()
+    ),
+  });
+
+  // Sync form values when data loads
+  useState(() => {
+    if (classRow) {
+      setPriceForm({
+        price_monthly: classRow.price_monthly?.toString() || "",
+        price_yearly: classRow.price_yearly?.toString() || "",
+        trial_days: (classRow.trial_days ?? 0).toString(),
+        currency: classRow.currency || "EUR",
+      });
+    }
   });
 
   const { data: discounts, isLoading } = useQuery({
@@ -48,15 +73,39 @@ export function ClassPaymentSettings({ classId, className, currentPrice, currenc
     enabled: isFeatureEnabled("INSTALLMENT_PLANS"),
   });
 
-  const updatePriceMutation = useMutation({
-    mutationFn: (data: typeof priceForm) =>
-      apiMutate("classes", (q) => q.update({ price: data.price ? parseFloat(data.price) : null, currency: data.currency }).eq("id", classId)),
+  const syncMutation = useMutation({
+    mutationFn: async (data: typeof priceForm) => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { getPaddleEnvironment } = await import("@/lib/paddle");
+      const { data: res, error } = await supabase.functions.invoke("paddle-sync-product", {
+        body: {
+          kind: "class",
+          id: classId,
+          environment: getPaddleEnvironment(),
+          name: className,
+          description: classRow?.description ?? null,
+          currency: data.currency,
+          trial_days: parseInt(data.trial_days || "0", 10) || 0,
+          price_monthly: data.price_monthly ? parseFloat(data.price_monthly) : null,
+          price_yearly: data.price_yearly ? parseFloat(data.price_yearly) : null,
+        },
+      });
+      if (error) throw error;
+      if ((res as any)?.error) throw new Error((res as any).error);
+      return res;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-classes"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-class-paddle", classId] });
+      queryClient.invalidateQueries({ queryKey: ["pricing-classes"] });
       setShowPriceDialog(false);
-      toast({ title: t("admin.priceUpdated", "Price Updated") });
+      toast({ title: t("admin.priceUpdated", "Prijzen gesynchroniseerd met Paddle") });
+    },
+    onError: (e: any) => {
+      toast({ variant: "destructive", title: t("common.error", "Fout"), description: e?.message });
     },
   });
+
 
   const createDiscountMutation = useMutation({
     mutationFn: (data: typeof discountForm) =>
