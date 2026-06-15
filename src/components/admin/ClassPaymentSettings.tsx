@@ -50,17 +50,8 @@ export function ClassPaymentSettings({ classId, className, currentPrice, currenc
     ),
   });
 
-  // Sync form values when data loads
-  useState(() => {
-    if (classRow) {
-      setPriceForm({
-        price_monthly: classRow.price_monthly?.toString() || "",
-        price_yearly: classRow.price_yearly?.toString() || "",
-        trial_days: (classRow.trial_days ?? 0).toString(),
-        currency: classRow.currency || "EUR",
-      });
-    }
-  });
+
+
 
   const { data: discounts, isLoading } = useQuery({
     queryKey: ["class-discounts", classId],
