@@ -253,19 +253,29 @@ export function ClassPaymentSettings({ classId, className, currentPrice, currenc
       )}
 
       <Dialog open={showPriceDialog} onOpenChange={setShowPriceDialog}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{t("admin.editPrice", "Edit Price")}</DialogTitle>
-            <DialogDescription>{t("admin.editPriceDescription", "Set the enrollment price for this class")}</DialogDescription>
+            <DialogTitle>{t("admin.editPrice", "Prijzen bewerken")}</DialogTitle>
+            <DialogDescription>{t("admin.editPriceDescription", "Stel maand- en jaarprijs in. Wordt direct gesynchroniseerd met Paddle.")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-2">
-              <div className="col-span-2">
-                <Label>{t("admin.price", "Price")}</Label>
-                <Input type="number" step="0.01" min={0} value={priceForm.price} onChange={(e) => setPriceForm({ ...priceForm, price: e.target.value })} placeholder="0.00" />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>{t("admin.priceMonthly", "Maandprijs")}</Label>
+                <Input type="number" step="0.01" min={0} value={priceForm.price_monthly} onChange={(e) => setPriceForm({ ...priceForm, price_monthly: e.target.value })} placeholder="0.00" />
               </div>
               <div>
-                <Label>{t("admin.currency", "Currency")}</Label>
+                <Label>{t("admin.priceYearly", "Jaarprijs")}</Label>
+                <Input type="number" step="0.01" min={0} value={priceForm.price_yearly} onChange={(e) => setPriceForm({ ...priceForm, price_yearly: e.target.value })} placeholder="0.00" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>{t("admin.trialDays", "Proefdagen")}</Label>
+                <Input type="number" min={0} value={priceForm.trial_days} onChange={(e) => setPriceForm({ ...priceForm, trial_days: e.target.value })} placeholder="0" />
+              </div>
+              <div>
+                <Label>{t("admin.currency", "Valuta")}</Label>
                 <Select value={priceForm.currency} onValueChange={(v) => setPriceForm({ ...priceForm, currency: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -276,15 +286,17 @@ export function ClassPaymentSettings({ classId, className, currentPrice, currenc
                 </Select>
               </div>
             </div>
+            <p className="text-xs text-muted-foreground">{t("admin.priceHint", "Laat een veld leeg om die optie te archiveren in Paddle.")}</p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPriceDialog(false)}>{t("common.cancel", "Cancel")}</Button>
-            <Button onClick={() => updatePriceMutation.mutate(priceForm)} disabled={updatePriceMutation.isPending}>
-              {updatePriceMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}{t("common.save", "Save")}
+            <Button variant="outline" onClick={() => setShowPriceDialog(false)}>{t("common.cancel", "Annuleren")}</Button>
+            <Button onClick={() => syncMutation.mutate(priceForm)} disabled={syncMutation.isPending}>
+              {syncMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}{t("admin.syncToPaddle", "Opslaan & sync naar Paddle")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
 
       <Dialog open={showDiscountDialog} onOpenChange={setShowDiscountDialog}>
         <DialogContent className="max-w-md">
