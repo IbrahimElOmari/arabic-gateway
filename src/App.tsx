@@ -39,6 +39,7 @@ const ClassesPage = lazyWithRetry(() => import("./pages/admin/ClassesPage"));
 const LevelsPage = lazyWithRetry(() => import("./pages/admin/LevelsPage"));
 const PaymentsPage = lazyWithRetry(() => import("./pages/admin/PaymentsPage"));
 const DiscountCodesPage = lazyWithRetry(() => import("./pages/admin/DiscountCodesPage"));
+const ExtraProductsPage = lazyWithRetry(() => import("./pages/admin/ExtraProductsPage"));
 const PlacementsPage = lazyWithRetry(() => import("./pages/admin/PlacementsPage"));
 const AnalyticsPage = lazyWithRetry(() => import("./pages/admin/AnalyticsPage"));
 const KnowledgeBaseManagementPage = lazyWithRetry(() => import("./pages/admin/KnowledgeBaseManagementPage"));
@@ -180,6 +181,7 @@ const App = () => (
                       <Route path="/admin/levels" element={<ProtectedRoute requiredRole="admin"><LevelsPage /></ProtectedRoute>} />
                       <Route path="/admin/payments" element={<ProtectedRoute requiredRole="admin"><PaymentsPage /></ProtectedRoute>} />
                       <Route path="/admin/discounts" element={<ProtectedRoute requiredRole="admin"><DiscountCodesPage /></ProtectedRoute>} />
+                      <Route path="/admin/extra-products" element={<ProtectedRoute requiredRole="admin"><ExtraProductsPage /></ProtectedRoute>} />
                       <Route path="/admin/placements" element={<ProtectedRoute requiredRole="admin"><PlacementsPage /></ProtectedRoute>} />
                       <Route path="/admin/analytics" element={<ProtectedRoute requiredRole="admin"><AnalyticsPage /></ProtectedRoute>} />
                       <Route path="/admin/faq" element={<ProtectedRoute requiredRole="admin"><KnowledgeBaseManagementPage /></ProtectedRoute>} />

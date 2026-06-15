@@ -21,6 +21,8 @@ import {
   Timer,
   ToggleLeft,
   Activity,
+  Package,
+
 } from "lucide-react";
 
 
@@ -47,6 +49,7 @@ export function AdminSidebar({ collapsed, onToggle }: AdminSidebarProps) {
     { to: "/admin/placements", icon: ClipboardList, label: t("admin.placements", "Placements") },
     { to: "/admin/payments", icon: CreditCard, label: t("admin.payments", "Payments") },
     { to: "/admin/discounts", icon: Percent, label: t("admin.discounts", "Discounts") },
+    { to: "/admin/extra-products", icon: Package, label: t("admin.extraProducts", "Extra producten") },
     { to: "/admin/faq", icon: HelpCircle, label: t("admin.knowledgeBase", "Knowledge Base") },
     { to: "/admin/reports", icon: Flag, label: t("admin.contentReports", "Reports") },
     { to: "/admin/invitations", icon: Mail, label: t("admin.invitations", "Invitations") },
