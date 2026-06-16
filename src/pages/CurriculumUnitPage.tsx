@@ -51,11 +51,11 @@ export default function CurriculumUnitPage() {
   });
 
   const { data: items, isLoading } = useQuery({
-    queryKey: ["curriculum-items", unitCode],
+    queryKey: ["curriculum-items", unitCode, canEdit],
     queryFn: () =>
       apiQuery<Item[]>("curriculum_items", (q) =>
         q
-          .select("id, item_id, week, skill, exercise_type, instruction_nl, question, points, review_flag")
+          .select(canEdit ? "*" : "id, item_id, week, skill, exercise_type, instruction_nl, question, points, review_flag")
           .eq("unit_code", unitCode!)
           .order("item_id", { ascending: true })
       ),
