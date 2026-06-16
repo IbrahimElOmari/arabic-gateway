@@ -41,6 +41,7 @@ export default function CurriculumUnitPage() {
   const canEdit = isAdmin || isTeacher;
   const [skillFilter, setSkillFilter] = useState<string>("all");
   const [editing, setEditing] = useState<EditableItem | null>(null);
+  const [creating, setCreating] = useState(false);
 
   const { data: unit } = useQuery({
     queryKey: ["curriculum-unit", unitCode],
