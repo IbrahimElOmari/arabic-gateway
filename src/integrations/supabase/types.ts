@@ -2733,12 +2733,13 @@ export type Database = {
       submission_feedback: {
         Row: {
           created_at: string
+          curriculum_attempt_id: string | null
           feedback_text: string
           id: string
           rubric_id: string | null
           rubric_scores: Json
           status: string
-          student_answer_id: string
+          student_answer_id: string | null
           student_id: string
           teacher_id: string
           template_id: string | null
@@ -2746,12 +2747,13 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          curriculum_attempt_id?: string | null
           feedback_text: string
           id?: string
           rubric_id?: string | null
           rubric_scores?: Json
           status?: string
-          student_answer_id: string
+          student_answer_id?: string | null
           student_id: string
           teacher_id: string
           template_id?: string | null
@@ -2759,18 +2761,27 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          curriculum_attempt_id?: string | null
           feedback_text?: string
           id?: string
           rubric_id?: string | null
           rubric_scores?: Json
           status?: string
-          student_answer_id?: string
+          student_answer_id?: string | null
           student_id?: string
           teacher_id?: string
           template_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "submission_feedback_curriculum_attempt_id_fkey"
+            columns: ["curriculum_attempt_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_item_attempts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriptions: {
         Row: {
@@ -3352,6 +3363,7 @@ export type Database = {
         Returns: boolean
       }
       increment_discount_usage: { Args: { p_code: string }; Returns: undefined }
+      is_teacher_of: { Args: { _student: string }; Returns: boolean }
       mark_user_for_deletion: {
         Args: { p_unenrolled_at?: string; p_user_id: string }
         Returns: undefined
@@ -3379,6 +3391,7 @@ export type Database = {
         }
         Returns: string
       }
+      start_direct_chat: { Args: { _other: string }; Returns: string }
       update_user_streak: { Args: { p_user_id: string }; Returns: number }
       user_can_access_lesson: {
         Args: { _lesson_id: string; _user_id: string }
