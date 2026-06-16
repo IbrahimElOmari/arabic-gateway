@@ -548,6 +548,11 @@ export default function CurriculumItemPage() {
           </div>
         </CardContent>
       </Card>
+      <CurriculumItemEditDialog
+        item={editing}
+        open={!!editing}
+        onOpenChange={(o) => !o && setEditing(null)}
+      />
     </div>
   );
 }
