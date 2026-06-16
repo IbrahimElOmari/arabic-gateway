@@ -65,6 +65,8 @@ const TeacherMaterialsPage = lazyWithRetry(() => import("./pages/teacher/Teacher
 
 // Self-Study pages
 const SelfStudyPage = lazyWithRetry(() => import("./pages/SelfStudyPage"));
+const CurriculumUnitPage = lazyWithRetry(() => import("./pages/CurriculumUnitPage"));
+const CurriculumItemPage = lazyWithRetry(() => import("./pages/CurriculumItemPage"));
 const CategoryPage = lazyWithRetry(() => import("./pages/CategoryPage"));
 const ExercisePage = lazyWithRetry(() => import("./pages/ExercisePage"));
 const FinalExamPage = lazyWithRetry(() => import("./pages/FinalExamPage"));
@@ -135,8 +137,10 @@ const App = () => (
                         }
                       />
                       
-                      {/* Self-Study routes */}
+                      {/* Self-Study routes — literal paths BEFORE :category catch-all */}
                       <Route path="/self-study" element={<ProtectedRoute><SelfStudyPage /></ProtectedRoute>} />
+                      <Route path="/self-study/unit/:unitCode" element={<ProtectedRoute><CurriculumUnitPage /></ProtectedRoute>} />
+                      <Route path="/self-study/item/:itemId" element={<ProtectedRoute><CurriculumItemPage /></ProtectedRoute>} />
                       <Route path="/self-study/:category" element={<ProtectedRoute><CategoryPage /></ProtectedRoute>} />
                       <Route path="/self-study/:category/:exerciseId" element={<ProtectedRoute><ExercisePage /></ProtectedRoute>} />
                       <Route path="/final-exam/:examId" element={<ProtectedRoute><FinalExamPage /></ProtectedRoute>} />

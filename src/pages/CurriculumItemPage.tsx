@@ -159,7 +159,7 @@ export default function CurriculumItemPage() {
         const fills: string[] = Array.isArray(answer) ? answer : [];
         answerJson = fills;
         answerText = fills.join(" | ");
-        const expected = (cur.correct_answer || "").split("|").map(normalize);
+        const expected = (cur.correct_answer ?? "").split("|").map(normalize);
         isCorrect = fills.length === expected.length && fills.every((v, i) => normalize(v) === expected[i]);
         break;
       }
@@ -167,12 +167,12 @@ export default function CurriculumItemPage() {
         const order = currentOrder;
         answerJson = order;
         answerText = order.join(" | ");
-        const expected = (cur.correct_answer || "").split("|").map(normalize);
+        const expected = (cur.correct_answer ?? "").split("|").map(normalize);
         if (expected.length === order.length) {
           isCorrect = order.every((v, i) => normalize(v) === expected[i]);
         } else {
           // Fallback: correct order = original options array
-          isCorrect = opts.every((v, i) => normalize(v) === normalize(order[i]));
+          isCorrect = opts.every((v, i) => normalize(v) === normalize(order[i] ?? ""));
         }
         break;
       }
@@ -180,10 +180,10 @@ export default function CurriculumItemPage() {
         const pairs: Record<string, string> = (answer ?? {}) as Record<string, string>;
         answerJson = pairs;
         answerText = JSON.stringify(pairs);
-        const expectedPairs = (cur.correct_answer || "").split("|");
+        const expectedPairs = (cur.correct_answer ?? "").split("|");
         const expected: Record<string, string> = {};
         expectedPairs.forEach((p) => {
-          const [l, r] = p.split("=");
+          const [l, r] = (p ?? "").split("=");
           if (l && r) expected[normalize(l)] = normalize(r);
         });
         const keys = Object.keys(expected);
@@ -257,7 +257,7 @@ export default function CurriculumItemPage() {
     const next = [...currentOrder];
     const j = idx + dir;
     if (j < 0 || j >= next.length) return;
-    [next[idx], next[j]] = [next[j], next[idx]];
+    [next[idx], next[j]] = [next[j] as string, next[idx] as string];
     setOrderingState(next);
   }
 
@@ -305,7 +305,7 @@ export default function CurriculumItemPage() {
           />
         );
       case "gatentekst": {
-        const blanks = (cur.correct_answer || "").split("|");
+        const blanks = (cur.correct_answer ?? "").split("|");
         const fills: string[] = Array.isArray(answer) ? answer : blanks.map(() => "");
         return (
           <div className="space-y-3">
@@ -344,8 +344,8 @@ export default function CurriculumItemPage() {
         );
       case "koppelen": {
         const lefts = opts;
-        const expectedPairs = (cur.correct_answer || "").split("|");
-        const rights = expectedPairs.map((p) => p.split("=")[1]).filter(Boolean);
+        const expectedPairs = (cur.correct_answer ?? "").split("|");
+        const rights = expectedPairs.map((p) => (p ?? "").split("=")[1]).filter(Boolean) as string[];
         const shuffledRights = useMemoShuffle(rights, cur.id);
         const pairs: Record<string, string> = (answer ?? {}) as Record<string, string>;
         return (
