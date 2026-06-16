@@ -570,6 +570,7 @@ export type Database = {
       }
       curriculum_items: {
         Row: {
+          audio_url: string | null
           correct_answer: string
           correct_options: Json | null
           created_at: string
@@ -579,6 +580,7 @@ export type Database = {
           feedback_correct: string
           feedback_incorrect: string
           id: string
+          image_url: string | null
           input_arabic: string
           input_translation_nl: string
           input_transliteration: string
@@ -602,6 +604,7 @@ export type Database = {
           week: number
         }
         Insert: {
+          audio_url?: string | null
           correct_answer?: string
           correct_options?: Json | null
           created_at?: string
@@ -611,6 +614,7 @@ export type Database = {
           feedback_correct?: string
           feedback_incorrect?: string
           id?: string
+          image_url?: string | null
           input_arabic?: string
           input_translation_nl?: string
           input_transliteration?: string
@@ -634,6 +638,7 @@ export type Database = {
           week: number
         }
         Update: {
+          audio_url?: string | null
           correct_answer?: string
           correct_options?: Json | null
           created_at?: string
@@ -643,6 +648,7 @@ export type Database = {
           feedback_correct?: string
           feedback_incorrect?: string
           id?: string
+          image_url?: string | null
           input_arabic?: string
           input_translation_nl?: string
           input_transliteration?: string
