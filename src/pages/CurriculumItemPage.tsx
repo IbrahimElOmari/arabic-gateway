@@ -605,24 +605,58 @@ export default function CurriculumItemPage() {
             </div>
           )}
 
+          {/* Unit completion screen */}
+          {submitted && isLast && (
+            <div className="rounded-md border border-success/40 bg-success/5 p-4 text-sm">
+              <p className="font-semibold mb-1">{t("curriculum.unitDone", "Je hebt alle oefeningen van deze unit afgerond.")}</p>
+            </div>
+          )}
+
           {/* Actions */}
-          <div className="flex gap-2 justify-end">
-            {!submitted ? (
-              <Button onClick={handleSubmit} disabled={submitAttempt.isPending}>
-                {submitAttempt.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {t("curriculum.submit", "Indienen")}
-              </Button>
-            ) : (
-              <>
-                <Button variant="outline" onClick={() => { setSubmitted(null); setAnswer(null); setRecordedBlob(null); setOrderingState(null); }}>
-                  {t("curriculum.tryAgain", "Opnieuw")}
+          <div className="flex gap-2 justify-between">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!prevItem) return;
+                resetForNewItem();
+                navigate(`/self-study/item/${prevItem.id}`);
+              }}
+              disabled={!prevItem}
+            >
+              {t("curriculum.previous", "Vorige")}
+            </Button>
+            <div className="flex gap-2">
+              {!submitted ? (
+                <Button onClick={handleSubmit} disabled={submitAttempt.isPending}>
+                  {submitAttempt.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  {t("curriculum.submit", "Indienen")}
                 </Button>
-                <Button onClick={() => navigate(`/self-study/unit/${cur.unit_code}`)}>
-                  {t("curriculum.next", "Volgende")}
-                </Button>
-              </>
-            )}
+              ) : (
+                <>
+                  <Button variant="outline" onClick={resetForNewItem}>
+                    {t("curriculum.tryAgain", "Opnieuw")}
+                  </Button>
+                  {isLast ? (
+                    <Button onClick={() => navigate(`/self-study/unit/${cur.unit_code}`)}>
+                      {t("curriculum.backToUnit", "Terug naar unit")}
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        if (!nextItem) return;
+                        resetForNewItem();
+                        navigate(`/self-study/item/${nextItem.id}`);
+                      }}
+                      disabled={!nextItem}
+                    >
+                      {t("curriculum.next", "Volgende")}
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
+
         </CardContent>
       </Card>
       <CurriculumItemEditDialog
