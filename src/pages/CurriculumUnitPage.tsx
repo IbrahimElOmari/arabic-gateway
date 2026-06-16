@@ -215,6 +215,14 @@ export default function CurriculumUnitPage() {
         open={!!editing}
         onOpenChange={(o) => !o && setEditing(null)}
       />
+      {unitCode && (
+        <CurriculumItemCreateDialog
+          unitCode={unitCode}
+          week={unit?.week_start ?? unit?.display_order ?? 1}
+          open={creating}
+          onOpenChange={setCreating}
+        />
+      )}
     </div>
   );
 }
