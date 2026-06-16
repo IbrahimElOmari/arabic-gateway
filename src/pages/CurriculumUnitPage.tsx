@@ -25,6 +25,7 @@ interface Item {
   question: string;
   points: number | null;
   review_flag: string | null;
+  display_order: number | null;
 }
 
 interface Unit {
