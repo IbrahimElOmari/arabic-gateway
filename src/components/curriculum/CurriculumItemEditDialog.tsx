@@ -50,7 +50,7 @@ function isArabic(s: string): boolean {
   return /[\u0600-\u06FF]/.test(s || "");
 }
 
-export function CurriculumItemEditDialog({ item, open, onOpenChange }: Props) {
+export function CurriculumItemEditDialog({ item, open, onOpenChange, onDeleted }: Props) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const qc = useQueryClient();
