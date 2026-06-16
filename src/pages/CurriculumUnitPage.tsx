@@ -6,9 +6,10 @@ import { apiQuery } from "@/lib/supabase-api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, AlertTriangle, CheckCircle2, Pencil } from "lucide-react";
+import { ArrowLeft, Loader2, AlertTriangle, CheckCircle2, Pencil, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { CurriculumItemEditDialog, type EditableItem } from "@/components/curriculum/CurriculumItemEditDialog";
+import { CurriculumItemCreateDialog } from "@/components/curriculum/CurriculumItemCreateDialog";
 
 const SKILLS = ["lezen", "schrijven", "luisteren", "spreken", "grammatica", "woordenschat"] as const;
 
@@ -40,6 +41,7 @@ export default function CurriculumUnitPage() {
   const canEdit = isAdmin || isTeacher;
   const [skillFilter, setSkillFilter] = useState<string>("all");
   const [editing, setEditing] = useState<EditableItem | null>(null);
+  const [creating, setCreating] = useState(false);
 
   const { data: unit } = useQuery({
     queryKey: ["curriculum-unit", unitCode],
@@ -100,17 +102,25 @@ export default function CurriculumUnitPage() {
         </Link>
       </Button>
 
-      <div className="mb-6">
-        <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-3xl font-bold">
-            {unitCode} · {title}
-          </h1>
-          {unit?.cefr_from && <Badge variant="secondary">{unit.cefr_from}</Badge>}
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-3xl font-bold">
+              {unitCode} · {title}
+            </h1>
+            {unit?.cefr_from && <Badge variant="secondary">{unit.cefr_from}</Badge>}
+          </div>
+          {unit?.title_ar && (
+            <p className="text-xl mt-1 text-muted-foreground" dir="rtl" lang="ar">
+              {unit.title_ar}
+            </p>
+          )}
         </div>
-        {unit?.title_ar && (
-          <p className="text-xl mt-1 text-muted-foreground" dir="rtl" lang="ar">
-            {unit.title_ar}
-          </p>
+        {canEdit && (
+          <Button onClick={() => setCreating(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            {t("curriculum.newItem", "Nieuwe oefening")}
+          </Button>
         )}
       </div>
 
@@ -205,6 +215,14 @@ export default function CurriculumUnitPage() {
         open={!!editing}
         onOpenChange={(o) => !o && setEditing(null)}
       />
+      {unitCode && (
+        <CurriculumItemCreateDialog
+          unitCode={unitCode}
+          week={unit?.week_start ?? unit?.display_order ?? 1}
+          open={creating}
+          onOpenChange={setCreating}
+        />
+      )}
     </div>
   );
 }
