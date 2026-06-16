@@ -1,15 +1,17 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiQuery } from "@/lib/supabase-api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, AlertTriangle, CheckCircle2, Pencil, Plus } from "lucide-react";
+import { ArrowLeft, Loader2, AlertTriangle, CheckCircle2, Pencil, Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { CurriculumItemEditDialog, type EditableItem } from "@/components/curriculum/CurriculumItemEditDialog";
 import { CurriculumItemCreateDialog } from "@/components/curriculum/CurriculumItemCreateDialog";
+import { deleteCurriculumItem, reorderCurriculumItems } from "@/lib/curriculum-admin";
 
 const SKILLS = ["lezen", "schrijven", "luisteren", "spreken", "grammatica", "woordenschat"] as const;
 
