@@ -163,6 +163,24 @@ export default function CurriculumItemPage() {
   const correctOpts: string[] = Array.isArray(cur.correct_options) ? cur.correct_options : [];
   const needsReview = /CONTROLEER|ONTBREEKT/i.test(cur.review_flag ?? "");
 
+  const isStaff = isAdmin || isTeacher;
+  const hasAudioOrVideo = (linkedMedia ?? []).some((m) => m.kind === "audio" || m.kind === "video");
+  const showArabicSource = isStaff || !hasAudioOrVideo;
+
+  const orderedList = unitItems ?? [];
+  const currentIndex = orderedList.findIndex((it) => it.id === cur.id);
+  const nextItem = currentIndex >= 0 && currentIndex < orderedList.length - 1 ? orderedList[currentIndex + 1] : null;
+  const prevItem = currentIndex > 0 ? orderedList[currentIndex - 1] : null;
+  const isLast = currentIndex >= 0 && currentIndex === orderedList.length - 1;
+
+  function resetForNewItem() {
+    setSubmitted(null);
+    setAnswer(null);
+    setRecordedBlob(null);
+    setOrderingState(null);
+  }
+
+
   // --- Submission handlers per type ---
   async function handleSubmit() {
     let isCorrect = false;
