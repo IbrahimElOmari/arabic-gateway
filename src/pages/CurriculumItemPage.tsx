@@ -517,8 +517,8 @@ export default function CurriculumItemPage() {
           <CardTitle className="text-xl">{cur.instruction_nl}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Arabic input */}
-          {cur.input_arabic && (
+          {/* Arabic input — hidden for students when exercise has audio/video */}
+          {cur.input_arabic && showArabicSource && (
             <div className="bg-muted/50 rounded-md p-4 space-y-2">
               <p
                 dir="rtl"
@@ -536,6 +536,12 @@ export default function CurriculumItemPage() {
               )}
             </div>
           )}
+          {cur.input_arabic && !showArabicSource && cur.input_translation_nl && (
+            <div className="bg-muted/50 rounded-md p-4">
+              <p className="text-sm text-muted-foreground">{cur.input_translation_nl}</p>
+            </div>
+          )}
+
 
           {/* Media */}
           {cur.needs_ns_audio && (
