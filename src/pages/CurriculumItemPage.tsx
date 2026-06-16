@@ -118,13 +118,13 @@ export default function CurriculumItemPage() {
   });
 
   if (isLoading || !item) {
-  const cur: Item = item;
     return (
       <div className="flex justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
+  const cur: Item = item;
 
   const opts: string[] = Array.isArray(cur.options) ? cur.options : [];
   const correctOpts: string[] = Array.isArray(cur.correct_options) ? cur.correct_options : [];
