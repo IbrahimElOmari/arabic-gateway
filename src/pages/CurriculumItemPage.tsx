@@ -257,7 +257,7 @@ export default function CurriculumItemPage() {
     const next = [...currentOrder];
     const j = idx + dir;
     if (j < 0 || j >= next.length) return;
-    [next[idx], next[j]] = [next[j], next[idx]];
+    [next[idx], next[j]] = [next[j] as string, next[idx] as string];
     setOrderingState(next);
   }
 
