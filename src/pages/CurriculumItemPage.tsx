@@ -80,6 +80,34 @@ export default function CurriculumItemPage() {
     enabled: !!itemId,
   });
 
+  // Ordered list of items in current unit (for prev/next navigation)
+  const { data: unitItems } = useQuery({
+    queryKey: ["curriculum-unit-order", item?.unit_code],
+    queryFn: () =>
+      apiQuery<Array<{ id: string; display_order: number | null; created_at: string; item_id: string }>>(
+        "curriculum_items",
+        (q) =>
+          q
+            .select("id,display_order,created_at,item_id")
+            .eq("unit_code", item!.unit_code)
+            .order("display_order", { ascending: true, nullsFirst: false })
+            .order("created_at", { ascending: true })
+            .order("item_id", { ascending: true })
+      ),
+    enabled: !!item?.unit_code,
+  });
+
+  // Media linked to this item (used to decide whether to hide Arabic source for students)
+  const { data: linkedMedia } = useQuery({
+    queryKey: ["curriculum-item-media-kinds", itemId],
+    queryFn: () =>
+      apiQuery<Array<{ kind: string }>>("curriculum_item_media", (q) =>
+        q.select("kind").eq("item_id", itemId as string)
+      ),
+    enabled: !!itemId,
+  });
+
+
   const [answer, setAnswer] = useState<any>(null);
   const [submitted, setSubmitted] = useState<null | { correct: boolean; feedback: string }>(null);
 
@@ -134,6 +162,24 @@ export default function CurriculumItemPage() {
   const opts: string[] = Array.isArray(cur.options) ? cur.options : [];
   const correctOpts: string[] = Array.isArray(cur.correct_options) ? cur.correct_options : [];
   const needsReview = /CONTROLEER|ONTBREEKT/i.test(cur.review_flag ?? "");
+
+  const isStaff = isAdmin || isTeacher;
+  const hasAudioOrVideo = (linkedMedia ?? []).some((m) => m.kind === "audio" || m.kind === "video");
+  const showArabicSource = isStaff || !hasAudioOrVideo;
+
+  const orderedList = unitItems ?? [];
+  const currentIndex = orderedList.findIndex((it) => it.id === cur.id);
+  const nextItem = currentIndex >= 0 && currentIndex < orderedList.length - 1 ? orderedList[currentIndex + 1] : null;
+  const prevItem = currentIndex > 0 ? orderedList[currentIndex - 1] : null;
+  const isLast = currentIndex >= 0 && currentIndex === orderedList.length - 1;
+
+  function resetForNewItem() {
+    setSubmitted(null);
+    setAnswer(null);
+    setRecordedBlob(null);
+    setOrderingState(null);
+  }
+
 
   // --- Submission handlers per type ---
   async function handleSubmit() {
@@ -471,8 +517,8 @@ export default function CurriculumItemPage() {
           <CardTitle className="text-xl">{cur.instruction_nl}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Arabic input */}
-          {cur.input_arabic && (
+          {/* Arabic input — hidden for students when exercise has audio/video */}
+          {cur.input_arabic && showArabicSource && (
             <div className="bg-muted/50 rounded-md p-4 space-y-2">
               <p
                 dir="rtl"
@@ -490,6 +536,12 @@ export default function CurriculumItemPage() {
               )}
             </div>
           )}
+          {cur.input_arabic && !showArabicSource && cur.input_translation_nl && (
+            <div className="bg-muted/50 rounded-md p-4">
+              <p className="text-sm text-muted-foreground">{cur.input_translation_nl}</p>
+            </div>
+          )}
+
 
           {/* Media */}
           {cur.needs_ns_audio && (
@@ -553,24 +605,58 @@ export default function CurriculumItemPage() {
             </div>
           )}
 
+          {/* Unit completion screen */}
+          {submitted && isLast && (
+            <div className="rounded-md border border-success/40 bg-success/5 p-4 text-sm">
+              <p className="font-semibold mb-1">{t("curriculum.unitDone", "Je hebt alle oefeningen van deze unit afgerond.")}</p>
+            </div>
+          )}
+
           {/* Actions */}
-          <div className="flex gap-2 justify-end">
-            {!submitted ? (
-              <Button onClick={handleSubmit} disabled={submitAttempt.isPending}>
-                {submitAttempt.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {t("curriculum.submit", "Indienen")}
-              </Button>
-            ) : (
-              <>
-                <Button variant="outline" onClick={() => { setSubmitted(null); setAnswer(null); setRecordedBlob(null); setOrderingState(null); }}>
-                  {t("curriculum.tryAgain", "Opnieuw")}
+          <div className="flex gap-2 justify-between">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!prevItem) return;
+                resetForNewItem();
+                navigate(`/self-study/item/${prevItem.id}`);
+              }}
+              disabled={!prevItem}
+            >
+              {t("curriculum.previous", "Vorige")}
+            </Button>
+            <div className="flex gap-2">
+              {!submitted ? (
+                <Button onClick={handleSubmit} disabled={submitAttempt.isPending}>
+                  {submitAttempt.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  {t("curriculum.submit", "Indienen")}
                 </Button>
-                <Button onClick={() => navigate(`/self-study/unit/${cur.unit_code}`)}>
-                  {t("curriculum.next", "Volgende")}
-                </Button>
-              </>
-            )}
+              ) : (
+                <>
+                  <Button variant="outline" onClick={resetForNewItem}>
+                    {t("curriculum.tryAgain", "Opnieuw")}
+                  </Button>
+                  {isLast ? (
+                    <Button onClick={() => navigate(`/self-study/unit/${cur.unit_code}`)}>
+                      {t("curriculum.backToUnit", "Terug naar unit")}
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        if (!nextItem) return;
+                        resetForNewItem();
+                        navigate(`/self-study/item/${nextItem.id}`);
+                      }}
+                      disabled={!nextItem}
+                    >
+                      {t("curriculum.next", "Volgende")}
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
+
         </CardContent>
       </Card>
       <CurriculumItemEditDialog
