@@ -19,6 +19,7 @@ import { recordRealtimeStatus, newCorrelationId, sendWithRetry, getDiagnosticsBy
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
+import { useSearchParams } from "react-router-dom";
 
 
 const EMOJIS = ["👍", "❤️", "😊", "🎉", "👏", "🙏", "💪", "✨"];
