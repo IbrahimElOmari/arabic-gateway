@@ -118,7 +118,7 @@ export default function CurriculumItemPage() {
   });
 
   if (isLoading || !item) {
-  const it: Item = item;
+  const cur: Item = item;
     return (
       <div className="flex justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -126,9 +126,9 @@ export default function CurriculumItemPage() {
     );
   }
 
-  const opts: string[] = Array.isArray(it.options) ? it.options : [];
-  const correctOpts: string[] = Array.isArray(it.correct_options) ? it.correct_options : [];
-  const needsReview = /CONTROLEER|ONTBREEKT/i.test(it.review_flag ?? "");
+  const opts: string[] = Array.isArray(cur.options) ? cur.options : [];
+  const correctOpts: string[] = Array.isArray(cur.correct_options) ? cur.correct_options : [];
+  const needsReview = /CONTROLEER|ONTBREEKT/i.test(cur.review_flag ?? "");
 
   // --- Submission handlers per type ---
   async function handleSubmit() {
@@ -137,10 +137,10 @@ export default function CurriculumItemPage() {
     let answerJson: any = null;
     let uploadPath: string | null = null;
 
-    switch (it.exercise_type) {
+    switch (cur.exercise_type) {
       case "meerkeuze":
         answerText = String(answer ?? "");
-        isCorrect = normalize(answerText) === normalize(it.correct_answer);
+        isCorrect = normalize(answerText) === normalize(cur.correct_answer);
         break;
       case "meerdere-antwoorden": {
         const sel: string[] = Array.isArray(answer) ? answer : [];
@@ -153,13 +153,13 @@ export default function CurriculumItemPage() {
       }
       case "open-tekst":
         answerText = String(answer ?? "");
-        isCorrect = normalize(answerText) === normalize(it.correct_answer);
+        isCorrect = normalize(answerText) === normalize(cur.correct_answer);
         break;
       case "gatentekst": {
         const fills: string[] = Array.isArray(answer) ? answer : [];
         answerJson = fills;
         answerText = fills.join(" | ");
-        const expected = (it.correct_answer || "").split("|").map(normalize);
+        const expected = (cur.correct_answer || "").split("|").map(normalize);
         isCorrect = fills.length === expected.length && fills.every((v, i) => normalize(v) === expected[i]);
         break;
       }
@@ -167,7 +167,7 @@ export default function CurriculumItemPage() {
         const order = currentOrder;
         answerJson = order;
         answerText = order.join(" | ");
-        const expected = (it.correct_answer || "").split("|").map(normalize);
+        const expected = (cur.correct_answer || "").split("|").map(normalize);
         if (expected.length === order.length) {
           isCorrect = order.every((v, i) => normalize(v) === expected[i]);
         } else {
@@ -180,7 +180,7 @@ export default function CurriculumItemPage() {
         const pairs: Record<string, string> = (answer ?? {}) as Record<string, string>;
         answerJson = pairs;
         answerText = JSON.stringify(pairs);
-        const expectedPairs = (it.correct_answer || "").split("|");
+        const expectedPairs = (cur.correct_answer || "").split("|");
         const expected: Record<string, string> = {};
         expectedPairs.forEach((p) => {
           const [l, r] = p.split("=");
@@ -199,8 +199,8 @@ export default function CurriculumItemPage() {
           return;
         }
         const blob: Blob = recordedBlob ?? (answer as File);
-        const ext = it.exercise_type === "audio-opname" ? "webm" : (answer instanceof File ? answer.name.split(".").pop() : "bin");
-        const path = `${user!.id}/${it.id}/${Date.now()}.${ext}`;
+        const ext = cur.exercise_type === "audio-opname" ? "webm" : (answer instanceof File ? answer.name.split(".").pop() : "bin");
+        const path = `${user!.id}/${cur.id}/${Date.now()}.${ext}`;
         const { error } = await supabase.storage.from("student-uploads").upload(path, blob, { upsert: false });
         if (error) {
           toast({ variant: "destructive", title: t("common.error", "Fout"), description: error.message });
@@ -219,11 +219,11 @@ export default function CurriculumItemPage() {
         answer_text: answerText,
         answer_json: answerJson,
         upload_path: uploadPath,
-        score: isCorrect ? it.points ?? 1 : 0,
+        score: isCorrect ? cur.points ?? 1 : 0,
       });
       setSubmitted({
         correct: isCorrect,
-        feedback: isCorrect ? it.feedback_correct : it.feedback_incorrect,
+        feedback: isCorrect ? cur.feedback_correct : cur.feedback_incorrect,
       });
     } catch (e: any) {
       toast({ variant: "destructive", title: t("common.error", "Fout"), description: e?.message });
@@ -264,7 +264,7 @@ export default function CurriculumItemPage() {
   // --- Render per type ---
   function renderInteraction() {
     if (submitted) return null;
-    switch (it.exercise_type) {
+    switch (cur.exercise_type) {
       case "meerkeuze":
         return (
           <RadioGroup value={answer ?? ""} onValueChange={setAnswer} className="space-y-2">
@@ -305,11 +305,11 @@ export default function CurriculumItemPage() {
           />
         );
       case "gatentekst": {
-        const blanks = (it.correct_answer || "").split("|");
+        const blanks = (cur.correct_answer || "").split("|");
         const fills: string[] = Array.isArray(answer) ? answer : blanks.map(() => "");
         return (
           <div className="space-y-3">
-            {it.question && <p className="text-muted-foreground">{it.question}</p>}
+            {cur.question && <p className="text-muted-foreground">{cur.question}</p>}
             {blanks.map((_, i) => (
               <div key={i} className="flex items-center gap-2">
                 <Label className="w-16">#{i + 1}</Label>
@@ -344,9 +344,9 @@ export default function CurriculumItemPage() {
         );
       case "koppelen": {
         const lefts = opts;
-        const expectedPairs = (it.correct_answer || "").split("|");
+        const expectedPairs = (cur.correct_answer || "").split("|");
         const rights = expectedPairs.map((p) => p.split("=")[1]).filter(Boolean);
-        const shuffledRights = useMemoShuffle(rights, it.id);
+        const shuffledRights = useMemoShuffle(rights, cur.id);
         const pairs: Record<string, string> = (answer ?? {}) as Record<string, string>;
         return (
           <div className="space-y-2">
@@ -408,14 +408,14 @@ export default function CurriculumItemPage() {
           </div>
         );
       default:
-        return <p className="text-muted-foreground">{t("curriculum.unknownType", "Onbekend oefentype")}: {it.exercise_type}</p>;
+        return <p className="text-muted-foreground">{t("curriculum.unknownType", "Onbekend oefentype")}: {cur.exercise_type}</p>;
     }
   }
 
   return (
     <div className="container py-8 max-w-3xl">
       <Button variant="ghost" asChild className="mb-4">
-        <Link to={`/self-study/unit/${it.unit_code}`}>
+        <Link to={`/self-study/unit/${cur.unit_code}`}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           {t("common.back", "Terug")}
         </Link>
@@ -424,10 +424,10 @@ export default function CurriculumItemPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2 flex-wrap mb-2">
-            <Badge variant="outline">{it.item_id}</Badge>
-            <Badge variant="secondary">{t(`skills.${it.skill}`, it.skill)}</Badge>
-            <Badge variant="outline">{t(`exerciseTypes.${it.exercise_type}`, it.exercise_type)}</Badge>
-            <Badge variant="outline">{it.points ?? 0} pt</Badge>
+            <Badge variant="outline">{cur.item_id}</Badge>
+            <Badge variant="secondary">{t(`skills.${cur.skill}`, cur.skill)}</Badge>
+            <Badge variant="outline">{t(`exerciseTypes.${cur.exercise_type}`, cur.exercise_type)}</Badge>
+            <Badge variant="outline">{cur.points ?? 0} pt</Badge>
             {needsReview && (
               <Badge variant="destructive" className="gap-1">
                 <AlertTriangle className="h-3 w-3" />
@@ -435,11 +435,11 @@ export default function CurriculumItemPage() {
               </Badge>
             )}
           </div>
-          <CardTitle className="text-xl">{it.instruction_nl}</CardTitle>
+          <CardTitle className="text-xl">{cur.instruction_nl}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Arabic input */}
-          {it.input_arabic && (
+          {cur.input_arabic && (
             <div className="bg-muted/50 rounded-md p-4 space-y-2">
               <p
                 dir="rtl"
@@ -447,30 +447,30 @@ export default function CurriculumItemPage() {
                 className="text-2xl leading-loose font-arabic"
                 style={{ fontFamily: '"Amiri", "Noto Naskh Arabic", serif' }}
               >
-                {it.input_arabic}
+                {cur.input_arabic}
               </p>
-              {it.input_transliteration && (
-                <p className="text-sm italic text-muted-foreground">{it.input_transliteration}</p>
+              {cur.input_transliteration && (
+                <p className="text-sm italic text-muted-foreground">{cur.input_transliteration}</p>
               )}
-              {it.input_translation_nl && (
-                <p className="text-sm text-muted-foreground">{it.input_translation_nl}</p>
+              {cur.input_translation_nl && (
+                <p className="text-sm text-muted-foreground">{cur.input_translation_nl}</p>
               )}
             </div>
           )}
 
           {/* Media */}
-          {it.needs_ns_audio && (
-            it.audio_url ? (
-              <audio controls src={it.audio_url} className="w-full" />
+          {cur.needs_ns_audio && (
+            cur.audio_url ? (
+              <audio controls src={cur.audio_url} className="w-full" />
             ) : (
               <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
                 🎧 {t("curriculum.audioPending", "Audio nog niet beschikbaar.")}
               </div>
             )
           )}
-          {it.needs_image && (
-            it.image_url ? (
-              <img src={it.image_url} alt={it.question || it.instruction_nl} className="rounded-md max-w-full" />
+          {cur.needs_image && (
+            cur.image_url ? (
+              <img src={cur.image_url} alt={cur.question || cur.instruction_nl} className="rounded-md max-w-full" />
             ) : (
               <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
                 🖼️ {t("curriculum.imagePending", "Afbeelding nog niet beschikbaar.")}
@@ -479,8 +479,8 @@ export default function CurriculumItemPage() {
           )}
 
           {/* Question */}
-          {it.question && it.exercise_type !== "gatentekst" && (
-            <p className="font-medium">{it.question}</p>
+          {cur.question && cur.exercise_type !== "gatentekst" && (
+            <p className="font-medium">{cur.question}</p>
           )}
 
           {/* Interaction */}
@@ -507,10 +507,10 @@ export default function CurriculumItemPage() {
                 )}
               </div>
               {submitted.feedback && <p className="text-sm">{submitted.feedback}</p>}
-              {!submitted.correct && it.correct_answer && (
+              {!submitted.correct && cur.correct_answer && (
                 <p className="text-sm mt-2">
                   <span className="font-medium">{t("curriculum.correctAnswer", "Juist antwoord")}: </span>
-                  {it.correct_answer}
+                  {cur.correct_answer}
                 </p>
               )}
             </div>
@@ -528,7 +528,7 @@ export default function CurriculumItemPage() {
                 <Button variant="outline" onClick={() => { setSubmitted(null); setAnswer(null); setRecordedBlob(null); setOrderingState(null); }}>
                   {t("curriculum.tryAgain", "Opnieuw")}
                 </Button>
-                <Button onClick={() => navigate(`/self-study/unit/${it.unit_code}`)}>
+                <Button onClick={() => navigate(`/self-study/unit/${cur.unit_code}`)}>
                   {t("curriculum.next", "Volgende")}
                 </Button>
               </>
