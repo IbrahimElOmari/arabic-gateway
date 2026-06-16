@@ -62,7 +62,9 @@ function normalize(s: string): string {
 export default function CurriculumItemPage() {
   const { itemId } = useParams<{ itemId: string }>();
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, isAdmin, isTeacher } = useAuth();
+  const canEdit = isAdmin || isTeacher;
+  const [editing, setEditing] = useState<EditableItem | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const qc = useQueryClient();
