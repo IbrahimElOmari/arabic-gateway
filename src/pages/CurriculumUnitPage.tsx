@@ -36,8 +36,10 @@ interface Unit {
 export default function CurriculumUnitPage() {
   const { unitCode } = useParams<{ unitCode: string }>();
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, isAdmin, isTeacher } = useAuth();
+  const canEdit = isAdmin || isTeacher;
   const [skillFilter, setSkillFilter] = useState<string>("all");
+  const [editing, setEditing] = useState<EditableItem | null>(null);
 
   const { data: unit } = useQuery({
     queryKey: ["curriculum-unit", unitCode],
