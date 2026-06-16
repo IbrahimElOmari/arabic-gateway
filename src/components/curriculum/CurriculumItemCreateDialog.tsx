@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiQuery, apiMutate } from "@/lib/supabase-api";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -11,8 +12,35 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
+import { Loader2, Plus, Trash2, ArrowUp, ArrowDown, Link2, Image as ImageIcon, FileAudio, Film, File as FileIcon } from "lucide-react";
 import { CurriculumItemMediaPanel } from "./CurriculumItemMediaPanel";
+
+const BUCKET = "curriculum-media";
+
+type PendingKind = "image" | "audio" | "video" | "file" | "url";
+interface PendingMedia {
+  uid: string;
+  kind: PendingKind;
+  file?: File;
+  url?: string;
+  alt: string;
+}
+
+function kindFromMime(mime: string): PendingKind {
+  if (mime.startsWith("image/")) return "image";
+  if (mime.startsWith("audio/")) return "audio";
+  if (mime.startsWith("video/")) return "video";
+  return "file";
+}
+
+function KindIcon({ kind }: { kind: PendingKind }) {
+  const cls = "h-4 w-4";
+  if (kind === "image") return <ImageIcon className={cls} />;
+  if (kind === "audio") return <FileAudio className={cls} />;
+  if (kind === "video") return <Film className={cls} />;
+  if (kind === "url") return <Link2 className={cls} />;
+  return <FileIcon className={cls} />;
+}
 
 const SKILLS = ["lezen", "schrijven", "luisteren", "spreken", "grammatica", "woordenschat"] as const;
 const TYPES = [
