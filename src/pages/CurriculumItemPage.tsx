@@ -14,9 +14,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, AlertTriangle, Mic, Square, Upload, GripVertical, Pencil } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, AlertTriangle, Mic, Square, Upload, GripVertical, Pencil, Trash2 } from "lucide-react";
 import { CurriculumItemEditDialog, type EditableItem } from "@/components/curriculum/CurriculumItemEditDialog";
 import { CurriculumItemMediaView } from "@/components/curriculum/CurriculumItemMediaView";
+import { deleteCurriculumItem } from "@/lib/curriculum-admin";
 
 interface Item {
   id: string;
@@ -426,10 +427,29 @@ export default function CurriculumItemPage() {
           </Link>
         </Button>
         {canEdit && (
-          <Button variant="outline" onClick={() => setEditing(cur as unknown as EditableItem)}>
-            <Pencil className="h-4 w-4 mr-2" />
-            {t("common.edit", "Wijzigen")}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setEditing(cur as unknown as EditableItem)}>
+              <Pencil className="h-4 w-4 mr-2" />
+              {t("common.edit", "Wijzigen")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                if (!window.confirm(t("curriculum.confirmDelete", "Weet je zeker dat je deze oefening wilt verwijderen?"))) return;
+                try {
+                  await deleteCurriculumItem(cur.id);
+                  toast({ title: t("curriculum.deleted", "Oefening verwijderd") });
+                  qc.invalidateQueries({ queryKey: ["curriculum-items"] });
+                  navigate(`/self-study/unit/${cur.unit_code}`);
+                } catch (e: any) {
+                  toast({ variant: "destructive", title: t("common.error", "Fout"), description: e?.message });
+                }
+              }}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              {t("common.delete", "Verwijderen")}
+            </Button>
+          </div>
         )}
       </div>
 
@@ -557,6 +577,7 @@ export default function CurriculumItemPage() {
         item={editing}
         open={!!editing}
         onOpenChange={(o) => !o && setEditing(null)}
+        onDeleted={() => navigate(`/self-study/unit/${cur.unit_code}`)}
       />
     </div>
   );

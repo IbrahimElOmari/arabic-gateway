@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiMutate } from "@/lib/supabase-api";
+import { deleteCurriculumItem } from "@/lib/curriculum-admin";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,7 @@ interface Props {
   item: EditableItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onDeleted?: (id: string) => void;
 }
 
 const arabicFont = { fontFamily: '"Amiri", "Noto Naskh Arabic", serif' };
@@ -48,7 +50,7 @@ function isArabic(s: string): boolean {
   return /[\u0600-\u06FF]/.test(s || "");
 }
 
-export function CurriculumItemEditDialog({ item, open, onOpenChange }: Props) {
+export function CurriculumItemEditDialog({ item, open, onOpenChange, onDeleted }: Props) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -94,6 +96,23 @@ export function CurriculumItemEditDialog({ item, open, onOpenChange }: Props) {
       qc.invalidateQueries({ queryKey: ["curriculum-items"] });
       qc.invalidateQueries({ queryKey: ["curriculum-review"] });
       onOpenChange(false);
+    },
+    onError: (e: any) => {
+      toast({ variant: "destructive", title: t("common.error", "Fout"), description: e?.message });
+    },
+  });
+
+  const del = useMutation({
+    mutationFn: async () => {
+      if (!form) return;
+      await deleteCurriculumItem(form.id);
+    },
+    onSuccess: () => {
+      toast({ title: t("curriculum.deleted", "Oefening verwijderd") });
+      qc.invalidateQueries({ queryKey: ["curriculum-items"] });
+      qc.invalidateQueries({ queryKey: ["curriculum-review"] });
+      onOpenChange(false);
+      if (form) onDeleted?.(form.id);
     },
     onError: (e: any) => {
       toast({ variant: "destructive", title: t("common.error", "Fout"), description: e?.message });
@@ -341,14 +360,28 @@ export function CurriculumItemEditDialog({ item, open, onOpenChange }: Props) {
           <CurriculumItemMediaPanel itemId={f.id} />
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t("common.cancel", "Annuleren")}
+        <DialogFooter className="flex sm:justify-between gap-2">
+          <Button
+            variant="destructive"
+            disabled={del.isPending}
+            onClick={() => {
+              if (window.confirm(t("curriculum.confirmDelete", "Weet je zeker dat je deze oefening wilt verwijderen?"))) {
+                del.mutate();
+              }
+            }}
+          >
+            {del.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+            {t("common.delete", "Verwijderen")}
           </Button>
-          <Button onClick={() => save.mutate()} disabled={save.isPending}>
-            {save.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {t("common.save", "Opslaan")}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              {t("common.cancel", "Annuleren")}
+            </Button>
+            <Button onClick={() => save.mutate()} disabled={save.isPending}>
+              {save.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {t("common.save", "Opslaan")}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

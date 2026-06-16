@@ -1,15 +1,17 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiQuery } from "@/lib/supabase-api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, AlertTriangle, CheckCircle2, Pencil, Plus } from "lucide-react";
+import { ArrowLeft, Loader2, AlertTriangle, CheckCircle2, Pencil, Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { CurriculumItemEditDialog, type EditableItem } from "@/components/curriculum/CurriculumItemEditDialog";
 import { CurriculumItemCreateDialog } from "@/components/curriculum/CurriculumItemCreateDialog";
+import { deleteCurriculumItem, reorderCurriculumItems } from "@/lib/curriculum-admin";
 
 const SKILLS = ["lezen", "schrijven", "luisteren", "spreken", "grammatica", "woordenschat"] as const;
 
@@ -23,6 +25,7 @@ interface Item {
   question: string;
   points: number | null;
   review_flag: string | null;
+  display_order: number | null;
 }
 
 interface Unit {
@@ -38,6 +41,8 @@ export default function CurriculumUnitPage() {
   const { unitCode } = useParams<{ unitCode: string }>();
   const { t } = useTranslation();
   const { user, isAdmin, isTeacher } = useAuth();
+  const { toast } = useToast();
+  const qc = useQueryClient();
   const canEdit = isAdmin || isTeacher;
   const [skillFilter, setSkillFilter] = useState<string>("all");
   const [editing, setEditing] = useState<EditableItem | null>(null);
@@ -57,12 +62,48 @@ export default function CurriculumUnitPage() {
     queryFn: () =>
       apiQuery<Item[]>("curriculum_items", (q) =>
         q
-          .select(canEdit ? "*" : "id, item_id, week, skill, exercise_type, instruction_nl, question, points, review_flag")
+          .select(canEdit ? "*" : "id, item_id, week, skill, exercise_type, instruction_nl, question, points, review_flag, display_order")
           .eq("unit_code", unitCode!)
+          .order("display_order", { ascending: true, nullsFirst: false })
           .order("item_id", { ascending: true })
       ),
     enabled: !!unitCode,
   });
+
+  const invalidateItems = () =>
+    qc.invalidateQueries({ queryKey: ["curriculum-items", unitCode, canEdit] });
+
+  const reorder = useMutation({
+    mutationFn: (orderedIds: string[]) => reorderCurriculumItems(orderedIds),
+    onSuccess: () => invalidateItems(),
+    onError: (e: any) =>
+      toast({ variant: "destructive", title: t("common.error", "Fout"), description: e?.message }),
+  });
+
+  const del = useMutation({
+    mutationFn: (id: string) => deleteCurriculumItem(id),
+    onSuccess: () => {
+      toast({ title: t("curriculum.deleted", "Oefening verwijderd") });
+      invalidateItems();
+    },
+    onError: (e: any) =>
+      toast({ variant: "destructive", title: t("common.error", "Fout"), description: e?.message }),
+  });
+
+  function moveItem(idx: number, dir: -1 | 1) {
+    const list = items ?? [];
+    const j = idx + dir;
+    if (j < 0 || j >= list.length) return;
+    const next = [...list];
+    [next[idx], next[j]] = [next[j] as Item, next[idx] as Item];
+    reorder.mutate(next.map((it) => it.id));
+  }
+
+  function confirmDelete(it: Item) {
+    if (window.confirm(t("curriculum.confirmDelete", "Weet je zeker dat je deze oefening wilt verwijderen?"))) {
+      del.mutate(it.id);
+    }
+  }
 
   const { data: attempts } = useQuery({
     queryKey: ["unit-attempts", unitCode, user?.id],
@@ -153,6 +194,8 @@ export default function CurriculumUnitPage() {
           {filtered.map((item) => {
             const status = attemptByItem.get(item.id);
             const needsReview = /CONTROLEER|ONTBREEKT/i.test(item.review_flag ?? "");
+            const fullIdx = (items ?? []).findIndex((i) => i.id === item.id);
+            const canReorder = canEdit && skillFilter === "all";
             return (
               <Card key={item.id} className="relative transition-all hover:border-primary/50 hover:shadow-sm">
                 <Link to={`/self-study/item/${item.id}`} className="block">
@@ -184,19 +227,54 @@ export default function CurriculumUnitPage() {
                   </CardContent>
                 </Link>
                 {canEdit && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="absolute top-2 right-2 z-10"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setEditing(item as unknown as EditableItem);
-                    }}
-                  >
-                    <Pencil className="h-3 w-3 mr-1" />
-                    {t("common.edit", "Wijzigen")}
-                  </Button>
+                  <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+                    {canReorder && (
+                      <>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="h-7 w-7"
+                          disabled={fullIdx <= 0 || reorder.isPending}
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); moveItem(fullIdx, -1); }}
+                          title={t("curriculum.moveUp", "Omhoog")}
+                        >
+                          <ArrowUp className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="h-7 w-7"
+                          disabled={fullIdx === -1 || fullIdx >= (items?.length ?? 0) - 1 || reorder.isPending}
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); moveItem(fullIdx, 1); }}
+                          title={t("curriculum.moveDown", "Omlaag")}
+                        >
+                          <ArrowDown className="h-3 w-3" />
+                        </Button>
+                      </>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setEditing(item as unknown as EditableItem);
+                      }}
+                    >
+                      <Pencil className="h-3 w-3 mr-1" />
+                      {t("common.edit", "Wijzigen")}
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      className="h-7 w-7"
+                      disabled={del.isPending}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); confirmDelete(item); }}
+                      title={t("common.delete", "Verwijderen")}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
                 )}
               </Card>
             );
