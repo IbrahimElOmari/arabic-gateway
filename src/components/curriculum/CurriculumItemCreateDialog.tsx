@@ -186,39 +186,63 @@ export function CurriculumItemCreateDialog({ unitCode, week, open, onOpenChange 
       const newId = Array.isArray(rows) ? (rows[0]?.id as string) : "";
       if (!newId) throw new Error("insert returned no id");
 
+      const mediaErrors: string[] = [];
       for (let i = 0; i < pendingMedia.length; i++) {
         const m = pendingMedia[i]!;
-        let url = m.url ?? "";
-        if (m.file) {
-          const ext = m.file.name.split(".").pop() ?? "bin";
-          const path = `${newId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-          const { error: upErr } = await supabase.storage
-            .from(BUCKET)
-            .upload(path, m.file, { upsert: false, contentType: m.file.type });
-          if (upErr) throw upErr;
-          url = supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+        try {
+          let url = m.url ?? "";
+          if (m.kind !== "url" && m.file) {
+            const ext = m.file.name.split(".").pop() ?? "bin";
+            const path = `${newId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+            const { error: upErr } = await supabase.storage
+              .from(BUCKET)
+              .upload(path, m.file, { upsert: false, contentType: m.file.type });
+            if (upErr) throw new Error(`Upload faalde (${m.file.name}): ${upErr.message}`);
+            url = supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+            if (!url) throw new Error(`Geen publieke URL na upload (${m.file.name})`);
+          }
+          if (!url) throw new Error("Lege URL voor media-item");
+          await apiMutate("curriculum_item_media", (q) =>
+            q.insert({
+              item_id: newId,
+              kind: m.kind,
+              url,
+              alt: m.alt || null,
+              sort_order: i,
+              created_by: user.id,
+            })
+          );
+        } catch (err: any) {
+          const msg = err?.message || String(err);
+          // eslint-disable-next-line no-console
+          console.error("[curriculum-media] save failed", err);
+          mediaErrors.push(msg);
+          toast({
+            variant: "destructive",
+            title: t("curriculum.mediaSaveFailed", "Media opslaan mislukt"),
+            description: msg,
+          });
         }
-        await apiMutate("curriculum_item_media", (q) =>
-          q.insert({
-            item_id: newId,
-            kind: m.kind,
-            url,
-            alt: m.alt || null,
-            sort_order: i,
-            created_by: user.id,
-          })
-        );
       }
 
-      return newId;
+      return { newId, mediaErrors };
     },
-    onSuccess: (newId) => {
-      toast({ title: t("curriculum.created", "Oefening aangemaakt") });
+    onSuccess: ({ newId, mediaErrors }) => {
+      if (mediaErrors.length === 0) {
+        toast({ title: t("curriculum.created", "Oefening aangemaakt") });
+      } else {
+        toast({
+          variant: "destructive",
+          title: t("curriculum.createdWithMediaErrors", "Oefening aangemaakt, maar media mislukten"),
+          description: t("curriculum.retryInMediaPanel", "Probeer media hieronder opnieuw toe te voegen."),
+        });
+      }
       qc.invalidateQueries({ queryKey: ["curriculum-items", unitCode] });
       qc.invalidateQueries({ queryKey: ["curriculum-item-media", newId] });
       setCreatedItemId(newId);
     },
-    onError: (e: any) => toast({ variant: "destructive", title: t("common.error", "Fout"), description: e?.message }),
+    onError: (e: any) =>
+      toast({ variant: "destructive", title: t("common.error", "Fout"), description: e?.message }),
   });
 
   function close() {
