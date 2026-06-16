@@ -1,154 +1,141 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-
 import { useQuery } from "@tanstack/react-query";
 import { apiQuery } from "@/lib/supabase-api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, PenTool, Headphones, Mic, BookText, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, BookOpen } from "lucide-react";
 
-const categoryIcons: Record<string, React.ElementType> = {
-  reading: BookOpen,
-  writing: PenTool,
-  listening: Headphones,
-  speaking: Mic,
-  grammar: BookText,
-};
+interface Unit {
+  code: string;
+  display_order: number;
+  week_start: number | null;
+  title_nl: string | null;
+  title_ar: string | null;
+  cefr_from: string | null;
+}
+
+interface ProgressRow {
+  unit_code: string;
+  items_completed: number;
+  items_correct: number;
+  total_points: number;
+}
 
 export default function SelfStudyPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { user } = useAuth();
 
-  // Fetch exercise categories
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
-    queryKey: ["exercise-categories"],
-    queryFn: async () => {
-      return apiQuery<any[]>("exercise_categories", (q) =>
-        q.select("*").order("display_order")
-      );
-    },
+  const { data: units, isLoading } = useQuery({
+    queryKey: ["curriculum-units"],
+    queryFn: () =>
+      apiQuery<Unit[]>("curriculum_units", (q) =>
+        q.select("code, display_order, week_start, title_nl, title_ar, cefr_from").order("display_order")
+      ),
   });
 
-  // Fetch user's progress per category
+  const { data: itemCounts } = useQuery({
+    queryKey: ["curriculum-item-counts"],
+    queryFn: () =>
+      apiQuery<{ unit_code: string }[]>("curriculum_items", (q) =>
+        q.select("unit_code")
+      ),
+  });
+
   const { data: progress } = useQuery({
-    queryKey: ["student-progress", user?.id],
-    queryFn: async () => {
-      if (!user) return {};
-      const data = await apiQuery<any[]>("student_progress", (q) =>
-        q.select("*").eq("student_id", user.id)
-      );
-      
-      // Convert to a map by category_id
-      const progressMap: Record<string, { completed: number; total: number; score: number }> = {};
-      data?.forEach((p) => {
-        progressMap[p.category_id] = {
-          completed: p.exercises_completed,
-          total: p.exercises_total,
-          score: p.average_score,
-        };
-      });
-      return progressMap;
-    },
+    queryKey: ["curriculum-progress", user?.id],
+    queryFn: () =>
+      apiQuery<ProgressRow[]>("curriculum_progress", (q) =>
+        q.select("unit_code, items_completed, items_correct, total_points").eq("student_id", user!.id)
+      ),
     enabled: !!user,
   });
 
-  const getLocalizedName = (category: { name_nl: string; name_en: string; name_ar: string }) => {
-    const lang = i18n.language;
-    if (lang === "nl") return category.name_nl;
-    if (lang === "ar") return category.name_ar;
-    return category.name_en;
-  };
-
-  const getLocalizedDescription = (categoryName: string) => {
-    return t(`selfStudy.categoryDescriptions.${categoryName}`, "");
-  };
+  const countsByUnit = (itemCounts ?? []).reduce<Record<string, number>>((acc, r) => {
+    acc[r.unit_code] = (acc[r.unit_code] ?? 0) + 1;
+    return acc;
+  }, {});
+  const progressByUnit = (progress ?? []).reduce<Record<string, ProgressRow>>((acc, r) => {
+    acc[r.unit_code] = r;
+    return acc;
+  }, {});
 
   return (
-    <>
-      <div className="container py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">
-            {t("selfStudy.title")}
-          </h1>
-          <p className="text-muted-foreground">
-            {t("selfStudy.description")}
-          </p>
+    <div className="container py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">{t("selfStudy.title", "Zelfstudie")}</h1>
+        <p className="text-muted-foreground">
+          {t("selfStudy.unitsDescription", "Kies een unit om met de oefeningen te beginnen.")}
+        </p>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-
-        {/* Categories Grid */}
-        {categoriesLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {categories?.map((category) => {
-              const Icon = categoryIcons[category.name] || BookOpen;
-              const categoryProgress = progress?.[category.id];
-              const progressPercent = categoryProgress
-                ? (categoryProgress.completed / Math.max(categoryProgress.total, 1)) * 100
-                : 0;
-
-              return (
-                <Link key={category.id} to={`/self-study/${category.name}`}>
-                  <Card className="h-full transition-all hover:shadow-lg hover:border-primary/50">
-                    <CardHeader>
-                      <div className="flex items-center gap-4">
-                        <div className="rounded-full bg-primary/10 p-4">
-                          <Icon className="h-8 w-8 text-primary" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-xl">
-                            {getLocalizedName(category)}
-                          </CardTitle>
-                          <CardDescription>
-                            {getLocalizedDescription(category.name)}
-                          </CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">
-                            {t("selfStudy.progress")}
-                          </span>
-                          <span className="font-medium">
-                            {categoryProgress?.completed || 0}/{categoryProgress?.total || 0}
-                          </span>
-                        </div>
-                        <Progress value={progressPercent} className="h-2" />
-                        {categoryProgress?.score !== undefined && categoryProgress.score > 0 && (
-                          <p className="text-sm text-muted-foreground">
-                            {t("selfStudy.averageScore")}: {categoryProgress.score.toFixed(0)}%
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {units?.map((u) => {
+            const total = countsByUnit[u.code] ?? 0;
+            const p = progressByUnit[u.code];
+            const pct = total > 0 && p ? Math.round((p.items_completed / total) * 100) : 0;
+            const title = u.title_nl?.trim() || `Unit ${u.week_start ?? u.display_order}`;
+            return (
+              <Link key={u.code} to={`/self-study/unit/${u.code}`}>
+                <Card className="h-full transition-all hover:shadow-lg hover:border-primary/50">
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <CardTitle className="text-lg">
+                          {u.code} · {title}
+                        </CardTitle>
+                        {u.title_ar && (
+                          <p className="text-base mt-1 font-arabic" dir="rtl" lang="ar">
+                            {u.title_ar}
                           </p>
                         )}
+                        <CardDescription className="mt-1">
+                          {t("selfStudy.week", "Week")} {u.week_start ?? u.display_order}
+                          {total > 0 && ` · ${total} ${t("selfStudy.exercises", "oefeningen")}`}
+                        </CardDescription>
                       </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
-        )}
+                      {u.cefr_from && (
+                        <Badge variant="secondary" className="shrink-0">
+                          {u.cefr_from}
+                        </Badge>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          {t("selfStudy.progress", "Voortgang")}
+                        </span>
+                        <span className="font-medium">
+                          {p?.items_completed ?? 0}/{total}
+                        </span>
+                      </div>
+                      <Progress value={pct} className="h-2" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
-        {/* Empty state if no categories */}
-        {!categoriesLoading && (!categories || categories.length === 0) && (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold text-foreground">
-                {t("selfStudy.noExercises")}
-              </h3>
-              <p className="text-muted-foreground">
-                {t("selfStudy.checkBack")}
-              </p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    </>
+      {!isLoading && (!units || units.length === 0) && (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold">{t("selfStudy.noUnits", "Nog geen units beschikbaar")}</h3>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
