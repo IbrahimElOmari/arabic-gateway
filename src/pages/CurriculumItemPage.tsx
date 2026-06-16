@@ -80,6 +80,34 @@ export default function CurriculumItemPage() {
     enabled: !!itemId,
   });
 
+  // Ordered list of items in current unit (for prev/next navigation)
+  const { data: unitItems } = useQuery({
+    queryKey: ["curriculum-unit-order", item?.unit_code],
+    queryFn: () =>
+      apiQuery<Array<{ id: string; display_order: number | null; created_at: string; item_id: string }>>(
+        "curriculum_items",
+        (q) =>
+          q
+            .select("id,display_order,created_at,item_id")
+            .eq("unit_code", item!.unit_code)
+            .order("display_order", { ascending: true, nullsFirst: false })
+            .order("created_at", { ascending: true })
+            .order("item_id", { ascending: true })
+      ),
+    enabled: !!item?.unit_code,
+  });
+
+  // Media linked to this item (used to decide whether to hide Arabic source for students)
+  const { data: linkedMedia } = useQuery({
+    queryKey: ["curriculum-item-media-kinds", itemId],
+    queryFn: () =>
+      apiQuery<Array<{ kind: string }>>("curriculum_item_media", (q) =>
+        q.select("kind").eq("item_id", itemId as string)
+      ),
+    enabled: !!itemId,
+  });
+
+
   const [answer, setAnswer] = useState<any>(null);
   const [submitted, setSubmitted] = useState<null | { correct: boolean; feedback: string }>(null);
 
