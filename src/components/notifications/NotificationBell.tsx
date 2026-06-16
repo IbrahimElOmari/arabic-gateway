@@ -128,7 +128,7 @@ export const NotificationBell = React.memo(function NotificationBell() {
           {recentNotifications.length > 0 ? (
             <div className="divide-y">
               {recentNotifications.map((n) => (
-                <NotificationItem key={n.id} notification={n} onRead={markAsRead} />
+                <NotificationItem key={n.id} notification={n} onClick={handleClick} />
               ))}
             </div>
           ) : (
