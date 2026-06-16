@@ -107,6 +107,33 @@ export default function CurriculumItemPage() {
     enabled: !!itemId,
   });
 
+  // Student-side: feedback received on own attempts for this item
+  const { data: myAttemptIds } = useQuery({
+    queryKey: ["my-attempts-for-item", itemId, user?.id],
+    queryFn: () =>
+      apiQuery<Array<{ id: string }>>("curriculum_item_attempts", (q) =>
+        q.select("id").eq("item_id", itemId as string).eq("student_id", user!.id)
+      ),
+    enabled: !!itemId && !!user,
+  });
+
+  const attemptIdList = useMemo(() => (myAttemptIds ?? []).map((a) => a.id), [myAttemptIds]);
+
+  const { data: myFeedback } = useQuery({
+    queryKey: ["my-feedback-for-item", attemptIdList.join(",")],
+    queryFn: () =>
+      apiQuery<Array<{ id: string; feedback_text: string; status: string; rubric_scores: any; created_at: string; curriculum_attempt_id: string | null }>>(
+        "submission_feedback",
+        (q) =>
+          q
+            .select("id,feedback_text,status,rubric_scores,created_at,curriculum_attempt_id")
+            .in("curriculum_attempt_id", attemptIdList)
+            .order("created_at", { ascending: false })
+      ),
+    enabled: attemptIdList.length > 0,
+  });
+
+
 
   const [answer, setAnswer] = useState<any>(null);
   const [submitted, setSubmitted] = useState<null | { correct: boolean; feedback: string }>(null);
@@ -602,6 +629,22 @@ export default function CurriculumItemPage() {
                   {cur.correct_answer}
                 </p>
               )}
+            </div>
+          )}
+
+          {/* Teacher feedback on the student's own attempts (F5) */}
+          {!isStaff && (myFeedback ?? []).length > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm font-semibold">{t("curriculum.teacherFeedback", "Feedback van je leerkracht")}</p>
+              {(myFeedback ?? []).map((f) => (
+                <div key={f.id} className="rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">
+                  <div className="flex items-center justify-between mb-1">
+                    <Badge variant="secondary" className="text-xs">{f.status}</Badge>
+                    <span className="text-xs text-muted-foreground">{new Date(f.created_at).toLocaleString()}</span>
+                  </div>
+                  <p className="whitespace-pre-wrap">{f.feedback_text}</p>
+                </div>
+              ))}
             </div>
           )}
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Bell, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,20 +19,33 @@ const NOTIFICATION_ICONS: Record<string, string> = {
   enrollment_rejected: '❌',
   exercise_released: '📝',
   lesson_reminder: '🔔',
+  curriculum_submission: '📨',
+  private_message: '💬',
 };
+
+function targetPathFor(n: AppNotification): string | null {
+  const data = (n.data ?? {}) as Record<string, unknown>;
+  if (n.type === 'curriculum_submission' && typeof data.student_id === 'string') {
+    return `/teacher/students/${data.student_id}`;
+  }
+  if (n.type === 'private_message' && typeof data.room_id === 'string') {
+    return `/chat?room=${data.room_id}`;
+  }
+  return null;
+}
 
 const NotificationItem = React.memo(function NotificationItem({
   notification,
-  onRead,
+  onClick,
 }: {
   notification: AppNotification;
-  onRead: (id: string) => void;
+  onClick: (n: AppNotification) => void;
 }) {
   const icon = NOTIFICATION_ICONS[notification.type] || '📢';
 
   return (
     <button
-      onClick={() => !notification.is_read && onRead(notification.id)}
+      onClick={() => onClick(notification)}
       className={cn(
         'w-full text-start flex items-start gap-3 p-3 rounded-md transition-colors hover:bg-accent',
         !notification.is_read && 'bg-primary/5'
@@ -58,10 +72,20 @@ const NotificationItem = React.memo(function NotificationItem({
 
 export const NotificationBell = React.memo(function NotificationBell() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { notifications, unreadCount, markAsRead, markAllRead } = useNotifications();
   const [open, setOpen] = useState(false);
 
   const recentNotifications = notifications.slice(0, 10);
+
+  const handleClick = (n: AppNotification) => {
+    if (!n.is_read) markAsRead(n.id);
+    const path = targetPathFor(n);
+    if (path) {
+      setOpen(false);
+      navigate(path);
+    }
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -104,7 +128,7 @@ export const NotificationBell = React.memo(function NotificationBell() {
           {recentNotifications.length > 0 ? (
             <div className="divide-y">
               {recentNotifications.map((n) => (
-                <NotificationItem key={n.id} notification={n} onRead={markAsRead} />
+                <NotificationItem key={n.id} notification={n} onClick={handleClick} />
               ))}
             </div>
           ) : (

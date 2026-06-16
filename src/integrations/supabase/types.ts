@@ -3269,7 +3269,25 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      curriculum_progress_by_skill: {
+        Row: {
+          items_attempted: number | null
+          items_correct: number | null
+          points_total: number | null
+          skill: string | null
+          student_id: string | null
+          unit_code: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculum_items_unit_code_fkey"
+            columns: ["unit_code"]
+            isOneToOne: false
+            referencedRelation: "curriculum_units"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
     }
     Functions: {
       acknowledge_cron_alert: {

@@ -99,6 +99,9 @@ export default function TeacherDashboard() {
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           <Button variant="outline" className="h-auto justify-start py-4 text-start" asChild>
+            <Link to="/teacher/workspace"><Users className="h-4 w-4" />{t("teacher.workspace", "Werkruimte (klassen & leerlingen)")}</Link>
+          </Button>
+          <Button variant="outline" className="h-auto justify-start py-4 text-start" asChild>
             <Link to="/teacher/submissions"><FileCheck className="h-4 w-4" />{t("teacher.pendingReviews", "Pending Reviews")} ({pendingSubmissions?.length || 0})</Link>
           </Button>
           <Button variant="outline" className="h-auto justify-start py-4 text-start" asChild>
