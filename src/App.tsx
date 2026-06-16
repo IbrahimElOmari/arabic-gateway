@@ -176,6 +176,8 @@ const App = () => (
                       <Route path="/teacher/submissions" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><TeacherSubmissionsPage /></ProtectedRoute>} />
                       <Route path="/teacher/exercises" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><TeacherExercisesPage /></ProtectedRoute>} />
                       <Route path="/teacher/materials" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><TeacherMaterialsPage /></ProtectedRoute>} />
+                      <Route path="/teacher/workspace" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><TeacherWorkspacePage /></ProtectedRoute>} />
+                      <Route path="/teacher/students/:studentId" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><StudentDossierPage /></ProtectedRoute>} />
                       
                       {/* Knowledge base */}
                       <Route path="/faq" element={<KnowledgeBasePage />} />
