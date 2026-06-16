@@ -360,14 +360,28 @@ export function CurriculumItemEditDialog({ item, open, onOpenChange, onDeleted }
           <CurriculumItemMediaPanel itemId={f.id} />
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t("common.cancel", "Annuleren")}
+        <DialogFooter className="flex sm:justify-between gap-2">
+          <Button
+            variant="destructive"
+            disabled={del.isPending}
+            onClick={() => {
+              if (window.confirm(t("curriculum.confirmDelete", "Weet je zeker dat je deze oefening wilt verwijderen?"))) {
+                del.mutate();
+              }
+            }}
+          >
+            {del.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+            {t("common.delete", "Verwijderen")}
           </Button>
-          <Button onClick={() => save.mutate()} disabled={save.isPending}>
-            {save.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {t("common.save", "Opslaan")}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              {t("common.cancel", "Annuleren")}
+            </Button>
+            <Button onClick={() => save.mutate()} disabled={save.isPending}>
+              {save.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {t("common.save", "Opslaan")}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
