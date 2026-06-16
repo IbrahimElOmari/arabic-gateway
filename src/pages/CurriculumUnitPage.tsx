@@ -41,6 +41,8 @@ export default function CurriculumUnitPage() {
   const { unitCode } = useParams<{ unitCode: string }>();
   const { t } = useTranslation();
   const { user, isAdmin, isTeacher } = useAuth();
+  const { toast } = useToast();
+  const qc = useQueryClient();
   const canEdit = isAdmin || isTeacher;
   const [skillFilter, setSkillFilter] = useState<string>("all");
   const [editing, setEditing] = useState<EditableItem | null>(null);
@@ -60,12 +62,48 @@ export default function CurriculumUnitPage() {
     queryFn: () =>
       apiQuery<Item[]>("curriculum_items", (q) =>
         q
-          .select(canEdit ? "*" : "id, item_id, week, skill, exercise_type, instruction_nl, question, points, review_flag")
+          .select(canEdit ? "*" : "id, item_id, week, skill, exercise_type, instruction_nl, question, points, review_flag, display_order")
           .eq("unit_code", unitCode!)
+          .order("display_order", { ascending: true, nullsFirst: false })
           .order("item_id", { ascending: true })
       ),
     enabled: !!unitCode,
   });
+
+  const invalidateItems = () =>
+    qc.invalidateQueries({ queryKey: ["curriculum-items", unitCode, canEdit] });
+
+  const reorder = useMutation({
+    mutationFn: (orderedIds: string[]) => reorderCurriculumItems(orderedIds),
+    onSuccess: () => invalidateItems(),
+    onError: (e: any) =>
+      toast({ variant: "destructive", title: t("common.error", "Fout"), description: e?.message }),
+  });
+
+  const del = useMutation({
+    mutationFn: (id: string) => deleteCurriculumItem(id),
+    onSuccess: () => {
+      toast({ title: t("curriculum.deleted", "Oefening verwijderd") });
+      invalidateItems();
+    },
+    onError: (e: any) =>
+      toast({ variant: "destructive", title: t("common.error", "Fout"), description: e?.message }),
+  });
+
+  function moveItem(idx: number, dir: -1 | 1) {
+    const list = items ?? [];
+    const j = idx + dir;
+    if (j < 0 || j >= list.length) return;
+    const next = [...list];
+    [next[idx], next[j]] = [next[j] as Item, next[idx] as Item];
+    reorder.mutate(next.map((it) => it.id));
+  }
+
+  function confirmDelete(it: Item) {
+    if (window.confirm(t("curriculum.confirmDelete", "Weet je zeker dat je deze oefening wilt verwijderen?"))) {
+      del.mutate(it.id);
+    }
+  }
 
   const { data: attempts } = useQuery({
     queryKey: ["unit-attempts", unitCode, user?.id],
