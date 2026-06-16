@@ -632,6 +632,22 @@ export default function CurriculumItemPage() {
             </div>
           )}
 
+          {/* Teacher feedback on the student's own attempts (F5) */}
+          {!isStaff && (myFeedback ?? []).length > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm font-semibold">{t("curriculum.teacherFeedback", "Feedback van je leerkracht")}</p>
+              {(myFeedback ?? []).map((f) => (
+                <div key={f.id} className="rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">
+                  <div className="flex items-center justify-between mb-1">
+                    <Badge variant="secondary" className="text-xs">{f.status}</Badge>
+                    <span className="text-xs text-muted-foreground">{new Date(f.created_at).toLocaleString()}</span>
+                  </div>
+                  <p className="whitespace-pre-wrap">{f.feedback_text}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Unit completion screen */}
           {submitted && isLast && (
             <div className="rounded-md border border-success/40 bg-success/5 p-4 text-sm">
