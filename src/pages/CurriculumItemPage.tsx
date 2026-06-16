@@ -14,9 +14,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, AlertTriangle, Mic, Square, Upload, GripVertical, Pencil } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, AlertTriangle, Mic, Square, Upload, GripVertical, Pencil, Trash2 } from "lucide-react";
 import { CurriculumItemEditDialog, type EditableItem } from "@/components/curriculum/CurriculumItemEditDialog";
 import { CurriculumItemMediaView } from "@/components/curriculum/CurriculumItemMediaView";
+import { deleteCurriculumItem } from "@/lib/curriculum-admin";
 
 interface Item {
   id: string;
