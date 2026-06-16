@@ -157,23 +157,38 @@ export function CurriculumItemMediaPanel({ itemId }: Props) {
       ) : (
         <ul className="space-y-2">
           {media.map((m, i) => (
-            <li key={m.id} className="flex items-center gap-2 bg-background rounded-md border p-2">
-              <KindIcon kind={m.kind} />
+            <li key={m.id} className="flex items-start gap-2 bg-background rounded-md border p-2">
+              <div className="shrink-0 w-20 h-20 rounded-md overflow-hidden bg-muted flex items-center justify-center">
+                {m.kind === "image" ? (
+                  <img src={m.url} alt={m.alt ?? ""} className="w-full h-full object-cover" loading="lazy" />
+                ) : m.kind === "video" ? (
+                  <video src={m.url} className="w-full h-full object-cover" muted />
+                ) : (
+                  <KindIcon kind={m.kind} />
+                )}
+              </div>
               <div className="flex-1 min-w-0">
-                <a href={m.url} target="_blank" rel="noopener noreferrer" className="text-xs underline truncate block">
+                <div className="flex items-center gap-1 text-xs font-medium">
+                  <KindIcon kind={m.kind} />
+                  <span className="uppercase">{m.kind}</span>
+                </div>
+                {m.alt && <p className="text-xs text-muted-foreground truncate">{m.alt}</p>}
+                <a href={m.url} target="_blank" rel="noopener noreferrer" className="text-[10px] underline text-muted-foreground truncate block">
                   {m.url}
                 </a>
-                {m.alt && <p className="text-xs text-muted-foreground truncate">{m.alt}</p>}
+                {m.kind === "audio" && <audio controls src={m.url} className="w-full mt-1 h-8" />}
               </div>
-              <Button size="icon" variant="outline" onClick={() => move(i, -1)} disabled={i === 0}>
-                <ArrowUp className="h-3 w-3" />
-              </Button>
-              <Button size="icon" variant="outline" onClick={() => move(i, 1)} disabled={i === media.length - 1}>
-                <ArrowDown className="h-3 w-3" />
-              </Button>
-              <Button size="icon" variant="outline" onClick={() => delRow.mutate(m.id)}>
-                <Trash2 className="h-3 w-3" />
-              </Button>
+              <div className="flex flex-col gap-1">
+                <Button size="icon" variant="outline" onClick={() => move(i, -1)} disabled={i === 0}>
+                  <ArrowUp className="h-3 w-3" />
+                </Button>
+                <Button size="icon" variant="outline" onClick={() => move(i, 1)} disabled={i === media.length - 1}>
+                  <ArrowDown className="h-3 w-3" />
+                </Button>
+                <Button size="icon" variant="outline" onClick={() => delRow.mutate(m.id)}>
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
             </li>
           ))}
         </ul>
