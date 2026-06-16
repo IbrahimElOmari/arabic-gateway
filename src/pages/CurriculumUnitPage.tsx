@@ -144,8 +144,8 @@ export default function CurriculumUnitPage() {
             const status = attemptByItem.get(item.id);
             const needsReview = /CONTROLEER|ONTBREEKT/i.test(item.review_flag ?? "");
             return (
-              <Link key={item.id} to={`/self-study/item/${item.id}`}>
-                <Card className="transition-all hover:border-primary/50 hover:shadow-sm">
+              <Card key={item.id} className="relative transition-all hover:border-primary/50 hover:shadow-sm">
+                <Link to={`/self-study/item/${item.id}`} className="block">
                   <CardContent className="p-4 flex items-center gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -172,8 +172,23 @@ export default function CurriculumUnitPage() {
                       {status === true && <CheckCircle2 className="h-5 w-5 text-success" />}
                     </div>
                   </CardContent>
-                </Card>
-              </Link>
+                </Link>
+                {canEdit && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="absolute top-2 right-2 z-10"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setEditing(item as unknown as EditableItem);
+                    }}
+                  >
+                    <Pencil className="h-3 w-3 mr-1" />
+                    {t("common.edit", "Wijzigen")}
+                  </Button>
+                )}
+              </Card>
             );
           })}
           {filtered.length === 0 && (
@@ -185,6 +200,11 @@ export default function CurriculumUnitPage() {
           )}
         </div>
       )}
+      <CurriculumItemEditDialog
+        item={editing}
+        open={!!editing}
+        onOpenChange={(o) => !o && setEditing(null)}
+      />
     </div>
   );
 }
