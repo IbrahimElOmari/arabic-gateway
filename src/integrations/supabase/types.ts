@@ -512,6 +512,261 @@ export type Database = {
         }
         Relationships: []
       }
+      curriculum_item_attempts: {
+        Row: {
+          answer_json: Json | null
+          answer_text: string | null
+          attempt_number: number
+          created_at: string
+          feedback_shown: string | null
+          id: string
+          is_correct: boolean | null
+          item_id: string
+          max_score: number
+          score: number
+          student_id: string
+          time_spent_sec: number | null
+          upload_path: string | null
+        }
+        Insert: {
+          answer_json?: Json | null
+          answer_text?: string | null
+          attempt_number?: number
+          created_at?: string
+          feedback_shown?: string | null
+          id?: string
+          is_correct?: boolean | null
+          item_id: string
+          max_score?: number
+          score?: number
+          student_id: string
+          time_spent_sec?: number | null
+          upload_path?: string | null
+        }
+        Update: {
+          answer_json?: Json | null
+          answer_text?: string | null
+          attempt_number?: number
+          created_at?: string
+          feedback_shown?: string | null
+          id?: string
+          is_correct?: boolean | null
+          item_id?: string
+          max_score?: number
+          score?: number
+          student_id?: string
+          time_spent_sec?: number | null
+          upload_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculum_item_attempts_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      curriculum_items: {
+        Row: {
+          correct_answer: string
+          correct_options: Json | null
+          created_at: string
+          display_order: number
+          exercise_subtype: string
+          exercise_type: Database["public"]["Enums"]["curriculum_exercise_type"]
+          feedback_correct: string
+          feedback_incorrect: string
+          id: string
+          input_arabic: string
+          input_translation_nl: string
+          input_transliteration: string
+          instruction_nl: string
+          is_published: boolean
+          item_id: string
+          media_alt: string | null
+          media_production: Json
+          media_url: string | null
+          needs_image: boolean | null
+          needs_ns_audio: boolean | null
+          needs_student_recording: boolean | null
+          options: Json
+          points: number
+          question: string
+          reference_media: string
+          review_flag: string
+          skill: string
+          unit_code: string
+          updated_at: string
+          week: number
+        }
+        Insert: {
+          correct_answer?: string
+          correct_options?: Json | null
+          created_at?: string
+          display_order?: number
+          exercise_subtype?: string
+          exercise_type: Database["public"]["Enums"]["curriculum_exercise_type"]
+          feedback_correct?: string
+          feedback_incorrect?: string
+          id?: string
+          input_arabic?: string
+          input_translation_nl?: string
+          input_transliteration?: string
+          instruction_nl?: string
+          is_published?: boolean
+          item_id: string
+          media_alt?: string | null
+          media_production?: Json
+          media_url?: string | null
+          needs_image?: boolean | null
+          needs_ns_audio?: boolean | null
+          needs_student_recording?: boolean | null
+          options?: Json
+          points?: number
+          question?: string
+          reference_media?: string
+          review_flag?: string
+          skill: string
+          unit_code: string
+          updated_at?: string
+          week: number
+        }
+        Update: {
+          correct_answer?: string
+          correct_options?: Json | null
+          created_at?: string
+          display_order?: number
+          exercise_subtype?: string
+          exercise_type?: Database["public"]["Enums"]["curriculum_exercise_type"]
+          feedback_correct?: string
+          feedback_incorrect?: string
+          id?: string
+          input_arabic?: string
+          input_translation_nl?: string
+          input_transliteration?: string
+          instruction_nl?: string
+          is_published?: boolean
+          item_id?: string
+          media_alt?: string | null
+          media_production?: Json
+          media_url?: string | null
+          needs_image?: boolean | null
+          needs_ns_audio?: boolean | null
+          needs_student_recording?: boolean | null
+          options?: Json
+          points?: number
+          question?: string
+          reference_media?: string
+          review_flag?: string
+          skill?: string
+          unit_code?: string
+          updated_at?: string
+          week?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculum_items_unit_code_fkey"
+            columns: ["unit_code"]
+            isOneToOne: false
+            referencedRelation: "curriculum_units"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      curriculum_progress: {
+        Row: {
+          created_at: string
+          id: string
+          items_completed: number
+          items_correct: number
+          last_activity_at: string
+          student_id: string
+          total_points: number
+          unit_code: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          items_completed?: number
+          items_correct?: number
+          last_activity_at?: string
+          student_id: string
+          total_points?: number
+          unit_code: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          items_completed?: number
+          items_correct?: number
+          last_activity_at?: string
+          student_id?: string
+          total_points?: number
+          unit_code?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculum_progress_unit_code_fkey"
+            columns: ["unit_code"]
+            isOneToOne: false
+            referencedRelation: "curriculum_units"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      curriculum_units: {
+        Row: {
+          cefr_from: string
+          cefr_to: string
+          code: string
+          created_at: string
+          description_nl: string
+          display_order: number
+          id: string
+          title_ar: string
+          title_en: string
+          title_nl: string
+          updated_at: string
+          week_end: number | null
+          week_start: number | null
+        }
+        Insert: {
+          cefr_from?: string
+          cefr_to?: string
+          code: string
+          created_at?: string
+          description_nl?: string
+          display_order: number
+          id?: string
+          title_ar?: string
+          title_en?: string
+          title_nl?: string
+          updated_at?: string
+          week_end?: number | null
+          week_start?: number | null
+        }
+        Update: {
+          cefr_from?: string
+          cefr_to?: string
+          code?: string
+          created_at?: string
+          description_nl?: string
+          display_order?: number
+          id?: string
+          title_ar?: string
+          title_en?: string
+          title_nl?: string
+          updated_at?: string
+          week_end?: number | null
+          week_start?: number | null
+        }
+        Relationships: []
+      }
       data_retention_log: {
         Row: {
           action: string
@@ -2968,6 +3223,7 @@ export type Database = {
         }
         Returns: number
       }
+      can_access_curriculum: { Args: { _user_id: string }; Returns: boolean }
       cancel_user_deletion: { Args: { p_user_id: string }; Returns: undefined }
       cleanup_rate_limit_buckets: { Args: never; Returns: number }
       consume_rate_limit: {
@@ -3110,6 +3366,15 @@ export type Database = {
         | "level_complete"
         | "all_categories"
         | "dedication"
+      curriculum_exercise_type:
+        | "meerkeuze"
+        | "meerdere-antwoorden"
+        | "open-tekst"
+        | "gatentekst"
+        | "bestand-upload"
+        | "audio-opname"
+        | "rangschikken"
+        | "koppelen"
       discount_type: "percentage" | "fixed_amount"
       exercise_category:
         | "reading"
@@ -3323,6 +3588,16 @@ export const Constants = {
         "level_complete",
         "all_categories",
         "dedication",
+      ],
+      curriculum_exercise_type: [
+        "meerkeuze",
+        "meerdere-antwoorden",
+        "open-tekst",
+        "gatentekst",
+        "bestand-upload",
+        "audio-opname",
+        "rangschikken",
+        "koppelen",
       ],
       discount_type: ["percentage", "fixed_amount"],
       exercise_category: [
