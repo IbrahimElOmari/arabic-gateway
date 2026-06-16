@@ -199,6 +199,7 @@ const App = () => (
                       <Route path="/admin/cron-jobs" element={<ProtectedRoute requiredRole="admin"><CronJobsPage /></ProtectedRoute>} />
                       <Route path="/admin/feature-flags" element={<ProtectedRoute requiredRole="admin"><FeatureFlagsPage /></ProtectedRoute>} />
                       <Route path="/admin/chat-debug" element={<ProtectedRoute requiredRole="admin"><ChatDebugPage /></ProtectedRoute>} />
+                      <Route path="/admin/curriculum-review" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><CurriculumReviewPage /></ProtectedRoute>} />
 
                       {/* Catch-all */}
                       <Route path="*" element={<NotFound />} />
