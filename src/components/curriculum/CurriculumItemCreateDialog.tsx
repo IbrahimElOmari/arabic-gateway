@@ -402,6 +402,70 @@ export function CurriculumItemCreateDialog({ unitCode, week, open, onOpenChange 
               </div>
             </div>
 
+            <div className="border rounded-md p-3 space-y-3 bg-muted/30">
+              <p className="text-sm font-semibold">{t("curriculum.media", "Media & bijlagen")}</p>
+              {pendingMedia.length === 0 ? (
+                <p className="text-xs text-muted-foreground">{t("curriculum.noMedia", "Nog geen media.")}</p>
+              ) : (
+                <ul className="space-y-2">
+                  {pendingMedia.map((m, i) => (
+                    <li key={m.uid} className="flex items-center gap-2 bg-background rounded-md border p-2">
+                      <KindIcon kind={m.kind} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs truncate">{m.file ? m.file.name : m.url}</p>
+                        {m.alt && <p className="text-xs text-muted-foreground truncate">{m.alt}</p>}
+                      </div>
+                      <Button size="icon" variant="outline" onClick={() => movePending(i, -1)} disabled={i === 0}>
+                        <ArrowUp className="h-3 w-3" />
+                      </Button>
+                      <Button size="icon" variant="outline" onClick={() => movePending(i, 1)} disabled={i === pendingMedia.length - 1}>
+                        <ArrowDown className="h-3 w-3" />
+                      </Button>
+                      <Button size="icon" variant="outline" onClick={() => removePending(m.uid)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div>
+                  <Label className="text-xs">{t("curriculum.uploadFile", "Bestand toevoegen")}</Label>
+                  <Input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/*,audio/*,video/*,application/pdf"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) addPendingFile(f);
+                    }}
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    {t("curriculum.uploadPendingHint", "Wordt geüpload bij Aanmaken.")}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-xs">{t("curriculum.externalUrl", "Externe URL")}</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="https://..."
+                      value={urlValue}
+                      onChange={(e) => setUrlValue(e.target.value)}
+                    />
+                    <Button size="sm" variant="outline" onClick={addPendingUrl} disabled={!urlValue.trim()}>
+                      {t("common.add", "Toevoegen")}
+                    </Button>
+                  </div>
+                  <Input
+                    className="mt-2"
+                    placeholder={t("curriculum.altOptional", "Beschrijving (optioneel)")}
+                    value={urlAlt}
+                    onChange={(e) => setUrlAlt(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="flex items-center gap-2">
               <Switch checked={isPublished} onCheckedChange={setIsPublished} />
               <Label>{t("curriculum.published", "Gepubliceerd")}</Label>
