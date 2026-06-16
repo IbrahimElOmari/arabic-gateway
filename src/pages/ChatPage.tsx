@@ -638,18 +638,22 @@ function ChatBubble({ message, isOwn, onReaction, onReport }: { message: any; is
 // ─── Main Page ───
 export default function ChatPage() {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
+  const roomParam = searchParams.get("room");
+  const defaultTab = roomParam ? "private" : "group";
 
   return (
     <div className="container py-4 h-[calc(100vh-4rem)] flex flex-col">
       <h1 className="text-2xl font-bold text-foreground mb-4">{t("chat.title")}</h1>
-      <Tabs defaultValue="group" className="flex-1 flex flex-col">
+      <Tabs defaultValue={defaultTab} className="flex-1 flex flex-col">
         <TabsList className="mb-3">
           <TabsTrigger value="group" className="flex items-center gap-2"><Users className="h-4 w-4" /> {t("chat.groupChat", "Groepschat")}</TabsTrigger>
           <TabsTrigger value="private" className="flex items-center gap-2"><User className="h-4 w-4" /> {t("chat.privateChat", "Privéchat")}</TabsTrigger>
         </TabsList>
         <TabsContent value="group" className="flex-1"><GroupChatTab /></TabsContent>
-        <TabsContent value="private" className="flex-1"><PrivateChatTab /></TabsContent>
+        <TabsContent value="private" className="flex-1"><PrivateChatTab initialRoom={roomParam} /></TabsContent>
       </Tabs>
     </div>
   );
 }
+
