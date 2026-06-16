@@ -568,12 +568,57 @@ export type Database = {
           },
         ]
       }
+      curriculum_item_media: {
+        Row: {
+          alt: string
+          created_at: string
+          created_by: string | null
+          id: string
+          item_id: string
+          kind: string
+          sort_order: number
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          alt?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_id: string
+          kind: string
+          sort_order?: number
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          alt?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_id?: string
+          kind?: string
+          sort_order?: number
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculum_item_media_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       curriculum_items: {
         Row: {
           audio_url: string | null
           correct_answer: string
           correct_options: Json | null
           created_at: string
+          created_by: string | null
           display_order: number
           exercise_subtype: string
           exercise_type: Database["public"]["Enums"]["curriculum_exercise_type"]
@@ -608,6 +653,7 @@ export type Database = {
           correct_answer?: string
           correct_options?: Json | null
           created_at?: string
+          created_by?: string | null
           display_order?: number
           exercise_subtype?: string
           exercise_type: Database["public"]["Enums"]["curriculum_exercise_type"]
@@ -642,6 +688,7 @@ export type Database = {
           correct_answer?: string
           correct_options?: Json | null
           created_at?: string
+          created_by?: string | null
           display_order?: number
           exercise_subtype?: string
           exercise_type?: Database["public"]["Enums"]["curriculum_exercise_type"]
