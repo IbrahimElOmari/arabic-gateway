@@ -14,7 +14,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, AlertTriangle, Mic, Square, Upload, GripVertical } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, AlertTriangle, Mic, Square, Upload, GripVertical, Pencil } from "lucide-react";
+import { CurriculumItemEditDialog, type EditableItem } from "@/components/curriculum/CurriculumItemEditDialog";
 
 interface Item {
   id: string;
@@ -61,7 +62,9 @@ function normalize(s: string): string {
 export default function CurriculumItemPage() {
   const { itemId } = useParams<{ itemId: string }>();
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, isAdmin, isTeacher } = useAuth();
+  const canEdit = isAdmin || isTeacher;
+  const [editing, setEditing] = useState<EditableItem | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -414,12 +417,21 @@ export default function CurriculumItemPage() {
 
   return (
     <div className="container py-8 max-w-3xl">
-      <Button variant="ghost" asChild className="mb-4">
-        <Link to={`/self-study/unit/${cur.unit_code}`}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {t("common.back", "Terug")}
-        </Link>
-      </Button>
+      <div className="flex items-center justify-between mb-4">
+        <Button variant="ghost" asChild>
+          <Link to={`/self-study/unit/${cur.unit_code}`}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t("common.back", "Terug")}
+          </Link>
+        </Button>
+        {canEdit && (
+          <Button variant="outline" onClick={() => setEditing(cur as unknown as EditableItem)}>
+            <Pencil className="h-4 w-4 mr-2" />
+            {t("common.edit", "Wijzigen")}
+          </Button>
+        )}
+      </div>
+
 
       <Card>
         <CardHeader>
@@ -536,6 +548,11 @@ export default function CurriculumItemPage() {
           </div>
         </CardContent>
       </Card>
+      <CurriculumItemEditDialog
+        item={editing}
+        open={!!editing}
+        onOpenChange={(o) => !o && setEditing(null)}
+      />
     </div>
   );
 }
