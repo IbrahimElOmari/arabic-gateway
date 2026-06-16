@@ -102,17 +102,25 @@ export default function CurriculumUnitPage() {
         </Link>
       </Button>
 
-      <div className="mb-6">
-        <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-3xl font-bold">
-            {unitCode} · {title}
-          </h1>
-          {unit?.cefr_from && <Badge variant="secondary">{unit.cefr_from}</Badge>}
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-3xl font-bold">
+              {unitCode} · {title}
+            </h1>
+            {unit?.cefr_from && <Badge variant="secondary">{unit.cefr_from}</Badge>}
+          </div>
+          {unit?.title_ar && (
+            <p className="text-xl mt-1 text-muted-foreground" dir="rtl" lang="ar">
+              {unit.title_ar}
+            </p>
+          )}
         </div>
-        {unit?.title_ar && (
-          <p className="text-xl mt-1 text-muted-foreground" dir="rtl" lang="ar">
-            {unit.title_ar}
-          </p>
+        {canEdit && (
+          <Button onClick={() => setCreating(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            {t("curriculum.newItem", "Nieuwe oefening")}
+          </Button>
         )}
       </div>
 
