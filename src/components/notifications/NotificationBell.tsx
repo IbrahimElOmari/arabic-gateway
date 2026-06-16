@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Bell, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +19,20 @@ const NOTIFICATION_ICONS: Record<string, string> = {
   enrollment_rejected: '❌',
   exercise_released: '📝',
   lesson_reminder: '🔔',
+  curriculum_submission: '📨',
+  private_message: '💬',
 };
+
+function targetPathFor(n: AppNotification): string | null {
+  const data = (n.data ?? {}) as Record<string, unknown>;
+  if (n.type === 'curriculum_submission' && typeof data.student_id === 'string') {
+    return `/teacher/students/${data.student_id}`;
+  }
+  if (n.type === 'private_message' && typeof data.room_id === 'string') {
+    return `/chat?room=${data.room_id}`;
+  }
+  return null;
+}
 
 const NotificationItem = React.memo(function NotificationItem({
   notification,
