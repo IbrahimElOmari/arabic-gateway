@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { AlertTriangle, Loader2, Plus, Trash2, ArrowUp, ArrowDown, X } from "lucide-react";
+import { CurriculumItemMediaPanel } from "./CurriculumItemMediaPanel";
 
 export interface EditableItem {
   id: string;
