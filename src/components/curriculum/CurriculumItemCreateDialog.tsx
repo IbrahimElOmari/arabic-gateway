@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiQuery, apiMutate } from "@/lib/supabase-api";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -11,8 +12,35 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
+import { Loader2, Plus, Trash2, ArrowUp, ArrowDown, Link2, Image as ImageIcon, FileAudio, Film, File as FileIcon } from "lucide-react";
 import { CurriculumItemMediaPanel } from "./CurriculumItemMediaPanel";
+
+const BUCKET = "curriculum-media";
+
+type PendingKind = "image" | "audio" | "video" | "file" | "url";
+interface PendingMedia {
+  uid: string;
+  kind: PendingKind;
+  file?: File;
+  url?: string;
+  alt: string;
+}
+
+function kindFromMime(mime: string): PendingKind {
+  if (mime.startsWith("image/")) return "image";
+  if (mime.startsWith("audio/")) return "audio";
+  if (mime.startsWith("video/")) return "video";
+  return "file";
+}
+
+function KindIcon({ kind }: { kind: PendingKind }) {
+  const cls = "h-4 w-4";
+  if (kind === "image") return <ImageIcon className={cls} />;
+  if (kind === "audio") return <FileAudio className={cls} />;
+  if (kind === "video") return <Film className={cls} />;
+  if (kind === "url") return <Link2 className={cls} />;
+  return <FileIcon className={cls} />;
+}
 
 const SKILLS = ["lezen", "schrijven", "luisteren", "spreken", "grammatica", "woordenschat"] as const;
 const TYPES = [
@@ -57,6 +85,11 @@ export function CurriculumItemCreateDialog({ unitCode, week, open, onOpenChange 
   const [points, setPoints] = useState<number>(1);
   const [isPublished, setIsPublished] = useState(true);
 
+  const [pendingMedia, setPendingMedia] = useState<PendingMedia[]>([]);
+  const [urlValue, setUrlValue] = useState("");
+  const [urlAlt, setUrlAlt] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
   const [createdItemId, setCreatedItemId] = useState<string | null>(null);
 
   function reset() {
@@ -75,13 +108,43 @@ export function CurriculumItemCreateDialog({ unitCode, week, open, onOpenChange 
     setInputNl("");
     setPoints(1);
     setIsPublished(true);
+    setPendingMedia([]);
+    setUrlValue("");
+    setUrlAlt("");
     setCreatedItemId(null);
+  }
+
+  function addPendingFile(file: File) {
+    setPendingMedia((prev) => [
+      ...prev,
+      { uid: crypto.randomUUID(), kind: kindFromMime(file.type), file, alt: file.name },
+    ]);
+    if (fileRef.current) fileRef.current.value = "";
+  }
+  function addPendingUrl() {
+    const v = urlValue.trim();
+    if (!v) return;
+    setPendingMedia((prev) => [
+      ...prev,
+      { uid: crypto.randomUUID(), kind: "url", url: v, alt: urlAlt.trim() },
+    ]);
+    setUrlValue("");
+    setUrlAlt("");
+  }
+  function removePending(uid: string) {
+    setPendingMedia((prev) => prev.filter((p) => p.uid !== uid));
+  }
+  function movePending(i: number, dir: -1 | 1) {
+    const j = i + dir;
+    if (j < 0 || j >= pendingMedia.length) return;
+    const next = [...pendingMedia];
+    [next[i], next[j]] = [next[j]!, next[i]!];
+    setPendingMedia(next);
   }
 
   const create = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("not authenticated");
-      // Compute display_order = max(unit)+1
       const existing = await apiQuery<{ display_order: number }[]>(
         "curriculum_items",
         (q) =>
@@ -120,12 +183,39 @@ export function CurriculumItemCreateDialog({ unitCode, week, open, onOpenChange 
       };
 
       const rows = await apiMutate<any[]>("curriculum_items", (q) => q.insert(payload).select("id"));
-      const newId = Array.isArray(rows) ? rows[0]?.id : null;
-      return newId as string;
+      const newId = Array.isArray(rows) ? (rows[0]?.id as string) : "";
+      if (!newId) throw new Error("insert returned no id");
+
+      for (let i = 0; i < pendingMedia.length; i++) {
+        const m = pendingMedia[i]!;
+        let url = m.url ?? "";
+        if (m.file) {
+          const ext = m.file.name.split(".").pop() ?? "bin";
+          const path = `${newId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+          const { error: upErr } = await supabase.storage
+            .from(BUCKET)
+            .upload(path, m.file, { upsert: false, contentType: m.file.type });
+          if (upErr) throw upErr;
+          url = supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+        }
+        await apiMutate("curriculum_item_media", (q) =>
+          q.insert({
+            item_id: newId,
+            kind: m.kind,
+            url,
+            alt: m.alt || null,
+            sort_order: i,
+            created_by: user.id,
+          })
+        );
+      }
+
+      return newId;
     },
     onSuccess: (newId) => {
       toast({ title: t("curriculum.created", "Oefening aangemaakt") });
       qc.invalidateQueries({ queryKey: ["curriculum-items", unitCode] });
+      qc.invalidateQueries({ queryKey: ["curriculum-item-media", newId] });
       setCreatedItemId(newId);
     },
     onError: (e: any) => toast({ variant: "destructive", title: t("common.error", "Fout"), description: e?.message }),
@@ -309,6 +399,70 @@ export function CurriculumItemCreateDialog({ unitCode, week, open, onOpenChange 
               <div>
                 <Label>feedback_incorrect</Label>
                 <Textarea value={feedbackIncorrect} onChange={(e) => setFeedbackIncorrect(e.target.value)} rows={2} />
+              </div>
+            </div>
+
+            <div className="border rounded-md p-3 space-y-3 bg-muted/30">
+              <p className="text-sm font-semibold">{t("curriculum.media", "Media & bijlagen")}</p>
+              {pendingMedia.length === 0 ? (
+                <p className="text-xs text-muted-foreground">{t("curriculum.noMedia", "Nog geen media.")}</p>
+              ) : (
+                <ul className="space-y-2">
+                  {pendingMedia.map((m, i) => (
+                    <li key={m.uid} className="flex items-center gap-2 bg-background rounded-md border p-2">
+                      <KindIcon kind={m.kind} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs truncate">{m.file ? m.file.name : m.url}</p>
+                        {m.alt && <p className="text-xs text-muted-foreground truncate">{m.alt}</p>}
+                      </div>
+                      <Button size="icon" variant="outline" onClick={() => movePending(i, -1)} disabled={i === 0}>
+                        <ArrowUp className="h-3 w-3" />
+                      </Button>
+                      <Button size="icon" variant="outline" onClick={() => movePending(i, 1)} disabled={i === pendingMedia.length - 1}>
+                        <ArrowDown className="h-3 w-3" />
+                      </Button>
+                      <Button size="icon" variant="outline" onClick={() => removePending(m.uid)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div>
+                  <Label className="text-xs">{t("curriculum.uploadFile", "Bestand toevoegen")}</Label>
+                  <Input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/*,audio/*,video/*,application/pdf"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) addPendingFile(f);
+                    }}
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    {t("curriculum.uploadPendingHint", "Wordt geüpload bij Aanmaken.")}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-xs">{t("curriculum.externalUrl", "Externe URL")}</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="https://..."
+                      value={urlValue}
+                      onChange={(e) => setUrlValue(e.target.value)}
+                    />
+                    <Button size="sm" variant="outline" onClick={addPendingUrl} disabled={!urlValue.trim()}>
+                      {t("common.add", "Toevoegen")}
+                    </Button>
+                  </div>
+                  <Input
+                    className="mt-2"
+                    placeholder={t("curriculum.altOptional", "Beschrijving (optioneel)")}
+                    value={urlAlt}
+                    onChange={(e) => setUrlAlt(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
 
