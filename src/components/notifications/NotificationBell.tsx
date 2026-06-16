@@ -72,10 +72,20 @@ const NotificationItem = React.memo(function NotificationItem({
 
 export const NotificationBell = React.memo(function NotificationBell() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { notifications, unreadCount, markAsRead, markAllRead } = useNotifications();
   const [open, setOpen] = useState(false);
 
   const recentNotifications = notifications.slice(0, 10);
+
+  const handleClick = (n: AppNotification) => {
+    if (!n.is_read) markAsRead(n.id);
+    const path = targetPathFor(n);
+    if (path) {
+      setOpen(false);
+      navigate(path);
+    }
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
