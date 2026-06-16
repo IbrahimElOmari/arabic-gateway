@@ -194,6 +194,8 @@ export default function CurriculumUnitPage() {
           {filtered.map((item) => {
             const status = attemptByItem.get(item.id);
             const needsReview = /CONTROLEER|ONTBREEKT/i.test(item.review_flag ?? "");
+            const fullIdx = (items ?? []).findIndex((i) => i.id === item.id);
+            const canReorder = canEdit && skillFilter === "all";
             return (
               <Card key={item.id} className="relative transition-all hover:border-primary/50 hover:shadow-sm">
                 <Link to={`/self-study/item/${item.id}`} className="block">
@@ -225,19 +227,54 @@ export default function CurriculumUnitPage() {
                   </CardContent>
                 </Link>
                 {canEdit && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="absolute top-2 right-2 z-10"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setEditing(item as unknown as EditableItem);
-                    }}
-                  >
-                    <Pencil className="h-3 w-3 mr-1" />
-                    {t("common.edit", "Wijzigen")}
-                  </Button>
+                  <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+                    {canReorder && (
+                      <>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="h-7 w-7"
+                          disabled={fullIdx <= 0 || reorder.isPending}
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); moveItem(fullIdx, -1); }}
+                          title={t("curriculum.moveUp", "Omhoog")}
+                        >
+                          <ArrowUp className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="h-7 w-7"
+                          disabled={fullIdx === -1 || fullIdx >= (items?.length ?? 0) - 1 || reorder.isPending}
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); moveItem(fullIdx, 1); }}
+                          title={t("curriculum.moveDown", "Omlaag")}
+                        >
+                          <ArrowDown className="h-3 w-3" />
+                        </Button>
+                      </>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setEditing(item as unknown as EditableItem);
+                      }}
+                    >
+                      <Pencil className="h-3 w-3 mr-1" />
+                      {t("common.edit", "Wijzigen")}
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      className="h-7 w-7"
+                      disabled={del.isPending}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); confirmDelete(item); }}
+                      title={t("common.delete", "Verwijderen")}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
                 )}
               </Card>
             );
