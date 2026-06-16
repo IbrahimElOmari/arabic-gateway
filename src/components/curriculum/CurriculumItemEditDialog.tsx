@@ -336,6 +336,9 @@ export function CurriculumItemEditDialog({ item, open, onOpenChange }: Props) {
               />
             </div>
           </div>
+
+          {/* Media panel */}
+          <CurriculumItemMediaPanel itemId={f.id} />
         </div>
 
         <DialogFooter>
