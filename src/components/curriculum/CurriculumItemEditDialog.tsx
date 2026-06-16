@@ -41,6 +41,7 @@ interface Props {
   item: EditableItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onDeleted?: (id: string) => void;
 }
 
 const arabicFont = { fontFamily: '"Amiri", "Noto Naskh Arabic", serif' };
