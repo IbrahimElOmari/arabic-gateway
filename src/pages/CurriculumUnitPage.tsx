@@ -6,9 +6,10 @@ import { apiQuery } from "@/lib/supabase-api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, AlertTriangle, CheckCircle2, Pencil } from "lucide-react";
+import { ArrowLeft, Loader2, AlertTriangle, CheckCircle2, Pencil, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { CurriculumItemEditDialog, type EditableItem } from "@/components/curriculum/CurriculumItemEditDialog";
+import { CurriculumItemCreateDialog } from "@/components/curriculum/CurriculumItemCreateDialog";
 
 const SKILLS = ["lezen", "schrijven", "luisteren", "spreken", "grammatica", "woordenschat"] as const;
 
