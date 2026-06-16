@@ -63,6 +63,8 @@ const TeacherSubmissionsPage = lazyWithRetry(() => import("./pages/teacher/Teach
 const ContentStudioPage = lazyWithRetry(() => import("./pages/teacher/ContentStudioPage"));
 const TeacherExercisesPage = lazyWithRetry(() => import("./pages/teacher/TeacherExercisesPage"));
 const TeacherMaterialsPage = lazyWithRetry(() => import("./pages/teacher/TeacherMaterialsPage"));
+const TeacherWorkspacePage = lazyWithRetry(() => import("./pages/teacher/TeacherWorkspacePage"));
+const StudentDossierPage = lazyWithRetry(() => import("./pages/teacher/StudentDossierPage"));
 
 // Self-Study pages
 const SelfStudyPage = lazyWithRetry(() => import("./pages/SelfStudyPage"));
