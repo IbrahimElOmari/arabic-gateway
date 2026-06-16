@@ -102,6 +102,23 @@ export function CurriculumItemEditDialog({ item, open, onOpenChange, onDeleted }
     },
   });
 
+  const del = useMutation({
+    mutationFn: async () => {
+      if (!form) return;
+      await deleteCurriculumItem(form.id);
+    },
+    onSuccess: () => {
+      toast({ title: t("curriculum.deleted", "Oefening verwijderd") });
+      qc.invalidateQueries({ queryKey: ["curriculum-items"] });
+      qc.invalidateQueries({ queryKey: ["curriculum-review"] });
+      onOpenChange(false);
+      if (form) onDeleted?.(form.id);
+    },
+    onError: (e: any) => {
+      toast({ variant: "destructive", title: t("common.error", "Fout"), description: e?.message });
+    },
+  });
+
   if (!form) return null;
   const f = form;
 
