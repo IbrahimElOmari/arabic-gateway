@@ -491,6 +491,10 @@ export default function CurriculumItemPage() {
             )
           )}
 
+          {/* Attached media (image/audio/video/file/url) */}
+          <CurriculumItemMediaView itemId={cur.id} alt={cur.question || cur.instruction_nl} />
+
+
           {/* Question */}
           {cur.question && cur.exercise_type !== "gatentekst" && (
             <p className="font-medium">{cur.question}</p>
