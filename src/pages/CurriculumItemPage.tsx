@@ -577,6 +577,7 @@ export default function CurriculumItemPage() {
         item={editing}
         open={!!editing}
         onOpenChange={(o) => !o && setEditing(null)}
+        onDeleted={() => navigate(`/self-study/unit/${cur.unit_code}`)}
       />
     </div>
   );
