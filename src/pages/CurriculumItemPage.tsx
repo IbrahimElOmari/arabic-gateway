@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Loader2, CheckCircle2, XCircle, AlertTriangle, Mic, Square, Upload, GripVertical, Pencil } from "lucide-react";
 import { CurriculumItemEditDialog, type EditableItem } from "@/components/curriculum/CurriculumItemEditDialog";
+import { CurriculumItemMediaView } from "@/components/curriculum/CurriculumItemMediaView";
 
 interface Item {
   id: string;
