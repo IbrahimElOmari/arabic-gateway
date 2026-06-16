@@ -85,6 +85,11 @@ export function CurriculumItemCreateDialog({ unitCode, week, open, onOpenChange 
   const [points, setPoints] = useState<number>(1);
   const [isPublished, setIsPublished] = useState(true);
 
+  const [pendingMedia, setPendingMedia] = useState<PendingMedia[]>([]);
+  const [urlValue, setUrlValue] = useState("");
+  const [urlAlt, setUrlAlt] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
   const [createdItemId, setCreatedItemId] = useState<string | null>(null);
 
   function reset() {
@@ -103,13 +108,43 @@ export function CurriculumItemCreateDialog({ unitCode, week, open, onOpenChange 
     setInputNl("");
     setPoints(1);
     setIsPublished(true);
+    setPendingMedia([]);
+    setUrlValue("");
+    setUrlAlt("");
     setCreatedItemId(null);
+  }
+
+  function addPendingFile(file: File) {
+    setPendingMedia((prev) => [
+      ...prev,
+      { uid: crypto.randomUUID(), kind: kindFromMime(file.type), file, alt: file.name },
+    ]);
+    if (fileRef.current) fileRef.current.value = "";
+  }
+  function addPendingUrl() {
+    const v = urlValue.trim();
+    if (!v) return;
+    setPendingMedia((prev) => [
+      ...prev,
+      { uid: crypto.randomUUID(), kind: "url", url: v, alt: urlAlt.trim() },
+    ]);
+    setUrlValue("");
+    setUrlAlt("");
+  }
+  function removePending(uid: string) {
+    setPendingMedia((prev) => prev.filter((p) => p.uid !== uid));
+  }
+  function movePending(i: number, dir: -1 | 1) {
+    const j = i + dir;
+    if (j < 0 || j >= pendingMedia.length) return;
+    const next = [...pendingMedia];
+    [next[i], next[j]] = [next[j]!, next[i]!];
+    setPendingMedia(next);
   }
 
   const create = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("not authenticated");
-      // Compute display_order = max(unit)+1
       const existing = await apiQuery<{ display_order: number }[]>(
         "curriculum_items",
         (q) =>
@@ -148,12 +183,39 @@ export function CurriculumItemCreateDialog({ unitCode, week, open, onOpenChange 
       };
 
       const rows = await apiMutate<any[]>("curriculum_items", (q) => q.insert(payload).select("id"));
-      const newId = Array.isArray(rows) ? rows[0]?.id : null;
-      return newId as string;
+      const newId = Array.isArray(rows) ? (rows[0]?.id as string) : "";
+      if (!newId) throw new Error("insert returned no id");
+
+      for (let i = 0; i < pendingMedia.length; i++) {
+        const m = pendingMedia[i]!;
+        let url = m.url ?? "";
+        if (m.file) {
+          const ext = m.file.name.split(".").pop() ?? "bin";
+          const path = `${newId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+          const { error: upErr } = await supabase.storage
+            .from(BUCKET)
+            .upload(path, m.file, { upsert: false, contentType: m.file.type });
+          if (upErr) throw upErr;
+          url = supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+        }
+        await apiMutate("curriculum_item_media", (q) =>
+          q.insert({
+            item_id: newId,
+            kind: m.kind,
+            url,
+            alt: m.alt || null,
+            sort_order: i,
+            created_by: user.id,
+          })
+        );
+      }
+
+      return newId;
     },
     onSuccess: (newId) => {
       toast({ title: t("curriculum.created", "Oefening aangemaakt") });
       qc.invalidateQueries({ queryKey: ["curriculum-items", unitCode] });
+      qc.invalidateQueries({ queryKey: ["curriculum-item-media", newId] });
       setCreatedItemId(newId);
     },
     onError: (e: any) => toast({ variant: "destructive", title: t("common.error", "Fout"), description: e?.message }),
