@@ -36,16 +36,16 @@ function targetPathFor(n: AppNotification): string | null {
 
 const NotificationItem = React.memo(function NotificationItem({
   notification,
-  onRead,
+  onClick,
 }: {
   notification: AppNotification;
-  onRead: (id: string) => void;
+  onClick: (n: AppNotification) => void;
 }) {
   const icon = NOTIFICATION_ICONS[notification.type] || '📢';
 
   return (
     <button
-      onClick={() => !notification.is_read && onRead(notification.id)}
+      onClick={() => onClick(notification)}
       className={cn(
         'w-full text-start flex items-start gap-3 p-3 rounded-md transition-colors hover:bg-accent',
         !notification.is_read && 'bg-primary/5'
