@@ -209,12 +209,12 @@ function GroupChatTab() {
 }
 
 // ─── Private Chat Tab ───
-function PrivateChatTab() {
+function PrivateChatTab({ initialRoom }: { initialRoom?: string | null } = {}) {
   const { t } = useTranslation();
   const { user, role } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+  const [selectedRoom, setSelectedRoom] = useState<string | null>(initialRoom ?? null);
   const [newMessage, setNewMessage] = useState("");
   const [newChatDialogOpen, setNewChatDialogOpen] = useState(false);
   const [searchUser, setSearchUser] = useState("");
