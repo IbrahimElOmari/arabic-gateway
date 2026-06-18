@@ -39,6 +39,15 @@ interface ItemRow {
   skill: string | null;
   exercise_type: string;
   question: string | null;
+  instruction_nl: string | null;
+  input_arabic: string | null;
+  input_transliteration: string | null;
+  input_translation_nl: string | null;
+  options: any;
+  correct_answer: string | null;
+  correct_options: any;
+  feedback_correct: string | null;
+  feedback_incorrect: string | null;
 }
 
 interface FeedbackRow {
@@ -201,7 +210,11 @@ export default function StudentDossierPage() {
     queryKey: ["dossier-items", itemIds.join(",")],
     queryFn: () =>
       apiQuery<ItemRow[]>("curriculum_items", (q) =>
-        q.select("id,item_id,unit_code,week,skill,exercise_type,question").in("id", itemIds)
+        q
+          .select(
+            "id,item_id,unit_code,week,skill,exercise_type,question,instruction_nl,input_arabic,input_transliteration,input_translation_nl,options,correct_answer,correct_options,feedback_correct,feedback_incorrect"
+          )
+          .in("id", itemIds)
       ),
     enabled: itemIds.length > 0,
   });
@@ -517,20 +530,90 @@ function AttemptCard({
           </div>
         </div>
 
+        {item?.instruction_nl && (
+          <p className="text-xs text-muted-foreground italic">{item.instruction_nl}</p>
+        )}
         {item?.question && <p className="text-sm font-medium">{item.question}</p>}
 
-        {attempt.answer_text && (
-          <div className="rounded-md bg-muted/50 p-3 text-sm whitespace-pre-wrap break-words">
-            {attempt.answer_text}
+        {(item?.input_arabic || item?.input_transliteration || item?.input_translation_nl) && (
+          <div className="rounded-md border bg-card p-3 space-y-1 text-sm">
+            {item?.input_arabic && (
+              <p dir="rtl" lang="ar" className="text-lg font-arabic">
+                {item.input_arabic}
+              </p>
+            )}
+            {item?.input_transliteration && (
+              <p className="text-xs text-muted-foreground italic">{item.input_transliteration}</p>
+            )}
+            {item?.input_translation_nl && (
+              <p className="text-sm">{item.input_translation_nl}</p>
+            )}
           </div>
         )}
-        {attempt.answer_json && !attempt.answer_text && (
-          <pre className="rounded-md bg-muted/50 p-3 text-xs overflow-auto">
-            {JSON.stringify(attempt.answer_json, null, 2)}
-          </pre>
+
+        {item?.options && Array.isArray(item.options) && item.options.length > 0 && (
+          <div className="text-xs">
+            <p className="font-medium mb-1">{t("dossier.options", "Antwoordopties")}</p>
+            <ul className="list-disc list-inside space-y-0.5">
+              {(item.options as any[]).map((opt, i) => (
+                <li key={i} className="text-muted-foreground">
+                  {typeof opt === "string" ? opt : JSON.stringify(opt)}
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
 
-        {attempt.upload_path && <StudentFile path={attempt.upload_path} />}
+        {(item?.correct_answer || (item?.correct_options && (item.correct_options as any[])?.length > 0)) && (
+          <div className="text-xs rounded-md bg-success/10 border border-success/30 p-2">
+            <span className="font-medium">{t("dossier.correctAnswer", "Juist antwoord")}: </span>
+            <span>
+              {item.correct_answer ??
+                (Array.isArray(item.correct_options)
+                  ? (item.correct_options as any[]).map((o) => (typeof o === "string" ? o : JSON.stringify(o))).join(", ")
+                  : JSON.stringify(item.correct_options))}
+            </span>
+          </div>
+        )}
+
+        {(item?.feedback_correct || item?.feedback_incorrect) && (
+          <div className="grid gap-1 text-xs">
+            {item?.feedback_correct && (
+              <p>
+                <span className="font-medium text-success">✓ </span>
+                <span className="text-muted-foreground">{item.feedback_correct}</span>
+              </p>
+            )}
+            {item?.feedback_incorrect && (
+              <p>
+                <span className="font-medium text-destructive">✗ </span>
+                <span className="text-muted-foreground">{item.feedback_incorrect}</span>
+              </p>
+            )}
+          </div>
+        )}
+
+        <div className="border-t pt-3 space-y-2">
+          <p className="text-xs font-semibold uppercase text-muted-foreground">
+            {t("dossier.studentSubmission", "Inzending leerling")}
+          </p>
+          {attempt.answer_text && (
+            <div className="rounded-md bg-muted/50 p-3 text-sm whitespace-pre-wrap break-words">
+              {attempt.answer_text}
+            </div>
+          )}
+          {attempt.answer_json && !attempt.answer_text && (
+            <pre className="rounded-md bg-muted/50 p-3 text-xs overflow-auto">
+              {JSON.stringify(attempt.answer_json, null, 2)}
+            </pre>
+          )}
+          {attempt.upload_path && <StudentFile path={attempt.upload_path} />}
+          {!attempt.answer_text && !attempt.answer_json && !attempt.upload_path && (
+            <p className="text-xs text-muted-foreground italic">
+              {t("dossier.noSubmissionContent", "Geen inhoud bij deze inzending.")}
+            </p>
+          )}
+        </div>
 
         {feedback && !isOpen && (
           <div className="text-sm border-t pt-3">
