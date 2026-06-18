@@ -20,6 +20,7 @@ const NOTIFICATION_ICONS: Record<string, string> = {
   exercise_released: '📝',
   lesson_reminder: '🔔',
   curriculum_submission: '📨',
+  curriculum_feedback: '🧑‍🏫',
   private_message: '💬',
 };
 
@@ -27,6 +28,9 @@ function targetPathFor(n: AppNotification): string | null {
   const data = (n.data ?? {}) as Record<string, unknown>;
   if (n.type === 'curriculum_submission' && typeof data.student_id === 'string') {
     return `/teacher/students/${data.student_id}`;
+  }
+  if (n.type === 'curriculum_feedback' && typeof data.item_id === 'string') {
+    return `/self-study/item/${data.item_id}`;
   }
   if (n.type === 'private_message' && typeof data.room_id === 'string') {
     return `/chat?room=${data.room_id}`;
