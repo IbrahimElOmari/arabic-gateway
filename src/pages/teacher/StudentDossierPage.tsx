@@ -39,6 +39,15 @@ interface ItemRow {
   skill: string | null;
   exercise_type: string;
   question: string | null;
+  instruction_nl: string | null;
+  input_arabic: string | null;
+  input_transliteration: string | null;
+  input_translation_nl: string | null;
+  options: any;
+  correct_answer: string | null;
+  correct_options: any;
+  feedback_correct: string | null;
+  feedback_incorrect: string | null;
 }
 
 interface FeedbackRow {
