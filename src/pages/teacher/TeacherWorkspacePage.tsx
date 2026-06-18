@@ -53,7 +53,7 @@ export default function TeacherWorkspacePage() {
     queryKey: ["workspace-enrollments", classIds.join(",")],
     queryFn: () =>
       apiQuery<EnrollmentRow[]>("class_enrollments", (q) =>
-        q.select("id,class_id,student_id").in("class_id", classIds).eq("status", "active")
+        q.select("id,class_id,student_id").in("class_id", classIds).eq("status", "enrolled")
       ),
     enabled: classIds.length > 0,
   });
