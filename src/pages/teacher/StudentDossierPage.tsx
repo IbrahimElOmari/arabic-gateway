@@ -210,7 +210,11 @@ export default function StudentDossierPage() {
     queryKey: ["dossier-items", itemIds.join(",")],
     queryFn: () =>
       apiQuery<ItemRow[]>("curriculum_items", (q) =>
-        q.select("id,item_id,unit_code,week,skill,exercise_type,question").in("id", itemIds)
+        q
+          .select(
+            "id,item_id,unit_code,week,skill,exercise_type,question,instruction_nl,input_arabic,input_transliteration,input_translation_nl,options,correct_answer,correct_options,feedback_correct,feedback_incorrect"
+          )
+          .in("id", itemIds)
       ),
     enabled: itemIds.length > 0,
   });
