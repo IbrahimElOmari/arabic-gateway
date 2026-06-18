@@ -120,6 +120,7 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
 
   const teacherItems: NavItem[] = [
     { to: '/teacher', icon: LayoutDashboard, label: t('teacher.dashboard', 'Teacher Dashboard'), end: true },
+    { to: '/teacher/workspace', icon: Users, label: t('teacher.workspace', 'Werkruimte') },
     { to: '/teacher/content-studio', icon: Palette, label: t('teacher.contentStudio', 'Content Studio') },
     { to: '/teacher/lessons', icon: Calendar, label: t('teacher.lessons', 'Lessons') },
     { to: '/teacher/recordings', icon: Video, label: t('teacher.recordings', 'Recordings') },
