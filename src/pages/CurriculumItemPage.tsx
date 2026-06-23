@@ -164,7 +164,7 @@ export default function CurriculumItemPage() {
   const currentOrder = orderingState ?? shuffledOptions;
 
   const submitAttempt = useMutation({
-    mutationFn: async (payload: { is_correct: boolean; answer_text: string; answer_json: any; upload_path?: string | null; score: number }) => {
+    mutationFn: async (payload: { is_correct: boolean | null; answer_text: string; answer_json: any; upload_path?: string | null; score: number }) => {
       if (!user || !item) throw new Error("not ready");
       return apiMutate("curriculum_item_attempts", (q) =>
         q.insert({
