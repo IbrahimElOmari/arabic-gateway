@@ -11,7 +11,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { CurriculumItemEditDialog, type EditableItem } from "@/components/curriculum/CurriculumItemEditDialog";
 import { CurriculumItemCreateDialog } from "@/components/curriculum/CurriculumItemCreateDialog";
-import { deleteCurriculumItem, reorderCurriculumItems } from "@/lib/curriculum-admin";
+import { deleteCurriculumItem, reorderCurriculumItems, setUnitPublished } from "@/lib/curriculum-admin";
+import { supabase } from "@/integrations/supabase/client";
 
 const SKILLS = ["lezen", "schrijven", "luisteren", "spreken", "grammatica", "woordenschat"] as const;
 
