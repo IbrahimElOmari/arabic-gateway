@@ -644,6 +644,7 @@ export type Database = {
           reference_media: string
           review_flag: string
           skill: string
+          strict_tashkeel: boolean
           unit_code: string
           updated_at: string
           week: number
@@ -679,6 +680,7 @@ export type Database = {
           reference_media?: string
           review_flag?: string
           skill: string
+          strict_tashkeel?: boolean
           unit_code: string
           updated_at?: string
           week: number
@@ -714,6 +716,7 @@ export type Database = {
           reference_media?: string
           review_flag?: string
           skill?: string
+          strict_tashkeel?: boolean
           unit_code?: string
           updated_at?: string
           week?: number
