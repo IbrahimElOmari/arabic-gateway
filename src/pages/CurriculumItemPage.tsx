@@ -44,6 +44,7 @@ interface Item {
   needs_ns_audio: boolean;
   needs_image: boolean;
   needs_student_recording: boolean;
+  strict_tashkeel: boolean | null;
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -59,6 +60,14 @@ function shuffle<T>(arr: T[]): T[] {
 
 function normalize(s: string): string {
   return (s || "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function stripTashkeel(s: string): string {
+  return (s || "").replace(/[\u0640\u064B-\u0652\u0670]/g, "");
+}
+
+function normItem(s: string, strict: boolean | null | undefined): string {
+  return strict ? normalize(s) : normalize(stripTashkeel(s));
 }
 
 export default function CurriculumItemPage() {
@@ -218,39 +227,39 @@ export default function CurriculumItemPage() {
     switch (cur.exercise_type) {
       case "meerkeuze":
         answerText = String(answer ?? "");
-        isCorrect = normalize(answerText) === normalize(cur.correct_answer);
+        isCorrect = normItem(answerText, cur.strict_tashkeel) === normItem(cur.correct_answer, cur.strict_tashkeel);
         break;
       case "meerdere-antwoorden": {
         const sel: string[] = Array.isArray(answer) ? answer : [];
         answerJson = sel;
         answerText = sel.join(" | ");
-        const expected = correctOpts.map(normalize).sort();
-        const got = sel.map(normalize).sort();
+        const expected = correctOpts.map((v) => normItem(v, cur.strict_tashkeel)).sort();
+        const got = sel.map((v) => normItem(v, cur.strict_tashkeel)).sort();
         isCorrect = expected.length === got.length && expected.every((v, i) => v === got[i]);
         break;
       }
       case "open-tekst":
         answerText = String(answer ?? "");
-        isCorrect = normalize(answerText) === normalize(cur.correct_answer);
+        isCorrect = normItem(answerText, cur.strict_tashkeel) === normItem(cur.correct_answer, cur.strict_tashkeel);
         break;
       case "gatentekst": {
         const fills: string[] = Array.isArray(answer) ? answer : [];
         answerJson = fills;
         answerText = fills.join(" | ");
-        const expected = (cur.correct_answer ?? "").split("|").map(normalize);
-        isCorrect = fills.length === expected.length && fills.every((v, i) => normalize(v) === expected[i]);
+        const expected = (cur.correct_answer ?? "").split("|").map((v) => normItem(v, cur.strict_tashkeel));
+        isCorrect = fills.length === expected.length && fills.every((v, i) => normItem(v, cur.strict_tashkeel) === expected[i]);
         break;
       }
       case "rangschikken": {
         const order = currentOrder;
         answerJson = order;
         answerText = order.join(" | ");
-        const expected = (cur.correct_answer ?? "").split("|").map(normalize);
+        const expected = (cur.correct_answer ?? "").split("|").map((v) => normItem(v, cur.strict_tashkeel));
         if (expected.length === order.length) {
-          isCorrect = order.every((v, i) => normalize(v) === expected[i]);
+          isCorrect = order.every((v, i) => normItem(v, cur.strict_tashkeel) === expected[i]);
         } else {
           // Fallback: correct order = original options array
-          isCorrect = opts.every((v, i) => normalize(v) === normalize(order[i] ?? ""));
+          isCorrect = opts.every((v, i) => normItem(v, cur.strict_tashkeel) === normItem(order[i] ?? "", cur.strict_tashkeel));
         }
         break;
       }
@@ -262,12 +271,12 @@ export default function CurriculumItemPage() {
         const expected: Record<string, string> = {};
         expectedPairs.forEach((p) => {
           const [l, r] = (p ?? "").split("=");
-          if (l && r) expected[normalize(l)] = normalize(r);
+          if (l && r) expected[normItem(l, cur.strict_tashkeel)] = normItem(r, cur.strict_tashkeel);
         });
         const keys = Object.keys(expected);
         isCorrect =
           keys.length > 0 &&
-          keys.every((k) => normalize(pairs[k] ?? "") === expected[k]);
+          keys.every((k) => normItem(pairs[k] ?? "", cur.strict_tashkeel) === expected[k]);
         break;
       }
       case "bestand-upload":
