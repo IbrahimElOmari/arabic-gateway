@@ -87,7 +87,9 @@ export function CurriculumItemEditDialog({ item, open, onOpenChange, onDeleted }
             points: form.points ?? 1,
             review_flag: form.review_flag,
             is_published: form.is_published ?? true,
+            strict_tashkeel: form.strict_tashkeel ?? false,
             updated_at: new Date().toISOString(),
+
           })
           .eq("id", form.id)
       );
@@ -223,6 +225,14 @@ export function CurriculumItemEditDialog({ item, open, onOpenChange, onDeleted }
               />
               <Label className="mb-2">{t("curriculum.published", "Gepubliceerd")}</Label>
             </div>
+            <div className="flex items-end gap-2">
+              <Switch
+                checked={f.strict_tashkeel ?? false}
+                onCheckedChange={(v) => setField("strict_tashkeel", v)}
+              />
+              <Label className="mb-2">{t("curriculum.strictTashkeel", "Tashkīl exact laten meetellen (standaard uit)")}</Label>
+            </div>
+
           </div>
 
           {/* Instruction & question */}

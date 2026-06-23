@@ -110,7 +110,9 @@ export function CurriculumItemCreateDialog({ unitCode, week, open, onOpenChange 
     setInputNl("");
     setPoints(1);
     setIsPublished(true);
+    setStrictTashkeel(false);
     setPendingMedia([]);
+
     setUrlValue("");
     setUrlAlt("");
     setCreatedItemId(null);
@@ -181,7 +183,9 @@ export function CurriculumItemCreateDialog({ unitCode, week, open, onOpenChange 
         input_translation_nl: inputNl,
         points,
         is_published: isPublished,
+        strict_tashkeel: strictTashkeel,
         created_by: user.id,
+
       };
 
       const rows = await apiMutate<any[]>("curriculum_items", (q) => q.insert(payload).select("id"));
@@ -496,6 +500,11 @@ export function CurriculumItemCreateDialog({ unitCode, week, open, onOpenChange 
               <Switch checked={isPublished} onCheckedChange={setIsPublished} />
               <Label>{t("curriculum.published", "Gepubliceerd")}</Label>
             </div>
+            <div className="flex items-center gap-2">
+              <Switch checked={strictTashkeel} onCheckedChange={setStrictTashkeel} />
+              <Label>{t("curriculum.strictTashkeel", "Tashkīl exact laten meetellen (standaard uit)")}</Label>
+            </div>
+
           </div>
         ) : (
           <div className="space-y-4">
