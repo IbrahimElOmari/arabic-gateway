@@ -614,7 +614,23 @@ export default function CurriculumItemPage() {
           {renderInteraction()}
 
           {/* Result */}
-          {submitted && (
+          {submitted && submitted.correct === null && (
+            <div
+              dir="rtl"
+              className="rounded-md p-4 border border-primary/30 bg-primary/5 text-sm"
+            >
+              <p className="font-semibold mb-1">
+                {t("curriculum.submittedPending", "Ingeleverd.")}
+              </p>
+              <p>
+                {t(
+                  "curriculum.awaitingTeacherReview",
+                  "Je leerkracht beoordeelt je antwoord en geeft feedback."
+                )}
+              </p>
+            </div>
+          )}
+          {submitted && submitted.correct !== null && (
             <div
               className={`rounded-md p-4 border ${
                 submitted.correct ? "border-success bg-success/10" : "border-destructive bg-destructive/10"
