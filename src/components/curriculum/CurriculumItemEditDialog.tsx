@@ -218,20 +218,23 @@ export function CurriculumItemEditDialog({ item, open, onOpenChange, onDeleted }
                 onChange={(e) => setField("points", Math.max(1, parseInt(e.target.value) || 1))}
               />
             </div>
-            <div className="flex items-end gap-2">
-              <Switch
-                checked={f.is_published ?? true}
-                onCheckedChange={(v) => setField("is_published", v)}
-              />
-              <Label className="mb-2">{t("curriculum.published", "Gepubliceerd")}</Label>
+            <div className="flex items-end gap-4 flex-wrap">
+              <div className="flex items-end gap-2">
+                <Switch
+                  checked={f.is_published ?? true}
+                  onCheckedChange={(v) => setField("is_published", v)}
+                />
+                <Label className="mb-2">{t("curriculum.published", "Gepubliceerd")}</Label>
+              </div>
+              <div className="flex items-end gap-2">
+                <Switch
+                  checked={f.strict_tashkeel ?? false}
+                  onCheckedChange={(v) => setField("strict_tashkeel", v)}
+                />
+                <Label className="mb-2">{t("curriculum.strictTashkeel", "Tashkīl exact laten meetellen (standaard uit)")}</Label>
+              </div>
             </div>
-            <div className="flex items-end gap-2">
-              <Switch
-                checked={f.strict_tashkeel ?? false}
-                onCheckedChange={(v) => setField("strict_tashkeel", v)}
-              />
-              <Label className="mb-2">{t("curriculum.strictTashkeel", "Tashkīl exact laten meetellen (standaard uit)")}</Label>
-            </div>
+
 
           </div>
 
