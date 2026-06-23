@@ -44,6 +44,7 @@ interface Item {
   needs_ns_audio: boolean;
   needs_image: boolean;
   needs_student_recording: boolean;
+  strict_tashkeel: boolean | null;
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -59,6 +60,14 @@ function shuffle<T>(arr: T[]): T[] {
 
 function normalize(s: string): string {
   return (s || "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function stripTashkeel(s: string): string {
+  return (s || "").replace(/[\u0640\u064B-\u0652\u0670]/g, "");
+}
+
+function normItem(s: string, strict: boolean | null | undefined): string {
+  return strict ? normalize(s) : normalize(stripTashkeel(s));
 }
 
 export default function CurriculumItemPage() {
