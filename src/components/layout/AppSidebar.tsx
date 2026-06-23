@@ -10,7 +10,7 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
-import { apiQuery, apiRpc } from '@/lib/supabase-api';
+import { apiRpc } from '@/lib/supabase-api';
 import {
   Home,
   LayoutDashboard,
@@ -62,19 +62,6 @@ interface NavItem {
 export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSidebarProps) {
   const { t } = useTranslation();
   const { user, profile, role, roleStatus, signOut } = useAuth();
-
-  // Fetch pending enrollment count for admin badge
-  const { data: pendingEnrollmentCount } = useQuery({
-    queryKey: ['pending-enrollment-count'],
-    queryFn: async () => {
-      const data = await apiQuery<any[]>('class_enrollments', (q) =>
-        q.select('id').eq('status', 'pending')
-      );
-      return data?.length || 0;
-    },
-    enabled: !!user && role === 'admin',
-    refetchInterval: 30000,
-  });
 
   // Fetch unassigned students count for admin badge
   const { data: unassignedCount } = useQuery({
@@ -134,7 +121,6 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
     { to: '/admin/users', icon: Users, label: t('admin.users', 'Users'), badge: unassignedCount || 0 },
     { to: '/admin/teachers', icon: UserCheck, label: t('admin.teacherApprovals', 'Teacher Approvals') },
     { to: '/admin/classes', icon: School, label: t('admin.classes', 'Classes') },
-    { to: '/admin/enrollments', icon: UserPlus, label: t('admin.enrollmentRequests', 'Inschrijvingsaanvragen'), badge: pendingEnrollmentCount || 0 },
     { to: '/admin/levels', icon: Layers, label: t('admin.levels', 'Levels') },
     { to: '/admin/placements', icon: ClipboardList, label: t('admin.placements', 'Placements') },
     { to: '/admin/payments', icon: CreditCard, label: t('admin.payments', 'Payments') },
