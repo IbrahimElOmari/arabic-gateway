@@ -193,10 +193,35 @@ export default function CurriculumUnitPage() {
           )}
         </div>
         {canEdit && (
-          <Button onClick={() => setCreating(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            {t("curriculum.newItem", "Nieuwe oefening")}
-          </Button>
+          <div className="flex flex-col items-end gap-2">
+            <Badge variant="secondary" dir="rtl-friendly">
+              {t("curriculum.visibleToStudents", "Zichtbaar voor leerlingen")}:{" "}
+              {publishCounts?.published ?? 0} {t("common.of", "van")} {publishCounts?.total ?? 0}{" "}
+              {t("curriculum.exercises", "oefeningen")}
+            </Badge>
+            <div className="flex gap-2 flex-wrap justify-end">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={setPublished.isPending}
+                onClick={() => setPublished.mutate(true)}
+              >
+                {t("curriculum.publishWeek", "Hele week publiceren")}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={setPublished.isPending}
+                onClick={() => setPublished.mutate(false)}
+              >
+                {t("curriculum.hideWeek", "Hele week verbergen")}
+              </Button>
+              <Button onClick={() => setCreating(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                {t("curriculum.newItem", "Nieuwe oefening")}
+              </Button>
+            </div>
+          </div>
         )}
       </div>
 
