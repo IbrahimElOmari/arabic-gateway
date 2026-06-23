@@ -35,7 +35,9 @@ export interface EditableItem {
   points: number | null;
   review_flag: string | null;
   is_published?: boolean | null;
+  strict_tashkeel?: boolean | null;
 }
+
 
 interface Props {
   item: EditableItem | null;
@@ -85,7 +87,9 @@ export function CurriculumItemEditDialog({ item, open, onOpenChange, onDeleted }
             points: form.points ?? 1,
             review_flag: form.review_flag,
             is_published: form.is_published ?? true,
+            strict_tashkeel: form.strict_tashkeel ?? false,
             updated_at: new Date().toISOString(),
+
           })
           .eq("id", form.id)
       );
@@ -214,13 +218,24 @@ export function CurriculumItemEditDialog({ item, open, onOpenChange, onDeleted }
                 onChange={(e) => setField("points", Math.max(1, parseInt(e.target.value) || 1))}
               />
             </div>
-            <div className="flex items-end gap-2">
-              <Switch
-                checked={f.is_published ?? true}
-                onCheckedChange={(v) => setField("is_published", v)}
-              />
-              <Label className="mb-2">{t("curriculum.published", "Gepubliceerd")}</Label>
+            <div className="flex items-end gap-4 flex-wrap">
+              <div className="flex items-end gap-2">
+                <Switch
+                  checked={f.is_published ?? true}
+                  onCheckedChange={(v) => setField("is_published", v)}
+                />
+                <Label className="mb-2">{t("curriculum.published", "Gepubliceerd")}</Label>
+              </div>
+              <div className="flex items-end gap-2">
+                <Switch
+                  checked={f.strict_tashkeel ?? false}
+                  onCheckedChange={(v) => setField("strict_tashkeel", v)}
+                />
+                <Label className="mb-2">{t("curriculum.strictTashkeel", "Tashkīl exact laten meetellen (standaard uit)")}</Label>
+              </div>
             </div>
+
+
           </div>
 
           {/* Instruction & question */}
