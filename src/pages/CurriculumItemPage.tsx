@@ -145,7 +145,7 @@ export default function CurriculumItemPage() {
 
 
   const [answer, setAnswer] = useState<any>(null);
-  const [submitted, setSubmitted] = useState<null | { correct: boolean; feedback: string }>(null);
+  const [submitted, setSubmitted] = useState<null | { correct: boolean | null; feedback: string }>(null);
 
   // Audio recording
   const [recording, setRecording] = useState(false);
@@ -164,7 +164,7 @@ export default function CurriculumItemPage() {
   const currentOrder = orderingState ?? shuffledOptions;
 
   const submitAttempt = useMutation({
-    mutationFn: async (payload: { is_correct: boolean; answer_text: string; answer_json: any; upload_path?: string | null; score: number }) => {
+    mutationFn: async (payload: { is_correct: boolean | null; answer_text: string; answer_json: any; upload_path?: string | null; score: number }) => {
       if (!user || !item) throw new Error("not ready");
       return apiMutate("curriculum_item_attempts", (q) =>
         q.insert({
@@ -219,10 +219,11 @@ export default function CurriculumItemPage() {
 
   // --- Submission handlers per type ---
   async function handleSubmit() {
-    let isCorrect = false;
+    let isCorrect: boolean | null = false;
     let answerText = "";
     let answerJson: any = null;
     let uploadPath: string | null = null;
+    let pending = false;
 
     switch (cur.exercise_type) {
       case "meerkeuze":
@@ -240,7 +241,8 @@ export default function CurriculumItemPage() {
       }
       case "open-tekst":
         answerText = String(answer ?? "");
-        isCorrect = normItem(answerText, cur.strict_tashkeel) === normItem(cur.correct_answer, cur.strict_tashkeel);
+        isCorrect = null;
+        pending = true;
         break;
       case "gatentekst": {
         const fills: string[] = Array.isArray(answer) ? answer : [];
@@ -306,11 +308,11 @@ export default function CurriculumItemPage() {
         answer_text: answerText,
         answer_json: answerJson,
         upload_path: uploadPath,
-        score: isCorrect ? cur.points ?? 1 : 0,
+        score: isCorrect === true ? cur.points ?? 1 : 0,
       });
       setSubmitted({
-        correct: isCorrect,
-        feedback: isCorrect ? cur.feedback_correct : cur.feedback_incorrect,
+        correct: pending ? null : (isCorrect as boolean),
+        feedback: pending ? "" : (isCorrect ? cur.feedback_correct : cur.feedback_incorrect),
       });
     } catch (e: any) {
       toast({ variant: "destructive", title: t("common.error", "Fout"), description: e?.message });
@@ -612,7 +614,23 @@ export default function CurriculumItemPage() {
           {renderInteraction()}
 
           {/* Result */}
-          {submitted && (
+          {submitted && submitted.correct === null && (
+            <div
+              dir="rtl"
+              className="rounded-md p-4 border border-primary/30 bg-primary/5 text-sm"
+            >
+              <p className="font-semibold mb-1">
+                {t("curriculum.submittedPending", "Ingeleverd.")}
+              </p>
+              <p>
+                {t(
+                  "curriculum.awaitingTeacherReview",
+                  "Je leerkracht beoordeelt je antwoord en geeft feedback."
+                )}
+              </p>
+            </div>
+          )}
+          {submitted && submitted.correct !== null && (
             <div
               className={`rounded-md p-4 border ${
                 submitted.correct ? "border-success bg-success/10" : "border-destructive bg-destructive/10"
