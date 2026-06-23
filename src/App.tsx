@@ -46,7 +46,6 @@ const KnowledgeBaseManagementPage = lazyWithRetry(() => import("./pages/admin/Kn
 const ContentReportsPage = lazyWithRetry(() => import("./pages/admin/ContentReportsPage"));
 const AdminInvitationsPage = lazyWithRetry(() => import("./pages/admin/AdminInvitationsPage"));
 const FinalExamsPage = lazyWithRetry(() => import("./pages/admin/FinalExamsPage"));
-const EnrollmentRequestsPage = lazyWithRetry(() => import("./pages/admin/EnrollmentRequestsPage"));
 const DesignSystemPage = lazyWithRetry(() => import("./pages/admin/DesignSystemPage"));
 const I18nTranslatePage = lazyWithRetry(() => import("./pages/admin/I18nTranslatePage"));
 const CronJobsPage = lazyWithRetry(() => import("./pages/admin/CronJobsPage"));
