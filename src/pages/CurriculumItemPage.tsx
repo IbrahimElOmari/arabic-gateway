@@ -276,7 +276,7 @@ export default function CurriculumItemPage() {
         const keys = Object.keys(expected);
         isCorrect =
           keys.length > 0 &&
-          keys.every((k) => normItem(pairs[Object.keys(pairs).find((pk) => normItem(pk, cur.strict_tashkeel) === k) ?? ""] ?? "", cur.strict_tashkeel) === expected[k]);
+          keys.every((k) => normItem(pairs[k] ?? "", cur.strict_tashkeel) === expected[k]);
         break;
       }
       case "audio-opname": {
