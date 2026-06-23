@@ -145,7 +145,7 @@ export default function CurriculumItemPage() {
 
 
   const [answer, setAnswer] = useState<any>(null);
-  const [submitted, setSubmitted] = useState<null | { correct: boolean; feedback: string }>(null);
+  const [submitted, setSubmitted] = useState<null | { correct: boolean | null; feedback: string }>(null);
 
   // Audio recording
   const [recording, setRecording] = useState(false);
