@@ -39,3 +39,10 @@ export async function reorderCurriculumItems(orderedIds: string[]): Promise<void
     )
   );
 }
+
+/** Publish or hide all curriculum items within a unit. */
+export async function setUnitPublished(unitCode: string, published: boolean): Promise<void> {
+  await apiMutate("curriculum_items", (q) =>
+    q.update({ is_published: published }).eq("unit_code", unitCode)
+  );
+}
