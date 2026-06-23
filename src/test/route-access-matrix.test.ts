@@ -8,7 +8,7 @@ const sidebarSource = readFileSync(resolve(process.cwd(), 'src/components/layout
 const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/privacy', '/terms', '/pricing', '/faq', '/install'];
 const studentRoutes = ['/dashboard', '/self-study', '/live-lessons', '/recordings', '/forum', '/chat', '/calendar', '/progress', '/settings', '/helpdesk', '/gamification'];
 const teacherRoutes = ['/teacher', '/teacher/content-studio', '/teacher/lessons', '/teacher/recordings', '/teacher/submissions', '/teacher/exercises', '/teacher/materials'];
-const adminRoutes = ['/admin', '/admin/users', '/admin/teachers', '/admin/classes', '/admin/levels', '/admin/payments', '/admin/discounts', '/admin/placements', '/admin/analytics', '/admin/faq', '/admin/reports', '/admin/invitations', '/admin/final-exams', '/admin/enrollments', '/admin/design-system'];
+const adminRoutes = ['/admin', '/admin/users', '/admin/teachers', '/admin/classes', '/admin/levels', '/admin/payments', '/admin/discounts', '/admin/placements', '/admin/analytics', '/admin/faq', '/admin/reports', '/admin/invitations', '/admin/final-exams', '/admin/design-system'];
 
 function routePattern(path: string): RegExp {
   return new RegExp(`<Route\\s+path=["']${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`);
