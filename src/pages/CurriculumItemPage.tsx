@@ -219,10 +219,11 @@ export default function CurriculumItemPage() {
 
   // --- Submission handlers per type ---
   async function handleSubmit() {
-    let isCorrect = false;
+    let isCorrect: boolean | null = false;
     let answerText = "";
     let answerJson: any = null;
     let uploadPath: string | null = null;
+    let pending = false;
 
     switch (cur.exercise_type) {
       case "meerkeuze":
@@ -240,7 +241,8 @@ export default function CurriculumItemPage() {
       }
       case "open-tekst":
         answerText = String(answer ?? "");
-        isCorrect = normItem(answerText, cur.strict_tashkeel) === normItem(cur.correct_answer, cur.strict_tashkeel);
+        isCorrect = null;
+        pending = true;
         break;
       case "gatentekst": {
         const fills: string[] = Array.isArray(answer) ? answer : [];
@@ -306,11 +308,11 @@ export default function CurriculumItemPage() {
         answer_text: answerText,
         answer_json: answerJson,
         upload_path: uploadPath,
-        score: isCorrect ? cur.points ?? 1 : 0,
+        score: isCorrect === true ? cur.points ?? 1 : 0,
       });
       setSubmitted({
-        correct: isCorrect,
-        feedback: isCorrect ? cur.feedback_correct : cur.feedback_incorrect,
+        correct: pending ? null : (isCorrect as boolean),
+        feedback: pending ? "" : (isCorrect ? cur.feedback_correct : cur.feedback_incorrect),
       });
     } catch (e: any) {
       toast({ variant: "destructive", title: t("common.error", "Fout"), description: e?.message });
