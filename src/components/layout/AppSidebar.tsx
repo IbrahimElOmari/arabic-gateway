@@ -63,19 +63,6 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
   const { t } = useTranslation();
   const { user, profile, role, roleStatus, signOut } = useAuth();
 
-  // Fetch pending enrollment count for admin badge
-  const { data: pendingEnrollmentCount } = useQuery({
-    queryKey: ['pending-enrollment-count'],
-    queryFn: async () => {
-      const data = await apiQuery<any[]>('class_enrollments', (q) =>
-        q.select('id').eq('status', 'pending')
-      );
-      return data?.length || 0;
-    },
-    enabled: !!user && role === 'admin',
-    refetchInterval: 30000,
-  });
-
   // Fetch unassigned students count for admin badge
   const { data: unassignedCount } = useQuery({
     queryKey: ['unassigned-students-count'],
