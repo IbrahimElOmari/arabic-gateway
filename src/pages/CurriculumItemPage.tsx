@@ -279,6 +279,7 @@ export default function CurriculumItemPage() {
           keys.every((k) => normItem(pairs[k] ?? "", cur.strict_tashkeel) === expected[k]);
         break;
       }
+      case "bestand-upload":
       case "audio-opname": {
         if (!recordedBlob && !(answer instanceof File)) {
           toast({ variant: "destructive", title: t("curriculum.uploadRequired", "Upload of opname vereist") });
