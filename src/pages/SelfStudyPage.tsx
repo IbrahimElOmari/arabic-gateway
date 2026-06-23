@@ -140,7 +140,7 @@ export default function SelfStudyPage() {
         </div>
       )}
 
-      {!isLoading && (!units || units.length === 0) && (
+      {!isLoading && visibleUnits.length === 0 && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
