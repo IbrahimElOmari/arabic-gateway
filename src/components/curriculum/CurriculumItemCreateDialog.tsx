@@ -84,6 +84,8 @@ export function CurriculumItemCreateDialog({ unitCode, week, open, onOpenChange 
   const [inputNl, setInputNl] = useState("");
   const [points, setPoints] = useState<number>(1);
   const [isPublished, setIsPublished] = useState(true);
+  const [strictTashkeel, setStrictTashkeel] = useState(false);
+
 
   const [pendingMedia, setPendingMedia] = useState<PendingMedia[]>([]);
   const [urlValue, setUrlValue] = useState("");

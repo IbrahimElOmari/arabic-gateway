@@ -35,7 +35,9 @@ export interface EditableItem {
   points: number | null;
   review_flag: string | null;
   is_published?: boolean | null;
+  strict_tashkeel?: boolean | null;
 }
+
 
 interface Props {
   item: EditableItem | null;
