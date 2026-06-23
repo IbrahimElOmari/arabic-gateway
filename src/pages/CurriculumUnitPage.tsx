@@ -74,6 +74,40 @@ export default function CurriculumUnitPage() {
   const invalidateItems = () =>
     qc.invalidateQueries({ queryKey: ["curriculum-items", unitCode, canEdit] });
 
+  const { data: publishCounts } = useQuery({
+    queryKey: ["curriculum-unit-publish-counts", unitCode],
+    enabled: !!unitCode && canEdit,
+    queryFn: async () => {
+      const totalRes = await supabase
+        .from("curriculum_items")
+        .select("*", { count: "exact", head: true })
+        .eq("unit_code", unitCode!);
+      if (totalRes.error) throw totalRes.error;
+      const pubRes = await supabase
+        .from("curriculum_items")
+        .select("*", { count: "exact", head: true })
+        .eq("unit_code", unitCode!)
+        .eq("is_published", true);
+      if (pubRes.error) throw pubRes.error;
+      return { total: totalRes.count ?? 0, published: pubRes.count ?? 0 };
+    },
+  });
+
+  const setPublished = useMutation({
+    mutationFn: (published: boolean) => setUnitPublished(unitCode!, published),
+    onSuccess: (_d, published) => {
+      toast({
+        title: published
+          ? t("curriculum.unitPublished", "Week gepubliceerd")
+          : t("curriculum.unitHidden", "Week verborgen"),
+      });
+      invalidateItems();
+      qc.invalidateQueries({ queryKey: ["curriculum-unit-publish-counts", unitCode] });
+    },
+    onError: (e: any) =>
+      toast({ variant: "destructive", title: t("common.error", "Fout"), description: e?.message }),
+  });
+
   const reorder = useMutation({
     mutationFn: (orderedIds: string[]) => reorderCurriculumItems(orderedIds),
     onSuccess: () => invalidateItems(),
