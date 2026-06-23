@@ -89,8 +89,8 @@ export default function SelfStudyPage() {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {units?.map((u) => {
-            const total = countsByUnit[u.code] ?? 0;
+          {visibleUnits.map((u) => {
+            const total = countsByUnit?.[u.code] ?? 0;
             const p = progressByUnit[u.code];
             const pct = total > 0 && p ? Math.round((p.items_completed / total) * 100) : 0;
             const title = u.title_nl?.trim() || `Unit ${u.week_start ?? u.display_order}`;
