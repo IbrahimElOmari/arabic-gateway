@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiQuery } from "@/lib/supabase-api";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -28,7 +29,7 @@ export default function SelfStudyPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
 
-  const { data: units, isLoading } = useQuery({
+  const { data: units, isLoading: unitsLoading } = useQuery({
     queryKey: ["curriculum-units"],
     queryFn: () =>
       apiQuery<Unit[]>("curriculum_units", (q) =>
@@ -36,12 +37,24 @@ export default function SelfStudyPage() {
       ),
   });
 
-  const { data: itemCounts } = useQuery({
-    queryKey: ["curriculum-item-counts"],
-    queryFn: () =>
-      apiQuery<{ unit_code: string }[]>("curriculum_items", (q) =>
-        q.select("unit_code")
-      ),
+  const unitCodes = (units ?? []).map((u) => u.code);
+
+  const { data: countsByUnit, isLoading: countsLoading } = useQuery({
+    queryKey: ["curriculum-item-counts", unitCodes],
+    enabled: unitCodes.length > 0,
+    queryFn: async () => {
+      const entries = await Promise.all(
+        unitCodes.map(async (code) => {
+          const { count, error } = await supabase
+            .from("curriculum_items")
+            .select("*", { count: "exact", head: true })
+            .eq("unit_code", code);
+          if (error) throw error;
+          return [code, count ?? 0] as const;
+        })
+      );
+      return Object.fromEntries(entries) as Record<string, number>;
+    },
   });
 
   const { data: progress } = useQuery({
@@ -53,14 +66,13 @@ export default function SelfStudyPage() {
     enabled: !!user,
   });
 
-  const countsByUnit = (itemCounts ?? []).reduce<Record<string, number>>((acc, r) => {
-    acc[r.unit_code] = (acc[r.unit_code] ?? 0) + 1;
-    return acc;
-  }, {});
   const progressByUnit = (progress ?? []).reduce<Record<string, ProgressRow>>((acc, r) => {
     acc[r.unit_code] = r;
     return acc;
   }, {});
+
+  const isLoading = unitsLoading || (unitCodes.length > 0 && countsLoading);
+  const visibleUnits = (units ?? []).filter((u) => (countsByUnit?.[u.code] ?? 0) > 0);
 
   return (
     <div className="container py-8">
@@ -77,8 +89,8 @@ export default function SelfStudyPage() {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {units?.map((u) => {
-            const total = countsByUnit[u.code] ?? 0;
+          {visibleUnits.map((u) => {
+            const total = countsByUnit?.[u.code] ?? 0;
             const p = progressByUnit[u.code];
             const pct = total > 0 && p ? Math.round((p.items_completed / total) * 100) : 0;
             const title = u.title_nl?.trim() || `Unit ${u.week_start ?? u.display_order}`;
@@ -128,7 +140,7 @@ export default function SelfStudyPage() {
         </div>
       )}
 
-      {!isLoading && (!units || units.length === 0) && (
+      {!isLoading && visibleUnits.length === 0 && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
