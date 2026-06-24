@@ -10,7 +10,7 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
-import { apiQuery, apiRpc } from '@/lib/supabase-api';
+import { apiRpc } from '@/lib/supabase-api';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Home,
