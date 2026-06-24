@@ -10,7 +10,8 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
-import { apiRpc } from '@/lib/supabase-api';
+import { apiQuery, apiRpc } from '@/lib/supabase-api';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Home,
   LayoutDashboard,
