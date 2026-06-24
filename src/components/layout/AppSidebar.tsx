@@ -75,6 +75,21 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
     refetchInterval: 30000,
   });
 
+  // Pending open-text submissions count for teacher badge
+  const { data: pendingReviewCount } = useQuery({
+    queryKey: ['pending-review-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('curriculum_item_attempts')
+        .select('id', { count: 'exact', head: true })
+        .is('is_correct', null);
+      if (error) return 0;
+      return count || 0;
+    },
+    enabled: !!user && (role === 'teacher' || role === 'admin'),
+    refetchInterval: 60000,
+  });
+
   const publicItems: NavItem[] = [
     { to: '/', icon: Home, label: t('nav.home'), end: true },
     { to: '/faq', icon: HelpCircleIcon, label: t('nav.knowledgeBase', 'FAQ') },
