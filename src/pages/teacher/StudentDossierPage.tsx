@@ -112,12 +112,29 @@ function FeedbackEditor({
   const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
+  const qc = useQueryClient();
   const [text, setText] = useState(existing?.feedback_text ?? "");
-  useEffect(() => setText(existing?.feedback_text ?? ""), [existing?.id]);
+  const [verdict, setVerdict] = useState<boolean | null>(attempt.is_correct);
+  const maxScore = attempt.max_score ?? 0;
+  const [score, setScore] = useState<string>(
+    attempt.score != null ? String(attempt.score) : ""
+  );
+  useEffect(() => {
+    setText(existing?.feedback_text ?? "");
+    setVerdict(attempt.is_correct);
+    setScore(attempt.score != null ? String(attempt.score) : "");
+  }, [existing?.id, attempt.id, attempt.is_correct, attempt.score]);
 
   const save = useMutation({
     mutationFn: async () => {
       if (!text.trim()) throw new Error(t("dossier.feedbackRequired", "Feedback mag niet leeg zijn."));
+      if (verdict === null) {
+        throw new Error(t("dossier.verdictRequired", "Kies een oordeel (Goed of Fout)."));
+      }
+      const parsedScore = score === "" ? 0 : Number(score);
+      if (Number.isNaN(parsedScore) || parsedScore < 0 || (maxScore > 0 && parsedScore > maxScore)) {
+        throw new Error(t("dossier.scoreInvalid", "Ongeldige score."));
+      }
       if (existing) {
         await apiMutate("submission_feedback", (q) =>
           q
@@ -141,9 +158,13 @@ function FeedbackEditor({
           })
         );
       }
+      await apiMutate("curriculum_item_attempts", (q) =>
+        q.update({ is_correct: verdict, score: parsedScore }).eq("id", attempt.id)
+      );
     },
     onSuccess: () => {
-      toast({ title: t("dossier.feedbackSaved", "Feedback opgeslagen") });
+      toast({ title: t("dossier.feedbackSaved", "Beoordeling opgeslagen") });
+      qc.invalidateQueries({ queryKey: ["dossier-attempts", studentId] });
       onSaved();
     },
     onError: (e: any) => {
@@ -152,7 +173,7 @@ function FeedbackEditor({
   });
 
   return (
-    <div className="space-y-2 border-t pt-3 mt-3">
+    <div className="space-y-3 border-t pt-3 mt-3">
       <p className="text-sm font-medium">{t("dossier.feedback", "Feedback")}</p>
       <Textarea
         value={text}
@@ -160,16 +181,57 @@ function FeedbackEditor({
         rows={3}
         placeholder={t("dossier.feedbackPlaceholder", "Schrijf hier je feedback...")}
       />
-      <div className="flex items-center justify-between">
-        {existing && (
-          <Badge variant="outline" className="text-xs">
-            {t("dossier.statusReviewed", "Status")}: {existing.status}
-          </Badge>
-        )}
-        <Button size="sm" onClick={() => save.mutate()} disabled={save.isPending}>
-          {save.isPending ? <Loader2 className="h-4 w-4 me-2 animate-spin" /> : <Save className="h-4 w-4 me-2" />}
-          {existing ? t("dossier.update", "Bijwerken") : t("dossier.send", "Verzenden")}
-        </Button>
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="space-y-1">
+          <p className="text-xs font-medium">{t("dossier.verdict", "Oordeel")}</p>
+          <div className="flex gap-1">
+            <Button
+              type="button"
+              size="sm"
+              variant={verdict === true ? "default" : "outline"}
+              className={verdict === true ? "bg-success text-success-foreground hover:bg-success/90" : ""}
+              onClick={() => setVerdict(true)}
+            >
+              <CheckCircle2 className="h-4 w-4 me-1" />
+              {t("dossier.good", "Goed")}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={verdict === false ? "destructive" : "outline"}
+              onClick={() => setVerdict(false)}
+            >
+              <XCircle className="h-4 w-4 me-1" />
+              {t("dossier.wrong", "Fout")}
+            </Button>
+          </div>
+        </div>
+        <div className="space-y-1">
+          <p className="text-xs font-medium">
+            {t("dossier.scoreLabel", "Punten")} {maxScore > 0 ? `(0–${maxScore})` : ""}
+          </p>
+          <input
+            type="number"
+            min={0}
+            max={maxScore > 0 ? maxScore : undefined}
+            step={1}
+            value={score}
+            onChange={(e) => setScore(e.target.value)}
+            className="h-9 w-24 rounded-md border bg-background px-2 text-sm"
+            placeholder="0"
+          />
+        </div>
+        <div className="ms-auto flex items-center gap-2">
+          {existing && (
+            <Badge variant="outline" className="text-xs">
+              {t("dossier.statusReviewed", "Status")}: {existing.status}
+            </Badge>
+          )}
+          <Button size="sm" onClick={() => save.mutate()} disabled={save.isPending}>
+            {save.isPending ? <Loader2 className="h-4 w-4 me-2 animate-spin" /> : <Save className="h-4 w-4 me-2" />}
+            {existing ? t("dossier.update", "Bijwerken") : t("dossier.send", "Verzenden")}
+          </Button>
+        </div>
       </div>
     </div>
   );
