@@ -130,6 +130,7 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
     { to: '/teacher/exercises', icon: BookOpen, label: t('teacher.exercises', 'Exercises') },
     { to: '/teacher/materials', icon: FileCheck, label: t('teacher.materials', 'Materials') },
     { to: '/teacher/submissions', icon: Users, label: t('teacher.submissions', 'Submissions') },
+    { to: '/teacher/review-queue', icon: FileCheck, label: t('teacher.reviewQueue', 'Na te kijken'), badge: pendingReviewCount || 0 },
   ];
 
   const adminItems: NavItem[] = [
