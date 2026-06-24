@@ -64,6 +64,7 @@ const TeacherExercisesPage = lazyWithRetry(() => import("./pages/teacher/Teacher
 const TeacherMaterialsPage = lazyWithRetry(() => import("./pages/teacher/TeacherMaterialsPage"));
 const TeacherWorkspacePage = lazyWithRetry(() => import("./pages/teacher/TeacherWorkspacePage"));
 const StudentDossierPage = lazyWithRetry(() => import("./pages/teacher/StudentDossierPage"));
+const TeacherReviewQueuePage = lazyWithRetry(() => import("./pages/teacher/TeacherReviewQueuePage"));
 
 // Self-Study pages
 const SelfStudyPage = lazyWithRetry(() => import("./pages/SelfStudyPage"));
@@ -177,6 +178,7 @@ const App = () => (
                       <Route path="/teacher/materials" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><TeacherMaterialsPage /></ProtectedRoute>} />
                       <Route path="/teacher/workspace" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><TeacherWorkspacePage /></ProtectedRoute>} />
                       <Route path="/teacher/students/:studentId" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><StudentDossierPage /></ProtectedRoute>} />
+                      <Route path="/teacher/review-queue" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><TeacherReviewQueuePage /></ProtectedRoute>} />
                       
                       {/* Knowledge base */}
                       <Route path="/faq" element={<KnowledgeBasePage />} />
