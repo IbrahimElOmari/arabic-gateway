@@ -7,22 +7,26 @@ import { Loader2, FileCheck } from "lucide-react";
 import { format } from "date-fns";
 import { apiQuery } from "@/lib/supabase-api";
 
-interface ReviewRow {
+interface AttemptRow {
   id: string;
   student_id: string;
   item_id: string;
   answer_text: string | null;
   created_at: string;
-  curriculum_items: {
-    id: string;
-    unit_code: string | null;
-    instruction_nl: string | null;
-    question: string | null;
-  } | null;
-  profiles: {
-    id: string;
-    full_name: string | null;
-  } | null;
+}
+interface ItemRow {
+  id: string;
+  unit_code: string | null;
+  instruction_nl: string | null;
+  question: string | null;
+}
+interface ProfileRow {
+  user_id: string;
+  full_name: string | null;
+}
+interface ReviewRow extends AttemptRow {
+  item: ItemRow | null;
+  studentName: string;
 }
 
 export default function TeacherReviewQueuePage() {
@@ -30,15 +34,36 @@ export default function TeacherReviewQueuePage() {
 
   const { data: rows, isLoading } = useQuery({
     queryKey: ["teacher-review-queue"],
-    queryFn: async () =>
-      apiQuery<ReviewRow[]>("curriculum_item_attempts", (q) =>
+    queryFn: async (): Promise<ReviewRow[]> => {
+      const attempts = await apiQuery<AttemptRow[]>("curriculum_item_attempts", (q) =>
         q
-          .select(
-            "id, student_id, item_id, answer_text, created_at, curriculum_items!inner(id, unit_code, instruction_nl, question), profiles:student_id(id, full_name)"
-          )
+          .select("id, student_id, item_id, answer_text, created_at")
           .is("is_correct", null)
           .order("created_at", { ascending: false })
-      ),
+      );
+      if (!attempts || attempts.length === 0) return [];
+
+      const itemIds = Array.from(new Set(attempts.map((a) => a.item_id)));
+      const studentIds = Array.from(new Set(attempts.map((a) => a.student_id)));
+
+      const [items, profiles] = await Promise.all([
+        apiQuery<ItemRow[]>("curriculum_items", (q) =>
+          q.select("id, unit_code, instruction_nl, question").in("id", itemIds)
+        ),
+        apiQuery<ProfileRow[]>("profiles", (q) =>
+          q.select("user_id, full_name").in("user_id", studentIds)
+        ),
+      ]);
+
+      const itemMap = new Map((items || []).map((i) => [i.id, i]));
+      const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
+
+      return attempts.map((a) => ({
+        ...a,
+        item: itemMap.get(a.item_id) || null,
+        studentName: profileMap.get(a.student_id)?.full_name || "Onbekende leerling",
+      }));
+    },
     refetchInterval: 60000,
   });
 
@@ -67,11 +92,11 @@ export default function TeacherReviewQueuePage() {
       ) : (
         <div className="space-y-3">
           {rows.map((r) => {
-            const studentName = r.profiles?.full_name || "Onbekende leerling";
-            const week = r.curriculum_items?.unit_code || "—";
+            const studentName = r.studentName;
+            const week = r.item?.unit_code || "—";
             const oef =
-              r.curriculum_items?.instruction_nl ||
-              r.curriculum_items?.question ||
+              r.item?.instruction_nl ||
+              r.item?.question ||
               "Oefening";
             const answer = (r.answer_text || "").trim();
             const shortAnswer =
