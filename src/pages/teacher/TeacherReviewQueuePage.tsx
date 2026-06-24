@@ -92,11 +92,11 @@ export default function TeacherReviewQueuePage() {
       ) : (
         <div className="space-y-3">
           {rows.map((r) => {
-            const studentName = r.profiles?.full_name || "Onbekende leerling";
-            const week = r.curriculum_items?.unit_code || "—";
+            const studentName = r.studentName;
+            const week = r.item?.unit_code || "—";
             const oef =
-              r.curriculum_items?.instruction_nl ||
-              r.curriculum_items?.question ||
+              r.item?.instruction_nl ||
+              r.item?.question ||
               "Oefening";
             const answer = (r.answer_text || "").trim();
             const shortAnswer =
