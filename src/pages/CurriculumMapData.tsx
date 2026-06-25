@@ -4,10 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 type Unit = {
   code: string;
   display_order: number | null;
-  title_nl: string | null;
-  title_ar: string | null;
-  cefr_from: string | null;
-  week_start: string | null;
 };
 
 type Item = { unit_code: string; skill: string };
@@ -16,19 +12,6 @@ type ProgressRow = {
   unit_code: string;
   skill: string;
   items_correct: number | null;
-  items_attempted: number | null;
-  points_total: number | null;
-};
-
-type Dot = {
-  unit_code: string;
-  skill: string;
-  items_total: number;
-  items_correct: number;
-  items_attempted: number;
-  points_total: number;
-  display_order: number;
-  title_nl: string | null;
 };
 
 export default function CurriculumMapData() {
@@ -36,8 +19,9 @@ export default function CurriculumMapData() {
   const [error, setError] = useState<string | null>(null);
   const [notLoggedIn, setNotLoggedIn] = useState(false);
   const [empty, setEmpty] = useState(false);
-  const [dots, setDots] = useState<Dot[]>([]);
-  const [progressCount, setProgressCount] = useState(0);
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
+  const [progress, setProgress] = useState<ProgressRow[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,16 +32,16 @@ export default function CurriculumMapData() {
         return;
       }
 
-      const [{ data: units, error: unitsErr }, { data: progress, error: progErr }] =
+      const [{ data: unitsData, error: unitsErr }, { data: progressData, error: progErr }] =
         await Promise.all([
-          supabase.from("curriculum_units").select("code, display_order, title_nl, title_ar, cefr_from, week_start"),
+          supabase.from("curriculum_units").select("code, display_order"),
           supabase
             .from("curriculum_progress_by_skill")
-            .select("unit_code, skill, items_correct, items_attempted, points_total")
+            .select("unit_code, skill, items_correct")
             .eq("student_id", user.id),
         ]);
 
-      let items: Item[] = [];
+      let fetchedItems: Item[] = [];
       let itemsErr: any = null;
       const PAGE_SIZE = 1000; // gelijk aan het server-maximum per verzoek
       let from = 0;
@@ -69,7 +53,7 @@ export default function CurriculumMapData() {
           .order('id', { ascending: true })
           .range(from, from + PAGE_SIZE - 1);
         if (error) { itemsErr = error; break; }
-        items = items.concat(data as Item[]);
+        fetchedItems = fetchedItems.concat(data as Item[]);
         if (data.length < PAGE_SIZE) break; // laatste pagina bereikt
         from += PAGE_SIZE;
       }
@@ -82,59 +66,19 @@ export default function CurriculumMapData() {
         return;
       }
 
-      if (!items || items.length === 0) {
+      if (!fetchedItems || fetchedItems.length === 0) {
         setEmpty(true);
         setLoading(false);
         return;
       }
 
-      const unitByCode = new Map<string, Unit>();
-      (units || []).forEach((u: any) => unitByCode.set(u.code, {
-        code: u.code,
-        display_order: u.display_order ?? null,
-        title_nl: u.title_nl ?? null,
-        title_ar: u.title_ar ?? null,
-        cefr_from: u.cefr_from ?? null,
-        week_start: u.week_start != null ? String(u.week_start) : null,
-      }));
-
-      const itemsTotal = new Map<string, number>();
-      (items as Item[]).forEach((it) => {
-        const k = `${it.unit_code}|${it.skill}`;
-        itemsTotal.set(k, (itemsTotal.get(k) || 0) + 1);
-      });
-
-      const progressByKey = new Map<string, ProgressRow>();
-      (progress || []).forEach((p: any) => {
-        if (!p.unit_code || !p.skill) return;
-        progressByKey.set(`${p.unit_code}|${p.skill}`, {
-          unit_code: p.unit_code,
-          skill: p.skill,
-          items_correct: p.items_correct,
-          items_attempted: p.items_attempted,
-          points_total: p.points_total,
-        });
-      });
-
-      const builtDots: Dot[] = [];
-      itemsTotal.forEach((total, key) => {
-        const [unit_code = "", skill = ""] = key.split("|");
-        const p = progressByKey.get(key);
-        const u = unitByCode.get(unit_code);
-        builtDots.push({
-          unit_code,
-          skill,
-          items_total: total,
-          items_correct: p?.items_correct ?? 0,
-          items_attempted: p?.items_attempted ?? 0,
-          points_total: p?.points_total ?? 0,
-          display_order: u?.display_order ?? 999999,
-          title_nl: u ? u.title_nl : null,
-        });
-      });
-
-      setDots(builtDots);
-      setProgressCount((progress || []).length);
+      setUnits((unitsData || []).map((u: any) => ({ code: u.code, display_order: u.display_order ?? null })));
+      setItems(fetchedItems);
+      setProgress((progressData || []).map((p: any) => ({
+        unit_code: p.unit_code,
+        skill: p.skill,
+        items_correct: p.items_correct,
+      })));
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -145,63 +89,101 @@ export default function CurriculumMapData() {
   if (error) return <div className="p-6 text-destructive">{error}</div>;
   if (empty) return <div className="p-6">Je hebt nog geen toegang tot het curriculum.</div>;
 
-  // Group by week
-  const weekMap = new Map<string, Dot[]>();
-  dots.forEach((d) => {
-    const arr = weekMap.get(d.unit_code) || [];
-    arr.push(d);
-    weekMap.set(d.unit_code, arr);
+  // B1 — vorm de data tot stippen (zelfstandig)
+  const groups = new Map(); // "unit\u0000skill" -> { unit_code, skill, items_total }
+  items.forEach((it) => {
+    const k = it.unit_code + '\u0000' + it.skill;
+    let g = groups.get(k);
+    if (!g) { g = { unit_code: it.unit_code, skill: it.skill, items_total: 0 }; groups.set(k, g); }
+    g.items_total += 1;
+  });
+  const progByKey = new Map();
+  progress.forEach((p) => { progByKey.set(p.unit_code + '\u0000' + p.skill, p); });
+  const stippen = [...groups.values()].map((g) => {
+    const pr = progByKey.get(g.unit_code + '\u0000' + g.skill);
+    return {
+      unit_code: g.unit_code,
+      skill: g.skill,
+      items_total: Number(g.items_total),
+      items_correct: Number(pr ? pr.items_correct : 0),
+    };
   });
 
-  const weeks = Array.from(weekMap.keys()).sort((a, b) => {
-    const da = weekMap.get(a)?.[0]?.display_order ?? 999999;
-    const db = weekMap.get(b)?.[0]?.display_order ?? 999999;
-    if (da !== db) return da - db;
-    return a.localeCompare(b);
+  // B2 — afgeleide waarden
+  const orderOf: Record<string, number> = {};
+  units.forEach((u) => { orderOf[u.code] = u.display_order ?? 999999; });
+
+  const weeksSorted = [...new Set(stippen.map((s) => s.unit_code))].sort((a, b) => {
+    const da = orderOf[a] ?? 999999, db = orderOf[b] ?? 999999;
+    return da - db || (a < b ? -1 : a > b ? 1 : 0);
   });
+  const skillsSorted = [...new Set(stippen.map((s) => s.skill))].sort();
 
-  const totalItems = dots.reduce((s, d) => s + d.items_total, 0);
+  const T = 0.8;
+  const ratioOf = (s: { items_correct: number; items_total: number }) => Math.min(s.items_correct / s.items_total, 1);
+  const ignited = stippen.filter((s) => ratioOf(s) >= T)
+    .map((s) => `${s.unit_code} ${s.skill}`).sort();
 
+  // B3 — vaste layout-constanten
+  const cellW = 26, cellH = 30, originX = 40, originY = 40;
+  const numWeeks = weeksSorted.length, numSkills = skillsSorted.length;
+  const width  = originX + (numWeeks  - 1) * cellW + 60;
+  const height = originY + (numSkills - 1) * cellH + 56;
+  const xOf = (wi: number) => originX + wi * cellW;
+  const yOf = (si: number) => originY + si * cellH;
+  const labelY = originY + (numSkills - 1) * cellH + 30;
+
+  // B4 — één ster (Optie A: helderheid groeit mee; goud bij ratio ≥ 0,8)
+  const renderStar = (s: typeof stippen[number], i: number) => {
+    const wi = weeksSorted.indexOf(s.unit_code);
+    const si = skillsSorted.indexOf(s.skill);
+    if (wi < 0 || si < 0) return null;
+    const cx = xOf(wi), cy = yOf(si);
+    const r = ratioOf(s);
+    const title = `${s.unit_code} · ${s.skill} · ${s.items_correct}/${s.items_total}`;
+    if (r >= T) {
+      return (
+        <g key={i}>
+          <title>{title}</title>
+          <circle cx={cx} cy={cy} r={10}  fill="#f3c969" opacity={0.10} />
+          <circle cx={cx} cy={cy} r={6.5} fill="#f3c969" opacity={0.20} />
+          <circle cx={cx} cy={cy} r={4}   fill="#ffdd8a" opacity={0.45} />
+          <line x1={cx - 7} y1={cy} x2={cx + 7} y2={cy} stroke="#ffe9a8" strokeWidth={0.8} opacity={0.55} />
+          <line x1={cx} y1={cy - 7} x2={cx} y2={cy + 7} stroke="#ffe9a8" strokeWidth={0.8} opacity={0.55} />
+          <circle cx={cx} cy={cy} r={2.6} fill="#fff5d6" opacity={1} />
+        </g>
+      );
+    }
+    const t = r / T;
+    const op = 0.12 + 0.60 * t;
+    const rad = 2.2 + 1.6 * t;
+    return (
+      <g key={i}>
+        <title>{title}</title>
+        {t > 0.45 && <circle cx={cx} cy={cy} r={rad * 2.2} fill="#aebfe0" opacity={op * 0.30} />}
+        <circle cx={cx} cy={cy} r={rad} fill="#cdd8f2" opacity={op} />
+      </g>
+    );
+  };
+
+  // B5 — weergave
   return (
-    <div className="p-6 space-y-6">
-      {weeks.map((code) => {
-        const rows = [...weekMap.get(code)!].sort((a, b) => a.skill.localeCompare(b.skill));
-        const title = rows[0]?.title_nl ?? null;
-        return (
-          <section key={code}>
-            <h2 className="text-lg font-semibold mb-2">
-              {title ? `${code} — ${title}` : code}
-            </h2>
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-2">skill</th>
-                  <th className="text-left p-2">items_total</th>
-                  <th className="text-left p-2">items_correct</th>
-                  <th className="text-left p-2">items_attempted</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.skill} className="border-b">
-                    <td className="p-2">{r.skill}</td>
-                    <td className="p-2">{r.items_total}</td>
-                    <td className="p-2">{r.items_correct}</td>
-                    <td className="p-2">{r.items_attempted}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </section>
-        );
-      })}
-
-      <pre className="mt-8 p-4 bg-muted rounded text-xs">
-{`weken=${weeks.length}
-stippen=${dots.length}
-gepubliceerde_items=${totalItems}
-voortgangsrijen=${progressCount}`}
-      </pre>
+    <div className="p-6">
+      {stippen.length > 0 && (
+        <svg width="100%" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Sterrenkaart voortgang">
+          <rect x={0} y={0} width={width} height={height} rx={12} fill="#0b1124" />
+          {stippen.map(renderStar)}
+          {weeksSorted.map((code, i) => (
+            <text key={code} x={xOf(i)} y={labelY} textAnchor="middle" fontSize={12} fill="#6f7ea6">{code}</text>
+          ))}
+        </svg>
+      )}
+      <p style={{ marginTop: 12 }}>
+        Ontvlamd (≥80%): {ignited.length ? ignited.join(', ') : 'nog geen'}
+      </p>
+      <p>
+        weken={numWeeks} stippen={stippen.length} gepubliceerde_items={items.length} voortgangsrijen={progress.length}
+      </p>
     </div>
   );
 }
