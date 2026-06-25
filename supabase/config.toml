@@ -80,8 +80,6 @@ verify_jwt = true
 [functions.gamification]
 verify_jwt = true
 
-[functions.grade-submission]
-verify_jwt = true
 
 [functions.health]
 verify_jwt = true
