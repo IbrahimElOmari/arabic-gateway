@@ -135,16 +135,21 @@ export default function CurriculumMapData() {
   const labelY = originY + (numSkills - 1) * cellH + 30;
 
   // B4 — één ster (Optie A: helderheid groeit mee; goud bij ratio ≥ 0,8)
+  const keyOf = (s: { unit_code: string; skill: string }) => s.unit_code + '\u0000' + s.skill;
+
   const renderStar = (s: typeof stippen[number], i: number) => {
     const wi = weeksSorted.indexOf(s.unit_code);
     const si = skillsSorted.indexOf(s.skill);
     if (wi < 0 || si < 0) return null;
     const cx = xOf(wi), cy = yOf(si);
     const r = ratioOf(s);
+    const k = keyOf(s);
     const title = `${s.unit_code} · ${s.skill} · ${s.items_correct}/${s.items_total}`;
+    const onEnter = () => setHovered(k);
+    const onLeave = () => setHovered((h) => (h === k ? null : h));
     if (r >= T) {
       return (
-        <g key={i}>
+        <g key={i} onMouseEnter={onEnter} onMouseLeave={onLeave}>
           <title>{title}</title>
           <circle cx={cx} cy={cy} r={10}  fill="#f3c969" opacity={0.10} />
           <circle cx={cx} cy={cy} r={6.5} fill="#f3c969" opacity={0.20} />
@@ -152,6 +157,7 @@ export default function CurriculumMapData() {
           <line x1={cx - 7} y1={cy} x2={cx + 7} y2={cy} stroke="#ffe9a8" strokeWidth={0.8} opacity={0.55} />
           <line x1={cx} y1={cy - 7} x2={cx} y2={cy + 7} stroke="#ffe9a8" strokeWidth={0.8} opacity={0.55} />
           <circle cx={cx} cy={cy} r={2.6} fill="#fff5d6" opacity={1} />
+          <circle cx={cx} cy={cy} r={11} fill="transparent" pointerEvents="all" />
         </g>
       );
     }
@@ -159,10 +165,11 @@ export default function CurriculumMapData() {
     const op = 0.12 + 0.60 * t;
     const rad = 2.2 + 1.6 * t;
     return (
-      <g key={i}>
+      <g key={i} onMouseEnter={onEnter} onMouseLeave={onLeave}>
         <title>{title}</title>
         {t > 0.45 && <circle cx={cx} cy={cy} r={rad * 2.2} fill="#aebfe0" opacity={op * 0.30} />}
         <circle cx={cx} cy={cy} r={rad} fill="#cdd8f2" opacity={op} />
+        <circle cx={cx} cy={cy} r={11} fill="transparent" pointerEvents="all" />
       </g>
     );
   };
