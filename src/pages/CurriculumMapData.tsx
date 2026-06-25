@@ -320,7 +320,7 @@ export default function CurriculumMapData() {
         </div>
       )}
       <p style={{ marginTop: 12 }}>
-        Ontvlamd (≥80%): {ignited.length ? ignited.join(', ') : 'nog geen'}
+        Behaalde sterren: {ignited.length ? ignited.join(', ') : 'nog geen'}
       </p>
       <p>
         weken={numWeeks} stippen={stippen.length} gepubliceerde_items={items.length} voortgangsrijen={progress.length}
