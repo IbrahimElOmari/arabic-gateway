@@ -150,7 +150,7 @@ export default function CurriculumMapData() {
     <div className="p-6 space-y-6">
       {weeks.map((code) => {
         const rows = [...weekMap.get(code)!].sort((a, b) => a.skill.localeCompare(b.skill));
-        const title = rows[0].title_nl;
+        const title = rows[0]?.title_nl ?? null;
         return (
           <section key={code}>
             <h2 className="text-lg font-semibold mb-2">
