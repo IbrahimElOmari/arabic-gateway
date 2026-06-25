@@ -138,8 +138,8 @@ export default function CurriculumMapData() {
   });
 
   const weeks = Array.from(weekMap.keys()).sort((a, b) => {
-    const da = weekMap.get(a)![0].display_order;
-    const db = weekMap.get(b)![0].display_order;
+    const da = weekMap.get(a)?.[0]?.display_order ?? 999999;
+    const db = weekMap.get(b)?.[0]?.display_order ?? 999999;
     if (da !== db) return da - db;
     return a.localeCompare(b);
   });
