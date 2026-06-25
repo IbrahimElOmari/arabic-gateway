@@ -48,15 +48,31 @@ export default function CurriculumMapData() {
         return;
       }
 
-      const [{ data: units, error: unitsErr }, { data: items, error: itemsErr }, { data: progress, error: progErr }] =
+      const [{ data: units, error: unitsErr }, { data: progress, error: progErr }] =
         await Promise.all([
           supabase.from("curriculum_units").select("code, display_order, title_nl, title_ar, cefr_from, week_start"),
-          supabase.from("curriculum_items").select("unit_code, skill").eq("is_published", true),
           supabase
             .from("curriculum_progress_by_skill")
             .select("unit_code, skill, items_correct, items_attempted, points_total")
             .eq("student_id", user.id),
         ]);
+
+      let items: Item[] = [];
+      let itemsErr: any = null;
+      const PAGE_SIZE = 1000; // gelijk aan het server-maximum per verzoek
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from('curriculum_items')
+          .select('unit_code, skill')
+          .eq('is_published', true)
+          .order('id', { ascending: true })
+          .range(from, from + PAGE_SIZE - 1);
+        if (error) { itemsErr = error; break; }
+        items = items.concat(data as Item[]);
+        if (data.length < PAGE_SIZE) break; // laatste pagina bereikt
+        from += PAGE_SIZE;
+      }
 
       if (cancelled) return;
 
