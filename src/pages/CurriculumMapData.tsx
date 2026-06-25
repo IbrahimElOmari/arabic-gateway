@@ -174,7 +174,33 @@ export default function CurriculumMapData() {
     );
   };
 
-  // B5 — weergave
+  // B5 — label-helper
+  const labelW = (skill: string) => skill.length * 6.6 + 12;
+
+  const renderLabel = (s: typeof stippen[number], idKey: string, gold: boolean) => {
+    const wi = weeksSorted.indexOf(s.unit_code);
+    const si = skillsSorted.indexOf(s.skill);
+    if (wi < 0 || si < 0) return null;
+    const cx = xOf(wi), cy = yOf(si);
+    const w = labelW(s.skill), h = 16, gap = 13;
+    const fitsLeft = (cx - gap - w) >= 2;
+    const rectX = fitsLeft ? (cx - gap - w) : (cx + gap);
+    const textX = fitsLeft ? (cx - gap) : (cx + gap);
+    const anchor = fitsLeft ? 'end' : 'start';
+    const textFill = gold ? '#f0c45f' : '#dbe4fb';
+    const bgFill   = gold ? '#1a1330' : '#10204a';
+    return (
+      <g key={idKey} pointerEvents="none">
+        <rect x={rectX} y={cy - h / 2} width={w} height={h} rx={4} fill={bgFill} opacity={0.9} />
+        <text x={textX} y={cy + 4} textAnchor={anchor} fontSize={11} fill={textFill}>{s.skill}</text>
+      </g>
+    );
+  };
+
+  const hoveredStip = hovered ? stippen.find((s) => keyOf(s) === hovered) : null;
+  const hoveredIsGold = hoveredStip ? ratioOf(hoveredStip) >= T : false;
+
+  // B6 — weergave
   return (
     <div className="p-6">
       {stippen.length > 0 && (
@@ -184,6 +210,8 @@ export default function CurriculumMapData() {
           {weeksSorted.map((code, i) => (
             <text key={code} x={xOf(i)} y={labelY} textAnchor="middle" fontSize={12} fill="#6f7ea6">{code}</text>
           ))}
+          {stippen.filter((s) => ratioOf(s) >= T).map((s) => renderLabel(s, 'gold-' + keyOf(s), true))}
+          {hoveredStip && !hoveredIsGold && renderLabel(hoveredStip, 'hover', false)}
         </svg>
       )}
       <p style={{ marginTop: 12 }}>
