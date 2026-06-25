@@ -12,6 +12,7 @@ import { Link } from "react-router-dom";
 import config from "@/lib/app-config";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { generateCertificateHtml } from "@/lib/certificate-utils";
+import CurriculumMapData from "@/pages/CurriculumMapData";
 
 interface AttemptRow {
   exercise_id: string;
@@ -179,6 +180,11 @@ export default function ProgressPage() {
           </>
         )}
       </div>
+
+      <section className="container py-8">
+        <h2 className="text-2xl font-bold mb-4">Sterrenkaart</h2>
+        <CurriculumMapData />
+      </section>
     </>
   );
 }

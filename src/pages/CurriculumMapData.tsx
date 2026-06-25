@@ -129,7 +129,7 @@ export default function CurriculumMapData() {
   const numWeeks = weeksSorted.length, numSkills = skillsSorted.length;
   const width  = originX + (numWeeks  - 1) * cellW + 60;
   const height = originY + (numSkills - 1) * cellH + 56;
-  const xOf = (wi: number) => originX + wi * cellW;
+  const xOf = (wi: number) => originX + (numWeeks - 1 - wi) * cellW;
   const yOf = (si: number) => originY + si * cellH;
   const labelY = originY + (numSkills - 1) * cellH + 30;
 
