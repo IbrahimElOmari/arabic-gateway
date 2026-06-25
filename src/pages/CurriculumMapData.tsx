@@ -22,7 +22,11 @@ export default function CurriculumMapData() {
   const [units, setUnits] = useState<Unit[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [progress, setProgress] = useState<ProgressRow[]>([]);
-  
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const dragRef = useRef<any>(null);
+  const [view, setView] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [active, setActive] = useState<string | null>(null);
+
 
   useEffect(() => {
     let cancelled = false;
@@ -136,10 +140,6 @@ export default function CurriculumMapData() {
 
   // B1 — sleutel + interactie-state
   const keyOf = (s: { unit_code: string; skill: string }) => s.unit_code + '\u0000' + s.skill;
-  const svgRef = useRef<SVGSVGElement | null>(null);
-  const dragRef = useRef<any>(null);
-  const [view, setView] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
-  const [active, setActive] = useState<string | null>(null);
   const fullView = { x: 0, y: 0, w: width, h: height };
   const vb = view ?? fullView;
   const aspect = width / height;
