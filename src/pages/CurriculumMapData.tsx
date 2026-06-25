@@ -22,6 +22,7 @@ export default function CurriculumMapData() {
   const [units, setUnits] = useState<Unit[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [progress, setProgress] = useState<ProgressRow[]>([]);
+  const [hovered, setHovered] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
