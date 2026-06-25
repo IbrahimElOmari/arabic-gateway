@@ -102,7 +102,7 @@ export default function CurriculumMapData() {
 
       const builtDots: Dot[] = [];
       itemsTotal.forEach((total, key) => {
-        const [unit_code, skill] = key.split("|");
+        const [unit_code = "", skill = ""] = key.split("|");
         const p = progressByKey.get(key);
         const u = unitByCode.get(unit_code);
         builtDots.push({
