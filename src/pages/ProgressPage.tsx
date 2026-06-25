@@ -116,17 +116,7 @@ export default function ProgressPage() {
           <p>{t("common.loading", "Laden...")}</p>
         ) : (
           <>
-            {attemptsDetailed && attemptsDetailed.length === 0 ? (
-              <div className="text-center py-12">
-                <BookOpenCheck className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground">
-                  {t("progress.noExercises")}
-                </p>
-                <Link to="/self-study" className="text-primary underline">
-                  {t("progress.startLearning", "Begin met leren")}
-                </Link>
-              </div>
-            ) : (
+            {attemptsDetailed && attemptsDetailed.length === 0 ? null : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {isFeatureEnabled("CERTIFICATE_GENERATION") &&
                   uniquePassedLevels.length > 0 && (
