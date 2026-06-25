@@ -134,22 +134,113 @@ export default function CurriculumMapData() {
   const yOf = (si: number) => originY + si * cellH;
   const labelY = originY + (numSkills - 1) * cellH + 30;
 
-  // B4 — één ster (Optie A: helderheid groeit mee; goud bij ratio ≥ 0,8)
+  // B1 — sleutel + interactie-state
   const keyOf = (s: { unit_code: string; skill: string }) => s.unit_code + '\u0000' + s.skill;
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const dragRef = useRef<any>(null);
+  const [view, setView] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [active, setActive] = useState<string | null>(null);
+  const fullView = { x: 0, y: 0, w: width, h: height };
+  const vb = view ?? fullView;
+  const aspect = width / height;
 
+  // B2 — begrenzen, zoomen
+  const clampView = (v: { x: number; y: number; w: number; h: number }) => {
+    const w = Math.min(Math.max(v.w, width / 6), width);
+    const h = w / aspect;
+    const x = Math.min(Math.max(v.x, 0), Math.max(0, width - w));
+    const y = Math.min(Math.max(v.y, 0), Math.max(0, height - h));
+    return { x, y, w, h };
+  };
+  const zoomAt = (factor: number, fx: number, fy: number) => {
+    if (!svgRef.current) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const cur = view ?? fullView;
+    const ux = cur.x + (fx - rect.left) / rect.width * cur.w;
+    const uy = cur.y + (fy - rect.top) / rect.height * cur.h;
+    const nw = Math.min(Math.max(cur.w * factor, width / 6), width);
+    const nh = nw / aspect;
+    const nx = ux - (fx - rect.left) / rect.width * nw;
+    const ny = uy - (fy - rect.top) / rect.height * nh;
+    setView(clampView({ x: nx, y: ny, w: nw, h: nh }));
+  };
+  const zoomButton = (factor: number) => {
+    if (!svgRef.current) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    zoomAt(factor, rect.left + rect.width / 2, rect.top + rect.height / 2);
+  };
+
+  // B3 — welke ster ligt onder een punt
+  const pointToKey = (fx: number, fy: number) => {
+    if (!svgRef.current) return null;
+    const rect = svgRef.current.getBoundingClientRect();
+    const cur = view ?? fullView;
+    const ux = cur.x + (fx - rect.left) / rect.width * cur.w;
+    const uy = cur.y + (fy - rect.top) / rect.height * cur.h;
+    let best: string | null = null, bestD = 13;
+    for (const s of stippen) {
+      const wi = weeksSorted.indexOf(s.unit_code), si = skillsSorted.indexOf(s.skill);
+      const d = Math.hypot(xOf(wi) - ux, yOf(si) - uy);
+      if (d < bestD) { bestD = d; best = keyOf(s); }
+    }
+    return best;
+  };
+
+  // B4 — pointer-handlers
+  const onPointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (dragRef.current) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragRef.current = {
+      pointerId: e.pointerId,
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      startView: view ?? fullView,
+      moved: false,
+    };
+  };
+  const onPointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    const d = dragRef.current;
+    if (d && e.pointerId === d.pointerId) {
+      const dx = e.clientX - d.startClientX, dy = e.clientY - d.startClientY;
+      if (!d.moved && Math.hypot(dx, dy) > 6) d.moved = true;
+      if (d.moved && svgRef.current) {
+        const rect = svgRef.current.getBoundingClientRect();
+        const ux = dx / rect.width * d.startView.w;
+        const uy = dy / rect.height * d.startView.h;
+        setView(clampView({ x: d.startView.x - ux, y: d.startView.y - uy, w: d.startView.w, h: d.startView.h }));
+      }
+      return;
+    }
+    if (e.pointerType === 'mouse' && e.buttons === 0) {
+      setActive(pointToKey(e.clientX, e.clientY));
+    }
+  };
+  const onPointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
+    const d = dragRef.current;
+    if (d && e.pointerId === d.pointerId) {
+      if (!d.moved) {
+        const k = pointToKey(e.clientX, e.clientY);
+        setActive((prev) => (prev === k ? null : k));
+      }
+      try { e.currentTarget.releasePointerCapture(e.pointerId); } catch (_) {}
+      dragRef.current = null;
+    }
+  };
+  const onPointerLeave = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (e.pointerType === 'mouse' && !dragRef.current) setActive(null);
+  };
+
+  // B5 — één ster (zonder eigen handlers)
   const renderStar = (s: typeof stippen[number], i: number) => {
     const wi = weeksSorted.indexOf(s.unit_code);
     const si = skillsSorted.indexOf(s.skill);
     if (wi < 0 || si < 0) return null;
     const cx = xOf(wi), cy = yOf(si);
     const r = ratioOf(s);
-    const k = keyOf(s);
     const title = `${s.unit_code} · ${s.skill} · ${s.items_correct}/${s.items_total}`;
-    const onEnter = () => setHovered(k);
-    const onLeave = () => setHovered((h) => (h === k ? null : h));
     if (r >= T) {
       return (
-        <g key={i} onMouseEnter={onEnter} onMouseLeave={onLeave}>
+        <g key={i}>
           <title>{title}</title>
           <circle cx={cx} cy={cy} r={10}  fill="#f3c969" opacity={0.10} />
           <circle cx={cx} cy={cy} r={6.5} fill="#f3c969" opacity={0.20} />
@@ -157,7 +248,6 @@ export default function CurriculumMapData() {
           <line x1={cx - 7} y1={cy} x2={cx + 7} y2={cy} stroke="#ffe9a8" strokeWidth={0.8} opacity={0.55} />
           <line x1={cx} y1={cy - 7} x2={cx} y2={cy + 7} stroke="#ffe9a8" strokeWidth={0.8} opacity={0.55} />
           <circle cx={cx} cy={cy} r={2.6} fill="#fff5d6" opacity={1} />
-          <circle cx={cx} cy={cy} r={11} fill="transparent" pointerEvents="all" />
         </g>
       );
     }
@@ -165,18 +255,16 @@ export default function CurriculumMapData() {
     const op = 0.12 + 0.60 * t;
     const rad = 2.2 + 1.6 * t;
     return (
-      <g key={i} onMouseEnter={onEnter} onMouseLeave={onLeave}>
+      <g key={i}>
         <title>{title}</title>
         {t > 0.45 && <circle cx={cx} cy={cy} r={rad * 2.2} fill="#aebfe0" opacity={op * 0.30} />}
         <circle cx={cx} cy={cy} r={rad} fill="#cdd8f2" opacity={op} />
-        <circle cx={cx} cy={cy} r={11} fill="transparent" pointerEvents="all" />
       </g>
     );
   };
 
-  // B5 — label-helper
+  // B6 — label-helper
   const labelW = (skill: string) => skill.length * 6.6 + 12;
-
   const renderLabel = (s: typeof stippen[number], idKey: string, gold: boolean) => {
     const wi = weeksSorted.indexOf(s.unit_code);
     const si = skillsSorted.indexOf(s.skill);
@@ -196,23 +284,40 @@ export default function CurriculumMapData() {
       </g>
     );
   };
+  const activeStip = active ? stippen.find((s) => keyOf(s) === active) : null;
+  const activeIsGold = activeStip ? ratioOf(activeStip) >= T : false;
 
-  const hoveredStip = hovered ? stippen.find((s) => keyOf(s) === hovered) : null;
-  const hoveredIsGold = hoveredStip ? ratioOf(hoveredStip) >= T : false;
-
-  // B6 — weergave
+  // B7 — return
   return (
     <div className="p-6">
       {stippen.length > 0 && (
-        <svg width="100%" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Sterrenkaart voortgang">
-          <rect x={0} y={0} width={width} height={height} rx={12} fill="#0b1124" />
-          {stippen.map(renderStar)}
-          {weeksSorted.map((code, i) => (
-            <text key={code} x={xOf(i)} y={labelY} textAnchor="middle" fontSize={12} fill="#6f7ea6">{code}</text>
-          ))}
-          {stippen.filter((s) => ratioOf(s) >= T).map((s) => renderLabel(s, 'gold-' + keyOf(s), true))}
-          {hoveredStip && !hoveredIsGold && renderLabel(hoveredStip, 'hover', false)}
-        </svg>
+        <div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <button type="button" onClick={() => zoomButton(0.8)} aria-label="Inzoomen">+</button>
+            <button type="button" onClick={() => zoomButton(1.25)} aria-label="Uitzoomen">−</button>
+            <button type="button" onClick={() => setView(fullView)} aria-label="Herstel weergave">Herstel</button>
+          </div>
+          <svg
+            ref={svgRef}
+            width="100%"
+            viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`}
+            role="img"
+            aria-label="Sterrenkaart voortgang"
+            style={{ touchAction: 'none', userSelect: 'none', display: 'block', cursor: 'grab' }}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerLeave={onPointerLeave}
+          >
+            <rect x={0} y={0} width={width} height={height} rx={12} fill="#0b1124" />
+            {stippen.map(renderStar)}
+            {weeksSorted.map((code, i) => (
+              <text key={code} x={xOf(i)} y={labelY} textAnchor="middle" fontSize={12} fill="#6f7ea6">{code}</text>
+            ))}
+            {stippen.filter((s) => ratioOf(s) >= T).map((s) => renderLabel(s, 'gold-' + keyOf(s), true))}
+            {activeStip && !activeIsGold && renderLabel(activeStip, 'active', false)}
+          </svg>
+        </div>
       )}
       <p style={{ marginTop: 12 }}>
         Ontvlamd (≥80%): {ignited.length ? ignited.join(', ') : 'nog geen'}
@@ -223,3 +328,4 @@ export default function CurriculumMapData() {
     </div>
   );
 }
+
