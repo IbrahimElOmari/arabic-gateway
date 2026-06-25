@@ -207,6 +207,8 @@ const App = () => (
                       <Route path="/admin/chat-debug" element={<ProtectedRoute requiredRole="admin"><ChatDebugPage /></ProtectedRoute>} />
                       <Route path="/admin/curriculum-review" element={<ProtectedRoute allowedRoles={['admin', 'teacher']}><CurriculumReviewPage /></ProtectedRoute>} />
 
+                      <Route path="/map-debug" element={<ProtectedRoute><CurriculumMapData /></ProtectedRoute>} />
+
                       {/* Catch-all */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
