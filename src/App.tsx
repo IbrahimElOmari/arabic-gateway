@@ -52,6 +52,7 @@ const CronJobsPage = lazyWithRetry(() => import("./pages/admin/CronJobsPage"));
 const FeatureFlagsPage = lazyWithRetry(() => import("./pages/admin/FeatureFlagsPage"));
 const ChatDebugPage = lazyWithRetry(() => import("./pages/admin/ChatDebugPage"));
 const CurriculumReviewPage = lazyWithRetry(() => import("./pages/admin/CurriculumReviewPage"));
+const CurriculumMapData = lazyWithRetry(() => import("./pages/CurriculumMapData"));
 
 
 // Teacher pages
