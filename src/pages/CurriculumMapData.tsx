@@ -73,7 +73,14 @@ export default function CurriculumMapData() {
       }
 
       const unitByCode = new Map<string, Unit>();
-      (units || []).forEach((u: Unit) => unitByCode.set(u.code, u));
+      (units || []).forEach((u: any) => unitByCode.set(u.code, {
+        code: u.code,
+        display_order: u.display_order ?? null,
+        title_nl: u.title_nl ?? null,
+        title_ar: u.title_ar ?? null,
+        cefr_from: u.cefr_from ?? null,
+        week_start: u.week_start != null ? String(u.week_start) : null,
+      }));
 
       const itemsTotal = new Map<string, number>();
       (items as Item[]).forEach((it) => {
@@ -82,8 +89,15 @@ export default function CurriculumMapData() {
       });
 
       const progressByKey = new Map<string, ProgressRow>();
-      (progress || []).forEach((p: ProgressRow) => {
-        progressByKey.set(`${p.unit_code}|${p.skill}`, p);
+      (progress || []).forEach((p: any) => {
+        if (!p.unit_code || !p.skill) return;
+        progressByKey.set(`${p.unit_code}|${p.skill}`, {
+          unit_code: p.unit_code,
+          skill: p.skill,
+          items_correct: p.items_correct,
+          items_attempted: p.items_attempted,
+          points_total: p.points_total,
+        });
       });
 
       const builtDots: Dot[] = [];
