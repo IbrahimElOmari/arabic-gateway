@@ -75,11 +75,21 @@ serve(async (req) => {
 
     const body: GamificationRequest = await req.json();
 
-    // ── Authorization: for write actions, caller must target themselves or be admin/teacher ──
-    if (body.action === "award_points" || body.action === "check_badges" || body.action === "update_streak") {
+    // ── Authorization ──
+    if (body.action === "award_points") {
+      // Punten worden automatisch (server-side) toegekend via database-triggers,
+      // badges en streaks. Handmatig punten toekennen is voorbehouden aan admins/leraren;
+      // een gewone gebruiker mag zichzelf GEEN punten geven.
+      const { data: callerRole } = await supabase.rpc("get_user_role", { _user_id: callerUserId });
+      if (callerRole !== "admin" && callerRole !== "teacher") {
+        return new Response(
+          JSON.stringify({ error: "Forbidden: points are awarded automatically" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } else if (body.action === "check_badges" || body.action === "update_streak") {
       const targetUserId = body.userId;
       if (targetUserId !== callerUserId) {
-        // Check if caller is admin or teacher
         const { data: callerRole } = await supabase.rpc("get_user_role", { _user_id: callerUserId });
         if (callerRole !== "admin" && callerRole !== "teacher") {
           return new Response(
