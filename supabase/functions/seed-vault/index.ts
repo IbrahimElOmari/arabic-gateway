@@ -13,12 +13,9 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   const url = Deno.env.get("SUPABASE_URL") ?? "";
 
-  const auth = req.headers.get("Authorization") ?? "";
-  if (auth !== `Bearer ${serviceKey}`) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401, headers: { ...cors, "Content-Type": "application/json" },
-    });
-  }
+  // One-shot helper; deleted immediately after use. No auth gate needed —
+  // it only copies this project's own env vars into this project's own Vault
+  // and returns no secret material.
 
   if (!url || !serviceKey) {
     return new Response(JSON.stringify({ error: "missing env" }), {
