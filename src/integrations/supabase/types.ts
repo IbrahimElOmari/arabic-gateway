@@ -3293,6 +3293,10 @@ export type Database = {
       }
     }
     Functions: {
+      _seed_vault_secret: {
+        Args: { p_name: string; p_value: string }
+        Returns: string
+      }
       acknowledge_cron_alert: {
         Args: { p_alert_id: string }
         Returns: undefined
