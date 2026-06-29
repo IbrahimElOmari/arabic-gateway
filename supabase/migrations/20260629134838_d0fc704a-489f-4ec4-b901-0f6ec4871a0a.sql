@@ -1,1 +1,0 @@
-DROP FUNCTION IF EXISTS public._seed_vault_secret(text, text);
