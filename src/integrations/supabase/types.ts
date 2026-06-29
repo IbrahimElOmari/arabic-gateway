@@ -3311,6 +3311,19 @@ export type Database = {
       can_access_curriculum: { Args: { _user_id: string }; Returns: boolean }
       cancel_user_deletion: { Args: { p_user_id: string }; Returns: undefined }
       cleanup_rate_limit_buckets: { Args: never; Returns: number }
+      cm_grade_answer: {
+        Args: {
+          p_answer_json: Json
+          p_answer_text: string
+          p_correct_answer: string
+          p_correct_options: Json
+          p_options: Json
+          p_strict: boolean
+          p_type: string
+        }
+        Returns: boolean
+      }
+      cm_norm: { Args: { s: string; strict: boolean }; Returns: string }
       consume_rate_limit: {
         Args: {
           p_action: string
@@ -3413,6 +3426,16 @@ export type Database = {
         Returns: string
       }
       start_direct_chat: { Args: { _other: string }; Returns: string }
+      submit_curriculum_attempt: {
+        Args: {
+          p_answer_json?: Json
+          p_answer_text?: string
+          p_item_id: string
+          p_time_spent_sec?: number
+          p_upload_path?: string
+        }
+        Returns: Json
+      }
       update_user_streak: { Args: { p_user_id: string }; Returns: number }
       user_can_access_lesson: {
         Args: { _lesson_id: string; _user_id: string }
