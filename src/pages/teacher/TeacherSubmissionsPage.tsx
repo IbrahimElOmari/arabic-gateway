@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { recomputeExerciseAttempt } from "@/lib/exercise-recompute";
 
 function SubmissionFileLink({ fileUrl, isAudio }: { fileUrl: string; isAudio: boolean }) {
   const { t } = useTranslation();
@@ -194,6 +195,9 @@ export default function TeacherSubmissionsPage() {
           reviewed_at: new Date().toISOString(),
         }).eq("id", id)
       );
+      if (selectedSubmission?.exercise_attempt_id) {
+        try { await recomputeExerciseAttempt(selectedSubmission.exercise_attempt_id); } catch (e) { console.error(e); }
+      }
       await apiMutate("submission_feedback", (q) => q.upsert({
         student_answer_id: id,
         student_id: selectedSubmission.student_id,

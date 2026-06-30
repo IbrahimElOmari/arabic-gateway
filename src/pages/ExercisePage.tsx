@@ -53,6 +53,8 @@ export default function ExercisePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [results, setResults] = useState<{ score: number; passed: boolean } | null>(null);
+  const [maxAttemptsReached, setMaxAttemptsReached] = useState(false);
+  const [usedAttempts, setUsedAttempts] = useState(0);
   const draftKey = user && exerciseId ? `exercise-draft:${user.id}:${exerciseId}` : null;
 
   // Fetch exercise
@@ -69,14 +71,24 @@ export default function ExercisePage() {
     enabled: !!exerciseId,
   });
 
-  // Create attempt on mount
+  // Create attempt on mount – enforce max_attempts before creating
   useEffect(() => {
     const createAttempt = async () => {
-      if (!user || !exerciseId || attemptId) return;
+      if (!user || !exerciseId || attemptId || maxAttemptsReached) return;
+      if (!exercise) return;
 
       const existingAttempts = await apiQuery<any[]>("exercise_attempts", (q) =>
-        q.select("attempt_number").eq("exercise_id", exerciseId).eq("student_id", user.id).order("attempt_number", { ascending: false }).limit(1)
+        q.select("id, attempt_number").eq("exercise_id", exerciseId).eq("student_id", user.id).order("attempt_number", { ascending: false })
       );
+
+      const count = existingAttempts?.length || 0;
+      setUsedAttempts(count);
+
+      const max = Number(exercise?.max_attempts ?? 0);
+      if (max > 0 && count >= max) {
+        setMaxAttemptsReached(true);
+        return;
+      }
 
       const attemptNumber = (existingAttempts?.[0]?.attempt_number || 0) + 1;
 
@@ -97,7 +109,7 @@ export default function ExercisePage() {
     };
 
     createAttempt();
-  }, [user, exerciseId, exercise, attemptId]);
+  }, [user, exerciseId, exercise, attemptId, maxAttemptsReached]);
 
   useEffect(() => {
     if (!draftKey) return;
@@ -335,6 +347,40 @@ export default function ExercisePage() {
       </>
     );
   }
+
+  if (maxAttemptsReached) {
+    const max = Number(exercise?.max_attempts ?? 0);
+    return (
+      <div className="container py-8">
+        <Card className="max-w-lg mx-auto">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">
+              {t("exercises.maxAttemptsTitle", "Maximaal aantal pogingen bereikt")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p className="text-muted-foreground">
+              {t("exercises.maxAttemptsReached", "Je hebt het maximaal aantal pogingen ({{n}}) bereikt voor deze oefening.", { n: max })}
+            </p>
+            <div className="flex gap-3 justify-center pt-2">
+              <Button asChild variant="outline">
+                <Link to="/exercises">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  {t("studentExercises.title", "Oefeningen")}
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link to={`/exercises/${exerciseId}/result`}>
+                  {t("studentExercises.viewResult", "Resultaat")}
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
 
   return (
     <>
