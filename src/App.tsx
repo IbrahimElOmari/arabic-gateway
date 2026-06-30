@@ -73,6 +73,8 @@ const CurriculumUnitPage = lazyWithRetry(() => import("./pages/CurriculumUnitPag
 const CurriculumItemPage = lazyWithRetry(() => import("./pages/CurriculumItemPage"));
 const CategoryPage = lazyWithRetry(() => import("./pages/CategoryPage"));
 const ExercisePage = lazyWithRetry(() => import("./pages/ExercisePage"));
+const StudentExercisesPage = lazyWithRetry(() => import("./pages/StudentExercisesPage"));
+const StudentExerciseResultPage = lazyWithRetry(() => import("./pages/StudentExerciseResultPage"));
 const FinalExamPage = lazyWithRetry(() => import("./pages/FinalExamPage"));
 
 // Knowledge base
@@ -147,6 +149,8 @@ const App = () => (
                       <Route path="/self-study/item/:itemId" element={<ProtectedRoute><CurriculumItemPage /></ProtectedRoute>} />
                       <Route path="/self-study/:category" element={<ProtectedRoute><CategoryPage /></ProtectedRoute>} />
                       <Route path="/self-study/:category/:exerciseId" element={<ProtectedRoute><ExercisePage /></ProtectedRoute>} />
+                      <Route path="/exercises" element={<ProtectedRoute><StudentExercisesPage /></ProtectedRoute>} />
+                      <Route path="/exercises/:exerciseId/result" element={<ProtectedRoute><StudentExerciseResultPage /></ProtectedRoute>} />
                       <Route path="/final-exam/:examId" element={<ProtectedRoute><FinalExamPage /></ProtectedRoute>} />
                       
                       {/* Live Lessons routes */}

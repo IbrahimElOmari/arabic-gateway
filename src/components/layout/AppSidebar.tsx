@@ -110,6 +110,7 @@ export function AppSidebar({ collapsed, onToggle, mobile, onNavigate }: AppSideb
   const studentItems: NavItem[] = [
     getDashboardLink(),
     { to: '/self-study', icon: BookOpen, label: t('nav.selfStudy') },
+    { to: '/exercises', icon: ClipboardList, label: t('nav.exercises', 'Oefeningen') },
     { to: '/live-lessons', icon: Video, label: t('nav.liveLessons') },
     { to: '/recordings', icon: Video, label: t('nav.recordings', 'Recordings') },
     { to: '/forum', icon: MessageCircle, label: t('nav.forum') },
