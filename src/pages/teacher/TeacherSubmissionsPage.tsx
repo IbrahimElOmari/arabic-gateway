@@ -195,6 +195,9 @@ export default function TeacherSubmissionsPage() {
           reviewed_at: new Date().toISOString(),
         }).eq("id", id)
       );
+      if (selectedSubmission?.exercise_attempt_id) {
+        try { await recomputeExerciseAttempt(selectedSubmission.exercise_attempt_id); } catch (e) { console.error(e); }
+      }
       await apiMutate("submission_feedback", (q) => q.upsert({
         student_answer_id: id,
         student_id: selectedSubmission.student_id,
