@@ -23,7 +23,6 @@ serve(async (req: Request) => {
     });
   }
 
-
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -40,12 +39,7 @@ serve(async (req: Request) => {
           id,
           name,
           class_enrollments (
-            student_id,
-            profiles:student_id (
-              email,
-              full_name,
-              preferred_language
-            )
+            student_id
           )
         )
       `)
@@ -77,6 +71,37 @@ serve(async (req: Request) => {
       throw updateError;
     }
 
+    // ── Profielen apart ophalen (student_id komt overeen met profiles.user_id) ──
+    const allStudentIds = new Set<string>();
+    for (const exercise of exercisesToRelease) {
+      const classData = exercise.classes as any;
+      if (!classData?.class_enrollments) continue;
+      for (const enrollment of classData.class_enrollments) {
+        if (enrollment.student_id) allStudentIds.add(enrollment.student_id);
+      }
+    }
+
+    const profilesByUserId = new Map<string, { email: string | null; full_name: string | null; preferred_language: string | null }>();
+    if (allStudentIds.size > 0) {
+      const { data: profileRows, error: profileError } = await supabase
+        .from("profiles")
+        .select("user_id, email, full_name, preferred_language")
+        .in("user_id", Array.from(allStudentIds));
+
+      if (profileError) {
+        console.error("Error fetching profiles:", profileError);
+        throw profileError;
+      }
+
+      for (const p of profileRows ?? []) {
+        profilesByUserId.set(p.user_id, {
+          email: p.email,
+          full_name: p.full_name,
+          preferred_language: p.preferred_language,
+        });
+      }
+    }
+
     // Collect unique students to notify
     const studentsToNotify: Map<string, { email: string; name: string; language: string; exercises: string[] }> = new Map();
 
@@ -85,12 +110,12 @@ serve(async (req: Request) => {
       if (!classData?.class_enrollments) continue;
 
       for (const enrollment of classData.class_enrollments) {
-        const profile = enrollment.profiles;
+        const profile = profilesByUserId.get(enrollment.student_id);
         if (!profile?.email) continue;
 
         const studentId = enrollment.student_id;
         const existing = studentsToNotify.get(studentId);
-        
+
         if (existing) {
           existing.exercises.push(exercise.title);
         } else {
@@ -158,8 +183,8 @@ serve(async (req: Request) => {
     console.log(`Released ${exerciseIds.length} exercises, notified ${studentsToNotify.size} students`);
 
     return new Response(
-      JSON.stringify({ 
-        message: "Exercises released successfully", 
+      JSON.stringify({
+        message: "Exercises released successfully",
         count: exerciseIds.length,
         notified: studentsToNotify.size
       }),
