@@ -172,20 +172,23 @@ function ClassExercisesTab() {
     enabled: !!exerciseIds && exerciseIds.length > 0,
   });
 
+  const [statusFilter, setStatusFilter] = useState<"pending" | "reviewed">("pending");
+  const [studentFilter, setStudentFilter] = useState<string>("all");
+
   const { data: pending, isLoading } = useQuery({
-    queryKey: ["teacher-class-pending-review", questionIds],
+    queryKey: ["teacher-class-pending-review", questionIds, statusFilter],
     queryFn: async () => {
-      const answers = await apiQuery<any[]>("student_answers", (q) =>
-        q
+      const answers = await apiQuery<any[]>("student_answers", (q) => {
+        let base = q
           .select(`
             id, answer_text, file_url, answer_data, submitted_at, score, feedback, is_correct, reviewed_at,
             student_id, exercise_attempt_id, question_id,
             question:questions(question_text, points, type, exercise:exercises(id, title, passing_score, class:classes(name)))
           `)
-          .is("reviewed_at", null)
-          .in("question_id", questionIds!)
-          .order("submitted_at", { ascending: false })
-      );
+          .in("question_id", questionIds!);
+        base = statusFilter === "pending" ? base.is("reviewed_at", null) : base.not("reviewed_at", "is", null);
+        return base.order(statusFilter === "pending" ? "submitted_at" : "reviewed_at", { ascending: false });
+      });
       if (!answers || answers.length === 0) return [];
       const studentIds = Array.from(new Set(answers.map((a: any) => a.student_id).filter(Boolean)));
       const profiles = studentIds.length
@@ -202,6 +205,18 @@ function ClassExercisesTab() {
     enabled: !!questionIds && questionIds.length > 0,
     refetchInterval: 60000,
   });
+
+  const studentOptions = (() => {
+    const map = new Map<string, string>();
+    (pending || []).forEach((a: any) => {
+      if (a.student_id) map.set(a.student_id, a.student?.full_name || a.student?.email || "—");
+    });
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  })();
+
+  const filtered = (pending || []).filter((a: any) =>
+    studentFilter === "all" ? true : a.student_id === studentFilter
+  );
 
   const reviewMutation = useMutation({
     mutationFn: async ({ id, isCorrect }: { id: string; isCorrect: boolean }) => {
