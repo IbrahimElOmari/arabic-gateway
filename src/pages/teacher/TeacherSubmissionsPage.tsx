@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { recomputeExerciseAttempt } from "@/lib/exercise-recompute";
 
 function SubmissionFileLink({ fileUrl, isAudio }: { fileUrl: string; isAudio: boolean }) {
   const { t } = useTranslation();
