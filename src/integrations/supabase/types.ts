@@ -479,6 +479,9 @@ export type Database = {
           id: string
           jobid: number
           jobname: string
+          last_notification_error: string | null
+          notification_attempts: number
+          notified_at: string | null
           return_message: string | null
           runid: number | null
           started_at: string | null
@@ -492,6 +495,9 @@ export type Database = {
           id?: string
           jobid: number
           jobname: string
+          last_notification_error?: string | null
+          notification_attempts?: number
+          notified_at?: string | null
           return_message?: string | null
           runid?: number | null
           started_at?: string | null
@@ -505,6 +511,9 @@ export type Database = {
           id?: string
           jobid?: number
           jobname?: string
+          last_notification_error?: string | null
+          notification_attempts?: number
+          notified_at?: string | null
           return_message?: string | null
           runid?: number | null
           started_at?: string | null
