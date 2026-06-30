@@ -73,6 +73,8 @@ const CurriculumUnitPage = lazyWithRetry(() => import("./pages/CurriculumUnitPag
 const CurriculumItemPage = lazyWithRetry(() => import("./pages/CurriculumItemPage"));
 const CategoryPage = lazyWithRetry(() => import("./pages/CategoryPage"));
 const ExercisePage = lazyWithRetry(() => import("./pages/ExercisePage"));
+const StudentExercisesPage = lazyWithRetry(() => import("./pages/StudentExercisesPage"));
+const StudentExerciseResultPage = lazyWithRetry(() => import("./pages/StudentExerciseResultPage"));
 const FinalExamPage = lazyWithRetry(() => import("./pages/FinalExamPage"));
 
 // Knowledge base
