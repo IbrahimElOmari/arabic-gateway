@@ -162,7 +162,11 @@ function ClassExercisesTab() {
   const { data: questionIds } = useQuery({
     queryKey: ["teacher-class-question-ids", exerciseIds],
     queryFn: async () => {
-      const rows = await apiQuery<any[]>("questions", (q) => q.select("id").in("exercise_id", exerciseIds!));
+      // Only questions that require manual review belong in the review queue
+      const MANUAL_TYPES = ["open_text", "audio_upload", "video_upload", "file_upload"];
+      const rows = await apiQuery<any[]>("questions", (q) =>
+        q.select("id").in("exercise_id", exerciseIds!).in("type", MANUAL_TYPES)
+      );
       return (rows || []).map((r: any) => r.id);
     },
     enabled: !!exerciseIds && exerciseIds.length > 0,
@@ -170,19 +174,31 @@ function ClassExercisesTab() {
 
   const { data: pending, isLoading } = useQuery({
     queryKey: ["teacher-class-pending-review", questionIds],
-    queryFn: () =>
-      apiQuery<any[]>("student_answers", (q) =>
+    queryFn: async () => {
+      const answers = await apiQuery<any[]>("student_answers", (q) =>
         q
           .select(`
             id, answer_text, file_url, answer_data, submitted_at, score, feedback, is_correct, reviewed_at,
             student_id, exercise_attempt_id, question_id,
-            student:profiles!student_answers_student_id_fkey(full_name, email),
             question:questions(question_text, points, type, exercise:exercises(id, title, passing_score, class:classes(name)))
           `)
           .is("reviewed_at", null)
           .in("question_id", questionIds!)
           .order("submitted_at", { ascending: false })
-      ),
+      );
+      if (!answers || answers.length === 0) return [];
+      const studentIds = Array.from(new Set(answers.map((a: any) => a.student_id).filter(Boolean)));
+      const profiles = studentIds.length
+        ? await apiQuery<any[]>("profiles", (q) =>
+            q.select("user_id, full_name, email").in("user_id", studentIds)
+          )
+        : [];
+      const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+      return answers.map((a: any) => ({
+        ...a,
+        student: profileMap.get(a.student_id) || null,
+      }));
+    },
     enabled: !!questionIds && questionIds.length > 0,
     refetchInterval: 60000,
   });

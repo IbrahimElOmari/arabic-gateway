@@ -78,15 +78,24 @@ export default function ExercisePage() {
       if (!exercise) return;
 
       const existingAttempts = await apiQuery<any[]>("exercise_attempts", (q) =>
-        q.select("id, attempt_number").eq("exercise_id", exerciseId).eq("student_id", user.id).order("attempt_number", { ascending: false })
+        q.select("id, attempt_number, submitted_at").eq("exercise_id", exerciseId).eq("student_id", user.id).order("attempt_number", { ascending: false })
       );
 
-      const count = existingAttempts?.length || 0;
-      setUsedAttempts(count);
+      // Only submitted attempts count toward max_attempts
+      const submittedCount = (existingAttempts || []).filter((a) => !!a.submitted_at).length;
+      setUsedAttempts(submittedCount);
 
       const max = Number(exercise?.max_attempts ?? 0);
-      if (max > 0 && count >= max) {
+      if (max > 0 && submittedCount >= max) {
         setMaxAttemptsReached(true);
+        return;
+      }
+
+      // Reuse an existing in-progress attempt (started but not submitted) — opening must not burn an attempt
+      const inProgress = (existingAttempts || []).find((a) => !a.submitted_at);
+      if (inProgress) {
+        setAttemptId(inProgress.id);
+        if (exercise?.time_limit_seconds) setTimeLeft(exercise.time_limit_seconds);
         return;
       }
 
