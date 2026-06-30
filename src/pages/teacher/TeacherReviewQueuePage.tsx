@@ -285,51 +285,104 @@ function ClassExercisesTab() {
     return String(txt);
   };
 
+  const filterBar = (
+    <div className="flex flex-wrap gap-3 items-end">
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{t("teacher.statusFilter", "Status")}</Label>
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+          <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="pending">{t("teacher.statusPending", "Niet-verbeterd")}</SelectItem>
+            <SelectItem value="reviewed">{t("teacher.statusReviewed", "Verbeterd")}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{t("teacher.studentFilter", "Leerling")}</Label>
+        <Select value={studentFilter} onValueChange={setStudentFilter}>
+          <SelectTrigger className="w-[240px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("teacher.allStudents", "Alle leerlingen")}</SelectItem>
+            {studentOptions.map((s) => (
+              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+
   if (isLoading) {
     return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin" />
+      <div className="space-y-4">
+        {filterBar}
+        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
       </div>
-    );
-  }
-
-  if (!pending || pending.length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-12 text-center text-muted-foreground">
-          {t("teacher.noPendingSubmissions", "Geen openstaande inzendingen.")}
-        </CardContent>
-      </Card>
     );
   }
 
   return (
-    <>
-      <div className="grid gap-3 md:grid-cols-2">
-        {pending.map((s: any) => (
-          <Card key={s.id} className="cursor-pointer hover:bg-accent/40" onClick={() => openSubmission(s)}>
-            <CardHeader className="pb-2">
-              <div className="flex items-start justify-between gap-3 flex-wrap">
-                <CardTitle className="text-base">{s.student?.full_name || "—"}</CardTitle>
-                <Badge variant="secondary">{s.submitted_at ? format(new Date(s.submitted_at), "dd-MM-yyyy HH:mm") : "—"}</Badge>
-              </div>
-              <CardDescription>
-                {s.question?.exercise?.title}{s.question?.exercise?.class?.name ? ` · ${s.question.exercise.class.name}` : ""}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground line-clamp-2" dir="auto">
-                {s.answer_text || (s.file_url ? t("teacher.fileSubmission", "Bestand-inzending") : "—")}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+    <div className="space-y-4">
+      {filterBar}
+
+      {filtered.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            {statusFilter === "pending"
+              ? t("teacher.noPendingSubmissions", "Geen openstaande inzendingen.")
+              : t("teacher.noReviewedSubmissions", "Geen beoordeelde inzendingen.")}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-3 md:grid-cols-2">
+          {filtered.map((s: any) => (
+            <Card key={s.id} className="cursor-pointer hover:bg-accent/40" onClick={() => openSubmission(s)}>
+              <CardHeader className="pb-2">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <CardTitle className="text-base">{s.student?.full_name || "—"}</CardTitle>
+                  <Badge variant="secondary">
+                    {(statusFilter === "reviewed" ? s.reviewed_at : s.submitted_at)
+                      ? format(new Date(statusFilter === "reviewed" ? s.reviewed_at : s.submitted_at), "dd-MM-yyyy HH:mm")
+                      : "—"}
+                  </Badge>
+                </div>
+                <CardDescription>
+                  {s.question?.exercise?.title}{s.question?.exercise?.class?.name ? ` · ${s.question.exercise.class.name}` : ""}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <p className="text-sm text-muted-foreground line-clamp-2" dir="auto">
+                  {s.answer_text || (s.file_url ? t("teacher.fileSubmission", "Bestand-inzending") : "—")}
+                </p>
+                {statusFilter === "reviewed" && (
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    {s.is_correct === true ? (
+                      <Badge className="bg-success text-success-foreground"><CheckCircle className="h-3 w-3 mr-1" />{t("teacher.markedCorrect", "Goed")}</Badge>
+                    ) : s.is_correct === false ? (
+                      <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />{t("teacher.markedIncorrect", "Fout")}</Badge>
+                    ) : null}
+                    <Badge variant="outline">{t("teacher.score", "Score")}: {s.score ?? 0}/{s.question?.points ?? 1}</Badge>
+                    {s.feedback && (
+                      <p className="w-full text-xs text-muted-foreground line-clamp-2" dir="auto">
+                        <span className="font-medium">{t("teacher.feedback", "Feedback")}:</span> {s.feedback}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{t("teacher.reviewSubmission", "Inzending nakijken")}</DialogTitle>
+            <DialogTitle>
+              {selected?.reviewed_at
+                ? t("teacher.editReview", "Beoordeling bewerken")
+                : t("teacher.reviewSubmission", "Inzending nakijken")}
+            </DialogTitle>
           </DialogHeader>
           {selected && (
             <div className="space-y-4">
@@ -356,6 +409,22 @@ function ClassExercisesTab() {
                   <p className="text-muted-foreground">{t("teacher.noAnswer", "Geen antwoord")}</p>
                 )}
               </div>
+              {selected.reviewed_at && (
+                <div className="p-3 rounded-md border bg-muted/40 text-sm space-y-1">
+                  <p className="font-medium">{t("teacher.previousReview", "Huidige beoordeling")}</p>
+                  <p>
+                    {selected.is_correct === true
+                      ? t("teacher.markedCorrect", "Goed")
+                      : selected.is_correct === false
+                        ? t("teacher.markedIncorrect", "Fout")
+                        : "—"}
+                    {" · "}{t("teacher.score", "Score")}: {selected.score ?? 0}/{selected.question?.points ?? 1}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {format(new Date(selected.reviewed_at), "dd-MM-yyyy HH:mm")}
+                  </p>
+                </div>
+              )}
               <div>
                 <Label>{t("teacher.feedback", "Feedback")}</Label>
                 <Textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} rows={3} dir="auto" />
@@ -385,7 +454,7 @@ function ClassExercisesTab() {
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }
 
