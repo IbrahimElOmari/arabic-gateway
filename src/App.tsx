@@ -136,6 +136,8 @@ const App = () => (
                       <Route path="/terms" element={<TermsPage />} />
                       <Route path="/pricing" element={<PricingPage />} />
                       
+                      <Route path="/.lovable/oauth/consent" element={<OAuthConsentPage />} />
+
                       {/* Protected routes */}
                       <Route
                         path="/dashboard"
