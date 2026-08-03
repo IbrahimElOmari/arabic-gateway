@@ -101,6 +101,9 @@ const ForumPostPage = lazyWithRetry(() => import("./pages/ForumPostPage"));
 const ChatPage = lazyWithRetry(() => import("./pages/ChatPage"));
 const ApplyTeacherPage = lazyWithRetry(() => import("./pages/ApplyTeacherPage"));
 
+// OAuth consent (MCP / agent integrations)
+const OAuthConsentPage = lazyWithRetry(() => import("./pages/OAuthConsentPage"));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
