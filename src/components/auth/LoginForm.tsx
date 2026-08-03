@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,9 @@ export function LoginForm() {
   });
   const { user, loading, signIn } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextParam = searchParams.get('next');
+  const safeNext = nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : null;
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -58,9 +61,9 @@ export function LoginForm() {
 
   useEffect(() => {
     if (user && !loading) {
-      navigate('/dashboard');
+      navigate(safeNext ?? '/dashboard');
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, safeNext]);
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
