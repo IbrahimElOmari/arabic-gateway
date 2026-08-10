@@ -1,256 +1,145 @@
-# Productie-gereedheidsplan — Volledige Afronding Audit (excl. Stripe, #2 en #3)
+# Evaluatierapport — Arabic Gateway (volledige app-audit)
 
-**Doel:** Alle openstaande blokkers, kritieke risico's en belangrijke verbeterpunten uit het auditrapport tot **100% voltooid** brengen volgens de strenge definitie van "voltooid" zoals eerder vastgelegd:
-
-> **Voltooid = (a)** code geïmplementeerd, **(b)** RLS/security correct, **(c)** i18n-pariteit (nl/en/ar) zonder hardcoded strings, **(d)** unit + integratietest aanwezig en groen, **(e)** documentatie bijgewerkt, **(f)** CI groen (tsc, lint, i18n-lint, build, audit, e2e), **(g)** handmatig geverifieerd in preview, **(h)** geen `// @ts-ignore` of `any` toegevoegd zonder rationale.
-
-**Uitgesteld (niet in scope nu):** #2 E-mail infrastructuur, #3 Error monitoring (Sentry/Datadog). Deze worden hervat zodra #1 (TypeScript strict) volledig is afgerond.
+**Datum:** 10 augustus 2026 · **Scope:** hele app, exclusief betalingen (Paddle/Stripe) en mailing — die komen later.
+**Methode:** 3 parallelle codebase-audits (frontend, backend/security, testinfra/CI) + live-database-inspectie (RLS, cron, content, storage).
 
 ---
 
-## Fasering & deadlines
+## Eindoordeel in het kort
+
+| Dimensie | Score | Kern |
+|---|---|---|
+| Structuur & opbouw | **8/10** | Volwassen architectuur; weinig dead code |
+| Werking & vlotheid | **6/10** | Werkt, maar loading-states, memoïsatie en a11y zijn dun |
+| Correctheid & veiligheid | **7/10** | RLS/punten uitstekend; 2 kritieke integriteitslekken |
+| Volledigheid | **±85%** | Kern compleet; content-gaten + enkele losse eindjes |
+
+**Pilot-klaar?** Bijna. Er zijn **2 kritieke bevindingen** (cron-alert-storm en client-side nakijken) die vóór een pilot met echte leerlingen moeten worden opgelost.
+
+---
+
+## 1. Structuur & opbouw — sterk
+
+**Wat goed is:**
+- ~60 routes in `src/App.tsx`, allemaal lazy-loaded met retry-logica; `Suspense` + `FullPageLoader`; catch-all 404 aanwezig. **Geen enkele dode link** gevonden (alle `to="..."` resolven).
+- Heldere scheiding: contexts (Auth, Class, Theme) → hooks → `src/lib/*` → pages. Rollenmodel (admin/teacher/student) via aparte `user_roles`-tabel met `has_role()` security-definer — textbook-correct.
+- API-laag: `apiQuery`/`apiMutate`/`apiRpc`/`apiInvoke` wrappers worden in **77 bestanden** gebruikt; slechts ±5 uitzonderingen met directe calls (`ClassPaymentSettings.tsx`, `ExtraProductsPage.tsx`, `BillingPage.tsx`, `CurriculumMapData.tsx`, `paddle.ts`, `error-logger.ts`).
+- Backend: 25 edge functions met gedeelde helpers (`_shared/logger.ts`, `rate-limit.ts`, `paddle.ts`); 73 tabellen; **alle 35 security-definer functies hebben `SET search_path`** (privilege-escalatie-vector consequent gedicht).
+- Database-migraties: 73× `CREATE TABLE` = 73× `ENABLE ROW LEVEL SECURITY` (1-op-1).
+
+**Aandachtspunten:**
+- `src/pages/admin/EnrollmentRequestsPage.tsx` (137 regels) is **wees-code**: nergens gerouteerd of geïmporteerd.
+- `@tanstack/react-virtual` staat in `package.json` maar wordt **nergens gebruikt** — dode dependency.
+- Logger-adoptie is zwak: `src/lib/logger.ts` is netjes ontworpen (no-op in prod), maar slechts **4 bestanden** gebruiken 'm; **29 rauwe `console.log/warn/error`-calls** staan verspreid in componenten (o.a. `AdminLayout`, `use-two-factor`, `ExercisePage`, `ChatPage`, upload-componenten) — die lekken naar productie-consoles.
+
+---
+
+## 2. Werking & vlotheid — werkt, maar inconsistent
+
+**Wat goed is:**
+- Geen N+1-querypatronen gevonden; loops over data zijn in-memory transformaties.
+- Top-level error boundaries goed geregeld (`TranslatedErrorBoundary` rond de hele router).
+- Auth-flow is robuust: role+profile in één RPC, fail-closed bij timeout, geen deadlocks in `onAuthStateChange`.
+- Sterrenkaart heeft eigen degelijke pan/zoom-logica en gepagineerde datafetching.
+
+**Wat ontbreekt / zwak is:**
+- **Loading-states inconsistent**: slechts 7 bestanden gebruiken Skeleton-componenten; **47 pagina's** tonen een kale `Loader2`-spinner. De skeleton-primitives bestaan maar worden nauwelijks toegepast.
+- **Memoïsatie minimaal**: slechts 4 bestanden gebruiken `React.memo`. Lijst-zware admin-pagina's (Users, Payments, Analytics) renderen ongememoiseerd.
+- **Geen virtualisatie**: lange lijsten (forum, chat, gebruikerstabellen) renderen volledig via `.map()` (296 call-sites) terwijl de virtualisatie-dep ongebruikt meeweegt.
+- **Toegankelijkheid dun**: slechts 94 `aria-*`-attributen in heel `src/`, en maar **2×** `aria-live`/`role="status"` — async laad-/foutmeldingen worden vrijwel nergens aangekondigd aan screenreaders. (shadcn/Radix dekt de basis, maar maatwerk-componenten zoals chat en oefening-spelers niet.)
+
+---
+
+## 3. Correctheid & veiligheid — sterk fundament, 2 kritieke lekken
+
+### 3.1 Wat 100% correct is
+- **RLS volledig**: alle 77 publieke tabellen hebben RLS én policies (live geverifieerd, geen uitzonderingen).
+- **Punten/badges server-side afgedwongen**: `award_points` alleen door admin/teacher via de gamification-function met eigen rol-check; zelf-punten is dichtgezet. Badges worden server-side berekend.
+- **Cron-functions beveiligd**: `scheduler`, `release-exercises`, `send-lesson-reminders`, `cron-alert-dispatcher` eisen de service-role-sleutel (401 anders — getest).
+- Edge functions hebben vrijwel overal JWT + rol-checks; `ai-translate-i18n` en `paddle-sync-product` hebben zelfs Zod-validatie.
+- MCP-server (`arabic-gateway`) correct met OAuth-issuer, RLS als ingelogde gebruiker, read-only tools.
+
+### 3.2 KRITIEK #1 — Cron-alert-storm (operationeel, nu actief)
+De trigger `cron_alert_on_failure()` slaat een alert op bij **élke status** van een cron-run (`starting`, `connecting`, `sending`) — niet alleen bij `failed`:
+- **61.340 onbehandelde alerts** nu, groeiend met **±864/dag** (de dispatcher draait elke 5 min × 3 statussen en **alert daarmee zichzelf** — zelfversterkend).
+- Bovendien: 927× `Out of memory`-fouten in de `pg_net`-queue eind juni — waarschijnlijk mede door deze vloed.
+- Gevolg: het hele alarmkanaal is onbruikbaar; een échte failure valt weg in de ruis.
+
+### 3.3 KRITIEK #2 — Client-side nakijken + antwoordsleutel bij de leerling
+- `CurriculumItemPage.tsx` berekent `is_correct`/`score` **volledig in de browser** en insert die waarden direct. De INSERT-policy op `curriculum_item_attempts` controleert alleen eigendom — **niet** of de score klopt.
+- De SELECT-policy op `curriculum_items` levert de volledige rij incl. `correct_answer`/`correct_options` aan elke leerling → **de antwoordsleutel zit in de API-response**.
+- Impact: via devtools kan een leerling willekeurige perfecte scores submitten. Zelfde patroon geldt voor het oudere `exercise_attempts`-systeem.
+- `max_attempts` wordt eveneens **alleen client-side** afgedwongen; niets in de DB blokkeert een (n+1)-de poging via directe API-calls.
+- (De RPC `submit_curriculum_attempt` + `cm_grade_answer` bestaan al server-side maar worden door de speler niet gebruikt.)
+
+### 3.4 Overige bevindingen (hoog/midden)
+- **`curriculum_progress` is dode tabel**: 0 rijen en géén codepad (frontend, trigger noch functie) schrijft er ooit naartoe. De RLS-policy staat wel INSERT/UPDATE toe — een toekomstig risico én een huidig functioneel gat (voortgangsaggregaties tonen niets).
+- **`verify-2fa` zonder rate limiting**: 6-cijferige TOTP is onbegrensd te raden; `_shared/rate-limit.ts` bestaat maar wordt hier niet gebruikt. Het `two_factor_attempts`-log wordt nergens op geblokkeerd.
+- **`monitor-health` is publiek aanroepbaar** (`verify_jwt=false`, geen interne check) — iedereen kan DB-probes triggeren en `cron_alerts` spammen.
+- **Dubbele cron-schema's**: `send-lesson-reminders` wordt door 3 onafhankelijke schema's aangeroepen (hourly, 01:30, en via `scheduler` om 02:00). In-app notificaties de-dupen, maar **e-mailverzending de-dupeert niet** → dubbele mails mogelijk. Ook inconsistent: één job haalt de sleutel uit `current_setting`, de rest uit Vault.
+- **`analytics.track_event` anoniem + ongevalideerd**: willekeurige JSON in `properties` wordt ongechecked opgeslagen; spammen kan.
+- **`verify-captcha` faalt open** als `TURNSTILE_SECRET_KEY` ontbreekt — acceptabel in dev, dodelijk in prod als het per ongeluk ontbreekt.
+- **`get-paddle-price`** heeft geen expliciete auth-check (laag risico).
+- Early tables (`profiles`, `user_roles`, `classes`…) hebben geen expliciete GRANTs in migraties; de app werkt, dus de platform-defaults dekkend het — maar het is niet uit de repo verifieerbaar.
+- Audit-doc inconsistentie: `docs/audit-report.md:651` markeert een wachtwoord-validatiebug (`< 6`) als ❌ open, maar `SettingsPage.tsx:81` gebruikt inmiddels correct `< 8` — **doc is verouderd**.
+
+---
+
+## 4. Volledigheid — wat is 100% af, wat ontbreekt
+
+### 4.1 Volledig afgerond (100%)
+- **Auth & rollen**: registratie, login, wachtwoord-reset, 2FA-setup (TOTP + backup-codes), rollenmodel, rol-resolutie met retry — compleet en fail-closed.
+- **Curriculum-speler**: alle 8 oefeningstypes (meerkeuze, meerdere-antwoorden, open-tekst, gatentekst, bestand-upload, audio-opname, rangschikken, koppelen), tashkīl-ongevoelig nakijken met `strict_tashkeel`-schakelaar, vorige/volgende-navigatie, media-verberg-logica voor luistertaken.
+- **Docent-workflow**: nakijk-wachtrij (zelfstudie + klas-oefeningen), status- en leerling-filters, feedback-editor, score-herberekening na review, student-dossier, direct-chat via RPC, notificaties bij inzendingen.
+- **Admin**: contentbeheer (curriculum create/edit + media-uploads via `curriculum-media` bucket), review-pagina voor native speakers, gebruikers, klassen, niveaus, feature flags (DB-backed + realtime), cron-pagina met alerts-tab, audit-logging (`useAdminMutation`), i18n-vertaaltool, FAQ/beheer, design-system-pagina.
+- **Gamification**: punten, badges, streaks, leaderboards — server-side gezaghebbend.
+- **Community**: forum (kamers, posts, likes, reacties), privé-chat met deelnemersmodel, content-moderatie (reports).
+- **GDPR/AVG**: data-export, account-verwijdering met cascade, verwerkingsregister, cookie-consent met categorieën.
+- **i18n-infra**: 1547 keys × 3 talen (nl/en/ar) in **perfecte pariteit**; RTL-ondersteuning; Amiri-font; check-script in CI.
+- **MCP/agent-integraties**: OAuth-beveiligde server met 4 tools, consent-flow met `next`-redirect.
+- **CI-pipeline**: lint, tsc, i18n-lint, kleuren-lint, any-budget, coverage-drempels (80/80/75), a11y+RTL-audit, visuele regressie, e2e, Lighthouse, bundle-budget (5MB), security-audit.
+- **Storage**: 6 buckets met MIME- en grootte-limits, correcte public/private-verdeling, magic-byte-validatie aanwezig.
+
+### 4.2 Content-gaten (data, geen code)
+- **U16 "Wonen"-vervolg is leeg** — 0 items.
+- **U25: 164 items aanwezig maar 0 gepubliceerd.**
+- **U21–U24 missen Nederlandse titels** (wel 133–164 items per unit).
+- Totaal: 2299 items, waarvan 2135 gepubliceerd over 24 units.
+- `curriculum_progress`: 0 rijen (zie 3.4).
+- Operationeel: 6 klas-antwoorden wachten op nakijk; alle cron-alerts (61k) onbehandeld.
+
+### 4.3 Ontbrekende/losse eindjes (code & kwaliteit)
+1. **BillingPage is volledig hardcoded Nederlands** — de enige onvertaalde route in de app. Plus ±10–15 verspreide hardcoded strings (o.a. `PricingPage`-toasts, `StatsCard` "vs last month", taal-toggle-labels, "Sterrenkaart"/"Herstel").
+2. **Kalender-e2e-suite volledig uitgeschakeld** (14 `test.skip`); e2e draait alleen op Chromium; conditieal skips voor staging/Turnstile.
+3. **Testgaten**: 7 van 25 `lib`-modules zonder enige test (`curriculum-admin`, `exercise-recompute`, `export-utils`, `date-utils`, `paddle`, `app-config`, `sync-metadata`); de meeste pagina's hebben geen eigen tests.
+4. **TypeScript**: strict + `noUncheckedIndexedAccess` staan aan, maar **180× `: any` + 43× `as any`** zitten pal op het CI-budget (190) — vrijwel geen ruimte; `noUnusedLocals/Parameters` en `no-explicit-any: error` zijn nog uit.
+5. **Soft-launch-checklist**: pre-launch vakjes allemaal afgevinkt, maar launch-dag/post-launch (staging-refresh, soak-test, loadtest, smoke, on-call, rollback) volledig open.
+6. **Native-app-sectie** op InstallPage is "coming soon".
+7. **Weespagina** `EnrollmentRequestsPage.tsx` — feature ontbreekt of code moet weg.
+8. **Logger- en skeleton-adoptie** uitbreiden (zie §2).
+9. **Betalingen & mailing** — bewust uitgesteld (buiten scope).
+
+---
+
+## 5. Aanbevolen volgorde vóór de pilot
 
 ```text
-Week 1  →  #1 TypeScript strict (Fase 0–1: strictNullChecks)
-Week 2  →  #1 vervolg (Fase 2: noImplicitAny)
-Week 3  →  #4 Staging  +  #5 Server-side rate limiting  +  #7 Captcha
-Week 4  →  #6 Backups/DR  +  #9 Storage RLS  +  #10 Realtime loadtest
-Week 5  →  #8 GDPR/DPA  +  #13 WCAG 2.1 AA  +  RTL audit
-Week 6  →  #11 Observability  +  #12 Performance  +  #15 Cron alerting
-Week 7  →  #14 Test coverage drempel  +  #16 DB tuning  +  #17 Feature flags
-Week 8  →  #1 Fase 3–4 (full strict)  +  #18 Documentatie  +  soft-launch checklist
+P0 (blokkerend):
+  1. cron_alert_on_failure-trigger beperken tot status 'failed' + 61k alerts opschonen
+  2. Server-side nakijken activeren (submit_curriculum_attempt / cm_grade_answer gebruiken)
+     + antwoordvelden uit de leerling-SELECT halen + max_attempts in DB afdwingen
+  3. curriculum_progress popularen (trigger op attempts) of tabel verwijderen
+
+P1 (sterk aanbevolen):
+  4. verify-2fa rate limiting; monitor-health achter service-role; captcha fail-closed in prod
+  5. Cron-deduplicatie: 1 schema voor send-lesson-reminders + e-mail dedupe
+  6. BillingPage + losse strings vertalen (i18n-pariteit herstellen)
+
+P2 (voor of tijdens pilot):
+  7. Content: U16 vullen, U25 publiceren, U21–U24 titels
+  8. Skeletons/logger/memoïsatie breed uitrollen; aria-live op async flows
+  9. Kalender-e2e heractiveren; testgaten lib-modules dichten; any-budget afbouwen
+ 10. Wegwerken: EnrollmentRequestsPage, react-virtual-dep, verouderde audit-doc regels
 ```
 
----
-
-## 1. TypeScript strict — volledige activatie
-
-Volgens `docs/typescript-strict-roadmap.md` (al aanwezig).
-
-**Stappen:**
-- Fase 0: baseline `npx tsc --noEmit --strict 2>&1 | tee /tmp/strict-baseline.log`; errors per module tellen.
-- Fase 1 (`strictNullChecks`): fix rij 1–2 (lib/supabase-api.ts, api-error.ts, integrations/supabase/*, AuthContext, ClassContext, use-admin-mutation). Doel: 0 errors met flag globaal aan.
-- Fase 2 (`noImplicitAny`): rij 3–4 (lib/*, hooks/*). `any`-count van 189 → < 30.
-- Fase 3: `strictFunctionTypes`, `strictBindCallApply`, `strictPropertyInitialization`, `alwaysStrict`. Rij 5–6.
-- Fase 4: `strict: true` + `noUncheckedIndexedAccess` + `noImplicitOverride` + `noUnusedLocals/Parameters`. Rij 7–9. ESLint `@typescript-eslint/no-explicit-any: error`.
-
-**Definitie voltooid:** `tsconfig.json` heeft `strict: true` + `noUncheckedIndexedAccess: true`. `npx tsc --noEmit` slaagt. `rg -n ": any\b|<any>|as any" src | wc -l` ≤ 5 (allen met `// @ts-explain` rationale). CI blokkeert PR's die het breken.
-
----
-
-## 4. Staging-omgeving
-
-**Stappen:**
-- Tweede Supabase-project provisionen (`hva-staging`).
-- Migration parity: script `scripts/sync-migrations.sh` dat alle `supabase/migrations/*.sql` toepast op staging.
-- `.env.staging` met aparte URL/anon-key; Vite-mode `staging`.
-- CI: deploy preview-branch → staging; smoke-test (Playwright) draait tegen staging.
-- Seed-script `scripts/seed-staging.ts` voor reproduceerbare testdata.
-
-**Voltooid:** Staging-URL bereikbaar; migraties identiek (`diff` van `pg_dump --schema-only` = leeg); CI deployt automatisch; runbook in `docs/staging.md`.
-
----
-
-## 5. Server-side rate limiting (edge functions)
-
-**Stappen:**
-- Shared helper `supabase/functions/_shared/rate-limit.ts` met token-bucket op basis van Postgres-tabel `public.rate_limit_buckets` (user_id + endpoint + window).
-- Per kritieke functie integreren: `send-email`, `helpdesk`, `ai-translate-i18n`, `stripe-checkout`, `manual-payment`, `analytics`, `verify-2fa`.
-- Limieten: 10/min/user voor send-email, 60/min voor analytics, 5/min voor verify-2fa.
-- Migratie: tabel + cleanup-cron (oude buckets > 1u verwijderen).
-- Unit-test per functie + integratietest die 429 verifieert.
-
-**Voltooid:** Alle 7 functies gebruiken helper; tests groen; logs tonen 429 bij overschrijding; runbook bijgewerkt.
-
----
-
-## 6. Backups & disaster recovery
-
-**Stappen:**
-- PITR verifiëren in Supabase project settings; screenshot in `docs/dr-runbook.md`.
-- Storage bucket export: cron-job die wekelijks `lesson-recordings` + `user-uploads` naar externe S3 sync't (rclone via edge function of GitHub Action).
-- Restore-drill: script `scripts/restore-drill.sh` dat staging vanaf backup herstelt; maandelijks draaien.
-- RPO/RTO afspraken: RPO=24u, RTO=4u; gedocumenteerd.
-
-**Voltooid:** PITR aan; eerste restore-drill succesvol uitgevoerd en gelogd; runbook compleet.
-
----
-
-## 7. Captcha op publieke formulieren
-
-**Stappen:**
-- Cloudflare Turnstile keys via `secrets--add_secret` (TURNSTILE_SITE_KEY publiek, TURNSTILE_SECRET_KEY backend).
-- Component `<TurnstileWidget>` in `src/components/security/`.
-- Integreren op: RegisterPage, ForgotPasswordPage, ApplyTeacherPage, HelpdeskPage (publiek tabblad).
-- Edge function verifieert token via Turnstile siteverify-endpoint vóór business-logic.
-- i18n keys voor foutmeldingen (nl/en/ar).
-
-**Voltooid:** Alle 4 formulieren beschermd; integratietest faalt zonder geldige token; i18n compleet.
-
----
-
-## 8. GDPR / AVG compliance
-
-**Stappen:**
-- DPA's: download van Supabase, Resend, Lovable, Stripe; opslaan in `docs/legal/dpa/`.
-- Privacy policy review: `src/pages/PrivacyPage.tsx` updaten met alle subverwerkers + retention-periodes.
-- Verwerkingsregister (Art. 30): `docs/legal/processing-register.md` met alle data-flows.
-- Recht op vergetelheid: `export-user-data` edge function uitbreiden met `delete-user-data` (cascade via SQL + storage cleanup); UI in `/settings`.
-- Cookie consent: review `CookieConsent.tsx` op categorieën (functioneel/analytisch/marketing).
-
-**Voltooid:** Alle DPA's getekend; PrivacyPage juridisch reviewed; delete-flow E2E getest; verwerkingsregister compleet.
-
----
-
-## 9. Storage RLS hardening
-
-**Stappen:**
-- Audit alle storage policies via `supabase--read_query` op `storage.objects`.
-- Per bucket: verifieer dat alleen owner + admin/teacher (waar relevant) lezen/schrijven kan.
-- Signed-URL TTL standaardiseren: max 1u voor `lesson-recordings`, 15min voor privé-bestanden.
-- Server-side file validatie in `upload-validation.ts` uitbreiden: MIME-sniffing (magic bytes) ipv alleen extensie; max bestandsgrootte per bucket.
-- Edge function `validate-upload` die pre-signed URL pas uitgeeft na validatie.
-
-**Voltooid:** Storage policy-test `src/test/storage-policies.test.ts` dekt elke bucket × elke rol; signed-URL TTL geverifieerd; magic-byte validatie groen.
-
----
-
-## 10. Realtime capaciteit & loadtest
-
-**Stappen:**
-- k6-script `scripts/loadtest-realtime.js`: 500 gelijktijdige WebSocket-clients op `messages` + `forum_posts` channels.
-- Reconnect-strategie in `src/integrations/supabase/client.ts`: exponential backoff + jitter; max 5 retries.
-- Metrieken: latency p95/p99, message-loss, reconnect-count.
-- Documenteren in `docs/realtime-capacity.md`.
-
-**Voltooid:** Loadtest met 500 clients haalt p95 < 500ms, 0% message-loss; reconnect bewezen na netwerk-drop.
-
----
-
-## 11. Observability
-
-**Stappen:**
-- Structured logging in alle edge functions via bestaande `_shared/logger.ts` (al deels aanwezig — audit & uitbreiden).
-- Request-tracing: `x-request-id` propageren van frontend → edge → DB (via `set_config`).
-- Funnel-dashboard in `/admin/analytics`: signup → first-lesson → first-payment.
-- Logs queryable via Supabase analytics tab; alert-regels gedocumenteerd.
-
-**Voltooid:** Alle edge functions gebruiken logger; request-id zichtbaar in elke log; funnel-dashboard live.
-
----
-
-## 12. Performance baseline
-
-**Stappen:**
-- Lighthouse CI al in pipeline — drempels instellen: Perf ≥ 85, A11y ≥ 95, Best Practices ≥ 95, SEO ≥ 95. Falen bij regressie.
-- Image CDN: Supabase image transformation al aan; alle `<img>` migreren naar `?width=...&quality=...`.
-- Bundle-budget: huidig 10MB → verlagen naar 5MB; per-route code-splitting verifiëren.
-- Preload kritieke fonts; lazy-load alle admin-routes.
-
-**Voltooid:** Lighthouse-drempels in CI; bundle < 5MB; alle pages Perf ≥ 85 op mobiel.
-
----
-
-## 13. WCAG 2.1 AA + RTL audit
-
-**Stappen:**
-- axe-core via Playwright op elke route (`e2e/accessibility.spec.ts` uitbreiden).
-- Manueel: keyboard-navigatie, screenreader (NVDA/VoiceOver) op kritieke flows.
-- Kleurcontrast: `src/test/color-contrast.test.ts` uitbreiden naar alle semantische tokens.
-- RTL: elke pagina inspecteren in `dir="rtl"` mode (Arabisch); fix `flex-row` → `flex-row rtl:flex-row-reverse` waar nodig.
-- Focus-indicators uniform via `:focus-visible` token.
-
-**Voltooid:** axe-core 0 violations op alle routes; RTL-screenshots per pagina in `docs/rtl-audit/`; WCAG-checklist 100% afgevinkt.
-
----
-
-## 14. Test coverage drempel
-
-**Stappen:**
-- `vitest.config.ts`: `coverage.thresholds.lines = 80, branches = 75, functions = 80`.
-- CI faalt onder drempel.
-- `forum-likes-consistency.test.ts`: service-role-key als CI-secret toevoegen zodat test echt draait.
-- Ontbrekende tests identificeren: `npx vitest --coverage` → gap-rapport → tests schrijven.
-
-**Voltooid:** Coverage ≥ 80% lines globaal; geen `.skip()` in CI; rapport in artifact.
-
----
-
-## 15. Cron failure alerting
-
-**Stappen:**
-- Migratie: trigger op `cron.job_run_details` die bij `status != 'succeeded'` een rij in `public.cron_alerts` schrijft.
-- Edge function `cron-alert-dispatcher` (draait elke 5min): leest nieuwe alerts → stuurt naar admin via in-app notificatie + (later) e-mail.
-- Retry-logica: failed jobs 3x retry met exponential backoff; daarna dead-letter in `cron_dead_letter`.
-- CronJobsPage uitbreiden met "Alerts" tab.
-
-**Voltooid:** Failure triggert binnen 5min een admin-notificatie; retry werkt; dead-letter zichtbaar in UI.
-
----
-
-## 16. Database tuning
-
-**Stappen:**
-- Index audit: `supabase--read_query` op `pg_stat_user_indexes` → ongebruikte indexes verwijderen, ontbrekende toevoegen.
-- `EXPLAIN ANALYZE` op top-10 queries (dashboard, leaderboards, analytics).
-- pgBouncer aanzetten in `supabase/config.toml` (`[db.pooler] enabled = true`, pool_mode = "transaction").
-- VACUUM/ANALYZE schedule via pg_cron (wekelijks).
-
-**Voltooid:** Slow-query log < 100ms p95; pooler aan; index-rapport in `docs/db-tuning.md`.
-
----
-
-## 17. Feature flags
-
-**Stappen:**
-- `feature-flags.ts` uitbreiden met DB-backed flags (`public.feature_flags` tabel; admin-UI om te togglen).
-- Per-user / per-role / per-percentage rollout.
-- Hook `useFeatureFlag(name)` met realtime subscribe.
-- Admin-pagina `/admin/feature-flags`.
-
-**Voltooid:** Flags toggle-baar zonder deploy; minstens 3 flags in gebruik (bv. `new-dashboard`, `beta-forum`, `gamification-v2`).
-
----
-
-## 18. Documentatie
-
-**Stappen:**
-- `CONTRIBUTING.md`: dev-setup, branch-strategie, commit-conventie, PR-template.
-- `docs/runbook.md`: incident-response, rollback, secret-rotation, restore-procedure.
-- `docs/api-contracts.md`: alle edge functions met request/response schema (Zod).
-- `docs/architecture.md`: high-level diagram (Mermaid).
-- README.md uitbreiden met links.
-
-**Voltooid:** Alle 5 docs aanwezig en review'd; nieuwe dev kan in < 1 dag bijdragen.
-
----
-
-## Cross-cutting eisen (per item)
-
-Voor élk item geldt voordat het als "voltooid" wordt gemarkeerd:
-- ✅ Code + tests groen in CI
-- ✅ i18n keys voor alle nieuwe UI-strings in nl/en/ar (`npm run check:i18n` groen)
-- ✅ Semantische tokens (geen hardcoded kleuren)
-- ✅ RLS-policy review als DB-tabel toegevoegd
-- ✅ Geen nieuwe `any` zonder rationale
-- ✅ Documentatie-snippet bijgewerkt
-- ✅ Handmatige verificatie in preview gelogd in task-tracker
-
----
-
-## Eindcriterium voor "100% audit voltooid"
-
-- Alle items #1, #4–#18 hierboven gemarkeerd als voltooid volgens bovenstaande definitie.
-- `npm run check:i18n` + `npx tsc --noEmit` + `npm run lint` + `npm run test:coverage` + `npx playwright test` + `npm audit --audit-level=high` + Lighthouse CI: **alle groen**.
-- `docs/audit-report.md` bijgewerkt met "✅ Resolved" status per punt + datum + commit-hash.
-- Soft-launch checklist (`docs/soft-launch.md`) volledig afgevinkt.
-- Daarna #2 (e-mail) en #3 (Sentry) ontgrendelen en starten.
-
----
-
-## Open beslissingen voor de gebruiker
-
-1. Akkoord met 8-weken planning, of compactere/uitgebreidere tijdslijn?
-2. Captcha-provider: Cloudflare Turnstile (gratis, aanbevolen) of hCaptcha?
-3. Externe backup-target voor storage: AWS S3, Backblaze B2, of Cloudflare R2?
-4. Loadtest-platform: lokaal k6 of gehost (Grafana Cloud k6)?
+**Conclusie:** architectuur, security-fundament (RLS/rollen/punten), curriculum-speler, docent-workflow en i18n zijn van productieniveau. De twee P0-items — de alarm-storm en het client-side vertrouwen van scores — zijn klein in omvang maar groot in impact en bepalen nu de pilot-gereedheid.
