@@ -293,10 +293,15 @@ export default function CurriculumItemPage() {
           const [l, r] = (p ?? "").split("=");
           if (l && r) expected[normItem(l, cur.strict_tashkeel)] = normItem(r, cur.strict_tashkeel);
         });
+        // Antwoorden staan onder de ruwe linkerkant; normaliseer die sleutel net als de verwachte paren (tashkīl/hoofdletters)
+        const normPairs: Record<string, string> = {};
+        Object.entries(pairs).forEach(([l, r]) => {
+          normPairs[normItem(l, cur.strict_tashkeel)] = r;
+        });
         const keys = Object.keys(expected);
         isCorrect =
           keys.length > 0 &&
-          keys.every((k) => normItem(pairs[k] ?? "", cur.strict_tashkeel) === expected[k]);
+          keys.every((k) => normItem(normPairs[k] ?? "", cur.strict_tashkeel) === expected[k]);
         break;
       }
       case "bestand-upload":
@@ -669,10 +674,21 @@ export default function CurriculumItemPage() {
               </div>
               {submitted.feedback && <p className="text-sm">{isolateArabic(submitted.feedback)}</p>}
               {!submitted.correct && cur.correct_answer && (
-                <p className="text-sm mt-2">
+                <div className="text-sm mt-2">
                   <span className="font-medium">{t("curriculum.correctAnswer", "Juist antwoord")}: </span>
-                  {isolateArabic(cur.correct_answer)}
-                </p>
+                  {["gatentekst", "rangschikken", "koppelen"].includes(cur.exercise_type) && cur.correct_answer.includes("|") ? (
+                    <ol className="mt-1 space-y-1">
+                      {cur.correct_answer.split("|").map((seg, i) => (
+                        <li key={i} className="flex items-center gap-2">
+                          <span className="text-muted-foreground">#{i + 1}</span>
+                          <span dir="auto">{seg}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <span>{isolateArabic(cur.correct_answer)}</span>
+                  )}
+                </div>
               )}
             </div>
           )}
