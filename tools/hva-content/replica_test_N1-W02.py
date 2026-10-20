@@ -105,7 +105,7 @@ for b in BLOKKEN:  # P4-draaiboek, cumulatief
     d = f"{SQL2}/{b}"; v = V[b]
     ok(f"G1.4 {b} droogloop P4 (live = NA vorig blok)", laatste(bestand(d, "2_droogloop.sql")), v["droogloop"])
     ok(f"G1.5 {b} 7_vinger vóór", laatste(bestand(d, "7_vinger_aggregaat.sql")), f"{v['week_voor']}|{v['blok_voor']}|{v['rest']}")
-    ok(f"G1.6 {b} generale repetitie (+ T15-telling in dezelfde aanroep)", laatste(bestand(d, "8_generale_repetitie.sql")), v["gr_eindrij"] + "|0|0|0|")
+    ok(f"G1.6 {b} generale repetitie (+ T15-telling in dezelfde aanroep)", laatste(bestand(d, "8_generale_repetitie.sql")), v["gr_eindrij"] + "|0|0|0|0|")
     ok(f"G1.7 {b} 7_vinger na de repetitie = vóór", laatste(bestand(d, "7_vinger_aggregaat.sql")), f"{v['week_voor']}|{v['blok_voor']}|{v['rest']}")
     ok(f"G1.8 {b} apply (RETURNING)", ret(bestand(d, "3_apply.sql")), v["apply_returning"])
     ok(f"G1.9 {b} 7_vinger na de apply (rest ongewijzigd)", laatste(bestand(d, "7_vinger_aggregaat.sql")), f"{v['week_na']}|{v['blok_na']}|{v['rest']}")
@@ -126,7 +126,7 @@ ok("G1.19 T13 na het terugdraaien = start", q(T13), "10|0|119|42|6")
 d = f"{SQL1}/1_W01"; v = W01V
 ok("G2.1 W01 droogloop (P3 = P4)", laatste(bestand(d, "2_droogloop.sql")), v["droogloop_p3"])
 ok("G2.2 W01 grootte-probe v2 vóór", laatste(bestand(d, "9_grootte_probe.sql")), v["probe_voor_apply"])
-ok("G2.3 W01 generale repetitie (+ T15)", laatste(bestand(d, "8_generale_repetitie.sql")), v["gr_eindrij"] + "|0|0|0|")
+ok("G2.3 W01 generale repetitie (+ T15)", laatste(bestand(d, "8_generale_repetitie.sql")), v["gr_eindrij"] + "|0|0|0|0|")
 ok("G2.4 W01 apply", ret(bestand(d, "3_apply.sql")), v["apply_returning"])
 ok("G2.5 W01 7_vinger na", laatste(bestand(d, "7_vinger_aggregaat.sql")), f"{v['week_na']}|{v['blok_na']}|{v['rest']}")
 ok("G2.6 W01 tweede apply = 0", ret(bestand(d, "3_apply.sql")), "0|")

@@ -1,4 +1,4 @@
-# maak_sql_N1-W02.py v4.2 — Maker-T (7T) · P3 N1-W02 · techplan T10/T11/T15 · architectuur T v2 §1–§2 · B17 (verlengd, P1-11).
+# maak_sql_N1-W02.py v4.2.1 — Maker-T (7T) · P3 N1-W02 · techplan T10/T11/T15 · architectuur T v2 §1–§2 · B17 (verlengd, P1-11).
 # Basis: maak_sql_N1-W11.py v4.1 (= maak_sql_N1-W01.py v4: U&-escapes, inhouds- en toestandsgrendel, alles-of-niets, 4b, 8, 9).
 # Nieuw in v4.2:
 #  1. --blokken "L1=luisteren-01,luisteren-02;L2=…" (of "W01=*"): cumulatieve blokken zoals blokken_N1-W02.py. Elk blok start
@@ -8,7 +8,7 @@
 #  3. 9_grootte_probe v2 (T11): read-only, met de VALUES van apply én rollback (even groot als de generale repetitie):
 #     per richting n · inhoud_ok (plakken byte-gelijk) · start_ok (live = verwachte startstand van die richting).
 #  4. 8_generale_repetitie met de T15-telling in dezelfde aanroep: pogingen 30 d (alle) · pogingen 30 d van leerders (zonder rol
-#     admin/teacher) · logins 30 d (auth.users.last_sign_in_at) · laatste poging.
+#     admin/teacher) · logins 30 d van leerders · logins 30 d van staf (admin/teacher; v4.2.1, 8T C-T03) · laatste poging.
 #  5. 7_vinger_aggregaat met drie scopes: week · blok · rest van de week (de rest moet per blok gelijk blijven).
 #  6. 2_droogloop (read-only): per gewijzigd veld md5(live) = md5(oud)?, plus de drie aggregaten en de telling updates/inserts/
 #     deletes in één rij; 6_oud_aggregaat in de W01-vorm (n | md5 over item|veld|md5(live)).
@@ -82,11 +82,12 @@ def wrap(sql, naam):
     sql = "\n".join(x for x in sql.split("\n") if not x.startswith("--")).strip().rstrip(";")
     head, _, ret = sql.rpartition("RETURNING"); k = "\nUPDATE public.curriculum_items"; i = head.rindex(k)
     return head[:i] + ",\nu AS (UPDATE public.curriculum_items" + head[i + len(k):] + "RETURNING" + ret + ")\n" + f"SELECT set_config('hva.{naam}', count(*)::text || '|' || coalesce(md5(string_agg(item_id||'|'||vingerafdruk, E'\\n' ORDER BY item_id COLLATE \"C\")),''), true) FROM u;"
-ACTIVITEIT = ("SELECT set_config('hva.activiteit', concat_ws('|', "
+STAF = "SELECT 1 FROM public.user_roles r WHERE r.user_id = {} AND r.role::text IN ('admin', 'teacher')"
+ACTIVITEIT = ("SELECT set_config('hva.activiteit', concat_ws('|', "   # v4.2.1 (8T C-T03): logins van leerders en van staf apart
               "(SELECT count(*) FROM public.curriculum_item_attempts WHERE created_at > now() - interval '30 days'), "
-              "(SELECT count(*) FROM public.curriculum_item_attempts a WHERE a.created_at > now() - interval '30 days' AND NOT EXISTS "
-              "(SELECT 1 FROM public.user_roles r WHERE r.user_id = a.student_id AND r.role::text IN ('admin', 'teacher'))), "
-              "(SELECT count(*) FROM auth.users WHERE last_sign_in_at > now() - interval '30 days'), "
+              f"(SELECT count(*) FROM public.curriculum_item_attempts a WHERE a.created_at > now() - interval '30 days' AND NOT EXISTS ({STAF.format('a.student_id')})), "
+              f"(SELECT count(*) FROM auth.users u WHERE u.last_sign_in_at > now() - interval '30 days' AND NOT EXISTS ({STAF.format('u.id')})), "
+              f"(SELECT count(*) FROM auth.users u WHERE u.last_sign_in_at > now() - interval '30 days' AND EXISTS ({STAF.format('u.id')})), "
               "coalesce((SELECT max(created_at)::text FROM public.curriculum_item_attempts), '')), true);")
 RO_BEGIN, RO_END = "BEGIN TRANSACTION READ ONLY;\n", "ROLLBACK;\n"
 # blokken
@@ -156,7 +157,7 @@ for nr, (naam, pref) in enumerate(blokken, 1):
         f"SELECT ({agg_sql(WEEKF)}) || '|' || ({agg_sql(WEEKF + ' AND ' + in_lijst(blokids))}) || '|' || ({agg_sql(WEEKF + ' AND NOT ' + in_lijst(blokids))}) AS week_blok_rest;\n" + RO_END)
     zet = lambda n: f"SELECT set_config('hva.{n}', ({agg_sql(WEEKF)}), true);"
     bestanden["8_generale_repetitie.sql"] = (f"-- 8_generale_repetitie · blok {naam} · netto read-only: BEGIN … ROLLBACK in één aanroep, met de T15-telling (activiteit) in dezelfde aanroep\n"
-        f"-- verwacht: {V['gr_eindrij']} | activiteit pogingen30|leerders30|logins30|laatste_poging (STOP als leerders30 > 0 of logins30 > 0)\n"
+        f"-- verwacht: {V['gr_eindrij']} | activiteit pogingen30|pogingen30_leerders|logins30_leerders|logins30_staf|laatste_poging (STOP als pogingen30_leerders > 0 of logins30_leerders > 0)\n"
         "BEGIN;\n" + ACTIVITEIT + "\n" + zet("start") + "\n" + wrap(apply_sql, "apply") + "\n" + zet("na_apply") + "\n" + wrap(rb_sql, "rollback") + "\n" + zet("na_rollback") +
         "\nSELECT current_setting('hva.start') AS start, current_setting('hva.apply') AS apply, current_setting('hva.na_apply') AS na_apply, current_setting('hva.rollback') AS rollback, current_setting('hva.na_rollback') AS na_rollback, current_setting('hva.activiteit') AS activiteit;\nROLLBACK;\n")
     pw = lambda a: f"(SELECT count(*) FROM {a} n WHERE {inhoud_sql('n')} = n.h_inhoud)"
