@@ -4,7 +4,7 @@ en bevatten geen geheimen. De SQL die ze maken, wordt na een poortakkoord van Ib
 
 **Geen cursusinhoud in deze publieke repo (B9).** Exports, back-ups, lijsten, JSON, SQL en wijzigingslogs staan in de privé Drive-map
 `arabic-gateway-content` en in de weekbundel. Daarom staan hier ook niet: `maak_log_N1-W02.py`, `maak_revisie_D_N1-W02.py`,
-`maak_p2_groepen_N1-W02.py`, `maak_p2_kop_N1-W02.py` en `ontwerp_voor_na_N1-W02.py` (ze bevatten de teksten van week 2).
+`maak_p2_groepen_N1-W02.py`, `maak_p2_kop_N1-W02.py`, `ontwerp_voor_na_N1-W02.py` en `maak_p3_voorstel_N1-W02.py` (ze bevatten de teksten van week 2).
 Vervangen en dus niet meegenomen: `maak_sql_N1-W11.py` v4.1, `blokken_N1-W02.py` (beide opgegaan in `maak_sql_N1-W02.py` v4.2),
 oudere kopieën van `apply_log.py`.
 
@@ -13,8 +13,10 @@ oudere kopieën van `apply_log.py`.
 | `app_export_week.py` | bijlage B · resultaat van query_database (JSON) → app-export TSV (30 kolommen) | 1782 | `ce8f0fa72d488dbebceaf19254e8a11a` | 0 |
 | `app_naar_master.py` | 7D · app-export → lijst-/masterformaat (6 kolommen + app:-regels, B7 punt 4) | 3071 | `f4407822fb85e922d4e3a9cba6820106` | 0 |
 | `apply_log.py` | 4T v1.2 · past alleen goedgekeurde logregels toe; de review bindt de inhoud; veld-whitelist; --week | 8615 | `bc6280bba4000ad89fa430b2a48007ce` | 9 |
+| `check_bidi_render_N1-W02.py` | 8D/8T v1.1 · rendertoets bidi in Chromium zoals de app (LTR-alinea); --breedte, --wrap (gsm) | 4855 | `e2e7303ec2f8e7ee09cfa34a0a7d1fac` | 39 |
 | `check_N1-W02.py` | 3T v1.3 · technische check; --poort = exit 2 bij K of H (B25-bytecontrole, bidi-regel) | 21934 | `8a349bb145bd8174cc6ca99a94674501` | 26 |
 | `keten_N1-W02.sh` | 4T v2 · P2-testketen op kopieën (gebruikt ook maak_log_N1-W02.py, dat inhoud bevat en hier niet staat) | 4630 | `0ff935b0c4cead2db17be6620e5e81cb` | 0 |
+| `maak_bundel_P3_N1-W02.py` | Regisseur-T v1 · manifest (md5 + bytes) en weekbundel voor de volgende chat | 3131 | `d9656f5796cad617e2df71f0ab2b2570` | 0 |
 | `maak_json_N1-W02.py` | 7T v1.1 · content/{niveau}/{week}.json (structuur van schema v1), deterministisch | 3767 | `b4b39e8d402388f1d944f7b48b77d05f` | 2 |
 | `maak_master.py` | 7D/7T · LEESBARE_LIJST_MASTER.tsv = N1 uit de app + N1-comp + N2 (B7 punt 4/5) | 1565 | `1bae21f16d322e06ff09d9a550663568` | 0 |
 | `maak_sql_N1-W02.py` | 7T v4.2.1 (T15: logins van leerders en staf apart) · cumulatieve blokken, U&-escapes (tekst en jsonb), probe v2, T15-telling, read-only controles | 20201 | `8b9c596e9190dd1d0b49cc93b436ea06` | 0 |
