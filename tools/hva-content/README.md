@@ -17,7 +17,7 @@ oudere kopieën van `apply_log.py`.
 | `check_N1-W02.py` | 3T v1.3 · technische check; --poort = exit 2 bij K of H (B25-bytecontrole, bidi-regel) | 21934 | `8a349bb145bd8174cc6ca99a94674501` | 26 |
 | `keten_N1-W02.sh` | 4T v2 · P2-testketen op kopieën (gebruikt ook maak_log_N1-W02.py, dat inhoud bevat en hier niet staat) | 4630 | `0ff935b0c4cead2db17be6620e5e81cb` | 0 |
 | `maak_bundel_P3_N1-W02.py` | Regisseur-T v1.1 · manifest (md5 + bytes) en weekbundel voor de volgende chat | 3279 | `e330b00ea20d57bec676bb00221753ea` | 0 |
-| `maak_bundel_N1-W02.py` | Regisseur-T v2 · manifest (md5 + bytes) en weekbundel per fase (vervangt maak_bundel_P3_N1-W02.py) | 3982 | `663a5b7ad30c3b7bc865903625230e72` | 0 |
+| `maak_bundel_N1-W02.py` | Regisseur-T v2.1 · manifest (md5 + bytes) en weekbundel per fase; --zonder voor bestanden in de project knowledge (vervangt maak_bundel_P3_N1-W02.py) | 4578 | `4fb9806abaa4576d7110fb44122af883` | 0 |
 | `maak_json_N1-W02.py` | 7T v1.1 · content/{niveau}/{week}.json (structuur van schema v1), deterministisch | 3767 | `b4b39e8d402388f1d944f7b48b77d05f` | 2 |
 | `maak_master.py` | 7D/7T · LEESBARE_LIJST_MASTER.tsv = N1 uit de app + N1-comp + N2 (B7 punt 4/5) | 1565 | `1bae21f16d322e06ff09d9a550663568` | 0 |
 | `maak_sql_N1-W02.py` | 7T v4.3.1 (P4: apply, rollback en 4b in REPEATABLE READ via BEGIN; SET TRANSACTION …, uitvoer n|md5|isolatie; vroege controles C-T10) · cumulatieve blokken, U&-escapes (tekst en jsonb), probe v2, T15-telling, read-only controles | 23794 | `00487d3623e1e8998e132b344daa82e9` | 0 |
