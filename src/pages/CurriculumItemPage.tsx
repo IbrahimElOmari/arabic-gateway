@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -68,6 +68,20 @@ function stripTashkeel(s: string): string {
 
 function normItem(s: string, strict: boolean | null | undefined): string {
   return strict ? normalize(s) : normalize(stripTashkeel(s));
+}
+
+// Arabic run: Arabic-block characters (incl. tashkeel) joined only by spaces or Arabic
+// punctuation, with at least one letter. Each run gets its own <bdi> so that separators,
+// digits and Latin text between runs keep their logical order in an LTR paragraph
+// (e.g. "X; Y", "X|Y|Z" or "X (2)" no longer flip into one right-to-left run).
+const ARABIC_RUN =
+  /([\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]+(?:[ \u00A0\u060C\u061B\u061F]+[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]+)*)/;
+
+function isolateArabic(text: string | null | undefined): ReactNode {
+  if (!text) return text;
+  return text
+    .split(ARABIC_RUN)
+    .map((part, i) => (i % 2 === 1 && /\p{L}/u.test(part) ? <bdi key={i} lang="ar">{part}</bdi> : part));
 }
 
 export default function CurriculumItemPage() {
@@ -208,6 +222,10 @@ export default function CurriculumItemPage() {
   const nextItem = currentIndex >= 0 && currentIndex < orderedList.length - 1 ? orderedList[currentIndex + 1] : null;
   const prevItem = currentIndex > 0 ? orderedList[currentIndex - 1] : null;
   const isLast = currentIndex >= 0 && currentIndex === orderedList.length - 1;
+  // Choice items cannot be submitted before something is chosen.
+  const nothingChosen =
+    (cur.exercise_type === "meerkeuze" && !answer) ||
+    (cur.exercise_type === "meerdere-antwoorden" && !(Array.isArray(answer) && answer.length > 0));
 
   function resetForNewItem() {
     setSubmitted(null);
@@ -398,7 +416,7 @@ export default function CurriculumItemPage() {
         const fills: string[] = Array.isArray(answer) ? answer : blanks.map(() => "");
         return (
           <div className="space-y-3">
-            {cur.question && <p className="text-muted-foreground">{cur.question}</p>}
+            {cur.question && <p className="text-muted-foreground">{isolateArabic(cur.question)}</p>}
             {blanks.map((_, i) => (
               <div key={i} className="flex items-center gap-2">
                 <Label className="w-16">#{i + 1}</Label>
@@ -552,7 +570,7 @@ export default function CurriculumItemPage() {
               </Badge>
             )}
           </div>
-          <CardTitle className="text-xl">{cur.instruction_nl}</CardTitle>
+          <CardTitle className="text-xl">{isolateArabic(cur.instruction_nl)}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Arabic input — hidden for students when exercise has audio/video */}
@@ -570,13 +588,13 @@ export default function CurriculumItemPage() {
                 <p className="text-sm italic text-muted-foreground">{cur.input_transliteration}</p>
               )}
               {cur.input_translation_nl && (
-                <p className="text-sm text-muted-foreground">{cur.input_translation_nl}</p>
+                <p className="text-sm text-muted-foreground">{isolateArabic(cur.input_translation_nl)}</p>
               )}
             </div>
           )}
           {cur.input_arabic && !showArabicSource && cur.input_translation_nl && (
             <div className="bg-muted/50 rounded-md p-4">
-              <p className="text-sm text-muted-foreground">{cur.input_translation_nl}</p>
+              <p className="text-sm text-muted-foreground">{isolateArabic(cur.input_translation_nl)}</p>
             </div>
           )}
 
@@ -607,7 +625,7 @@ export default function CurriculumItemPage() {
 
           {/* Question */}
           {cur.question && cur.exercise_type !== "gatentekst" && (
-            <p className="font-medium">{cur.question}</p>
+            <p className="font-medium">{isolateArabic(cur.question)}</p>
           )}
 
           {/* Interaction */}
@@ -649,11 +667,11 @@ export default function CurriculumItemPage() {
                   </>
                 )}
               </div>
-              {submitted.feedback && <p className="text-sm">{submitted.feedback}</p>}
+              {submitted.feedback && <p className="text-sm">{isolateArabic(submitted.feedback)}</p>}
               {!submitted.correct && cur.correct_answer && (
                 <p className="text-sm mt-2">
                   <span className="font-medium">{t("curriculum.correctAnswer", "Juist antwoord")}: </span>
-                  {cur.correct_answer}
+                  {isolateArabic(cur.correct_answer)}
                 </p>
               )}
             </div>
@@ -697,7 +715,7 @@ export default function CurriculumItemPage() {
             </Button>
             <div className="flex gap-2">
               {!submitted ? (
-                <Button onClick={handleSubmit} disabled={submitAttempt.isPending}>
+                <Button onClick={handleSubmit} disabled={submitAttempt.isPending || nothingChosen}>
                   {submitAttempt.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                   {t("curriculum.submit", "Indienen")}
                 </Button>
