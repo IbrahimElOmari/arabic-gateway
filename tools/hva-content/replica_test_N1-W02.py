@@ -1,7 +1,9 @@
-# replica_test_N1-W02.py v2.1 — Controleur-T (8T) / Maker-T (7T) · P3/P4 N1-W02 · techplan T6/T13 · architectuur T v2 §1, §6.
+# replica_test_N1-W02.py v2.2 — Controleur-T (8T) / Maker-T (7T) · P3/P4 N1-W02 · techplan T6/T13 · architectuur T v2 §1, §6.
 # v2.1 (SQL v4.3, 9T V2): apply, rollback en 4b geven één rij n|md5|isolatie in REPEATABLE READ; de generale repetitie toont de isolatie;
 # G3.4 toetst nu dat de generator een lege options-cel weigert (C-T10); nieuw G3.8: een gelijktijdige wijziging tijdens de apply →
 # serialisatiefout, niets toegepast (9T S5b).
+# v2.2 (SQL v4.3.1: BEGIN; SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;): G3.8 volgt de nieuwe kop; nieuw G3.9: de tool zet zelf een
+# transactie rond de aanroep → isolatie blijft repeatable read (a: apply, b: generale repetitie); er liep al een query → fout, niets toegepast (c).
 # Replica v2 = lokale PostgreSQL 16 met het LIVE-schema van public.curriculum_items (uit information_schema/pg_catalog, read-only
 # opgehaald op 2026-10-20: 34 kolommen, NOT NULL/defaults, de gegenereerde kolommen needs_*, PK, UNIQUE, beide FK's, indexen,
 # de trigger op updated_at) + minimale stubs voor auth.users, curriculum_units, curriculum_item_attempts en user_roles.
@@ -179,7 +181,9 @@ ro = bestand(d, "7_vinger_aggregaat.sql").replace("ROLLBACK;", f"UPDATE public.c
 rc, out, err = run(ro)
 ok("G3.6 UPDATE binnen BEGIN TRANSACTION READ ONLY → geweigerd", str(rc != 0 and "read-only transaction" in err), "True")
 # G3.8 REPEATABLE READ (9T S5b): iemand wijzigt een rij van het blok terwijl de apply-transactie loopt → serialisatiefout, niets toegepast
-a = bestand(d, "3_apply.sql").replace("BEGIN ISOLATION LEVEL REPEATABLE READ;\n", "BEGIN ISOLATION LEVEL REPEATABLE READ;\nSELECT count(*) FROM public.curriculum_items;\nSELECT pg_sleep(3);\n", 1)
+KOP_RR = "BEGIN;\nSET TRANSACTION ISOLATION LEVEL REPEATABLE READ;\n"
+assert bestand(d, "3_apply.sql").count(KOP_RR) == 1, "3_apply heeft niet de kop van v4.3.1"
+a = bestand(d, "3_apply.sql").replace(KOP_RR, KOP_RR + "SELECT count(*) FROM public.curriculum_items;\nSELECT pg_sleep(3);\n", 1)
 proc = subprocess.Popen(f"{PSQL} -d replica -f -", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 proc.stdin.write(a); proc.stdin.close(); time.sleep(1.0)
 q(f"UPDATE public.curriculum_items SET question = question || ' ' WHERE item_id = '{eerste}';")
@@ -187,13 +191,20 @@ uit_, fout_ = proc.stdout.read(), proc.stderr.read(); proc.wait()
 ok("G3.8a gelijktijdige wijziging tijdens de apply → serialisatiefout (geen stille overschrijving)", str(proc.returncode != 0 and "could not serialize access" in fout_), "True")
 q(f"UPDATE public.curriculum_items SET question = left(question, length(question) - 1) WHERE item_id = '{eerste}';")
 ok("G3.8b na het terugzetten van die ene wijziging: blok L1 = VOOR (de apply veranderde niets)", laatste(bestand(d, "7_vinger_aggregaat.sql")), f"{v['week_voor']}|{v['blok_voor']}|{v['rest']}")
+# G3.9 de tool zet zelf BEGIN … COMMIT rond de aanroep (dan negeert PostgreSQL onze BEGIN, maar SET TRANSACTION werkt nog: er liep nog geen query)
+gr9 = laatste("BEGIN;\n" + bestand(d, "8_generale_repetitie.sql") + "COMMIT;\n")
+ok("G3.9b omhulde generale repetitie: isolatie = repeatable read, stand terug", gr9.rsplit("|", 1)[-1] + "|" + laatste(bestand(d, "7_vinger_aggregaat.sql")), "repeatable read|" + f"{v['week_voor']}|{v['blok_voor']}|{v['rest']}")
+ok("G3.9a omhulde apply: isolatie = repeatable read, blok toegepast", laatste("BEGIN;\n" + bestand(d, "3_apply.sql") + "COMMIT;\n"), v["apply_uitvoer"])
+ok("G3.9a' omhulde rollback: terug naar VOOR", laatste("BEGIN;\n" + bestand(d, "4_rollback.sql") + "COMMIT;\n"), v["rollback_uitvoer"])
+rc, out, err = run("BEGIN;\nSELECT 1;\n" + bestand(d, "3_apply.sql") + "COMMIT;\n")
+ok("G3.9c er liep al een query in de omhullende transactie → SET TRANSACTION faalt, niets toegepast", str(rc != 0 and "SET TRANSACTION ISOLATION LEVEL must be called before any query" in err) + "|" + laatste(bestand(d, "7_vinger_aggregaat.sql")), "True|" + f"{v['week_voor']}|{v['blok_voor']}|{v['rest']}")
 # G3.7 elk SQL-bestand NFC-stabiel; read-only bestanden zonder schrijfopdracht
 alle = [f"{SQL2}/{b}/{f}" for b in BLOKKEN for f in os.listdir(f"{SQL2}/{b}") if f.endswith(".sql")] + [f"{SQL1}/1_W01/{f}" for f in os.listdir(f"{SQL1}/1_W01") if f.endswith(".sql")]
 nfc_ok = sum(1 for p in alle if unicodedata.normalize("NFC", open(p, encoding="utf-8").read()) == open(p, encoding="utf-8").read())
 ok(f"G3.7 SQL-bestanden NFC-stabiel ({len(alle)} bestanden)", str(nfc_ok), str(len(alle)))
 # ---------- rapport ----------
 groen = sum(1 for r_ in resultaten if r_[1] == "✓"); totaal = sum(1 for r_ in resultaten if r_[1] in ("✓", "✗"))
-L = [f"# Replica v2.1 · N1-W02 · rapport\nGemaakt door `scripts/replica_test_N1-W02.py` v2.1 · PostgreSQL 16 lokaal · schema uit de live metadata (`schema_replica_v2.sql`, md5 `{hashlib.md5(SCHEMA.encode()).hexdigest()}`) · gegevens: back-up W02 (81) + back-up W01 (21) · elk SQL-bestand NFC-genormaliseerd vóór het uitvoeren (zoals de tool).\n",
+L = [f"# Replica v2.2 · N1-W02 · rapport\nGemaakt door `scripts/replica_test_N1-W02.py` v2.2 · PostgreSQL 16 lokaal · schema uit de live metadata (`schema_replica_v2.sql`, md5 `{hashlib.md5(SCHEMA.encode()).hexdigest()}`) · gegevens: back-up W02 (81) + back-up W01 (21) · elk SQL-bestand NFC-genormaliseerd vóór het uitvoeren (zoals de tool).\n",
      f"**Uitslag: {'REPLICA GROEN' if fout == 0 else 'REPLICA ROOD'} · {groen}/{totaal}**\n", "| test | | kreeg | verwacht |", "|---|---|---|---|"]
 for n_, s_, k_, v_ in resultaten: L.append(f"| {n_} | {s_} | `{k_}` | `{v_}` |" if s_ else f"| {n_} | | | |")
 open(R + "/REPLICA_RAPPORT.md", "w", encoding="utf-8").write("\n".join(L) + "\n")

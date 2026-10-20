@@ -1,4 +1,4 @@
-# rapport_7D_N1-W02.py v1.1 — Maker-D (7D) · P3 N1-W02 · maakt het telrapport en de leesbare diff uit de VOOR- en NA-stand
+# rapport_7D_N1-W02.py v1.2 — Maker-D (7D) · P3 N1-W02 · maakt het telrapport en de leesbare diff uit de VOOR- en NA-stand
 # (app-formaat, 30 kolommen), de lijsten (app_naar_master.py) en het goedgekeurde log. Rekent alles na; niets met de hand.
 #   telrapport: items/regels vóór → na, regels per categorie met verklaring per item (wijziging_id's), veldverschillen = logregels
 #               (onverklaard / zonder effect / eindwaarde ≠ log), regelniveau: elke gewijzigde (item, categorie) heeft een logregel
@@ -6,6 +6,8 @@
 #   diff:       elke logregel van de week, per item in de app-volgorde: oud → nieuw, volledig, zonder inkorting.
 # v1.1 (na P3-akkoord): --voor <map> = map met de VOOR-bestanden (standaard <map>); --lijsten 2=v2,1=v3 = versies van de NA-lijsten
 #   (standaard 2=v1,1=v2). Zonder deze opties geeft het dezelfde inhoud als v1; alleen het versienummer in de kop verschilt.
+# v1.2 (8D/8T-delta L2): ketenregels = een tweede of latere logregel op hetzelfde veld (bv. P3 bovenop P2) worden geteld en elke keten
+#   moet sluiten (oud = nieuw van de vorige regel); veldverschillen + ketenregels = logregels. Kolomkop van de veldtabel rechtgezet.
 # Gebruik: python3 -I rapport_7D_N1-W02.py <map p3> <log> <datum> [--voor <map>] [--lijsten 2=v2,1=v3]
 # Verwacht in <map p3>: VOOR/NA per week (zie WEKEN) en de lijsten VOOR/NA. Exit 1 bij elk onverklaard verschil.
 import sys, csv, json, collections, hashlib, os
@@ -43,8 +45,8 @@ def toon(v, veld):
         except Exception: return v
     return v.replace("\\n", " ⏎ ")
 fout = 0; T = []; D = []
-T.append(f"# N1-W02 · telrapport (lijst {VERS['2']} en W01-nazorg)\nMaker-D (7D) · {DATUM} · gemaakt door `scripts/rapport_7D_N1-W02.py` v1.1 (niets met de hand) · log `{os.path.basename(LOGPAD)}` md5 `{md5(LOGPAD)}` ({len(LOG)} regels, alle `goedgekeurd`).\n")
-D.append(f"# N1-W02 · leesbare diff (oud → nieuw)\nMaker-D (7D) · {DATUM} · gemaakt door `scripts/rapport_7D_N1-W02.py` v1.1 · bron: het goedgekeurde log `{os.path.basename(LOGPAD)}` (md5 `{md5(LOGPAD)}`), elke regel volledig en letterlijk; per item in de volgorde van de app. Een lege waarde staat als \"(leeg)\"; opties staan als A) … · B) … in de volgorde van de app.\n")
+T.append(f"# N1-W02 · telrapport (lijst {VERS['2']} en W01-nazorg)\nMaker-D (7D) · {DATUM} · gemaakt door `scripts/rapport_7D_N1-W02.py` v1.2 (niets met de hand) · log `{os.path.basename(LOGPAD)}` md5 `{md5(LOGPAD)}` ({len(LOG)} regels, alle `goedgekeurd`).\n")
+D.append(f"# N1-W02 · leesbare diff (oud → nieuw)\nMaker-D (7D) · {DATUM} · gemaakt door `scripts/rapport_7D_N1-W02.py` v1.2 · bron: het goedgekeurde log `{os.path.basename(LOGPAD)}` (md5 `{md5(LOGPAD)}`), elke regel volledig en letterlijk; per item in de volgorde van de app. Een lege waarde staat als \"(leeg)\"; opties staan als A) … · B) … in de volgorde van de app.\n")
 for wk, vp, np_, vl, nl, nlnaam in WEKEN:
     V = {r["item_id"]: r for r in rd(vp)}; N = {r["item_id"]: r for r in rd(np_)}
     log = [r for r in LOG if r[LK["item_id"]].startswith(f"U{wk}-")]
@@ -86,6 +88,14 @@ for wk, vp, np_, vl, nl, nlnaam in WEKEN:
     fout += len(onv) + len(zonder) + len(eind)
     T.append(f"### Veldniveau (app VOOR → NA)\n- veldverschillen **{len(diff)}** · logregels **{len(log)}** · onverklaard **{len(onv)}** · logregel zonder effect **{len(zonder)}** · eindwaarde ≠ log **{len(eind)}**")
     for x in onv + zonder + eind: T.append(f"  - ! {x}")
+    groepen = collections.OrderedDict()
+    for r in log: groepen.setdefault((r[LK["item_id"]], r[LK["veld"]]), []).append(r)
+    keten = [r[0] for g in groepen.values() for r in g[1:]]
+    open_ketens = [k for k, g in groepen.items() if any(b[LK["oud"]] != a[LK["nieuw"]] for a, b in zip(g, g[1:]))]
+    fout += len(open_ketens)
+    if keten or open_ketens:
+        T.append(f"- waarvan ketenregels (een tweede of latere logregel op hetzelfde veld): **{len(keten)}** ({', '.join(keten)}) · elke keten sluit (`oud` = `nieuw` van de vorige regel): **{'ja' if not open_ketens else 'NEE'}** · veldverschillen + ketenregels = logregels: {len(diff)} + {len(keten)} = {len(diff) + len(keten)}{' ✓' if len(diff) + len(keten) == len(log) else ' ≠ ' + str(len(log)) + ' !'}")
+        for x in open_ketens: T.append(f"  - ! keten niet gesloten: {x}")
     pv = collections.Counter(k for _, k in diff)
     # 4. regelniveau: gewijzigde (item, categorie) ↔ logregel op het veld
     gew = {(i, c) for i in per for c in per[i] if per[i][c][0] != per[i][c][1]}
@@ -98,7 +108,7 @@ for wk, vp, np_, vl, nl, nlnaam in WEKEN:
         return True
     log_zonder_lijst = sorted((i, v) for i, v in lk if zichtbaar(i, v) and not any((i, c) in gew for c, vs in CAT2VELD.items() if v in vs))
     niet_zichtbaar = sorted((i, v) for i, v in lk if not zichtbaar(i, v))
-    T.append("\n| veld | logregels = veldverschillen | waarvan zichtbaar in de lijst |\n|---|---|---|")
+    T.append("\n| veld | veldverschillen (elk met logregel) | waarvan zichtbaar in de lijst |\n|---|---|---|")
     for k in sorted(pv, key=lambda k: (-pv[k], k)):
         z = sum(1 for i, v in diff if v == k and zichtbaar(i, v))
         T.append(f"| `{k}` | {pv[k]} | {z}" + ("" if z == pv[k] else f" (de andere {pv[k] - z}: zie hieronder)") + " |")

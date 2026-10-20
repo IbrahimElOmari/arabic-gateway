@@ -1,19 +1,23 @@
-# maak_verwacht_per_stap_N1-W02.py v1.1 — Maker-T (7T) · P3/P4 N1-W02 · zet de verwachte uitkomsten uit verwacht.txt van elk blok in
+# maak_verwacht_per_stap_N1-W02.py v1.2 — Maker-T (7T) · P3/P4 N1-W02 · zet de verwachte uitkomsten uit verwacht.txt van elk blok in
 # één overzicht per stap (leescontroles en het P4-draaiboek).
 # v1.1 (SQL v4.3): apply, rollback en 4b geven één rij n|md5|isolatie; de generale repetitie eindigt op de isolatie; bovenaan de
 # standbepaling van 9T (V1): de week-vingerafdruk zegt welk blok er als volgende aan de beurt is.
+# v1.2 (SQL v4.3.1; 8D/8T-delta L3): wat te doen na een fout (losse ROLLBACK;, dan standbepaling).
 # Gebruik: python3 -I maak_verwacht_per_stap_N1-W02.py <map met sql/N1-W02 en sql/N1-W01>
 import os, sys, hashlib
 B = sys.argv[1]
 blokken = [("N1-W02", b) for b in ("1_L1", "2_L2", "3_R1", "4_R2")] + [("N1-W01", "1_W01")]
 VW = {(wk, b): dict(l.rstrip("\n").split("\t", 1) for l in open(f"{B}/{wk}/{b}/verwacht.txt", encoding="utf-8")) for wk, b in blokken}
-L = ["# N1-W02 · SQL v4.3 · verwachte uitkomsten per stap (uit verwacht.txt)",
-     "Gemaakt door `scripts/maak_verwacht_per_stap_N1-W02.py` v1.1 uit de bestanden `verwacht.txt` van elk blok. Volgorde in P4: L1 → L2 → R1 → R2, daarna W01 (eigen back-up). "
+L = ["# N1-W02 · SQL v4.3.1 · verwachte uitkomsten per stap (uit verwacht.txt)",
+     "Gemaakt door `scripts/maak_verwacht_per_stap_N1-W02.py` v1.2 uit de bestanden `verwacht.txt` van elk blok. Volgorde in P4: L1 → L2 → R1 → R2, daarna W01 (eigen back-up). "
      "Terugdraaien in omgekeerde volgorde. Alle vingerafdrukken zijn `aantal|md5` over `item_id|vingerafdruk` (27 kolommen, gesorteerd COLLATE \"C\"). "
-     "Apply, rollback en 4b lopen in REPEATABLE READ (9T V2) en geven één rij `n|md5|isolatie`. De grendels per rij dwingen de blokvolgorde niet af; "
+     "Apply, rollback en 4b lopen in REPEATABLE READ (9T V2: `BEGIN; SET TRANSACTION ISOLATION LEVEL REPEATABLE READ; … COMMIT;`) en geven één rij `n|md5|isolatie`. De grendels per rij dwingen de blokvolgorde niet af; "
      "daarom is `7_vinger_aggregaat.sql` vóór elke apply en elke rollback een harde STOP (8T C-T05, 9T V1).", "",
      "## Standbepaling (9T V1): welk blok is aan de beurt?",
      "Draai `7_vinger_aggregaat.sql` van een willekeurig W02-blok; het eerste deel (`week`) moet één van deze waarden zijn. Elke andere waarde: STOP, niets uitvoeren, Ibra inlichten.", "",
+     "**Na elke fout of afwijking** (in 3, 4, 4b of 8, ook een serialisatiefout of \"current transaction is aborted\"): niets herhalen. Eerst één losse aanroep `ROLLBACK;` "
+     "(onschadelijk als er geen transactie open is), daarna `7_vinger_aggregaat.sql` en de standbepaling hieronder; dan Ibra inlichten. Elke uitkomst controleert "
+     "`scripts/p4_stap_N1-W02.py` (exit 2 = STOP).", "",
      "| week-vingerafdruk W02 | betekenis | volgende stap |", "|---|---|---|"]
 keten = [VW[("N1-W02", "1_L1")]["week_voor"]] + [VW[("N1-W02", b)]["week_na"] for b in ("1_L1", "2_L2", "3_R1", "4_R2")]
 volgende = ["blok L1", "blok L2", "blok R1", "blok R2", "W02 klaar → W01-blok"]
