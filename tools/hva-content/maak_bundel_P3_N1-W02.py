@@ -1,11 +1,12 @@
-# maak_bundel_P3_N1-W02.py v1 — Regisseur-T · P3 N1-W02 · maakt MANIFEST_N1-W02_P3.md (md5 + bytes van elk bestand) en de bundel
+# maak_bundel_P3_N1-W02.py v1.1 — Regisseur-T · P3 N1-W02 · maakt MANIFEST_N1-W02_P3.md (md5 + bytes van elk bestand) en de bundel
 # N1-W02_P3_bundel.zip, zodat een volgende chat (P4 of "N1-W02 deel 3") alles byte-gelijk terugvindt. Neemt NIET op: de master
 # (5 MB, Ibra heeft hem), de N1-export (1,7 MB, opnieuw op te halen; md5 staat in het manifest), ruwe tool-uitvoer (live/q_*.json)
 # en de database van de replica (replica/pgdata). Gebruik: python3 -I maak_bundel_P3_N1-W02.py
 import os, hashlib, zipfile, datetime
 B = "/home/claude/N1-W02"; UIT = B + "/p3/MANIFEST_N1-W02_P3.md"; ZIP = B + "/N1-W02_P3_bundel.zip"
 UIT_SLUIT = ("data/master/", "uit/APP_EXPORT_N1_2026-10-19.tsv", "live/q_", "p3/replica/pgdata", "p3/replica/sock", "p3/replica/g34", "p3/replica/pg.log", "p2/test/")
-WAT = {"na_p2/": "goedgekeurd log, ingevulde review, antwoord P2 (deel 1)", "p3/sql/": "SQL v4.2 per blok (maak_sql_N1-W02.py)", "p3/replica/": "replica v2",
+WAT = {"na_p2/": "goedgekeurd log, ingevulde review, antwoord P2 (deel 1)", "p3/sql/": "SQL v4.2.1 per blok (maak_sql_N1-W02.py)", "p3/replica/": "replica v2",
+       "p3/voorstel/proef/": "proef: P2-log + voorstel op de back-ups (niet live)", "p3/voorstel/": "voorstel W0468–W0497 (P3-beslissing 1)",
        "p3/live/": "live read-only uitkomsten P3", "p3/content/": "JSON (schema v1-structuur)", "p3/": "P3-uitvoer (7D/7T/8D/8T/9D/9T/1D)", "uit/": "exports, back-ups en P1-stukken",
        "scripts/": "scripts (ook die met inhoud; privé)", "kern_def/": "besluiten v9 en sjablonen v1.4 (deel 1)", "p2/": "P2-stukken (deel 1)", "bundel_uit/": "hulpscripts W11",
        "data/lijst/": "bron nr. 2: eerste 262.124 bytes van de TSV (heel W02)", "live/": "live schema-metadata", "MANIFEST_N1-W02_deel1.md": "manifest van deel 1"}

@@ -16,7 +16,7 @@ oudere kopieën van `apply_log.py`.
 | `check_bidi_render_N1-W02.py` | 8D/8T v1.1 · rendertoets bidi in Chromium zoals de app (LTR-alinea); --breedte, --wrap (gsm) | 4855 | `e2e7303ec2f8e7ee09cfa34a0a7d1fac` | 39 |
 | `check_N1-W02.py` | 3T v1.3 · technische check; --poort = exit 2 bij K of H (B25-bytecontrole, bidi-regel) | 21934 | `8a349bb145bd8174cc6ca99a94674501` | 26 |
 | `keten_N1-W02.sh` | 4T v2 · P2-testketen op kopieën (gebruikt ook maak_log_N1-W02.py, dat inhoud bevat en hier niet staat) | 4630 | `0ff935b0c4cead2db17be6620e5e81cb` | 0 |
-| `maak_bundel_P3_N1-W02.py` | Regisseur-T v1 · manifest (md5 + bytes) en weekbundel voor de volgende chat | 3131 | `d9656f5796cad617e2df71f0ab2b2570` | 0 |
+| `maak_bundel_P3_N1-W02.py` | Regisseur-T v1.1 · manifest (md5 + bytes) en weekbundel voor de volgende chat | 3279 | `e330b00ea20d57bec676bb00221753ea` | 0 |
 | `maak_json_N1-W02.py` | 7T v1.1 · content/{niveau}/{week}.json (structuur van schema v1), deterministisch | 3767 | `b4b39e8d402388f1d944f7b48b77d05f` | 2 |
 | `maak_master.py` | 7D/7T · LEESBARE_LIJST_MASTER.tsv = N1 uit de app + N1-comp + N2 (B7 punt 4/5) | 1565 | `1bae21f16d322e06ff09d9a550663568` | 0 |
 | `maak_sql_N1-W02.py` | 7T v4.2.1 (T15: logins van leerders en staf apart) · cumulatieve blokken, U&-escapes (tekst en jsonb), probe v2, T15-telling, read-only controles | 20201 | `8b9c596e9190dd1d0b49cc93b436ea06` | 0 |
