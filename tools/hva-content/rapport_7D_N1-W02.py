@@ -1,18 +1,24 @@
-# rapport_7D_N1-W02.py v1 — Maker-D (7D) · P3 N1-W02 · maakt het telrapport en de leesbare diff uit de VOOR- en NA-stand
+# rapport_7D_N1-W02.py v1.1 — Maker-D (7D) · P3 N1-W02 · maakt het telrapport en de leesbare diff uit de VOOR- en NA-stand
 # (app-formaat, 30 kolommen), de lijsten (app_naar_master.py) en het goedgekeurde log. Rekent alles na; niets met de hand.
 #   telrapport: items/regels vóór → na, regels per categorie met verklaring per item (wijziging_id's), veldverschillen = logregels
 #               (onverklaard / zonder effect / eindwaarde ≠ log), regelniveau: elke gewijzigde (item, categorie) heeft een logregel
 #               op het bijbehorende veld en omgekeerd; velden die het lijstformaat niet toont (B7 punt 4) worden apart geteld.
 #   diff:       elke logregel van de week, per item in de app-volgorde: oud → nieuw, volledig, zonder inkorting.
-# Gebruik: python3 -I rapport_7D_N1-W02.py <map p3> <log> <datum>
+# v1.1 (na P3-akkoord): --voor <map> = map met de VOOR-bestanden (standaard <map>); --lijsten 2=v2,1=v3 = versies van de NA-lijsten
+#   (standaard 2=v1,1=v2). Zonder deze opties geeft het dezelfde inhoud als v1; alleen het versienummer in de kop verschilt.
+# Gebruik: python3 -I rapport_7D_N1-W02.py <map p3> <log> <datum> [--voor <map>] [--lijsten 2=v2,1=v3]
 # Verwacht in <map p3>: VOOR/NA per week (zie WEKEN) en de lijsten VOOR/NA. Exit 1 bij elk onverklaard verschil.
 import sys, csv, json, collections, hashlib, os
 csv.field_size_limit(10**9)
+def _opt(naam, std):
+    return sys.argv[sys.argv.index(naam) + 1] if naam in sys.argv else std
 P3, LOGPAD, DATUM = sys.argv[1], sys.argv[2], sys.argv[3]
 B = os.path.dirname(os.path.abspath(P3))
+VM = _opt("--voor", P3)
+VERS = dict(x.split("=") for x in _opt("--lijsten", "2=v1,1=v2").split(","))
 WEKEN = [  # (week, VOOR-export, NA-export, VOOR-lijst, NA-lijst, naam NA-lijst)
-    ("2", B + "/uit/APP_EXPORT_N1-W02_2026-10-19.tsv", P3 + "/APP_NA_N1-W02.tsv", P3 + "/LIJST_N1-W02_VOOR_uit_app.tsv", P3 + "/LEESBARE_LIJST_N1-W02_v1.tsv", "LEESBARE_LIJST_N1-W02_v1.tsv"),
-    ("1", P3 + "/VOOR_N1-W01_uit_N1-export_2026-10-20.tsv", P3 + "/APP_NA_N1-W01.tsv", P3 + "/LIJST_N1-W01_VOOR_uit_app.tsv", P3 + "/LEESBARE_LIJST_N1-W01_v2.tsv", "LEESBARE_LIJST_N1-W01_v2.tsv"),
+    ("2", B + "/uit/APP_EXPORT_N1-W02_2026-10-19.tsv", P3 + "/APP_NA_N1-W02.tsv", VM + "/LIJST_N1-W02_VOOR_uit_app.tsv", P3 + f"/LEESBARE_LIJST_N1-W02_{VERS['2']}.tsv", f"LEESBARE_LIJST_N1-W02_{VERS['2']}.tsv"),
+    ("1", VM + "/VOOR_N1-W01_uit_N1-export_2026-10-20.tsv", P3 + "/APP_NA_N1-W01.tsv", VM + "/LIJST_N1-W01_VOOR_uit_app.tsv", P3 + f"/LEESBARE_LIJST_N1-W01_{VERS['1']}.tsv", f"LEESBARE_LIJST_N1-W01_{VERS['1']}.tsv"),
 ]
 CAT2VELD = {"Opdracht / instructie": ["instruction_nl"], "Vraag": ["question"], "Antwoordoptie": ["options"],
             "Correct antwoord": ["correct_answer", "correct_options"], "Feedback correct": ["feedback_correct"], "Feedback fout": ["feedback_incorrect"]}
@@ -37,8 +43,8 @@ def toon(v, veld):
         except Exception: return v
     return v.replace("\\n", " ⏎ ")
 fout = 0; T = []; D = []
-T.append(f"# N1-W02 · telrapport (lijst v1 en W01-nazorg)\nMaker-D (7D) · {DATUM} · gemaakt door `scripts/rapport_7D_N1-W02.py` v1 (niets met de hand) · log `{os.path.basename(LOGPAD)}` md5 `{md5(LOGPAD)}` ({len(LOG)} regels, alle `goedgekeurd`).\n")
-D.append(f"# N1-W02 · leesbare diff (oud → nieuw)\nMaker-D (7D) · {DATUM} · gemaakt door `scripts/rapport_7D_N1-W02.py` v1 · bron: het goedgekeurde log `{os.path.basename(LOGPAD)}` (md5 `{md5(LOGPAD)}`), elke regel volledig en letterlijk; per item in de volgorde van de app. Een lege waarde staat als \"(leeg)\"; opties staan als A) … · B) … in de volgorde van de app.\n")
+T.append(f"# N1-W02 · telrapport (lijst {VERS['2']} en W01-nazorg)\nMaker-D (7D) · {DATUM} · gemaakt door `scripts/rapport_7D_N1-W02.py` v1.1 (niets met de hand) · log `{os.path.basename(LOGPAD)}` md5 `{md5(LOGPAD)}` ({len(LOG)} regels, alle `goedgekeurd`).\n")
+D.append(f"# N1-W02 · leesbare diff (oud → nieuw)\nMaker-D (7D) · {DATUM} · gemaakt door `scripts/rapport_7D_N1-W02.py` v1.1 · bron: het goedgekeurde log `{os.path.basename(LOGPAD)}` (md5 `{md5(LOGPAD)}`), elke regel volledig en letterlijk; per item in de volgorde van de app. Een lege waarde staat als \"(leeg)\"; opties staan als A) … · B) … in de volgorde van de app.\n")
 for wk, vp, np_, vl, nl, nlnaam in WEKEN:
     V = {r["item_id"]: r for r in rd(vp)}; N = {r["item_id"]: r for r in rd(np_)}
     log = [r for r in LOG if r[LK["item_id"]].startswith(f"U{wk}-")]

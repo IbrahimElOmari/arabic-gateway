@@ -1,4 +1,4 @@
-# tools/hva-content · teamscripts Huis van het Arabisch (N1-W02, P3)
+# tools/hva-content · teamscripts Huis van het Arabisch (N1-W02, P3–P4)
 Python 3, alleen de standaardbibliotheek; uitvoeren met `python3 -I`. Deze scripts lezen en schrijven **bestanden**; ze verbinden niet met een database
 en bevatten geen geheimen. De SQL die ze maken, wordt na een poortakkoord van Ibra via de Lovable-tool `query_database` uitgevoerd (B17).
 
@@ -19,15 +19,16 @@ oudere kopieën van `apply_log.py`.
 | `maak_bundel_P3_N1-W02.py` | Regisseur-T v1.1 · manifest (md5 + bytes) en weekbundel voor de volgende chat | 3279 | `e330b00ea20d57bec676bb00221753ea` | 0 |
 | `maak_json_N1-W02.py` | 7T v1.1 · content/{niveau}/{week}.json (structuur van schema v1), deterministisch | 3767 | `b4b39e8d402388f1d944f7b48b77d05f` | 2 |
 | `maak_master.py` | 7D/7T · LEESBARE_LIJST_MASTER.tsv = N1 uit de app + N1-comp + N2 (B7 punt 4/5) | 1565 | `1bae21f16d322e06ff09d9a550663568` | 0 |
-| `maak_sql_N1-W02.py` | 7T v4.2.1 (T15: logins van leerders en staf apart) · cumulatieve blokken, U&-escapes (tekst en jsonb), probe v2, T15-telling, read-only controles | 20201 | `8b9c596e9190dd1d0b49cc93b436ea06` | 0 |
-| `maak_verwacht_per_stap_N1-W02.py` | 7T v1 · verwachte uitkomsten per stap (P3-leescontroles, P4-draaiboek) | 3274 | `ccbbc16e805a42c7429bd74efd2b010f` | 0 |
+| `maak_sql_N1-W02.py` | 7T v4.3 (P4: apply, rollback en 4b in REPEATABLE READ met uitvoer n|md5|isolatie; vroege controles C-T10) · cumulatieve blokken, U&-escapes (tekst en jsonb), probe v2, T15-telling, read-only controles | 23445 | `6548c9a0071823d9bfca57c46932995a` | 0 |
+| `maak_verwacht_per_stap_N1-W02.py` | 7T v1.1 · verwachte uitkomsten per stap en de standbepaling per blok (9T V1) | 4678 | `14e3938be84f5ecf75e0c08ab3688a0e` | 0 |
 | `master_rest_uit_master.py` | 7T · N1-comp + N2 letterlijk uit een bestaande master (vervangt de TSV-bron) | 1519 | `acbaf46c094be2a2ff3538c55b314301` | 0 |
 | `negatief_N1-W02.py` | 4T v1 · 28 negatieve en randtests voor review_bulk, verwerk_p2, apply_log en check | 13078 | `0c5ccf160fb33e280e5aad3ce4a85d0d` | 25 |
-| `rapport_7D_N1-W02.py` | 7D v1 · telrapport (regels per categorie, veld- en regelniveau) en leesbare diff | 11179 | `14b8881775b36d1f9b7df8b3b3968c2d` | 0 |
-| `replica_test_N1-W02.py` | 8T v2 · lokale PostgreSQL 16 met het live-schema; hoofdcyclus, W01-nazorg en negatieve tests | 17713 | `1c58fdfb2e577106bf625f976021a99d` | 1 |
+| `rapport_7D_N1-W02.py` | 7D v1.1 · telrapport (regels per categorie, veld- en regelniveau) en leesbare diff; --voor en --lijsten | 11725 | `e039a0595be058b9d816cf0eb3f7f1ae` | 0 |
+| `replica_test_N1-W02.py` | 8T v2.1 · lokale PostgreSQL 16 met het live-schema; hoofdcyclus, W01-nazorg, negatieve tests en een gelijktijdige wijziging tijdens de apply (REPEATABLE READ) | 19394 | `8379b221a653728e4a59e4d8e60b1872` | 1 |
 | `review_bulk.py` | 4T v1.2 · antwoord van de reviewer → ja/nee/aangepast per regel (B18) | 6802 | `0af7fe7e0ca5ea70d1449ed1aa870459` | 0 |
 | `telrapport_N1-W11.py` | 4T · VOOR ↔ NA veld voor veld tegen het log (0 onverklaard) | 1442 | `9f717f32960a3c7b34f29b773114b068` | 0 |
 | `valideer_structuur_N1-W02.py` | 8T v1 · structuur- en inhoudstoets van de JSON (geen vervanging van schema v1) | 6286 | `67f4857fa686a984869b3eb5bf2c9d73` | 2 |
+| `verwerk_p3_N1-W02.py` | 1D/4T v1 · zet een poortakkoord door een script in log en review (alleen status/besluit, asserts) | 3458 | `ca27389b90e4b15b3622185e6576c410` | 0 |
 | `verwerk_p2_N1-W02.py` | 1D/4T v1.1 · statussen in het log door een script, item-atomair (B18) | 5670 | `9c9e12a9270111b866d8a2113344742f` | 0 |
 
 De Arabische tekens zijn tekenklassen, voorbeelden in commentaar en twee testzinnetjes in `negatief_N1-W02.py`; geen lesinhoud.

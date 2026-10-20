@@ -1,4 +1,4 @@
-# maak_sql_N1-W02.py v4.2.1 — Maker-T (7T) · P3 N1-W02 · techplan T10/T11/T15 · architectuur T v2 §1–§2 · B17 (verlengd, P1-11).
+# maak_sql_N1-W02.py v4.3 — Maker-T (7T) · P3/P4 N1-W02 · techplan T10/T11/T15 · architectuur T v2 §1–§2 · B17 (verlengd, P1-11).
 # Basis: maak_sql_N1-W11.py v4.1 (= maak_sql_N1-W01.py v4: U&-escapes, inhouds- en toestandsgrendel, alles-of-niets, 4b, 8, 9).
 # Nieuw in v4.2:
 #  1. --blokken "L1=luisteren-01,luisteren-02;L2=…" (of "W01=*"): cumulatieve blokken zoals blokken_N1-W02.py. Elk blok start
@@ -15,6 +15,13 @@
 #  7. Elk read-only bestand (2, 5, 6, 7, 9) staat in BEGIN TRANSACTION READ ONLY … ROLLBACK: de database weigert elke schrijfactie.
 #  8. Aggregaat van 0 rijen = "0|" (v4.1 gaf NULL). Elk bestand NFC-stabiel (assert); SQL_MANIFEST.tsv met bytes, md5 en marge.
 #  9. verwacht.txt met de P3-verwachting (live = VOOR) én de P4-verwachting per blok (live = NA van het vorige blok).
+# Nieuw in v4.3 (na P3-akkoord, beslissing 9: voorwaarde V2 van 9T; 8T C-T08 en C-T10):
+# 10. 3_apply, 4_rollback en 4b_noodrollback lopen in BEGIN ISOLATION LEVEL REPEATABLE READ … COMMIT. Wijzigt iemand een rij van het
+#     blok terwijl de apply loopt, dan faalt de apply met een serialisatiefout en blijft alles staan (geen stille overschrijving).
+#     Uitvoer: één rij `n|md5|isolatie` (n|md5 = het oude RETURNING-aggregaat, isolatie = 'repeatable read'); tweede apply `0||repeatable read`.
+# 11. 8_generale_repetitie loopt ook in REPEATABLE READ en toont de isolatie als laatste kolom (live bewijs vóór de apply).
+# 12. Vroege controles (C-T10): BOOL alleen true/false; options en media_production nooit leeg (NOT NULL); geen dataregel die met
+#     '--' begint en geen 'RETURNING' of 'UPDATE public.curriculum_items' in de data (wrap() werkt op tekst). Kop van 9 rechtgezet (C-T08).
 # Gebruik: python3 -I maak_sql_N1-W02.py <VOOR.tsv> <NA.tsv> <uitmap> --week 2 --blokken "<spec>"
 import sys, csv, json, os, hashlib, unicodedata
 csv.field_size_limit(10**9)
@@ -32,6 +39,13 @@ assert all(r["week"] == week for r in voorrijen), "VOOR bevat rijen van een ande
 TXT = ["instruction_nl","question","correct_answer","feedback_correct","feedback_incorrect","input_arabic","input_transliteration","input_translation_nl","reference_media","review_flag"]
 JSB = ["options","correct_options","media_production"]; NUM = ["points"]; BOOL = ["is_published","strict_tashkeel"]
 KOL = TXT + JSB + NUM + BOOL
+for _bron, _rijen in (("VOOR", voor), ("NA", na)):  # v4.3 (8T C-T10): vroege controles, fail-early in plaats van bij het uitvoeren
+    for _i, _r in _rijen.items():
+        for _k in BOOL: assert _r[_k] in ("true", "false"), f"{_bron} {_i} {_k} = {_r[_k]!r}: geen true/false"
+        for _k in ("options", "media_production"): assert _r[_k] != "", f"{_bron} {_i} {_k} is leeg, maar de kolom is NOT NULL"
+        for _k in KOL:
+            assert not any(_x.startswith("--") for _x in _r[_k].split("\n")[1:]), f"{_bron} {_i} {_k}: dataregel begint met -- (wrap() zou hem weghalen)"
+            assert "RETURNING" not in _r[_k] and "UPDATE public.curriculum_items" not in _r[_k], f"{_bron} {_i} {_k}: SQL-sleutelwoord in de data"
 VINGER = ["item_id","unit_code","week","skill","exercise_type","exercise_subtype","display_order","instruction_nl","question","options","correct_answer","correct_options","feedback_correct","feedback_incorrect","input_arabic","input_transliteration","input_translation_nl","reference_media","media_production","media_url","media_alt","audio_url","image_url","points","review_flag","is_published","strict_tashkeel"]
 GRENS = 70000  # grootste live geteste aanroep (W11, 2026-10-19); marge = (GRENS - bytes) / GRENS
 def uesc(v):
@@ -82,6 +96,13 @@ def wrap(sql, naam):
     sql = "\n".join(x for x in sql.split("\n") if not x.startswith("--")).strip().rstrip(";")
     head, _, ret = sql.rpartition("RETURNING"); k = "\nUPDATE public.curriculum_items"; i = head.rindex(k)
     return head[:i] + ",\nu AS (UPDATE public.curriculum_items" + head[i + len(k):] + "RETURNING" + ret + ")\n" + f"SELECT set_config('hva.{naam}', count(*)::text || '|' || coalesce(md5(string_agg(item_id||'|'||vingerafdruk, E'\\n' ORDER BY item_id COLLATE \"C\")),''), true) FROM u;"
+def transactie(stmt, label, kop):
+    # v4.3 (9T V2): de UPDATE als CTE in één SELECT, binnen REPEATABLE READ; één uitvoerrij n|md5|isolatie
+    body = "\n".join(x for x in stmt.split("\n") if not x.startswith("--")).strip().rstrip(";")
+    head, _, ret = body.rpartition("RETURNING"); k = "\nUPDATE public.curriculum_items"; i = head.rindex(k)
+    sel = (head[:i] + ",\nu AS (UPDATE public.curriculum_items" + head[i + len(k):] + "RETURNING" + ret + ")\n"
+           + f"SELECT count(*)::text || '|' || coalesce(md5(string_agg(item_id||'|'||vingerafdruk, E'\\n' ORDER BY item_id COLLATE \"C\")),'') AS {label}, current_setting('transaction_isolation') AS isolatie FROM u;")
+    return kop + "BEGIN ISOLATION LEVEL REPEATABLE READ;\n" + sel + "\nCOMMIT;\n"
 STAF = "SELECT 1 FROM public.user_roles r WHERE r.user_id = {} AND r.role::text IN ('admin', 'teacher')"
 ACTIVITEIT = ("SELECT set_config('hva.activiteit', concat_ws('|', "   # v4.2.1 (8T C-T03): logins van leerders en van staf apart
               "(SELECT count(*) FROM public.curriculum_item_attempts WHERE created_at > now() - interval '30 days'), "
@@ -133,9 +154,11 @@ for nr, (naam, pref) in enumerate(blokken, 1):
     V["probe_voor_apply"] = f"{N}|{N}|{N}|{N}|{N}|0"; V["probe_na_apply"] = f"{N}|{N}|0|{N}|{N}|{N}"
     apply_sql = update3(gew, eind, start, f"APPLY blok {naam}"); rb_sql = update3(gew, start, eind, f"ROLLBACK blok {naam} uit de back-up")
     bestanden = {}
-    bestanden["3_apply.sql"] = apply_sql; bestanden["4_rollback.sql"] = rb_sql
+    V["apply_uitvoer"] = f"{V['apply_returning']}|repeatable read"; V["rollback_uitvoer"] = f"{V['rollback_returning']}|repeatable read"; V["leeg_uitvoer"] = "0||repeatable read"
+    bestanden["3_apply.sql"] = transactie(apply_sql, "apply", apply_sql.split("\n")[0] + f"\n-- REPEATABLE READ (9T V2) · verwacht: {V['apply_uitvoer']} · tweede keer: {V['leeg_uitvoer']} · serialisatiefout = STOP, niets veranderd\n")
+    bestanden["4_rollback.sql"] = transactie(rb_sql, "rollback", rb_sql.split("\n")[0] + f"\n-- REPEATABLE READ (9T V2) · alleen op opdracht van Ibra · eerst 7_vinger = NA van dit blok · verwacht: {V['rollback_uitvoer']}\n")
     l = rb_sql.split("\n"); idx = [k for k, x in enumerate(l) if x.strip().endswith("= n.h_start")]; assert len(idx) == 1; del l[idx[0]]
-    bestanden["4b_noodrollback.sql"] = "-- NOODROLLBACK (4b) blok " + naam + " · alleen met expliciet akkoord van Ibra · zonder toestandsgrendel; plakgrendel en alles-of-niets blijven. Nooit DELETE.\n" + "\n".join(l)
+    bestanden["4b_noodrollback.sql"] = transactie("\n".join(l), "noodrollback", "-- NOODROLLBACK (4b) blok " + naam + " · alleen met expliciet akkoord van Ibra · zonder toestandsgrendel; plakgrendel en alles-of-niets blijven. Nooit DELETE.\n-- REPEATABLE READ (9T V2) · verwacht na een apply: " + V["rollback_uitvoer"] + "\n")
     case = lambda a: "CASE p.veld " + " ".join(f"WHEN '{k}' THEN {a}.{k}::text" for k in KOL) + " END"
     pvals = ",\n  ".join(f"('{i}', '{k}', '{md5s(start[i][k])}', '{md5s(eind[i][k])}')" for i, k in paren)
     bestanden["2_droogloop.sql"] = (f"-- 2_droogloop · READ ONLY · blok {naam} · week {week} · per gewijzigd veld: is de live waarde de oude (VOOR)? + aggregaten week/blok/rest\n"
@@ -156,13 +179,13 @@ for nr, (naam, pref) in enumerate(blokken, 1):
     bestanden["7_vinger_aggregaat.sql"] = (f"-- 7_vinger_aggregaat · READ ONLY · blok {naam} · week | blok | rest\n-- verwacht vóór: {V['week_voor']}|{V['blok_voor']}|{V['rest']}\n-- verwacht na:   {V['week_na']}|{V['blok_na']}|{V['rest']}\n" + RO_BEGIN +
         f"SELECT ({agg_sql(WEEKF)}) || '|' || ({agg_sql(WEEKF + ' AND ' + in_lijst(blokids))}) || '|' || ({agg_sql(WEEKF + ' AND NOT ' + in_lijst(blokids))}) AS week_blok_rest;\n" + RO_END)
     zet = lambda n: f"SELECT set_config('hva.{n}', ({agg_sql(WEEKF)}), true);"
-    bestanden["8_generale_repetitie.sql"] = (f"-- 8_generale_repetitie · blok {naam} · netto read-only: BEGIN … ROLLBACK in één aanroep, met de T15-telling (activiteit) in dezelfde aanroep\n"
-        f"-- verwacht: {V['gr_eindrij']} | activiteit pogingen30|pogingen30_leerders|logins30_leerders|logins30_staf|laatste_poging (STOP als pogingen30_leerders > 0 of logins30_leerders > 0)\n"
-        "BEGIN;\n" + ACTIVITEIT + "\n" + zet("start") + "\n" + wrap(apply_sql, "apply") + "\n" + zet("na_apply") + "\n" + wrap(rb_sql, "rollback") + "\n" + zet("na_rollback") +
-        "\nSELECT current_setting('hva.start') AS start, current_setting('hva.apply') AS apply, current_setting('hva.na_apply') AS na_apply, current_setting('hva.rollback') AS rollback, current_setting('hva.na_rollback') AS na_rollback, current_setting('hva.activiteit') AS activiteit;\nROLLBACK;\n")
+    bestanden["8_generale_repetitie.sql"] = (f"-- 8_generale_repetitie · blok {naam} · netto read-only: BEGIN ISOLATION LEVEL REPEATABLE READ … ROLLBACK in één aanroep, met de T15-telling (activiteit) in dezelfde aanroep\n"
+        f"-- verwacht: {V['gr_eindrij']} | activiteit pogingen30|pogingen30_leerders|logins30_leerders|logins30_staf|laatste_poging (STOP als pogingen30_leerders > 0 of logins30_leerders > 0) | isolatie = repeatable read\n"
+        "BEGIN ISOLATION LEVEL REPEATABLE READ;\n" + ACTIVITEIT + "\n" + zet("start") + "\n" + wrap(apply_sql, "apply") + "\n" + zet("na_apply") + "\n" + wrap(rb_sql, "rollback") + "\n" + zet("na_rollback") +
+        "\nSELECT current_setting('hva.start') AS start, current_setting('hva.apply') AS apply, current_setting('hva.na_apply') AS na_apply, current_setting('hva.rollback') AS rollback, current_setting('hva.na_rollback') AS na_rollback, current_setting('hva.activiteit') AS activiteit, current_setting('transaction_isolation') AS isolatie;\nROLLBACK;\n")
     pw = lambda a: f"(SELECT count(*) FROM {a} n WHERE {inhoud_sql('n')} = n.h_inhoud)"
     ps = lambda a: f"(SELECT count(*) FROM public.curriculum_items i JOIN {a} m ON m.item_id = i.item_id WHERE i.{WEEKF} AND {vinger_sql('i')} = m.h_start)"
-    bestanden["9_grootte_probe.sql"] = (f"-- 9_grootte_probe v2 · READ ONLY · blok {naam} · VALUES van apply (a) én rollback (r), even groot als de generale repetitie · wijzigt niets\n"
+    bestanden["9_grootte_probe.sql"] = (f"-- 9_grootte_probe v2 · READ ONLY · blok {naam} · dezelfde VALUES als apply (a) en rollback (r) in de generale repetitie (die is groter: UPDATE-tekst en T15) · wijzigt niets\n"
         f"-- verwacht vóór de apply: {V['probe_voor_apply']} · na de apply: {V['probe_na_apply']} (a_n|a_inhoud_ok|a_start_ok|r_n|r_inhoud_ok|r_start_ok)\n" + RO_BEGIN +
         f"WITH {nwith('a', gew, eind, start)},\n{nwith('r', gew, start, eind)}\n"
         f"SELECT concat_ws('|', (SELECT count(*) FROM a), {pw('a')}, {ps('a')}, (SELECT count(*) FROM r), {pw('r')}, {ps('r')}) AS probe;\n" + RO_END)
@@ -191,6 +214,6 @@ assert all(stand[i] == na[i] for i in ids_alle), "na het laatste blok is de stan
 with open(f"{uitmap}/SQL_MANIFEST.tsv", "w", encoding="utf-8") as f:
     for r in manifest: f.write("\t".join(r) + "\n")
 kop = "| blok | items | gewijzigd | velden | 3_apply | 8_generale_repetitie (marge) | 9_grootte_probe v2 (marge) | U&-escapes (apply+rollback) | week-vingerafdruk vóór → na |\n|---|---|---|---|---|---|---|---|---|"
-open(f"{uitmap}/BLOKKEN.md", "w", encoding="utf-8").write(f"# SQL v4.2 · week {week} · blokken\nGemaakt door `maak_sql_N1-W02.py` v4.2 uit `{os.path.basename(args[0])}` (md5 `{hashlib.md5(open(args[0],'rb').read()).hexdigest()}`) en `{os.path.basename(args[1])}` (md5 `{hashlib.md5(open(args[1],'rb').read()).hexdigest()}`). Volgorde apply: {' → '.join(n for n, _ in blokken)}; terugdraaien in omgekeerde volgorde: {' → '.join(n for n, _ in reversed(blokken))}. Na het laatste blok = NA-stand (gecontroleerd).\n\n{kop}\n" + "\n".join(overzicht) + "\n")
+open(f"{uitmap}/BLOKKEN.md", "w", encoding="utf-8").write(f"# SQL v4.3 · week {week} · blokken\nGemaakt door `maak_sql_N1-W02.py` v4.3 uit `{os.path.basename(args[0])}` (md5 `{hashlib.md5(open(args[0],'rb').read()).hexdigest()}`) en `{os.path.basename(args[1])}` (md5 `{hashlib.md5(open(args[1],'rb').read()).hexdigest()}`). Volgorde apply: {' → '.join(n for n, _ in blokken)}; terugdraaien in omgekeerde volgorde: {' → '.join(n for n, _ in reversed(blokken))}. Na het laatste blok = NA-stand (gecontroleerd).\n\n{kop}\n" + "\n".join(overzicht) + "\n")
 print(open(f"{uitmap}/BLOKKEN.md", encoding="utf-8").read())
 print("SQL_MANIFEST.tsv md5", hashlib.md5(open(f"{uitmap}/SQL_MANIFEST.tsv", "rb").read()).hexdigest())

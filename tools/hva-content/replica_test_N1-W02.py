@@ -1,11 +1,14 @@
-# replica_test_N1-W02.py v2 — Controleur-T (8T) / Maker-T (7T) · P3 N1-W02 · techplan T6/T13 · architectuur T v2 §1, §6.
+# replica_test_N1-W02.py v2.1 — Controleur-T (8T) / Maker-T (7T) · P3/P4 N1-W02 · techplan T6/T13 · architectuur T v2 §1, §6.
+# v2.1 (SQL v4.3, 9T V2): apply, rollback en 4b geven één rij n|md5|isolatie in REPEATABLE READ; de generale repetitie toont de isolatie;
+# G3.4 toetst nu dat de generator een lege options-cel weigert (C-T10); nieuw G3.8: een gelijktijdige wijziging tijdens de apply →
+# serialisatiefout, niets toegepast (9T S5b).
 # Replica v2 = lokale PostgreSQL 16 met het LIVE-schema van public.curriculum_items (uit information_schema/pg_catalog, read-only
 # opgehaald op 2026-10-20: 34 kolommen, NOT NULL/defaults, de gegenereerde kolommen needs_*, PK, UNIQUE, beide FK's, indexen,
 # de trigger op updated_at) + minimale stubs voor auth.users, curriculum_units, curriculum_item_attempts en user_roles.
 # Gegevens: de back-ups VOOR van W02 (81 rijen) en W01 (21 rijen). Elk SQL-bestand wordt eerst NFC-genormaliseerd, zoals de
 # Lovable-tool doet bij het plakken (W01-les), en moet daarbij byte-gelijk blijven.
 # Groepen: G1 hoofdcyclus W02 (cumulatief L1 → L2 → R1 → R2, terugdraaien R2 → R1 → L2 → L1) · G2 W01-nazorg · G3 negatieve tests.
-# Gebruik: python3 -I replica_test_N1-W02.py <schema-metadata.json> <map p3>   → <map p3>/replica/REPLICA_RAPPORT.md, exit 1 bij ROOD
+# Gebruik: python3 -I replica_test_N1-W02.py <schema-metadata.json> <map p3|p4>   → <map>/replica/REPLICA_RAPPORT.md, exit 1 bij ROOD
 import sys, os, json, subprocess, unicodedata, hashlib, csv, re, shutil, time
 META, P3 = sys.argv[1], os.path.abspath(sys.argv[2])
 B = os.path.dirname(P3); R = P3 + "/replica"; os.makedirs(R, exist_ok=True)
@@ -105,11 +108,11 @@ for b in BLOKKEN:  # P4-draaiboek, cumulatief
     d = f"{SQL2}/{b}"; v = V[b]
     ok(f"G1.4 {b} droogloop P4 (live = NA vorig blok)", laatste(bestand(d, "2_droogloop.sql")), v["droogloop"])
     ok(f"G1.5 {b} 7_vinger vóór", laatste(bestand(d, "7_vinger_aggregaat.sql")), f"{v['week_voor']}|{v['blok_voor']}|{v['rest']}")
-    ok(f"G1.6 {b} generale repetitie (+ T15-telling in dezelfde aanroep)", laatste(bestand(d, "8_generale_repetitie.sql")), v["gr_eindrij"] + "|0|0|0|0|")
+    ok(f"G1.6 {b} generale repetitie (+ T15-telling in dezelfde aanroep)", laatste(bestand(d, "8_generale_repetitie.sql")), v["gr_eindrij"] + "|0|0|0|0||repeatable read")
     ok(f"G1.7 {b} 7_vinger na de repetitie = vóór", laatste(bestand(d, "7_vinger_aggregaat.sql")), f"{v['week_voor']}|{v['blok_voor']}|{v['rest']}")
-    ok(f"G1.8 {b} apply (RETURNING)", ret(bestand(d, "3_apply.sql")), v["apply_returning"])
+    ok(f"G1.8 {b} apply (REPEATABLE READ, n|md5|isolatie)", laatste(bestand(d, "3_apply.sql")), v["apply_uitvoer"])
     ok(f"G1.9 {b} 7_vinger na de apply (rest ongewijzigd)", laatste(bestand(d, "7_vinger_aggregaat.sql")), f"{v['week_na']}|{v['blok_na']}|{v['rest']}")
-    ok(f"G1.10 {b} tweede apply = 0", ret(bestand(d, "3_apply.sql")), "0|")
+    ok(f"G1.10 {b} tweede apply = 0", laatste(bestand(d, "3_apply.sql")), v["leeg_uitvoer"])
     ok(f"G1.11 {b} grootte-probe v2 na de apply", laatste(bestand(d, "9_grootte_probe.sql")), v["probe_na_apply"])
 NA_WEEK = V["4_R2"]["week_na"]
 ok("G1.12 na R2 = volledige NA-stand (week 2)", laatste(bestand(f"{SQL2}/4_R2", "7_vinger_aggregaat.sql")).split("|")[0] + "|" + laatste(bestand(f"{SQL2}/4_R2", "7_vinger_aggregaat.sql")).split("|")[1], NA_WEEK)
@@ -118,41 +121,41 @@ ok("G1.14 T12/B25: strict-items met sleutel buiten de opties", q(B25), "0")
 w01 = laatste(W01VINGER).split("|"); ok("G1.15 W01 ongewijzigd door alle W02-blokken", f"{w01[0]}|{w01[1]}", W01V["week_voor"])
 for b in reversed(BLOKKEN):
     d = f"{SQL2}/{b}"; v = V[b]
-    ok(f"G1.16 {b} rollback (RETURNING)", ret(bestand(d, "4_rollback.sql")), v["rollback_returning"])
+    ok(f"G1.16 {b} rollback (REPEATABLE READ)", laatste(bestand(d, "4_rollback.sql")), v["rollback_uitvoer"])
     ok(f"G1.17 {b} 7_vinger na de rollback = vóór dit blok", laatste(bestand(d, "7_vinger_aggregaat.sql")), f"{v['week_voor']}|{v['blok_voor']}|{v['rest']}")
-    ok(f"G1.18 {b} tweede rollback = 0", ret(bestand(d, "4_rollback.sql")), "0|")
+    ok(f"G1.18 {b} tweede rollback = 0", laatste(bestand(d, "4_rollback.sql")), v["leeg_uitvoer"])
 ok("G1.19 T13 na het terugdraaien = start", q(T13), "10|0|119|42|6")
 # ---------- G2: W01-nazorg ----------
 d = f"{SQL1}/1_W01"; v = W01V
 ok("G2.1 W01 droogloop (P3 = P4)", laatste(bestand(d, "2_droogloop.sql")), v["droogloop_p3"])
 ok("G2.2 W01 grootte-probe v2 vóór", laatste(bestand(d, "9_grootte_probe.sql")), v["probe_voor_apply"])
-ok("G2.3 W01 generale repetitie (+ T15)", laatste(bestand(d, "8_generale_repetitie.sql")), v["gr_eindrij"] + "|0|0|0|0|")
-ok("G2.4 W01 apply", ret(bestand(d, "3_apply.sql")), v["apply_returning"])
+ok("G2.3 W01 generale repetitie (+ T15)", laatste(bestand(d, "8_generale_repetitie.sql")), v["gr_eindrij"] + "|0|0|0|0||repeatable read")
+ok("G2.4 W01 apply", laatste(bestand(d, "3_apply.sql")), v["apply_uitvoer"])
 ok("G2.5 W01 7_vinger na", laatste(bestand(d, "7_vinger_aggregaat.sql")), f"{v['week_na']}|{v['blok_na']}|{v['rest']}")
-ok("G2.6 W01 tweede apply = 0", ret(bestand(d, "3_apply.sql")), "0|")
+ok("G2.6 W01 tweede apply = 0", laatste(bestand(d, "3_apply.sql")), v["leeg_uitvoer"])
 ok("G2.7 W02 ongewijzigd door W01", laatste(bestand(f"{SQL2}/1_L1", "7_vinger_aggregaat.sql")), f"{V['1_L1']['week_voor']}|{V['1_L1']['blok_voor']}|{V['1_L1']['rest']}")
-ok("G2.8 W01 rollback", ret(bestand(d, "4_rollback.sql")), v["rollback_returning"])
+ok("G2.8 W01 rollback", laatste(bestand(d, "4_rollback.sql")), v["rollback_uitvoer"])
 ok("G2.9 W01 terug = start", laatste(bestand(d, "7_vinger_aggregaat.sql")), f"{v['week_voor']}|{v['blok_voor']}|{v['rest']}")
 # ---------- G3: negatieve tests ----------
 nieuwe_db(); v = V["1_L1"]; d = f"{SQL2}/1_L1"
 eerste = sorted(l.split("\t")[0] for l in open(f"{d}/items.txt", encoding="utf-8"))[0]
 q(f"UPDATE public.curriculum_items SET question = question || ' ' WHERE item_id = '{eerste}';")
-ok(f"G3.1 toestandsgrendel: 1 rij buiten het log gewijzigd ({eerste}) → apply 0", ret(bestand(d, "3_apply.sql")), "0|")
+ok(f"G3.1 toestandsgrendel: 1 rij buiten het log gewijzigd ({eerste}) → apply 0", laatste(bestand(d, "3_apply.sql")), v["leeg_uitvoer"])
 q(f"UPDATE public.curriculum_items SET question = left(question, length(question) - 1) WHERE item_id = '{eerste}';")
 ok("G3.1b stand terug = VOOR", laatste(bestand(d, "7_vinger_aggregaat.sql")), f"{v['week_voor']}|{v['blok_voor']}|{v['rest']}")
 a = bestand(d, "3_apply.sql"); k = a.index("(VALUES"); j = a.index("َ", k)
-ok("G3.2 plakgrendel: één fatḥa weg in de VALUES → apply 0", ret(a[:j] + a[j + 1:]), "0|")
+ok("G3.2 plakgrendel: één fatḥa weg in de VALUES → apply 0", laatste(a[:j] + a[j + 1:]), v["leeg_uitvoer"])
 ok("G3.2b stand ongewijzigd", laatste(bestand(d, "7_vinger_aggregaat.sql")), f"{v['week_voor']}|{v['blok_voor']}|{v['rest']}")
 # G3.3 NFC-regressie (W01-les): R1-rollback zonder U&-escape, geplakt zoals de tool doet (NFC) → 0; met escape → alle rijen
 d3 = f"{SQL2}/3_R1"; v3 = V["3_R1"]
-ok("G3.3a R1 apply (rijen van R1 zijn VOOR)", ret(bestand(d3, "3_apply.sql")), v3["apply_returning"])
+ok("G3.3a R1 apply (rijen van R1 zijn VOOR)", laatste(bestand(d3, "3_apply.sql")), v3["apply_uitvoer"])
 rb = bestand(d3, "4_rollback.sql"); esc = re.findall(r"U&'((?:[^']|'')*)'::text", rb)
 def ont(s): return re.sub(r"\\\+([0-9A-F]{6})|\\([0-9A-F]{4})", lambda mm: chr(int(mm.group(1) or mm.group(2), 16)), s.replace("''", "'")).replace("\\\\", "\\")
 rauw = rb
 for e in esc: rauw = rauw.replace(f"U&'{e}'::text", "'" + ont(e).replace("'", "''") + "'::text")
 ok(f"G3.3b R1-rollback heeft {len(esc)} U&-escape(s); zonder escape is de tekst niet NFC-stabiel", str(len(esc) > 0 and unicodedata.normalize('NFC', rauw) != rauw), "True")
-ok("G3.3c rollback zónder escape, NFC-geplakt → 0 (fail-closed, zoals W01 v3)", ret(unicodedata.normalize("NFC", rauw)), "0|")
-ok("G3.3d rollback mét escape (v4.2) → alle rijen", ret(rb), v3["rollback_returning"])
+ok("G3.3c rollback zónder escape, NFC-geplakt → 0 (fail-closed, zoals W01 v3)", laatste(unicodedata.normalize("NFC", rauw)), v3["leeg_uitvoer"])
+ok("G3.3d rollback mét escape (v4.2+) → alle rijen", laatste(rb), v3["rollback_uitvoer"])
 # G3.4 lege jsonb-cel (T13): options leeg in de NA → NOT NULL-fout, niets veranderd
 tmp = R + "/g34"; shutil.rmtree(tmp, ignore_errors=True); os.makedirs(tmp)
 l1 = {l.split("\t")[0] for l in open(f"{d}/items.txt", encoding="utf-8")}
@@ -164,26 +167,33 @@ for bron, doel in ((f"{d}/VOOR_L1.tsv", f"{tmp}/VOOR.tsv"), (f"{d}/NA_L1.tsv", f
         w = csv.writer(f, delimiter="\t", lineterminator="\n", quoting=csv.QUOTE_MINIMAL); w.writerow(kop)
         for r_ in rows: w.writerow([r_[c] for c in kop])
 g = subprocess.run(["python3", "-I", B + "/scripts/maak_sql_N1-W02.py", f"{tmp}/VOOR.tsv", f"{tmp}/NA.tsv", f"{tmp}/sql", "--week", "2", "--blokken", "L1=luisteren-01,luisteren-02,luisteren-03"], capture_output=True, text=True)
-assert g.returncode == 0, g.stderr
-rc, out, err = run(bestand(f"{tmp}/sql/1_L1", "3_apply.sql"))
-ok("G3.4 lege jsonb-cel (options) → NOT NULL-fout, statement faalt", str(rc != 0 and "null value" in err and "options" in err), "True")
+ok("G3.4 lege jsonb-cel (options) in de NA → de generator weigert (v4.3, C-T10), er komt geen SQL", str(g.returncode != 0 and "NOT NULL" in g.stderr and not os.path.exists(f"{tmp}/sql/1_L1/3_apply.sql")), "True")
 ok("G3.4b stand ongewijzigd na de fout", laatste(bestand(d, "7_vinger_aggregaat.sql")), f"{v['week_voor']}|{v['blok_voor']}|{v['rest']}")
 # G3.5 noodrollback 4b na een apply
 d2 = f"{SQL2}/2_L2"; v2 = V["2_L2"]
-ok("G3.5a L2 apply", ret(bestand(d2, "3_apply.sql")), v2["apply_returning"])
-ok("G3.5b noodrollback 4b (zonder toestandsgrendel)", ret(bestand(d2, "4b_noodrollback.sql")), v2["rollback_returning"])
+ok("G3.5a L2 apply", laatste(bestand(d2, "3_apply.sql")), v2["apply_uitvoer"])
+ok("G3.5b noodrollback 4b (zonder toestandsgrendel)", laatste(bestand(d2, "4b_noodrollback.sql")), v2["rollback_uitvoer"])
 ok("G3.5c blok L2 terug = VOOR", laatste(bestand(d2, "7_vinger_aggregaat.sql")).split("|", 2)[2].split("|")[0] + "|" + laatste(bestand(d2, "7_vinger_aggregaat.sql")).split("|")[3], v2["blok_voor"])
 # G3.6 een read-only bestand weigert elke schrijfactie (veiligheidsnet voor de live controles)
 ro = bestand(d, "7_vinger_aggregaat.sql").replace("ROLLBACK;", f"UPDATE public.curriculum_items SET question = question WHERE item_id = '{eerste}';\nROLLBACK;")
 rc, out, err = run(ro)
 ok("G3.6 UPDATE binnen BEGIN TRANSACTION READ ONLY → geweigerd", str(rc != 0 and "read-only transaction" in err), "True")
+# G3.8 REPEATABLE READ (9T S5b): iemand wijzigt een rij van het blok terwijl de apply-transactie loopt → serialisatiefout, niets toegepast
+a = bestand(d, "3_apply.sql").replace("BEGIN ISOLATION LEVEL REPEATABLE READ;\n", "BEGIN ISOLATION LEVEL REPEATABLE READ;\nSELECT count(*) FROM public.curriculum_items;\nSELECT pg_sleep(3);\n", 1)
+proc = subprocess.Popen(f"{PSQL} -d replica -f -", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+proc.stdin.write(a); proc.stdin.close(); time.sleep(1.0)
+q(f"UPDATE public.curriculum_items SET question = question || ' ' WHERE item_id = '{eerste}';")
+uit_, fout_ = proc.stdout.read(), proc.stderr.read(); proc.wait()
+ok("G3.8a gelijktijdige wijziging tijdens de apply → serialisatiefout (geen stille overschrijving)", str(proc.returncode != 0 and "could not serialize access" in fout_), "True")
+q(f"UPDATE public.curriculum_items SET question = left(question, length(question) - 1) WHERE item_id = '{eerste}';")
+ok("G3.8b na het terugzetten van die ene wijziging: blok L1 = VOOR (de apply veranderde niets)", laatste(bestand(d, "7_vinger_aggregaat.sql")), f"{v['week_voor']}|{v['blok_voor']}|{v['rest']}")
 # G3.7 elk SQL-bestand NFC-stabiel; read-only bestanden zonder schrijfopdracht
 alle = [f"{SQL2}/{b}/{f}" for b in BLOKKEN for f in os.listdir(f"{SQL2}/{b}") if f.endswith(".sql")] + [f"{SQL1}/1_W01/{f}" for f in os.listdir(f"{SQL1}/1_W01") if f.endswith(".sql")]
 nfc_ok = sum(1 for p in alle if unicodedata.normalize("NFC", open(p, encoding="utf-8").read()) == open(p, encoding="utf-8").read())
 ok(f"G3.7 SQL-bestanden NFC-stabiel ({len(alle)} bestanden)", str(nfc_ok), str(len(alle)))
 # ---------- rapport ----------
 groen = sum(1 for r_ in resultaten if r_[1] == "✓"); totaal = sum(1 for r_ in resultaten if r_[1] in ("✓", "✗"))
-L = [f"# Replica v2 · N1-W02 · rapport\nGemaakt door `scripts/replica_test_N1-W02.py` v2 · PostgreSQL 16 lokaal · schema uit de live metadata (`schema_replica_v2.sql`, md5 `{hashlib.md5(SCHEMA.encode()).hexdigest()}`) · gegevens: back-up W02 (81) + back-up W01 (21) · elk SQL-bestand NFC-genormaliseerd vóór het uitvoeren (zoals de tool).\n",
+L = [f"# Replica v2.1 · N1-W02 · rapport\nGemaakt door `scripts/replica_test_N1-W02.py` v2.1 · PostgreSQL 16 lokaal · schema uit de live metadata (`schema_replica_v2.sql`, md5 `{hashlib.md5(SCHEMA.encode()).hexdigest()}`) · gegevens: back-up W02 (81) + back-up W01 (21) · elk SQL-bestand NFC-genormaliseerd vóór het uitvoeren (zoals de tool).\n",
      f"**Uitslag: {'REPLICA GROEN' if fout == 0 else 'REPLICA ROOD'} · {groen}/{totaal}**\n", "| test | | kreeg | verwacht |", "|---|---|---|---|"]
 for n_, s_, k_, v_ in resultaten: L.append(f"| {n_} | {s_} | `{k_}` | `{v_}` |" if s_ else f"| {n_} | | | |")
 open(R + "/REPLICA_RAPPORT.md", "w", encoding="utf-8").write("\n".join(L) + "\n")
