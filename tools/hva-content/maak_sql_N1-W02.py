@@ -96,8 +96,10 @@ def wrap(sql, naam):
     sql = "\n".join(x for x in sql.split("\n") if not x.startswith("--")).strip().rstrip(";")
     head, _, ret = sql.rpartition("RETURNING"); k = "\nUPDATE public.curriculum_items"; i = head.rindex(k)
     return head[:i] + ",\nu AS (UPDATE public.curriculum_items" + head[i + len(k):] + "RETURNING" + ret + ")\n" + f"SELECT set_config('hva.{naam}', count(*)::text || '|' || coalesce(md5(string_agg(item_id||'|'||vingerafdruk, E'\\n' ORDER BY item_id COLLATE \"C\")),''), true) FROM u;"
-# v4.3.1: BEGIN; SET TRANSACTION … i.p.v. BEGIN ISOLATION LEVEL …: werkt ook als de tool de aanroep zelf al in een transactie zet (dan negeert
-# PostgreSQL een tweede BEGIN, mét zijn isolatieniveau). Heeft er al een query gelopen, dan faalt SET TRANSACTION: fail-closed.
+# v4.3.1: BEGIN; SET TRANSACTION … i.p.v. BEGIN ISOLATION LEVEL …. Gelijkwaardig (8D/8T-delta N1, getest op PostgreSQL 16.15): ook een
+# tweede BEGIN binnen een open transactie zet de isolatie, met alleen een WARNING. Beide vormen werken dus als de tool zelf al een transactie
+# opende, zolang er nog geen query liep; liep er wel al een, dan faalt het statement: fail-closed (replica G3.9a–c). De expliciete SET
+# TRANSACTION maakt de bedoeling zichtbaar en hangt niet af van dat randgedrag van BEGIN.
 BEGIN_RR = "BEGIN;\nSET TRANSACTION ISOLATION LEVEL REPEATABLE READ;\n"
 def transactie(stmt, label, kop):
     # v4.3 (9T V2): de UPDATE als CTE in één SELECT, binnen REPEATABLE READ; één uitvoerrij n|md5|isolatie
