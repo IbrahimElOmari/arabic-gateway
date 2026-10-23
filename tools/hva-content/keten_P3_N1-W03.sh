@@ -1,10 +1,12 @@
 #!/bin/bash
-# keten_P3_N1-W03.sh v1.2 — 7D/7T/8T · bouwt de P3-stand van N1-W03 opnieuw op uit het goedgekeurde log (na_p2/) en de back-ups;
+# keten_P3_N1-W03.sh v1.4 — 7D/7T/8T · bouwt de P3-stand van N1-W03 opnieuw op uit het goedgekeurde log (na_p2/) en de back-ups;
 # deterministisch (tweede run bit-gelijk); schrijft niets in de app. set -euo pipefail: elke STOP breekt de keten af.
 # lijsten (app_naar_master v1.1) → telrapport + diff (rapport_7D) → JSON + structuurtoets → check v1.4 --poort → rendertoets 900/330
 # → maak_sql v4.4.1 (3 weken, 7 blokken) → BLOKKEN_MANIFEST → VERWACHT_PER_STAP + slottellingen (v1.4, --rijen) → replica v3.1.
 # v1.1 (8T C-T07, C-T09): ook check/ en bidi/ komen uit deze keten (eerst gewist); --rijen 2299 voor de slotverwachting.
 # v1.2 (9T P3 V3, V4): verwacht v1.5 met --zicht (live policies bij P3) → leerderszicht_N1-W03.sql; replica v3.2 (N1 volledig, policies, G6).
+# v1.3 (9D P4 1.2): verwacht v1.6 (leerderszicht v2: ook als leerder), replica v3.3 (rol authenticated + leerder).
+# v1.4 (9T P4 V4): verwacht v1.7 met --ref-p3 (pogingenreferentie van P3 als terugval); replica v3.4 (9T P4-scenario's).
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 S=scripts; B=bron; P=p3; N=na_p2
@@ -22,6 +24,7 @@ md5sum -c --quiet - <<'MD5'
 691e35d63073eab28094d91e33395db4  p3/replica_schema/schema_replica_v2.sql
 36ce4507cca4fdf52e3e3f3de3735a21  bron/APP_EXPORT_N1_2026-10-20_W03stap0b.tsv
 bb17a651ee4a7be9fcca8c01ae5ba97f  p3/live/leerderszicht_live_2026-10-23_P3.json
+7ab0e90e948faf1d8372fc296d63f821  p3/live/slot_ref_live_2026-10-23_P3.json
 MD5
 echo "invoer: md5 ✓"
 rm -rf $P/sql $P/json $P/check $P/bidi $P/APP_NA_N1-W0?.tsv $P/LEESBARE_LIJST_N1-W0?_v?.tsv $P/LIJST_N1-W0?_VOOR_uit_app.tsv $P/N1-W03_telrapport.md $P/N1-W03_diff_leesbaar.md $P/replica/REPLICA_RAPPORT_N1-W03.md
@@ -49,7 +52,7 @@ python3 -I $S/w03/maak_sql_N1-W03.py $B/APP_BACKUP_N1-W03_2026-10-20.tsv $P/APP_
 python3 -I $S/w03/maak_sql_N1-W03.py $B/APP_BACKUP_N1-W02_2026-10-20_W03nazorg.tsv $P/APP_NA_N1-W02.tsv $P/sql/N1-W02 --week 2 --start 6 --blokken "W02n=*" --enum-live "$E" > /dev/null
 python3 -I $S/w03/maak_sql_N1-W03.py $B/APP_BACKUP_N1-W01_2026-10-20_W03nazorg.tsv $P/APP_NA_N1-W01.tsv $P/sql/N1-W01 --week 1 --start 7 --blokken "W01n=*" --enum-live "$E" > /dev/null
 python3 -I $S/w03/maak_manifest_N1-W03.py $P/sql N1-W03 N1-W02 N1-W01 | tail -1
-python3 -I $S/w03/maak_verwacht_per_stap_N1-W03.py $P/sql $P/APP_NA_N1-W03.tsv $P/APP_NA_N1-W02.tsv $P/APP_NA_N1-W01.tsv $B/APP_BACKUP_N1-W03_2026-10-20.tsv $B/APP_BACKUP_N1-W02_2026-10-20_W03nazorg.tsv $B/APP_BACKUP_N1-W01_2026-10-20_W03nazorg.tsv --rijen 2299 --zicht $P/live/leerderszicht_live_2026-10-23_P3.json | head -4
+python3 -I $S/w03/maak_verwacht_per_stap_N1-W03.py $P/sql $P/APP_NA_N1-W03.tsv $P/APP_NA_N1-W02.tsv $P/APP_NA_N1-W01.tsv $B/APP_BACKUP_N1-W03_2026-10-20.tsv $B/APP_BACKUP_N1-W02_2026-10-20_W03nazorg.tsv $B/APP_BACKUP_N1-W01_2026-10-20_W03nazorg.tsv --rijen 2299 --zicht $P/live/leerderszicht_live_2026-10-23_P3.json --ref-p3 $P/live/slot_ref_live_2026-10-23_P3.json | head -4
 chown -R claude $P 2>/dev/null || true
 python3 -I $S/w03/replica_test_N1-W03.py .
 md5sum $P/LEESBARE_LIJST_N1-W0?_v?.tsv $P/N1-W03_telrapport.md $P/N1-W03_diff_leesbaar.md $P/json/N1-W03.json $P/sql/N1-W0?/SQL_MANIFEST.tsv $P/sql/BLOKKEN_MANIFEST.tsv $P/sql/VERWACHT_PER_STAP.md $P/sql/slot_tellingen_N1-W03.sql $P/sql/leerderszicht_N1-W03.sql $P/sql/slot_verwacht_N1-W03.json

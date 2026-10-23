@@ -1,4 +1,4 @@
-# replica_test_N1-W03.py v3.2 — Controleur-T (8T) / Maker-T (7T) · P3 N1-W03 · architectuur T v1.1 §4 (P1-18: 9T V1, V2; tegenrapport T P2: V5).
+# replica_test_N1-W03.py v3.4 — Controleur-T (8T) / Maker-T (7T) · P3 N1-W03 · architectuur T v1.1 §4 (P1-18: 9T V1, V2; tegenrapport T P2: V5).
 # Basis: replica_test_N1-W02.py v2.2 (zelfde kern-tests), nu voor 7 blokken over drie weken, gestuurd door BLOKKEN_MANIFEST.tsv, en met
 # p4_stap_N1-W03.py als scheidsrechter van elke uitkomst (zoals in P4).
 # Replica = lokale PostgreSQL 16 met schema_replica_v2.sql (live metadata 2026-10-20; op 2026-10-23 opnieuw read-only vergeleken:
@@ -14,6 +14,11 @@
 #   curriculum_items zoals live (G0.6); slot_ref/zicht_voor vóór blok 1 en slot/zicht_na na blok 7 lopen via p4_log_stap (G2.14, G3.6); G6 = de
 #   breekscenario's van 9T: apply zonder voorcontrole of zonder ✓ gr, activiteit met en zonder akkoord van Ibra, stand na een verloren log,
 #   toolfout met en zonder commit, een gewijzigd log, een log van een andere bundel, slotstappen buiten de volgorde.
+# v3.3 (9D P4 1.2): rol `authenticated` met grants, auth.uid() uit de jwt-claims en één leerder met toegang (login 60 dagen geleden, telt niet als
+#   activiteit), zodat leerderszicht v2 de RLS echt als leerder toetst (G0.8, G2.14, G3.6).
+# v3.4 (9T P4 V1–V4, V6, V8, §3): G7 = het draaiboek variant b (2 + 1 per blok) volledig via bash, met de ruwe uitvoer in een heredoc-bestand
+#   (--uit), op een verse database en een nieuw log; plus V2 (stand tegen het log), V3 (gelijktijdige aanroepen), V4 (P3-referentie),
+#   een te oude gr, V6 (wijziging in W02 vóór blok 1), een scriptfout (exit 2) en p4_status.
 # Gebruik: python3 -I replica_test_N1-W03.py <werkmap N1-W03> → p3/replica/REPLICA_RAPPORT_N1-W03.md, exit 1 bij ROOD
 import sys, os, json, subprocess, unicodedata, hashlib, csv, re, shutil, time, io
 WM = os.path.abspath(sys.argv[1]); P3 = WM + "/p3"; SQL = P3 + "/sql"; R = P3 + "/replica"; os.makedirs(R, exist_ok=True)
@@ -37,9 +42,12 @@ PSQL = f"psql -X -q -h {SOCK} -p {PORT} -U postgres -v ON_ERROR_STOP=1 -At"
 PSQLCSV = f"psql -X -q -h {SOCK} -p {PORT} -U postgres -v ON_ERROR_STOP=1 --csv"
 _N1 = list(csv.DictReader(open(N1EXP, encoding="utf-8", newline=""), delimiter="\t"))
 UNITS = "INSERT INTO public.curriculum_units (code) SELECT DISTINCT u FROM (VALUES " + ", ".join(f"('{u}')" for u in sorted({r["unit_code"] for r in _N1})) + ") x(u) ON CONFLICT DO NOTHING;\n"
-POLICIES = """CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT NULL::uuid $$;
-CREATE OR REPLACE FUNCTION public.has_role(_user_id uuid, _role public.app_role) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = _role) $$;
-CREATE OR REPLACE FUNCTION public.can_access_curriculum(_user_id uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT true $$;
+POLICIES = """DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN CREATE ROLE authenticated NOLOGIN; END IF; END $$;
+CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('request.jwt.claims', true)::json->>'sub', '')::uuid $$;
+CREATE OR REPLACE FUNCTION public.has_role(_user_id uuid, _role public.app_role) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$ SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = _role) $$;
+CREATE OR REPLACE FUNCTION public.can_access_curriculum(_user_id uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$ SELECT _user_id IS NOT NULL AND EXISTS (SELECT 1 FROM auth.users WHERE id = _user_id) $$;
+GRANT USAGE ON SCHEMA public, auth TO authenticated; GRANT SELECT ON public.curriculum_items TO authenticated;
+GRANT EXECUTE ON FUNCTION auth.uid(), public.has_role(uuid, public.app_role), public.can_access_curriculum(uuid) TO authenticated;
 CREATE POLICY "Admins beheren items" ON public.curriculum_items FOR ALL USING (has_role(auth.uid(), 'admin'::app_role)) WITH CHECK (has_role(auth.uid(), 'admin'::app_role));
 CREATE POLICY "Leerkrachten en admins zien alle items" ON public.curriculum_items FOR SELECT USING ((has_role(auth.uid(), 'teacher'::app_role) OR has_role(auth.uid(), 'admin'::app_role)));
 CREATE POLICY "Leerkrachten maken items" ON public.curriculum_items FOR INSERT WITH CHECK ((has_role(auth.uid(), 'teacher'::app_role) AND (created_by = auth.uid())));
@@ -53,6 +61,7 @@ def nieuwe_db():
     r = subprocess.run(f"{PSQL} -d replica -f -", shell=True, input=SCHEMA + UNITS + POLICIES, capture_output=True, text=True); assert r.returncode == 0, r.stderr
     r = sh(f"""{PSQL} -d replica -c "\\copy public.curriculum_items ({', '.join(EXPCOLS)}) FROM '{N1EXP}' WITH (FORMAT csv, DELIMITER E'\\t', HEADER true, FORCE_NOT_NULL ({', '.join(NN)}))" """)
     assert r.returncode == 0, r.stderr
+    r = sh(f"""{PSQL} -d replica -c "INSERT INTO auth.users (id, last_sign_in_at) VALUES ('00000000-0000-0000-0000-0000000000c1', now() - interval '60 days');" """); assert r.returncode == 0, r.stderr
 def run(sql, nfc=True):
     if nfc:
         n = unicodedata.normalize("NFC", sql); assert n == sql, "SQL niet NFC-stabiel"; sql = n
@@ -126,6 +135,7 @@ ok("G0.0 export N1: 2.299 rijen, W01–W03 per item_id gelijk aan de back-ups", 
 ZL = json.load(open(WM + "/p3/live/leerderszicht_live_2026-10-23_P3.json", encoding="utf-8"))["rows"][0]
 ok("G0.6 policies op curriculum_items replica = live (pg_policies, 6 policies)", q("SELECT string_agg(policyname::text || ':' || cmd::text || ':' || array_to_string(roles, ',') || ':' || coalesce(qual, '') || ':' || coalesce(with_check, ''), ' # ' ORDER BY policyname) FROM pg_policies WHERE schemaname = 'public' AND tablename = 'curriculum_items';"), ZL["policies"])
 ok("G0.7 rijen totaal = live (2.299)", q("SELECT count(*) FROM public.curriculum_items;"), str(ZL["rijen_totaal"]))
+ok("G0.8 als leerder (rol authenticated, RLS): W03 100 · W25 0 · zonder jwt-sub 0", q("BEGIN; SELECT set_config('request.jwt.claims', '{\"sub\":\"00000000-0000-0000-0000-0000000000c1\"}', true); SET LOCAL ROLE authenticated; SELECT (SELECT count(*) FROM public.curriculum_items WHERE week = 3) || '|' || (SELECT count(*) FROM public.curriculum_items WHERE week = 25) || '|' || current_user; ROLLBACK;") + "|" + q("BEGIN; SET LOCAL ROLE authenticated; SELECT count(*) FROM public.curriculum_items; ROLLBACK;"), "100|0|authenticated|0")
 # ---------- G1: leescontroles zoals in P3 (alles nog VOOR) ----------
 for r in M:
     b = r["blok"]
@@ -386,9 +396,84 @@ SV_ = json.load(open(SQL + "/slot_verwacht_N1-W03.json", encoding="utf-8"))
 rij = {f"{k}_{w.lower()}": SV_[w][k] for w in ("W03", "W02", "W01") for k in ("items", "b25", "needs_image", "strict", "punten", "ns_audio", "student_opname", "vlaggen", "gepubliceerd", "typen")}; rij.update(rijen_totaal=2299, rijen_n1=2299, pogingen_totaal=45)
 p6 = lambda u, *x: subprocess.run(["python3", "-I", WM + "/scripts/w03/p4_stap_N1-W03.py", SQL, "slot", "slot", json.dumps(u, ensure_ascii=False)] + list(x), capture_output=True, text=True).returncode
 ok("G6.10 p4_stap slot: NA-rij met pogingen 45 ≥ ref 45 → ✓ · ref 46 → STOP · één getal anders → STOP · zonder --ref → STOP", f"{p6(rij, '--ref', '45')}|{p6(rij, '--ref', '46')}|{p6({**rij, 'punten_w02': 108}, '--ref', '45')}|{p6(rij)}", "0|2|2|2")
+# ---------- G7: draaiboek variant b via bash (9T P4) ----------
+nieuwe_db()
+TB2 = R + "/p4basis7"; shutil.rmtree(TB2, ignore_errors=True); os.makedirs(TB2 + "/p4/uitvoering/ruw")
+os.symlink(WM + "/scripts", TB2 + "/scripts"); os.symlink(WM + "/p3", TB2 + "/p3")
+ENV7 = {k_: v_ for k_, v_ in os.environ.items() if k_ not in ("P4LOG", "P4SQL")}; ENV7["P4BASIS"] = TB2
+nr7 = [0]
+def bash7(blok, s_, naam, sql_uit=None, extra_env=None):   # voorcontrole → plakken (psql) → heredoc-bestand → --uit, alles via bash zoals in het draaiboek
+    nr7[0] += 1; best = pad(blok, naam); e = {**ENV7, **(extra_env or {})}
+    v = subprocess.run(["bash", "-c", f"cd {TB2} && python3 -I scripts/w03/p4_log_stap_N1-W03.py replica {blok} {s_} {best} --voor"], capture_output=True, text=True, env=e)
+    if v.returncode != 0: return v.returncode, -1, v.stdout + v.stderr
+    uj = sql_uit if sql_uit is not None else ruw(bestand(blok, naam))
+    f_ = f"p4/uitvoering/ruw/{nr7[0]:02d}_{blok}_{s_}.json"
+    w = subprocess.run(["bash", "-c", f"cd {TB2} && cat > {f_} <<'RUW'\n{uj}\nRUW\n"], capture_output=True, text=True)
+    assert w.returncode == 0, w.stderr
+    u = subprocess.run(["bash", "-c", f"cd {TB2} && python3 -I scripts/w03/p4_log_stap_N1-W03.py replica {blok} {s_} {best} --uit {f_}"], capture_output=True, text=True, env=e)
+    return v.returncode, u.returncode, u.stdout + u.stderr
+codes = []
+for s_, f_ in (("slot_ref", "slot_tellingen_N1-W03.sql"), ("zicht_voor", "leerderszicht_N1-W03.sql")): codes.append(bash7("slot", s_, f_)[:2])
+for b_ in ("1_L1", "6_W02n", "7_W01n"): codes.append(bash7(b_, "stand", "7_vinger_aggregaat.sql")[:2])
+for r in M:
+    b = r["blok"]
+    codes += [bash7(b, "gr", "8_generale_repetitie.sql")[:2], bash7(b, "apply", "3_apply.sql")[:2], bash7(b, "stand", "7_vinger_aggregaat.sql")[:2]]
+for s_, f_ in (("slot", "slot_tellingen_N1-W03.sql"), ("zicht_na", "leerderszicht_N1-W03.sql")): codes.append(bash7("slot", s_, f_)[:2])
+ok(f"G7.1 draaiboek variant b via bash met heredoc + --uit ({len(codes)} aanroepen: 2 slot vooraf, 3 × stand V6, 7 × gr/apply/stand, 2 slot na): elke voorcontrole en elke uitkomst exit 0", str(sorted(set(codes))), "[(0, 0)]")
+for w in (3, 2, 1): ok(f"G7.2 W0{w} na variant b = slot_verwacht", q(TEL(w)), slot_verw(SLOT[f"W0{w}"]))
+st_ = subprocess.run(["python3", "-I", WM + "/scripts/w03/p4_status_N1-W03.py"], capture_output=True, text=True, env=ENV7)
+ok("G7.3 p4_status (V8): log gaaf, W03 5/5 · W02 1/1 · W01 1/1, referentie = slot_ref", f"{st_.returncode}|{'N1-W03 5/5 toegepast' in st_.stdout and 'N1-W02 1/1' in st_.stdout and 'N1-W01 1/1' in st_.stdout and 'pogingenreferentie 0' in st_.stdout}", "0|True")
+zj = json.dumps({"rows": [{"fout": "ERROR: relation 'x' does not exist; it's $HOME"}]})
+rc_, rc2_, m_ = bash7("1_L1", "stand", "7_vinger_aggregaat.sql", sql_uit=zj)
+regel = open(TB2 + "/p4/uitvoering/P4_log_N1-W03.tsv", encoding="utf-8").read().rstrip("\n").split("\n")[-1].split("\t")
+ok("G7.4 (R1) ruwe uitvoer met ' en $ via heredoc → STOP (exit 2), en de uitvoer staat letterlijk in het log", f"{rc2_}|{chr(39) + 'x' + chr(39) in regel[7] and '$HOME' in regel[7]}", "2|True")
+e3 = {"P4LOG": R + "/p4log_g7_v2.tsv"}
+if os.path.exists(e3["P4LOG"]): os.remove(e3["P4LOG"])
+r_ = [logstap("1_L1", "stand", pad("1_L1", "7_vinger_aggregaat.sql"), json.dumps({"rows": [{"week_blok_rest": vn("1_L1")}]}), extra=e3)[0],
+      logstap("1_L1", "stand", pad("1_L1", "7_vinger_aggregaat.sql"), json.dumps({"rows": [{"week_blok_rest": vv("1_L1")}]}), extra=e3)[0],
+      logstap("1_L1", "stand", pad("1_L1", "7_vinger_aggregaat.sql"), json.dumps({"rows": [{"week_blok_rest": vn("5_R2")}]}), extra=e3)[0],
+      logstap("2_L2", "stand", pad("2_L2", "7_vinger_aggregaat.sql"), json.dumps({"rows": [{"week_blok_rest": vn("2_L2")}]}), extra=e3)[0]]
+ok("G7.5 (V2) stand tegen het log: 1 van 5 ✓ (nieuw log) → back-up STOP → W03-NA STOP → 2 van 5 zonder apply ertussen STOP", "|".join(map(str, r_)), "0|2|2|2")
+e4 = {"P4LOG": R + "/p4log_g7_v3.tsv"}
+if os.path.exists(e4["P4LOG"]): os.remove(e4["P4LOG"])
+procs = [subprocess.Popen(["python3", "-I", WM + "/scripts/w03/p4_log_stap_N1-W03.py", "replica", "1_L1", "vinger_voor", pad("1_L1", "7_vinger_aggregaat.sql"), "--voor"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env={**ENV7, "P4BASIS": TB, **e4}) for _ in range(6)]
+rcs = [p_.wait() for p_ in procs]
+st_ = subprocess.run(["python3", "-I", WM + "/scripts/w03/p4_status_N1-W03.py"], capture_output=True, text=True, env={**ENV7, "P4BASIS": TB, **e4})
+ok("G7.6 (V3) 6 gelijktijdige aanroepen → 6 × exit 0, log gaaf (p4_status exit 0, 6 regels)", f"{sorted(set(rcs))}|{st_.returncode}|{'P4-log: 6 regels' in st_.stdout}", "[0]|0|True")
+e5 = {"P4LOG": R + "/p4log_g7_v4.tsv"}
+if os.path.exists(e5["P4LOG"]): os.remove(e5["P4LOG"])
+for b_ in ("1_L1", "6_W02n", "7_W01n"): logstap(b_, "stand", pad(b_, "7_vinger_aggregaat.sql"), ruw(bestand(b_, "7_vinger_aggregaat.sql")), extra=e5)
+q("INSERT INTO public.curriculum_item_attempts (student_id, item_id, created_at) SELECT '00000000-0000-0000-0000-0000000000c1', id, now() - interval '60 days' FROM public.curriculum_items WHERE week = 25 LIMIT 45;")
+rc_, m_ = logstap("slot", "slot", pad("slot", "slot_tellingen_N1-W03.sql"), ruw(open(SQL + "/slot_tellingen_N1-W03.sql", encoding="utf-8").read()), extra=e5)
+q("DELETE FROM public.curriculum_item_attempts WHERE id = (SELECT id FROM public.curriculum_item_attempts LIMIT 1);")
+rc2_, m2_ = logstap("slot", "slot", pad("slot", "slot_tellingen_N1-W03.sql"), ruw(open(SQL + "/slot_tellingen_N1-W03.sql", encoding="utf-8").read()), extra=e5)
+q("DELETE FROM public.curriculum_item_attempts;")
+ok("G7.7 (V4) nieuw log (stand per week), geen slot_ref: slot met 45 pogingen ✓ (P3-referentie gemeld) · met 44 → STOP", f"{rc_}|{'P3-referentie' in m_}|{rc2_}", "0|True|2")
+e6 = {"P4LOG": R + "/p4log_g7_gr.tsv"}
+if os.path.exists(e6["P4LOG"]): os.remove(e6["P4LOG"])
+nieuwe_db()
+logstap("1_L1", "vinger_voor", pad("1_L1", "7_vinger_aggregaat.sql"), ruw(bestand("1_L1", "7_vinger_aggregaat.sql")), extra=e6)
+logstap("1_L1", "gr", pad("1_L1", "8_generale_repetitie.sql"), ruw(bestand("1_L1", "8_generale_repetitie.sql")), extra=e6)
+t_ = open(e6["P4LOG"], encoding="utf-8").read().rstrip("\n").split("\n"); vorige = hashlib.md5(t_[0].encode()).hexdigest(); nieuw_ = [t_[0]]
+for i_, l_ in enumerate(t_[1:], 1):
+    c_ = l_.split("\t")
+    if c_[3] == "gr": c_[0] = "2026-10-23 00:00:01"
+    c_[12] = hashlib.md5((vorige + "\t" + "\t".join(c_[:12])).encode()).hexdigest(); vorige = c_[12]; nieuw_.append("\t".join(c_))
+open(e6["P4LOG"], "w", encoding="utf-8").write("\n".join(nieuw_) + "\n")
+rc_, m_ = logstap("1_L1", "apply", pad("1_L1", "3_apply.sql"), voor=True, extra=e6)
+ok("G7.8 ✓ gr ouder dan 15 minuten → apply-voorcontrole STOP (eerst opnieuw gr)", f"{rc_}|{'ouder dan 15' in m_}", "2|True")
+e7 = {"P4LOG": R + "/p4log_g7_v6.tsv"}
+if os.path.exists(e7["P4LOG"]): os.remove(e7["P4LOG"])
+q("UPDATE public.curriculum_items SET feedback_correct = feedback_correct || ' ' WHERE item_id = 'U2-grammatica-01-1';")
+r_ = [logstap(b_, "stand", pad(b_, "7_vinger_aggregaat.sql"), ruw(bestand(b_, "7_vinger_aggregaat.sql")), extra=e7)[0] for b_ in ("1_L1", "6_W02n", "7_W01n")]
+q("UPDATE public.curriculum_items SET feedback_correct = left(feedback_correct, length(feedback_correct) - 1) WHERE item_id = 'U2-grammatica-01-1';")
+ok("G7.9 (V6) één spatie in W02 sinds P3 → de stand van 6_W02n vóór blok 1 geeft STOP (W03 en W01 ✓)", "|".join(map(str, r_)), "0|2|0")
+p_ = subprocess.run(["python3", "-I", WM + "/scripts/w03/p4_log_stap_N1-W03.py", "replica", "1_L1", "stand", pad("1_L1", "7_vinger_aggregaat.sql"), "--uit", "p4/uitvoering/ruw/bestaat_niet.json"], capture_output=True, text=True, env={**ENV7, "P4BASIS": TB, **e7})
+ok("G7.10 scriptfout (--uit-bestand ontbreekt) → exit 2 met 'scriptfout', nooit exit 1", f"{p_.returncode}|{'scriptfout' in p_.stdout}", "2|True")
+shutil.copy(TB2 + "/p4/uitvoering/P4_log_N1-W03.tsv", R + "/P4_log_replica_variant_b_N1-W03.tsv")
 # ---------- rapport ----------
 groen = sum(1 for r_ in resultaten if r_[1] == "✓"); totaal = len(resultaten)
-L = [f"# Replica v3.2 · N1-W03 · rapport\nGemaakt door `scripts/w03/replica_test_N1-W03.py` v3.2 · PostgreSQL 16 lokaal · schema `schema_replica_v2.sql` (md5 `{hashlib.md5(open(SCHEMA_BRON,'rb').read()).hexdigest()}`, + unit U3), op 2026-10-23 read-only vergeleken met live (G0) · gegevens: export N1 2026-10-20 (2.299 rijen; W03 100, W02 81 en W01 21 = de back-ups) + de 6 policies zoals live · manifest `{hashlib.md5(open(SQL + '/BLOKKEN_MANIFEST.tsv','rb').read()).hexdigest()}` · elk SQL-bestand NFC-genormaliseerd vóór het uitvoeren (zoals de tool) · elke P4-uitkomst beoordeeld door `p4_stap_N1-W03.py`.\n",
+L = [f"# Replica v3.4 · N1-W03 · rapport\nGemaakt door `scripts/w03/replica_test_N1-W03.py` v3.4 · PostgreSQL 16 lokaal · schema `schema_replica_v2.sql` (md5 `{hashlib.md5(open(SCHEMA_BRON,'rb').read()).hexdigest()}`, + unit U3), op 2026-10-23 read-only vergeleken met live (G0) · gegevens: export N1 2026-10-20 (2.299 rijen; W03 100, W02 81 en W01 21 = de back-ups) + de 6 policies zoals live, de rol authenticated en één leerder met toegang · manifest `{hashlib.md5(open(SQL + '/BLOKKEN_MANIFEST.tsv','rb').read()).hexdigest()}` · elk SQL-bestand NFC-genormaliseerd vóór het uitvoeren (zoals de tool) · elke P4-uitkomst beoordeeld door `p4_stap_N1-W03.py`.\n",
      f"**Uitslag: {'REPLICA GROEN' if fout == 0 else 'REPLICA ROOD'} · {groen}/{totaal}**\n", "| test | | kreeg | verwacht |", "|---|---|---|---|"]
 for n_, s_, k_, v_ in resultaten: L.append(f"| {n_} | {s_} | `{k_}` | `{v_}` |")
 open(R + "/REPLICA_RAPPORT_N1-W03.md", "w", encoding="utf-8").write("\n".join(L) + "\n")

@@ -1,4 +1,4 @@
-# p4_stap_N1-W03.py v1.4 — Maker-T / Controleur-T · P4 N1-W03 · = p4_stap_N1-W02.py v1.1, maar alles komt uit BLOKKEN_MANIFEST.tsv
+# p4_stap_N1-W03.py v1.4.1 — Maker-T / Controleur-T · P4 N1-W03 · = p4_stap_N1-W02.py v1.1, maar alles komt uit BLOKKEN_MANIFEST.tsv
 # (P1-18, 9T V2; tegenrapport T P2, V5): geen vaste bloklijst en geen vaste weekmappen meer.
 #  - zonder manifest in <sql-root> = STOP (een andere bundel, bv. die van W02, wordt zo geweigerd);
 #  - de md5 van elke verwacht.txt moet gelijk zijn aan het manifest (anders STOP: bundel gewijzigd of gemengd);
@@ -56,7 +56,7 @@ if BLOK == "slot":   # v1.4: slotstappen (9T P3 V3, V4)
         fout = verschil(SV[STAP])
         if "pogingen_totaal" in U: fout.append("kolom pogingen_totaal onverwacht")
         if fout: stop(f"{len(fout)} afwijking(en) t.o.v. slot_verwacht {SVM}: " + "; ".join(fout))
-        goed(f"leerderszicht = {'VOOR' if STAP == 'zicht_voor' else 'NA'}: {U['zichtbaar_w03']}/{U['zichtbaar_w02']}/{U['zichtbaar_w01']} gepubliceerd (W03/W02/W01), U3-luisteren-08 {U['luisteren08']}, policies ongewijzigd, RLS {U['rls']}")
+        goed(f"leerderszicht = {'VOOR' if STAP == 'zicht_voor' else 'NA'}: {U['zichtbaar_w03']}/{U['zichtbaar_w02']}/{U['zichtbaar_w01']} gepubliceerd (W03/W02/W01), U3-luisteren-08 {U['luisteren08']}, policies ongewijzigd, RLS {U['rls']}; als leerder (RLS): {U['als_leerder_w03']}/{U['als_leerder_w02']}/{U['als_leerder_w01']}, W25 {U['als_leerder_w25']}, U3-luisteren-08 {U['als_leerder_luisteren08']}")
     stop(f"onbekende slotstap '{STAP}' (slot_ref · zicht_voor · slot · zicht_na · bestand)")
 idx = {r["blok"]: r for r in M}
 if BLOK not in idx: stop(f"blok '{BLOK}' staat niet in het manifest ({', '.join(r['blok'] for r in M)})")
