@@ -30,21 +30,25 @@ Branch `content/N1-W03-inhoud` (vanaf `main` @ `e7317258`). Geen PR en geen merg
 | `p4_status_N1-W03.py` | v1 | 1D | één statusregel uit het P4-log (regels, md5, laatste ketenhash, stand per week, referentie, akkoorden) (9T P4 V8). |
 | `voorspel_master_N1-W03.py` | v1 | 7T | de master zoals hij na P4 moet zijn (9T P4 V7), met de regeldiff tegen de huidige master. |
 | `maak_bundel_deel2_N1-W03.py` | v1 | 1T | de bundel voor deel 3 met MD5-manifest, zonder oude scriptversies en replicalogs (9T P4 V5). |
+| `log_naar_md_N1-W03.py` | v1 | 1D | zet het P4-log letterlijk om naar één chronologische tabel (alle regels en kolommen, ook voorcontroles, ruwe uitvoer en ketenhash) in het P4-verslag. |
+| `maak_bundel_deel3_N1-W03.py` | v1 | 1T | de bundel na de P4-uitvoering (scripts, verse exports, p3 zonder replica, p4 met log, verslag en master, kern) met MD5-manifest. |
 | `rapport_7D_N1-W03.py` | v1 | 7D | telrapport en leesbare diff voor W03 + nazorg W02/W01 (veld- en regelniveau, `app:is_published`). |
 | `p3_leescontrole_N1-W03.py` | v1 | 8T | beoordeelt één live leescontrole (droogloop, probe, vinger) tegen `verwacht.txt` en legt ze vast. |
 | `app_naar_master.py` | v1.1 | 7D | app-export → lijstformaat; nieuw: regel `app:is_published` bij false (P1-18). |
 | `maak_json_N1-W02.py` · `valideer_structuur_N1-W02.py` | v1.1 · v1 | 7T/8T | JSON (schema v1-structuur) en structuurtoets (geen schemavalidatie: schema v1 niet in de chat). |
 
-## md5 (2026-10-23, P4-rapport na de tegenrapporten 9D en 9T)
+## md5 (2026-10-23, na de P4-uitvoering van N1-W03)
 ```
 2b0ce81e7e783a5e1564230553d55eab  app_naar_master.py
 797af8baa3ac2d8770234d3c05318fad  apply_log.py
 0a6838875c8262c532dba5e704a982e4  check_N1-W03.py
 cf2cd1e80cc0e18534d89e606266a606  keten_P2_N1-W03.sh
 bd222d2728fe3128420aafa03ab442dc  keten_P3_N1-W03.sh
+5d7018c6fa38382c12f9b2f596364d8a  log_naar_md_N1-W03.py
 352d0989a4e5445b99ea6a804a48b03e  maak_bundel_P2_N1-W03.py
 6dad73cc18a6d6f1af158eafa0689151  maak_bundel_P3_N1-W03.py
 6a182ae61db43d7f1958a7080018f2e6  maak_bundel_deel2_N1-W03.py
+3886274c7bd79e0410d8e9f610fde792  maak_bundel_deel3_N1-W03.py
 2f994f5db76fa31679d6be06ad6363a3  maak_draaiboek_P4_N1-W03.py
 65608641f395ee3fe7b3a227e370a5b0  maak_html_bdi.mjs
 b4b39e8d402388f1d944f7b48b77d05f  maak_json_N1-W02.py
