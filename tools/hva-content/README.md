@@ -11,17 +11,27 @@ Branch `content/N1-W03-inhoud` (vanaf `main` @ `e7317258`). Geen PR en geen merg
 | `maak_proef_N1-W03.py` | v1 | 4T | simulatie van "P2 akkoord" op kopieën (alles goedgekeurd, review alles ja). |
 | `telrapport_P2_N1-W03.py` | v1 | 1T/8T | tellingen VOOR → NA en de diff-controle in twee richtingen (elk verschil een logregel, elke logregel een verschil); exit 2 bij een onverklaard verschil. |
 | `tashkil_scan_N1-W03.py` | v1 | 2T | heuristiek B1: woorden met ontbrekende tashkīl per item. |
-| `keten_P2_N1-W03.sh` | v1 | 4T/3T | de hele P2-keten (revisie → check → log → proef → check --poort → rendertoets 900/330); tweede run bit-gelijk. Verwacht de werkmap-indeling `scripts/`, `scripts/w03/`, `bron/`, `p2/`. |
+| `keten_P2_N1-W03.sh` | v1.1 | 4T/3T | de hele P2-keten (revisie → check → log → proef → check --poort → rendertoets 900/330); tweede run bit-gelijk. v1.1 (9T V2): `set -euo pipefail`, eerst de md5 van de bronnen, alle uitvoer eerst gewist, elke STOP breekt af. Argument `a|b` = variant van `U3-luisteren-03`. Verwacht de werkmap-indeling `scripts/`, `scripts/w03/`, `bron/`, `p2/`. |
+| `review_bulk.py` | v1.3 | 4T | zet het antwoord van de native reviewer om per wijziging_id; v1.3 (9T V3): poortbesluiten 1–99 ("10a", "12 ja") worden herkend, ook direct na een 'aangepast'-tekst. |
+| `verwerk_p2_N1-W03.py` | v1.2 | 1D | statussen in het log, item-atomair; v1.2 (9T V1): `--logbesluiten` verplicht als `<review>_logbesluiten.tsv` bestaat, anders STOP. |
+| `verwerk_antwoord_P2_N1-W03.py` | v1 | 1D/1T | verwerkt het letterlijke P2-antwoord van Ibra in één gang (poortbesluiten, varianten, review, statussen, apply, NA-diff tegen de proef, bevestigingen, check, rapport per teruggestuurd item) (9T V1–V4). |
+| `negatief_verwerking_N1-W03.py` | v1 | 8T | 17 tests op de verwerking (o.a. "3b", "W0525 nee", "aangepast … · 8a", typfout-id, "ja maar", "12a", het lek van v1.1). |
+| `maak_bundel_P2_N1-W03.py` | v1 | 1T | de P2-bundel met MD5-manifest. |
 
 ## md5 (2026-10-23)
 ```
 797af8baa3ac2d8770234d3c05318fad  apply_log.py
 0a6838875c8262c532dba5e704a982e4  check_N1-W03.py
-2dd8a127984162f47f24bc1e4aa345ea  keten_P2_N1-W03.sh
+cf2cd1e80cc0e18534d89e606266a606  keten_P2_N1-W03.sh
+352d0989a4e5445b99ea6a804a48b03e  maak_bundel_P2_N1-W03.py
 65608641f395ee3fe7b3a227e370a5b0  maak_html_bdi.mjs
 3a2f7b4ef8b676d685df29ccc1348fac  maak_proef_N1-W03.py
 5244ed49da90061fc30f1ed832b631c8  negatief_apply_N1-W03.py
+ca6b6e803b6007bd556bbd7b2dcc997d  negatief_verwerking_N1-W03.py
 d3b680219026e419af05a63b713d30be  rendertoets_N1-W03.py
+06dd21b7e203673ffb5729fffd9ad664  review_bulk.py
 ddb289a2da42565ef81c44f1459b9f4e  tashkil_scan_N1-W03.py
 21170e1ec58d89c6a092517f3f91c6f0  telrapport_P2_N1-W03.py
+257e3ab6e4f902d77d2ef5f859145cb5  verwerk_antwoord_P2_N1-W03.py
+15568f0ede8c0fbcae97c554b43ad2e6  verwerk_p2_N1-W03.py
 ```
