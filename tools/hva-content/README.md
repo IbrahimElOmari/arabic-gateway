@@ -22,7 +22,7 @@ Branch `content/N1-W03-inhoud` (vanaf `main` @ `e7317258`). Geen PR en geen merg
 | `p4_stap_N1-W03.py` | v1.4.1 | 7T/8T | scheidsrechter per P4-stap uit het manifest; v1.3: stap `bestand`, `noodrollback`, spaties = STOP; v1.3.1: `stand` alleen volledig; v1.4: blok `slot` (slot_ref, slot met `--ref`, zicht_voor, zicht_na tegen `slot_verwacht`), gr met `--activiteit-akkoord`; v1.4.1: leerderszicht ook als leerder. |
 | `p4_log_stap_N1-W03.py` | v1.4 | 1D | legt één P4-aanroep vast en laat `p4_stap` oordelen. v1.2: volgorde uit het log, `--voor`; v1.3: apply alleen na ✓ gr en direct na de eigen voorcontrole, `--akkoord-ibra`, stand zet de week, slotstappen, ketenhash; v1.4 (9T P4): `--uit <bestand>` (heredoc), flock op het log, stand moet kloppen met het log, P3-referentie als terugval, gr ≤ 15 min, scriptfout = exit 2. |
 | `maak_verwacht_per_stap_N1-W03.py` | v1.7 | 7T | `VERWACHT_PER_STAP.md` (met herstelpad), `slot_tellingen_N1-W03.sql`, `leerderszicht_N1-W03.sql` v2 (ook als leerder: rol authenticated, RLS) en `slot_verwacht_N1-W03.json` (NA, VOOR, zicht, `pogingen_ref_p3`); `--rijen`, `--zicht`, `--ref-p3`. |
-| `replica_test_N1-W03.py` | v3.4 | 8T | replica PostgreSQL 16 met heel N1, de 6 policies, de rol authenticated en een leerder; P4-draaiboek via `p4_log_stap`, slotstappen, terugdraaien, negatieve tests, G6 (9T P3 S1–S8) en G7 (draaiboek variant b via bash met heredoc, V2–V4, gr te oud, V6, scriptfout). 223 tests. |
+| `replica_test_N1-W03.py` | v3.4.1 | 8T | replica PostgreSQL 16 met heel N1, de 6 policies, de rol authenticated en een leerder; P4-draaiboek via `p4_log_stap`, slotstappen, terugdraaien, negatieve tests, G6 (9T P3 S1–S8) en G7 (draaiboek variant b via bash met heredoc, V2–V4, gr te oud, V6, scriptfout). 223 tests. |
 | `keten_P3_N1-W03.sh` | v1.4 | 7D/7T/8T | de hele P3-keten uit het goedgekeurde log en de back-ups; md5 van alle invoer (ook N1-export, live policies en de P3-referentie); tweede run bit-gelijk op de replicalogs na. |
 | `proef_p3_delta_N1-W03.sh` | v1 | 7T | simulatie van "P3-delta ja" op kopieën: W02/W01 byte-gelijk, W03 = precies de deltavelden, check --poort, rendertoets. (`maak_p3_delta_N1-W03.py` zelf bevat lesinhoud → alleen in de bundel.) |
 | `maak_bundel_P3_N1-W03.py` | v1 | 1T | de P3-bundel (p3/, deel2/, scripts/) met MD5-manifest, zonder tijdelijke replica-bestanden. |
@@ -61,7 +61,7 @@ d75fb750e4a0ebfb8244e8e1735b908b  p4_stap_N1-W03.py
 81b7f6cac922920e1128e74d7f4c398c  proef_p3_delta_N1-W03.sh
 4ebdfca0958d42503833684e0bd11b8e  rapport_7D_N1-W03.py
 d3b680219026e419af05a63b713d30be  rendertoets_N1-W03.py
-57f166ebb845b83e165ebfe0ec89e406  replica_test_N1-W03.py
+3ee86a64e3c627b0e50493c9099a191d  replica_test_N1-W03.py
 06dd21b7e203673ffb5729fffd9ad664  review_bulk.py
 ddb289a2da42565ef81c44f1459b9f4e  tashkil_scan_N1-W03.py
 21170e1ec58d89c6a092517f3f91c6f0  telrapport_P2_N1-W03.py

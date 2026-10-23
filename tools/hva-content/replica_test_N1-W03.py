@@ -1,4 +1,4 @@
-# replica_test_N1-W03.py v3.4 — Controleur-T (8T) / Maker-T (7T) · P3 N1-W03 · architectuur T v1.1 §4 (P1-18: 9T V1, V2; tegenrapport T P2: V5).
+# replica_test_N1-W03.py v3.4.1 — Controleur-T (8T) / Maker-T (7T) · P3 N1-W03 · architectuur T v1.1 §4 (P1-18: 9T V1, V2; tegenrapport T P2: V5).
 # Basis: replica_test_N1-W02.py v2.2 (zelfde kern-tests), nu voor 7 blokken over drie weken, gestuurd door BLOKKEN_MANIFEST.tsv, en met
 # p4_stap_N1-W03.py als scheidsrechter van elke uitkomst (zoals in P4).
 # Replica = lokale PostgreSQL 16 met schema_replica_v2.sql (live metadata 2026-10-20; op 2026-10-23 opnieuw read-only vergeleken:
@@ -294,10 +294,11 @@ alle = [f"{SQL}/{r['map']}/{f}" for r in M for f in os.listdir(f"{SQL}/{r['map']
 nfc_ok = sum(1 for p in alle if unicodedata.normalize("NFC", open(p, encoding="utf-8").read()) == open(p, encoding="utf-8").read())
 ok(f"G5.11 SQL-bestanden NFC-stabiel ({len(alle)} bestanden)", str(nfc_ok), str(len(alle)))
 # manifest en p4_stap
-W02BUNDEL = "/home/claude/N1-W02_P4/N1-W02/p4/sql"
-assert os.path.isdir(W02BUNDEL), "W02-bundel niet gevonden (nodig voor G5.12a)"
+W02BUNDEL = "/home/claude/N1-W02_P4/N1-W02/p4/sql"   # v3.4.1: ontbreekt de W02-bundel (nieuwe sessie), dan een vreemde bundel zonder manifest
+if not os.path.isdir(W02BUNDEL):
+    W02BUNDEL = R + "/g512a_vreemd"; shutil.rmtree(W02BUNDEL, ignore_errors=True); shutil.copytree(f"{SQL}/{MB['1_L1']['map']}", W02BUNDEL + "/1_L1")
 p = subprocess.run(["python3", "-I", WM + "/scripts/w03/p4_stap_N1-W03.py", W02BUNDEL, "1_L1", "stand", "100|x|y"], capture_output=True, text=True)
-ok("G5.12a p4_stap met de W02-bundel → STOP (geen manifest)", str(p.returncode), "2")
+ok("G5.12a p4_stap met een andere bundel (W02, of zonder manifest) → STOP (geen manifest)", str(p.returncode), "2")
 tmpm = R + "/g512"; shutil.rmtree(tmpm, ignore_errors=True); shutil.copytree(SQL, tmpm)
 with open(f"{tmpm}/{MB['3_L3']['map']}/verwacht.txt", "a", encoding="utf-8") as f: f.write("x\ty\n")
 p = subprocess.run(["python3", "-I", WM + "/scripts/w03/p4_stap_N1-W03.py", tmpm, "1_L1", "stand", vv("1_L1")], capture_output=True, text=True)
