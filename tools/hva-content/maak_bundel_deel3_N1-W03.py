@@ -1,4 +1,4 @@
-# maak_bundel_deel3_N1-W03.py v1 — Regisseur-T (1T) · AFSLUITEN N1-W03 deel 3 (P4-uitvoering): alles wat N1-W04 en een eventuele
+# maak_bundel_deel3_N1-W03.py v1.1 (OVERDRACHT in kern_p4 uitgesloten: die noemt de md5 van de bundel) — Regisseur-T (1T) · AFSLUITEN N1-W03 deel 3 (P4-uitvoering): alles wat N1-W04 en een eventuele
 # terugdraaiactie (V-B, alleen op opdracht van Ibra) nodig hebben, in één zip met MANIFEST (md5 per bestand):
 #   scripts (zonder oude versies en __pycache__), bron (verse exports van 2026-10-23, de back-ups, de W04-export), p3 zonder de replica
 #   (SQL van de 7 blokken met rollback en 4b, VERWACHT_PER_STAP, de nazorgdelta voor W04, lijsten), p4 (rapport, draaiboeken, antwoorden,
@@ -12,7 +12,7 @@ wm, uit = sys.argv[1], sys.argv[2]
 MAPPEN = ["scripts", "bron", "p3", "p4", "export", "kern_p4"]
 WEG = ("p3/replica/", "bron/LEESBARE_LIJST_MASTER.tsv", "bron/APP_EXPORT_N1_2026-10-20_W03stap0b.tsv", "bron/ULTIEME_LEESBARE_LIJST.tsv",
        "p4/master/n1_lijst_naP4.tsv", "p4/master/rest_naP4.tsv", "p4/master_voorspelling/n1_", "p4/master_voorspelling/rest",
-       "p4/master_voorspelling/LEESBARE", "export/resultaat_W03_2026-10-23.json", "kern_p4/status_log.md", "scripts/deel3/p4_log_stap.py")
+       "p4/master_voorspelling/LEESBARE", "export/resultaat_W03_2026-10-23.json", "kern_p4/status_log.md", "kern_p4/OVERDRACHT", "scripts/deel3/p4_log_stap.py")
 OUD = re.compile(r"_v\d+(_\d+)*\.(py|sh)$")
 best = []
 for m in MAPPEN:

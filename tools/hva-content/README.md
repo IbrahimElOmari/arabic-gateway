@@ -31,7 +31,7 @@ Branch `content/N1-W03-inhoud` (vanaf `main` @ `e7317258`). Geen PR en geen merg
 | `voorspel_master_N1-W03.py` | v1 | 7T | de master zoals hij na P4 moet zijn (9T P4 V7), met de regeldiff tegen de huidige master. |
 | `maak_bundel_deel2_N1-W03.py` | v1 | 1T | de bundel voor deel 3 met MD5-manifest, zonder oude scriptversies en replicalogs (9T P4 V5). |
 | `log_naar_md_N1-W03.py` | v1 | 1D | zet het P4-log letterlijk om naar één chronologische tabel (alle regels en kolommen, ook voorcontroles, ruwe uitvoer en ketenhash) in het P4-verslag. |
-| `maak_bundel_deel3_N1-W03.py` | v1 | 1T | de bundel na de P4-uitvoering (scripts, verse exports, p3 zonder replica, p4 met log, verslag en master, kern) met MD5-manifest. |
+| `maak_bundel_deel3_N1-W03.py` | v1.1 | 1T | de bundel na de P4-uitvoering (scripts, verse exports, p3 zonder replica, p4 met log, verslag en master, kern zonder status_log en OVERDRACHT) met MD5-manifest. |
 | `rapport_7D_N1-W03.py` | v1 | 7D | telrapport en leesbare diff voor W03 + nazorg W02/W01 (veld- en regelniveau, `app:is_published`). |
 | `p3_leescontrole_N1-W03.py` | v1 | 8T | beoordeelt één live leescontrole (droogloop, probe, vinger) tegen `verwacht.txt` en legt ze vast. |
 | `app_naar_master.py` | v1.1 | 7D | app-export → lijstformaat; nieuw: regel `app:is_published` bij false (P1-18). |
@@ -48,7 +48,7 @@ bd222d2728fe3128420aafa03ab442dc  keten_P3_N1-W03.sh
 352d0989a4e5445b99ea6a804a48b03e  maak_bundel_P2_N1-W03.py
 6dad73cc18a6d6f1af158eafa0689151  maak_bundel_P3_N1-W03.py
 6a182ae61db43d7f1958a7080018f2e6  maak_bundel_deel2_N1-W03.py
-3886274c7bd79e0410d8e9f610fde792  maak_bundel_deel3_N1-W03.py
+edeae2b1fca96cd61a601ab05824f42e  maak_bundel_deel3_N1-W03.py
 2f994f5db76fa31679d6be06ad6363a3  maak_draaiboek_P4_N1-W03.py
 65608641f395ee3fe7b3a227e370a5b0  maak_html_bdi.mjs
 b4b39e8d402388f1d944f7b48b77d05f  maak_json_N1-W02.py
