@@ -1,93 +1,155 @@
-# p4_log_stap_N1-W03.py v1.2.1 — Regisseur-D · P4 N1-W03 · legt één P4-aanroep vast en laat p4_stap_N1-W03.py oordelen.
-# Basis: p4_log_stap.py v1.0 (N1-W02). Nieuw in v1.1: p4_stap_N1-W03.py (manifest) en de paden van W03 (P4BASIS, P4SQL, P4LOG).
-# Nieuw in v1.2 (controle 8T, C-T01–C-T04):
-#   - VOLGORDE OVER DE WEKEN (C-T01): de toestand per blok volgt uit het P4-log, regel na regel (voorcontroles tellen niet mee):
-#       ✓ vinger_na → toegepast · ✓ vinger_terug of ✓ vinger_voor (p4_stap: vingerafdruk = VOOR van dit blok) → niet toegepast, open
-#       elke apply-, rollback- of noodrollback-aanroep (ook met STOP of toolfout) → "onzeker" tot een volgende ✓ 7_vinger.
-#     vinger_voor van blok k: alle blokken vóór k toegepast, alle blokken ná k open (k zelf mag onzeker zijn: 7_vinger bepaalt de stand);
-#     gr en apply van blok k: alle blokken vóór k toegepast, k en alle latere open (dus ook geen dubbel blok);
-#     rollback van blok k: alle latere blokken open, k toegepast of onzeker; noodrollback (4b): alle latere blokken open. Anders STOP, vóór p4_stap.
-#   - BESTAND GEBONDEN (C-T02): het bestand moet het bestand van deze stap zijn, in de map van dit blok, met de md5 uit SQL_MANIFEST.tsv
-#     (via `p4_stap … bestand`). Met --voor gebeurt dat VÓÓR de aanroep (geen uitkomst; legt een regel `voorcontrole` vast).
-#   - De map van het log wordt aangemaakt als ze nog niet bestaat (C-T03).
-#   - Stappen rollback en noodrollback (4b) met hun kolommen (C-T04).
+# p4_log_stap_N1-W03.py v1.3 — Regisseur-D · P4 N1-W03 · legt één P4-aanroep vast en laat p4_stap_N1-W03.py oordelen.
+# Basis: p4_log_stap.py v1.0 (N1-W02). v1.1: p4_stap_N1-W03.py (manifest) en de paden van W03 (P4BASIS, P4SQL, P4LOG).
+# v1.2 (8T C-T01–C-T04): volgorde over de weken uit het log, bestand gebonden aan SQL_MANIFEST (--voor), logmap aangemaakt, rollback/4b.
+# v1.3 (9T P3 V1–V4):
+#   - TOESTAND per blok uit het log, regel na regel (voorcontroles tellen niet mee): ✓ vinger_na → toegepast · ✓ vinger_terug of ✓ vinger_voor
+#     → open · elke apply-, rollback- of noodrollback-regel → onzeker · ✓ stand (7_vinger) → de hele week volgens de vingerafdruk (k blokken
+#     toegepast, de rest open) (V2). Een ✓ gr van het blok geldt tot de volgende 7_vinger-, apply- of rollbackregel van dat blok.
+#   - VOLGORDE: vinger_voor van k: blokken vóór k toegepast, ná k open · gr en apply van k: vóór k toegepast, k en later open · apply alleen
+#     na een ✓ gr sinds de laatste ✓ 7_vinger van het blok (V1) · rollback van k: latere blokken open, k toegepast of onzeker · 4b: latere open.
+#   - SCHRIJVEN (apply, rollback, noodrollback): de uitkomst wordt alleen aanvaard als de regel er direct vóór de ✓ voorcontrole is van
+#     hetzelfde blok, dezelfde stap en dezelfde md5 (V1). De ruwe uitvoer wordt ALTIJD vastgelegd, ook bij een bezwaar (exit 2).
+#   - ACTIVITEIT: gr met leerdersactiviteit = STOP, tenzij `--akkoord-ibra "<letterlijke tekst van Ibra>"` (komt in het log) (V1).
+#   - SLOT (blok `slot`): slot_ref en zicht_voor als alle blokken open zijn, slot en zicht_na als alle blokken toegepast zijn; slot krijgt de
+#     referentie van de laatste ✓ slot_ref uit het log (V3, V4).
+#   - HET LOG ZELF: elke regel draagt de md5 van BLOKKEN_MANIFEST.tsv en een ketenhash (md5 van de vorige ketenhash + de regel). Een regel
+#     van een andere bundel of een regel die buiten dit script gewijzigd, ingevoegd of verwijderd is = STOP (9T P3 S5, S6).
 # Leest alleen SQL-bestanden (md5/bytes) en schrijft één regel in het log. Raakt de database niet.
-# Gebruik: python3 -I p4_log_stap_N1-W03.py <wie> <blok> <stap> <sql-bestand relatief t.o.v. P4BASIS | -> ['<ruwe tooluitvoer, letterlijk>' | --voor]
-#   stap: stand | vinger_voor | gr | apply | vinger_na | rollback | noodrollback | vinger_terug | rollback_los
-# Exit 0 = ✓ · exit 2 = STOP (volgorde, bestand, p4_stap exit 2, geen JSON, niet precies 1 rij, andere kolommen, WARNING/NOTICE/ERROR).
+# Gebruik: python3 -I p4_log_stap_N1-W03.py <wie> <blok|slot> <stap> <sql-bestand relatief t.o.v. P4BASIS | -> ['<ruwe tooluitvoer, letterlijk>' | --voor] [--akkoord-ibra "<tekst>"]
+#   stap: stand | vinger_voor | gr | apply | vinger_na | rollback | noodrollback | vinger_terug | rollback_los | slot_ref | zicht_voor | slot | zicht_na
+# Exit 0 = ✓ · exit 2 = STOP.
 import sys, json, subprocess, hashlib, os, datetime
 from zoneinfo import ZoneInfo
 BASIS = os.environ.get("P4BASIS", "/home/claude/N1-W03")
 LOG = os.environ.get("P4LOG", f"{BASIS}/p4/uitvoering/P4_log_N1-W03.tsv"); SQLROOT = os.environ.get("P4SQL", "p3/sql")
-wie, blok, stap, bestand = sys.argv[1:5]
-VOOR = len(sys.argv) > 5 and sys.argv[5] == "--voor"
-ruw = "" if VOOR else sys.argv[5]
+ARG = sys.argv[1:]; AKKOORD = ""
+if "--akkoord-ibra" in ARG:
+    i = ARG.index("--akkoord-ibra"); AKKOORD = ARG[i + 1].strip(); del ARG[i:i + 2]
+wie, blok, stap, bestand = ARG[0:4]
+VOOR = len(ARG) > 4 and ARG[4] == "--voor"
+ruw = "" if VOOR else (ARG[4] if len(ARG) > 4 else "")
 KOL = {"vinger_voor": ["week_blok_rest"], "vinger_na": ["week_blok_rest"], "stand": ["week_blok_rest"], "vinger_terug": ["week_blok_rest"],
        "gr": ["start", "apply", "na_apply", "rollback", "na_rollback", "activiteit", "isolatie"],
        "apply": ["apply", "isolatie"], "rollback": ["rollback", "isolatie"], "noodrollback": ["noodrollback", "isolatie"]}
+SLOTSTAP = {"slot_ref": "slot_tellingen_N1-W03.sql", "slot": "slot_tellingen_N1-W03.sql", "zicht_voor": "leerderszicht_N1-W03.sql", "zicht_na": "leerderszicht_N1-W03.sql"}
+BEST = {"stand": "7_vinger_aggregaat.sql", "vinger_voor": "7_vinger_aggregaat.sql", "vinger_na": "7_vinger_aggregaat.sql", "vinger_terug": "7_vinger_aggregaat.sql",
+        "gr": "8_generale_repetitie.sql", "apply": "3_apply.sql", "rollback": "4_rollback.sql", "noodrollback": "4b_noodrollback.sql", **SLOTSTAP}
+SCHRIJF = ("apply", "rollback", "noodrollback")
 P4STAP = os.path.join(BASIS, "scripts/w03/p4_stap_N1-W03.py"); SQLABS = os.path.join(BASIS, SQLROOT)
-M = [dict(zip(("volgorde", "week", "blok", "map", "md5_verwacht", "week_voor", "week_na"), l.rstrip("\n").split("\t"))) for l in list(open(os.path.join(SQLABS, "BLOKKEN_MANIFEST.tsv"), encoding="utf-8"))[1:]]
-VOLG = {r["blok"]: int(r["volgorde"]) for r in M}
+MPATH = os.path.join(SQLABS, "BLOKKEN_MANIFEST.tsv"); MMD5 = hashlib.md5(open(MPATH, "rb").read()).hexdigest()
+M = [dict(zip(("volgorde", "week", "blok", "map", "md5_verwacht", "week_voor", "week_na"), l.rstrip("\n").split("\t"))) for l in list(open(MPATH, encoding="utf-8"))[1:]]
+VOLG = {r["blok"]: int(r["volgorde"]) for r in M}; WEEK = {r["blok"]: r["week"] for r in M}
+KOP = "tijd\twie\tblok\tstap\tbestand\tbytes\tmd5_bestand\truwe_uitvoer\tuitkomst\texit\tp4_stap\tmanifest\tketen"
 tijd = datetime.datetime.now(ZoneInfo("Europe/Brussels")).strftime("%Y-%m-%d %H:%M:%S")
+def h(s): return hashlib.md5(s.encode("utf-8")).hexdigest()
+def uit_zonder_log(reden): print(f"✗ STOP · {reden}"); sys.exit(2)
+def lees_log():   # → lijst van kolomlijsten; STOP bij een andere kop, een andere bundel of een gebroken keten
+    if not os.path.exists(LOG): return [], h(KOP)
+    regels = open(LOG, encoding="utf-8").read().split("\n")
+    if regels and regels[-1] == "": regels.pop()
+    if not regels or regels[0] != KOP: uit_zonder_log(f"het P4-log {LOG} heeft niet de kop van v1.3: nieuw log beginnen (stand per week) of het juiste log gebruiken")
+    vorige, rijen = h(KOP), []
+    for n, l in enumerate(regels[1:], 2):
+        c = l.split("\t")
+        if len(c) != 13 or c[12] != h(vorige + "\t" + "\t".join(c[:12])): uit_zonder_log(f"P4-log regel {n} is buiten p4_log_stap gewijzigd, ingevoegd of verwijderd (ketenhash klopt niet) → Ibra inlichten; niets uitvoeren")
+        if c[11] != MMD5: uit_zonder_log(f"P4-log regel {n} hoort bij een andere bundel (manifest {c[11][:8]} ≠ {MMD5[:8]}) → het log van deze bundel gebruiken")
+        vorige = c[12]; rijen.append(c)
+    return rijen, vorige
+RIJEN, LAATSTE = lees_log()
 def schrijf(nb, md5, ruw1, uitkomst, code, oordeel):
     os.makedirs(os.path.dirname(LOG), exist_ok=True)   # C-T03
     nieuw = not os.path.exists(LOG)
+    vlak = [tijd, wie, blok, stap + (" (voorcontrole)" if VOOR else ""), bestand, nb, md5, ruw1, uitkomst, str(code), oordeel.replace("\t", " ").replace("\n", " ⏎ "), MMD5]
     with open(LOG, "a", encoding="utf-8") as f:
-        if nieuw: f.write("tijd\twie\tblok\tstap\tbestand\tbytes\tmd5_bestand\truwe_uitvoer\tuitkomst\texit\tp4_stap\n")
-        f.write("\t".join([tijd, wie, blok, stap + (" (voorcontrole)" if VOOR else ""), bestand, nb, md5, ruw1, uitkomst, str(code), oordeel.replace("\t", " ").replace("\n", " ⏎ ")]) + "\n")
+        if nieuw: f.write(KOP + "\n")
+        f.write("\t".join(vlak + [h(LAATSTE + "\t" + "\t".join(vlak))]) + "\n")
     print(oordeel); print(f"[vastgelegd {tijd} · exit {code}]"); sys.exit(code)
-def toestand():   # per blok: "toegepast", "open" of "onzeker", regel na regel uit het log (C-T01)
-    st = {r["blok"]: "open" for r in M}
-    if os.path.exists(LOG):
-        for l in list(open(LOG, encoding="utf-8"))[1:]:
-            c = l.rstrip("\n").split("\t")
-            if len(c) < 10 or c[2] not in st: continue
-            if c[3] == "vinger_na" and c[9] == "0": st[c[2]] = "toegepast"
-            elif c[3] in ("vinger_terug", "vinger_voor") and c[9] == "0": st[c[2]] = "open"
-            elif c[3] in ("apply", "rollback", "noodrollback"): st[c[2]] = "onzeker"
-    return st
-nb = md5 = ""
-if stap != "rollback_los":
-    if blok not in VOLG: schrijf("", "", "", "", 2, f"✗ STOP · blok '{blok}' staat niet in het manifest")
-    st = toestand(); k = VOLG[blok]
+def toestand():
+    st = {r["blok"]: "open" for r in M}; gr = {r["blok"]: False for r in M}
+    for c in RIJEN:
+        b, s_, ok_ = c[2], c[3], c[9] == "0"
+        if b not in st: continue
+        if s_ == "vinger_na" and ok_: st[b] = "toegepast"; gr[b] = False
+        elif s_ in ("vinger_terug", "vinger_voor") and ok_: st[b] = "open"; gr[b] = False
+        elif s_ in SCHRIJF: st[b] = "onzeker"; gr[b] = False
+        elif s_ == "gr": gr[b] = ok_
+        elif s_ == "stand" and ok_:
+            wk = [r for r in M if r["week"] == WEEK[b]]; keten = [wk[0]["week_voor"]] + [r["week_na"] for r in wk]
+            w = "|".join(c[8].split("|")[:2])
+            if w in keten:
+                for i, r in enumerate(wk): st[r["blok"]] = "toegepast" if i < keten.index(w) else "open"; gr[r["blok"]] = False
+    return st, gr
+def ref_pogingen():
+    for c in reversed(RIJEN):
+        if c[2] == "slot" and c[3] == "slot_ref" and c[9] == "0": return str(json.loads(c[8])["pogingen_totaal"])
+    return None
+# ---------------- bezwaren vóór het oordeel van p4_stap ----------------
+bezwaar = []; nb = md5 = ""
+if stap == "rollback_los":
+    pass
+elif blok == "slot":
+    if stap not in SLOTSTAP: uit_zonder_log(f"onbekende slotstap '{stap}' ({', '.join(SLOTSTAP)})")
+    st, _ = toestand()
+    if stap in ("slot_ref", "zicht_voor") and any(v != "open" for v in st.values()): bezwaar.append("slot_ref/zicht_voor alleen vóór blok 1 (alle blokken open); volgens het log: " + ", ".join(f"{b} ({v})" for b, v in st.items() if v != "open"))
+    if stap in ("slot", "zicht_na") and any(v != "toegepast" for v in st.values()): bezwaar.append("slot/zicht_na alleen als alle blokken toegepast zijn; volgens het log: " + ", ".join(f"{b} ({v})" for b, v in st.items() if v != "toegepast"))
+    if stap == "slot" and ref_pogingen() is None: bezwaar.append("geen ✓ slot_ref in het log (referentie voor de pogingen)")
+else:
+    if blok not in VOLG: uit_zonder_log(f"blok '{blok}' staat niet in het manifest")
+    if stap not in KOL: uit_zonder_log(f"onbekende stap '{stap}'")
+    st, gr = toestand(); k = VOLG[blok]; ORD = sorted(VOLG.items(), key=lambda x: x[1])
     if stap in ("vinger_voor", "gr", "apply"):
         grens = k if stap == "vinger_voor" else k - 1
-        fout = [f"{b} ({st[b]})" for b, n in sorted(VOLG.items(), key=lambda x: x[1]) if (n < k and st[b] != "toegepast") or (n > grens and st[b] != "open")]
-        if fout: schrijf("", "", "", "", 2, f"✗ STOP · volgorde: vóór {stap} van blok {blok} moeten de blokken 1–{k - 1} toegepast zijn en " + (f"de blokken ná {blok}" if stap == "vinger_voor" else f"{blok} en later") + f" open; afwijkend volgens het log: {', '.join(fout)}" + (" → eerst 7_vinger (stand/vinger_voor) van dit blok" if st[blok] == "onzeker" else ""))
+        fout = [f"{b} ({st[b]})" for b, n in ORD if (n < k and st[b] != "toegepast") or (n > grens and st[b] != "open")]
+        if fout: bezwaar.append(f"volgorde: vóór {stap} van blok {blok} moeten de blokken 1–{k - 1} toegepast zijn en " + (f"de blokken ná {blok}" if stap == "vinger_voor" else f"{blok} en later") + f" open; afwijkend volgens het log: {', '.join(fout)}" + (" → eerst 7_vinger als stand van dit blok" if st[blok] == "onzeker" else ""))
+    if stap == "apply" and not gr[blok]: bezwaar.append(f"apply van {blok} zonder ✓ generale repetitie sinds de laatste 7_vinger van dit blok (9T V1)")
     if stap in ("rollback", "noodrollback"):
-        fout = [f"{b} ({st[b]})" for b, n in sorted(VOLG.items(), key=lambda x: x[1], reverse=True) if n > k and st[b] != "open"]
-        if fout: schrijf("", "", "", "", 2, f"✗ STOP · terugdraaien in omgekeerde volgorde: eerst {', '.join(fout)}")
-        if stap == "rollback" and st[blok] == "open": schrijf("", "", "", "", 2, f"✗ STOP · blok {blok} is volgens het log niet toegepast: niets terug te draaien (bij twijfel: 7_vinger, en 4b alleen na akkoord van Ibra)")
-    if bestand != "-":
+        fout = [f"{b} ({st[b]})" for b, n in reversed(ORD) if n > k and st[b] != "open"]
+        if fout: bezwaar.append(f"terugdraaien in omgekeerde volgorde: eerst {', '.join(fout)}")
+        if stap == "rollback" and st[blok] == "open": bezwaar.append(f"blok {blok} is volgens het log niet toegepast: niets terug te draaien (bij twijfel: 7_vinger als stand; 4b alleen na akkoord van Ibra)")
+if stap != "rollback_los":
+    if bestand == "-": bezwaar.append(f"stap {stap} zonder SQL-bestand")
+    else:
         rel = os.path.relpath(os.path.join(BASIS, bestand), SQLABS)
         p = subprocess.run(["python3", "-I", P4STAP, SQLABS, blok, "bestand", rel], capture_output=True, text=True)
-        BEST = {"stand": "7_vinger_aggregaat.sql", "vinger_voor": "7_vinger_aggregaat.sql", "vinger_na": "7_vinger_aggregaat.sql", "vinger_terug": "7_vinger_aggregaat.sql",
-                "gr": "8_generale_repetitie.sql", "apply": "3_apply.sql", "rollback": "4_rollback.sql", "noodrollback": "4b_noodrollback.sql"}
-        if p.returncode != 0: schrijf("", "", "", "", 2, "✗ STOP · bestand niet gebonden: " + (p.stdout + p.stderr).strip().split("\n")[0])
-        if stap in BEST and os.path.basename(rel) != BEST[stap]: schrijf("", "", "", "", 2, f"✗ STOP · stap {stap} hoort bij {BEST[stap]}, niet bij {os.path.basename(rel)}")
-        data = open(os.path.join(BASIS, bestand), "rb").read(); nb, md5 = str(len(data)), hashlib.md5(data).hexdigest()
-    elif stap in KOL: schrijf("", "", "", "", 2, f"✗ STOP · stap {stap} zonder SQL-bestand")
-if VOOR: schrijf(nb, md5, "", "", 0, f"✓ voorcontrole {blok} · {stap}: volgorde en bestand in orde → nu precies {bestand} plakken")
+        if p.returncode != 0: bezwaar.append("bestand niet gebonden: " + (p.stdout + p.stderr).strip().split("\n")[0])
+        elif os.path.basename(rel) != BEST[stap]: bezwaar.append(f"stap {stap} hoort bij {BEST[stap]}, niet bij {os.path.basename(rel)}")
+        if os.path.isfile(os.path.join(BASIS, bestand)):
+            data = open(os.path.join(BASIS, bestand), "rb").read(); nb, md5 = str(len(data)), hashlib.md5(data).hexdigest()
+if VOOR:
+    if stap == "rollback_los": uit_zonder_log("rollback_los heeft geen voorcontrole")
+    if AKKOORD: uit_zonder_log("--akkoord-ibra hoort bij de uitkomst van gr, niet bij een voorcontrole")
+    if bezwaar: schrijf(nb, md5, "", "", 2, "✗ STOP · " + " · ".join(bezwaar))
+    schrijf(nb, md5, "", "", 0, f"✓ voorcontrole {blok} · {stap}: volgorde en bestand in orde → nu precies {bestand} plakken")
+if stap in SCHRIJF:   # V1: de regel direct hiervoor moet de ✓ voorcontrole van dit blok, deze stap en deze md5 zijn
+    v = RIJEN[-1] if RIJEN else None
+    if not (v and v[2] == blok and v[3] == stap + " (voorcontrole)" and v[9] == "0" and v[6] == md5):
+        bezwaar.append("geen ✓ voorcontrole direct vóór deze schrijfstap (zelfde blok, stap en md5) (9T V1)")
+# ---------------- uitkomst: altijd vastleggen ----------------
 ruw1 = ruw.strip().replace("\t", " ").replace("\r", " ").replace("\n", " ⏎ ")
 uitkomst, code, oordeel = "", 0, ""
 verdacht = [w for w in ("warning", "notice", "error", "transaction in progress", "aborted") if w in ruw.lower()]
 if stap == "rollback_los":
     oordeel = "losse ROLLBACK; vastgelegd (stopprocedure)" + (f" · melding: {', '.join(verdacht)}" if verdacht else "")
-elif stap not in KOL:
-    code, oordeel = 2, f"✗ STOP · onbekende stap '{stap}'"
 else:
     try:
         j = json.loads(ruw); rows = j["rows"]
         if len(rows) != 1: raise ValueError(f"{len(rows)} rijen in plaats van 1")
         r = rows[0]
-        if set(r) != set(KOL[stap]): raise ValueError(f"kolommen {list(r)} ≠ {KOL[stap]}")
-        uitkomst = "|".join("" if r[k] is None else str(r[k]) for k in KOL[stap])
+        if blok == "slot": uitkomst = json.dumps(r, ensure_ascii=False)
+        else:
+            if set(r) != set(KOL[stap]): raise ValueError(f"kolommen {list(r)} ≠ {KOL[stap]}")
+            uitkomst = "|".join("" if r[x] is None else str(r[x]) for x in KOL[stap])
     except Exception as e:
         code, oordeel = 2, f"✗ STOP · uitvoer niet bruikbaar: {e}"
-    if code == 0 and verdacht:
-        code, oordeel = 2, f"✗ STOP · melding in de uitvoer: {', '.join(verdacht)}"
+    if code == 0 and verdacht: code, oordeel = 2, f"✗ STOP · melding in de uitvoer: {', '.join(verdacht)}"
     if code == 0:
-        p = subprocess.run(["python3", "-I", P4STAP, SQLABS, blok, stap, uitkomst], capture_output=True, text=True)
+        extra = (["--ref", ref_pogingen()] if stap == "slot" and ref_pogingen() is not None else []) + (["--activiteit-akkoord"] if stap == "gr" and AKKOORD else [])
+        p = subprocess.run(["python3", "-I", P4STAP, SQLABS, blok, stap, uitkomst] + extra, capture_output=True, text=True)
         code = 0 if p.returncode == 0 else 2
         oordeel = (p.stdout + p.stderr).strip()
+    if AKKOORD:
+        if stap != "gr": bezwaar.append("--akkoord-ibra geldt alleen voor gr")
+        else: oordeel = f"akkoord Ibra: «{AKKOORD}» · " + oordeel
+if bezwaar:
+    code, oordeel = 2, "✗ STOP · " + " · ".join(bezwaar) + (" ⏎ oordeel p4_stap over de uitkomst: " + oordeel if oordeel else "")
 schrijf(nb, md5, ruw1, uitkomst, code, oordeel)
