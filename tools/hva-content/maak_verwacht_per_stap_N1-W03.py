@@ -1,10 +1,13 @@
-# maak_verwacht_per_stap_N1-W03.py v1.3 — Maker-T (7T) · P3/P4 N1-W03 · = maak_verwacht_per_stap_N1-W02.py v1.2, maar alles uit
+# maak_verwacht_per_stap_N1-W03.py v1.4 — Maker-T (7T) · P3/P4 N1-W03 · = maak_verwacht_per_stap_N1-W02.py v1.2, maar alles uit
 # BLOKKEN_MANIFEST.tsv (9T V2, V5): standbepaling per week, per blok de verwachte uitkomst van elke stap, de terugdraaivolgorde over de
 # weken heen, en de slotcontrole (tellingen uit de NA-bestanden, met slot_tellingen_N1-W03.sql).
-# Gebruik: python3 -I maak_verwacht_per_stap_N1-W03.py <sql-root> <NA_W03.tsv> <NA_W02.tsv> <NA_W01.tsv> <VOOR_W03.tsv> <VOOR_W02.tsv> <VOOR_W01.tsv>
+# v1.4 (8T C-T09): de slotverwachting bevat ook rijen_totaal en rijen_n1 (--rijen, de live telling bij P3) en de regel voor de pogingen
+#   (pogingen_totaal = de telling vlak vóór blok 1 in P4; een stijging tijdens P4 is een melding aan Ibra, de rooktest telt mee).
+# Gebruik: python3 -I maak_verwacht_per_stap_N1-W03.py <sql-root> <NA_W03.tsv> <NA_W02.tsv> <NA_W01.tsv> <VOOR_W03.tsv> <VOOR_W02.tsv> <VOOR_W01.tsv> --rijen 2299
 import sys, os, csv, json, hashlib, collections
 csv.field_size_limit(10**9)
 B = sys.argv[1]; NAP = dict(zip((3, 2, 1), sys.argv[2:5])); VOP = dict(zip((3, 2, 1), sys.argv[5:8]))
+RIJEN = int(sys.argv[sys.argv.index("--rijen") + 1])
 M = [dict(zip(("volgorde", "week", "blok", "map", "md5_verwacht", "week_voor", "week_na"), l.rstrip("\n").split("\t"))) for l in list(open(f"{B}/BLOKKEN_MANIFEST.tsv", encoding="utf-8"))[1:]]
 for r in M: assert hashlib.md5(open(f"{B}/{r['map']}/verwacht.txt", "rb").read()).hexdigest() == r["md5_verwacht"], r["map"]
 VW = {r["blok"]: dict(l.rstrip("\n").split("\t", 1) for l in open(f"{B}/{r['map']}/verwacht.txt", encoding="utf-8")) for r in M}
@@ -49,7 +52,7 @@ L += ["## Slotcontrole (V-A) na het laatste blok en na de rooktest", "`slot_tell
 for w in (3, 2, 1):
     n, o = SLOT_NA[w], SLOT_VOOR[w]
     L.append(f"| W0{w} | " + " | ".join(f"{n[k]} ({o[k]})" for k in ("items", "b25", "needs_image", "strict", "punten", "ns_audio", "student_opname", "vlaggen", "gepubliceerd")) + f" | `{n['typen']}` (`{o['typen']}`) |")
-L += ["", "Daarnaast: rijen totaal 2.299 en rijen N1 2.299 (geen rij erbij of eraf); pogingen ongewijzigd ten opzichte van de laatste telling; de week-vingerafdrukken = `week_na` van het laatste blok van elke week."]
+L += ["", f"Daarnaast: rijen_totaal = {RIJEN} en rijen_n1 = {RIJEN} (geen rij erbij of eraf; live telling bij P3); pogingen_totaal = de telling vlak vóór blok 1 (P4), een stijging tijdens P4 meldt de Regisseur aan Ibra (de rooktest telt mee); de week-vingerafdrukken = `week_na` van het laatste blok van elke week."]
 open(f"{B}/VERWACHT_PER_STAP.md", "w", encoding="utf-8").write("\n".join(L) + "\n")
 q = ["-- slot_tellingen_N1-W03 · READ ONLY · P4 N1-W03 · B25 en tellingen W03, W02, W01 (verwacht: VERWACHT_PER_STAP.md, slotcontrole)", "BEGIN TRANSACTION READ ONLY;"]
 cols = []
@@ -67,6 +70,6 @@ for w in (3, 2, 1):
 cols += ["(SELECT count(*) FROM public.curriculum_items) AS rijen_totaal", "(SELECT count(*) FROM public.curriculum_items WHERE week BETWEEN 1 AND 25) AS rijen_n1", "(SELECT count(*) FROM public.curriculum_item_attempts) AS pogingen_totaal"]
 q += ["SELECT " + ", ".join(cols) + ";", "ROLLBACK;"]
 open(f"{B}/slot_tellingen_N1-W03.sql", "w", encoding="utf-8").write("\n".join(q) + "\n")
-json.dump({f"W0{w}": SLOT_NA[w] for w in (3, 2, 1)}, open(f"{B}/slot_verwacht_N1-W03.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+json.dump({**{f"W0{w}": SLOT_NA[w] for w in (3, 2, 1)}, "rijen_totaal": RIJEN, "rijen_n1": RIJEN, "pogingen_totaal": "telling vlak vóór blok 1 (P4)"}, open(f"{B}/slot_verwacht_N1-W03.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 for n in ("VERWACHT_PER_STAP.md", "slot_tellingen_N1-W03.sql", "slot_verwacht_N1-W03.json"): print(n, "md5", hashlib.md5(open(f"{B}/{n}", "rb").read()).hexdigest())
 for w in (3, 2, 1): print(f"W0{w} NA", SLOT_NA[w])

@@ -1,9 +1,11 @@
-# maak_sql_N1-W03.py v4.4 — Maker-T (7T) · P3 N1-W03 · = maak_sql_N1-W02.py v4.3.1 + P1-18 (9T V1, V2) en het tegenrapport T P2 (V5):
+# maak_sql_N1-W03.py v4.4.1 — Maker-T (7T) · P3 N1-W03 · = maak_sql_N1-W02.py v4.3.1 + P1-18 (9T V1, V2) en het tegenrapport T P2 (V5):
 #  13. `exercise_type` is een vijfde kolomsoort (ENUM) naast tekst, jsonb, getal en boolean: lit() schrijft '<waarde>'::public.curriculum_exercise_type.
 #      Elke waarde (VOOR en NA) moet in ENUM_WAARDEN staan, en --enum-live (de live uitkomst van enum_range, alleen gelezen) moet daar
 #      exact gelijk aan zijn; anders weigert de generator (assert). `display_order` blijft buiten de kern (P1-19 = c).
 #  14. --start <n>: de bloknummers beginnen bij n (nazorg: 6_W02n, 7_W01n), zodat de mapnamen uniek zijn over de weken heen.
-#  15. BLOKKEN.md en de koppen noemen v4.4; de uitmap wordt pas na alle controles gemaakt (een weigering laat niets achter). Verder ongewijzigd t.o.v. v4.3.1 (REPEATABLE READ, plak- en toestandsgrendel, U&-escapes,
+#  15. BLOKKEN.md en de koppen noemen v4.4; de uitmap wordt pas na alle controles gemaakt (een weigering laat niets achter).
+#  16. v4.4.1 (8T C-T08): alles wordt gebouwd in <uitmap>.bouw en pas aan het eind, na de eindcontrole, hernoemd tot <uitmap>; bij elke
+#      weigering of fout wordt <uitmap>.bouw verwijderd (atexit). Een bestaande <uitmap> = STOP (nooit over een vorige export heen). Verder ongewijzigd t.o.v. v4.3.1 (REPEATABLE READ, plak- en toestandsgrendel, U&-escapes,
 #      generale repetitie met activiteit en isolatie, read-only bestanden in BEGIN TRANSACTION READ ONLY … ROLLBACK).
 # Basis: maak_sql_N1-W02.py v4.3.1 — Maker-T (7T) · P3/P4 N1-W02 · techplan T10/T11/T15 · architectuur T v2 §1–§2 · B17 (verlengd, P1-11).
 # Basis: maak_sql_N1-W11.py v4.1 (= maak_sql_N1-W01.py v4: U&-escapes, inhouds- en toestandsgrendel, alles-of-niets, 4b, 8, 9).
@@ -30,7 +32,7 @@
 # 12. Vroege controles (C-T10): BOOL alleen true/false; options en media_production nooit leeg (NOT NULL); geen dataregel die met
 #     '--' begint en geen 'RETURNING' of 'UPDATE public.curriculum_items' in de data (wrap() werkt op tekst). Kop van 9 rechtgezet (C-T08).
 # Gebruik: python3 -I maak_sql_N1-W03.py <VOOR.tsv> <NA.tsv> <uitmap> --week 3 --blokken "<spec>" --enum-live "<a|b|…>" [--start 1]
-import sys, csv, json, os, hashlib, unicodedata
+import sys, csv, json, os, hashlib, unicodedata, shutil, atexit
 csv.field_size_limit(10**9)
 def opt(n, d=None): return sys.argv[sys.argv.index(n) + 1] if n in sys.argv else d
 skipidx = {sys.argv.index(f) + 1 for f in ("--week", "--blokken", "--enum-live", "--start") if f in sys.argv}
@@ -40,7 +42,10 @@ assert week and week.isdigit(), "--week <getal> is verplicht"
 voorrijen = list(csv.DictReader(open(args[0], encoding="utf-8", newline=""), delimiter="\t")); KOP = list(voorrijen[0].keys())
 voor = {r["item_id"]: r for r in voorrijen}
 na = {r["item_id"]: r for r in csv.DictReader(open(args[1], encoding="utf-8", newline=""), delimiter="\t")}
-uitmap = args[2]   # v4.4: de map komt pas na alle controles (een weigering laat niets achter)
+DOEL = args[2]; uitmap = DOEL + ".bouw"   # v4.4.1: bouwen in <uitmap>.bouw, hernoemen op het eind
+assert not os.path.exists(DOEL), f"{DOEL} bestaat al: STOP (nooit over een vorige export heen)"
+shutil.rmtree(uitmap, ignore_errors=True); _klaar = []
+atexit.register(lambda: None if _klaar else shutil.rmtree(uitmap, ignore_errors=True))
 assert set(voor) == set(na), "VOOR en NA bevatten niet dezelfde item_id's"
 assert all(r["week"] == week for r in voorrijen), "VOOR bevat rijen van een andere week"
 TXT = ["instruction_nl","question","correct_answer","feedback_correct","feedback_incorrect","input_arabic","input_transliteration","input_translation_nl","reference_media","review_flag"]
@@ -236,5 +241,6 @@ with open(f"{uitmap}/SQL_MANIFEST.tsv", "w", encoding="utf-8") as f:
     for r in manifest: f.write("\t".join(r) + "\n")
 kop = "| blok | items | gewijzigd | velden | 3_apply | 8_generale_repetitie (marge) | 9_grootte_probe v2 (marge) | U&-escapes (apply+rollback) | week-vingerafdruk vóór → na |\n|---|---|---|---|---|---|---|---|---|"
 open(f"{uitmap}/BLOKKEN.md", "w", encoding="utf-8").write(f"# SQL v4.4 · week {week} · blokken\nGemaakt door `maak_sql_N1-W03.py` v4.4 uit `{os.path.basename(args[0])}` (md5 `{hashlib.md5(open(args[0],'rb').read()).hexdigest()}`) en `{os.path.basename(args[1])}` (md5 `{hashlib.md5(open(args[1],'rb').read()).hexdigest()}`). Volgorde apply: {' → '.join(n for n, _ in blokken)}; terugdraaien in omgekeerde volgorde: {' → '.join(n for n, _ in reversed(blokken))}. Na het laatste blok = NA-stand (gecontroleerd).\n\n{kop}\n" + "\n".join(overzicht) + "\n")
+os.rename(uitmap, DOEL); _klaar.append(1); uitmap = DOEL
 print(open(f"{uitmap}/BLOKKEN.md", encoding="utf-8").read())
 print("SQL_MANIFEST.tsv md5", hashlib.md5(open(f"{uitmap}/SQL_MANIFEST.tsv", "rb").read()).hexdigest())
