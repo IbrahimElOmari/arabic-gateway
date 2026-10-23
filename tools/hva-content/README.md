@@ -17,21 +17,42 @@ Branch `content/N1-W03-inhoud` (vanaf `main` @ `e7317258`). Geen PR en geen merg
 | `verwerk_antwoord_P2_N1-W03.py` | v1 | 1D/1T | verwerkt het letterlijke P2-antwoord van Ibra in één gang (poortbesluiten, varianten, review, statussen, apply, NA-diff tegen de proef, bevestigingen, check, rapport per teruggestuurd item) (9T V1–V4). |
 | `negatief_verwerking_N1-W03.py` | v1 | 8T | 17 tests op de verwerking (o.a. "3b", "W0525 nee", "aangepast … · 8a", typfout-id, "ja maar", "12a", het lek van v1.1). |
 | `maak_bundel_P2_N1-W03.py` | v1 | 1T | de P2-bundel met MD5-manifest. |
+| `maak_sql_N1-W03.py` | v4.4 | 7T | v4.3.1 + `exercise_type` als enumcast (live enum verplicht via `--enum-live`, foute waarde = weigeren), `--start` voor de bloknummers, uitmap pas na alle controles. |
+| `maak_manifest_N1-W03.py` | v1 | 7T | `BLOKKEN_MANIFEST.tsv` (volgorde · week · blok · map · md5 verwacht.txt · week_voor · week_na); nummers 1..n, unieke namen, gesloten keten per week. |
+| `p4_stap_N1-W03.py` | v1.2 | 7T/8T | scheidsrechter per P4-stap, alles uit het manifest; geen manifest of een gewijzigde verwacht.txt = STOP (de W02-bundel wordt geweigerd). |
+| `p4_log_stap_N1-W03.py` | v1.1 | 1D | legt één P4-aanroep vast (P4BASIS, P4SQL, P4LOG) en laat `p4_stap` oordelen; toolfout zonder rij = STOP. |
+| `maak_verwacht_per_stap_N1-W03.py` | v1.3 | 7T | `VERWACHT_PER_STAP.md`, `slot_tellingen_N1-W03.sql` en `slot_verwacht_N1-W03.json` uit het manifest en de NA/VOOR-bestanden. |
+| `replica_test_N1-W03.py` | v3 | 8T | replica PostgreSQL 16: schema = live, leescontroles P3, P4-draaiboek 1 → 7 met `p4_stap`, slottellingen, terugdraaien 7 → 1, negatieve tests (grendels, U&/NFC, enum, read-only, 4b, serialisatie, omhulde transactie, volgorde, manifest, toolfout). |
+| `rapport_7D_N1-W03.py` | v1 | 7D | telrapport en leesbare diff voor W03 + nazorg W02/W01 (veld- en regelniveau, `app:is_published`). |
+| `p3_leescontrole_N1-W03.py` | v1 | 8T | beoordeelt één live leescontrole (droogloop, probe, vinger) tegen `verwacht.txt` en legt ze vast. |
+| `app_naar_master.py` | v1.1 | 7D | app-export → lijstformaat; nieuw: regel `app:is_published` bij false (P1-18). |
+| `maak_json_N1-W02.py` · `valideer_structuur_N1-W02.py` | v1.1 · v1 | 7T/8T | JSON (schema v1-structuur) en structuurtoets (geen schemavalidatie: schema v1 niet in de chat). |
 
 ## md5 (2026-10-23)
 ```
+2b0ce81e7e783a5e1564230553d55eab  app_naar_master.py
 797af8baa3ac2d8770234d3c05318fad  apply_log.py
 0a6838875c8262c532dba5e704a982e4  check_N1-W03.py
 cf2cd1e80cc0e18534d89e606266a606  keten_P2_N1-W03.sh
 352d0989a4e5445b99ea6a804a48b03e  maak_bundel_P2_N1-W03.py
 65608641f395ee3fe7b3a227e370a5b0  maak_html_bdi.mjs
+b4b39e8d402388f1d944f7b48b77d05f  maak_json_N1-W02.py
+280872f61d24e0612fb26148fc80e6d4  maak_manifest_N1-W03.py
 3a2f7b4ef8b676d685df29ccc1348fac  maak_proef_N1-W03.py
+924a42646aa8678a6c250a4f86e9effa  maak_sql_N1-W03.py
+641def3c77cd59992fdf200fc254bbfb  maak_verwacht_per_stap_N1-W03.py
 5244ed49da90061fc30f1ed832b631c8  negatief_apply_N1-W03.py
 ca6b6e803b6007bd556bbd7b2dcc997d  negatief_verwerking_N1-W03.py
+427f3f158c0ba947953ee3a5f80cef73  p3_leescontrole_N1-W03.py
+a461af7222be45b5e5b07f609045ca09  p4_log_stap_N1-W03.py
+02593197df3aaed75922a839df458e8d  p4_stap_N1-W03.py
+4ebdfca0958d42503833684e0bd11b8e  rapport_7D_N1-W03.py
 d3b680219026e419af05a63b713d30be  rendertoets_N1-W03.py
+13f52ed91f3408b3e17c8f3c1e946b2d  replica_test_N1-W03.py
 06dd21b7e203673ffb5729fffd9ad664  review_bulk.py
 ddb289a2da42565ef81c44f1459b9f4e  tashkil_scan_N1-W03.py
 21170e1ec58d89c6a092517f3f91c6f0  telrapport_P2_N1-W03.py
+67f4857fa686a984869b3eb5bf2c9d73  valideer_structuur_N1-W02.py
 257e3ab6e4f902d77d2ef5f859145cb5  verwerk_antwoord_P2_N1-W03.py
 15568f0ede8c0fbcae97c554b43ad2e6  verwerk_p2_N1-W03.py
 ```
