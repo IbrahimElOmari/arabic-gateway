@@ -139,7 +139,7 @@ export default function StudentExerciseResultPage() {
             {pendingManual ? (
               <Badge variant="outline" className="text-sm">
                 <Hourglass className="h-3 w-3 me-1" aria-hidden="true" />
-                {t("studentExercises.pendingTeacher", "Wacht nog op nakijk door de leerkracht")}
+                {t("studentExercises.pendingTeacher", "Wacht nog op nakijk door de docent")}
               </Badge>
             ) : passed ? (
               <Badge className="text-sm">
@@ -248,7 +248,7 @@ export default function StudentExerciseResultPage() {
                   <div className="rounded-md bg-muted/50 p-3">
                     <div className="text-xs font-semibold text-muted-foreground mb-1 flex items-center gap-1">
                       <MessageSquare className="h-3 w-3" aria-hidden="true" />
-                      {t("studentExercises.teacherFeedback", "Leerkracht-feedback")}
+                      {t("studentExercises.teacherFeedback", "Docentfeedback")}
                     </div>
                     <div className="text-sm whitespace-pre-wrap">{a.feedback}</div>
                   </div>
@@ -258,7 +258,7 @@ export default function StudentExerciseResultPage() {
                   <div key={f.id} className="rounded-md bg-muted/50 p-3">
                     <div className="text-xs font-semibold text-muted-foreground mb-1 flex items-center gap-1">
                       <MessageSquare className="h-3 w-3" aria-hidden="true" />
-                      {t("studentExercises.teacherFeedback", "Leerkracht-feedback")}
+                      {t("studentExercises.teacherFeedback", "Docentfeedback")}
                     </div>
                     <div className="text-sm whitespace-pre-wrap">{f.feedback_text}</div>
                   </div>

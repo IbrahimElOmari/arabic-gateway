@@ -243,7 +243,7 @@ function ClassExercisesTab() {
             user_id: selected.student_id,
             type: "submission_feedback",
             title: t("teacher.feedbackPublished", "Nieuwe feedback beschikbaar"),
-            message: t("teacher.feedbackPublishedMessage", "Je leerkracht heeft je inzending nagekeken."),
+            message: t("teacher.feedbackPublishedMessage", "Je docent heeft je inzending nagekeken."),
             data: { student_answer_id: id },
           })
         );

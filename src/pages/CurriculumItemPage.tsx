@@ -648,7 +648,7 @@ export default function CurriculumItemPage() {
               <p>
                 {t(
                   "curriculum.awaitingTeacherReview",
-                  "Je leerkracht beoordeelt je antwoord en geeft feedback."
+                  "Je docent beoordeelt je antwoord en geeft feedback."
                 )}
               </p>
             </div>
@@ -696,7 +696,7 @@ export default function CurriculumItemPage() {
           {/* Teacher feedback on the student's own attempts (F5) */}
           {!isStaff && (myFeedback ?? []).length > 0 && (
             <div className="space-y-2">
-              <p className="text-sm font-semibold">{t("curriculum.teacherFeedback", "Feedback van je leerkracht")}</p>
+              <p className="text-sm font-semibold">{t("curriculum.teacherFeedback", "Feedback van je docent")}</p>
               {(myFeedback ?? []).map((f) => (
                 <div key={f.id} className="rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">
                   <div className="flex items-center justify-between mb-1">
