@@ -70,6 +70,11 @@ function normItem(s: string, strict: boolean | null | undefined): string {
   return strict ? normalize(s) : normalize(stripTashkeel(s));
 }
 
+// Gatentekst: sleutel van alleen cijfers (eventueel met dubbele punt, bv. 12:30) -> numeriek toetsenbord.
+function isNumericKey(key: string | undefined): boolean {
+  return /^[0-9:]+$/.test((key ?? "").trim());
+}
+
 // Arabic run: Arabic-block characters (incl. tashkeel) joined only by spaces or Arabic
 // punctuation, with at least one letter. Each run gets its own <bdi> so that separators,
 // digits and Latin text between runs keep their logical order in an LTR paragraph
@@ -422,10 +427,13 @@ export default function CurriculumItemPage() {
         return (
           <div className="space-y-3">
             {cur.question && <p className="text-muted-foreground">{isolateArabic(cur.question)}</p>}
-            {blanks.map((_, i) => (
+            {blanks.map((blank, i) => (
               <div key={i} className="flex items-center gap-2">
                 <Label className="w-16">#{i + 1}</Label>
                 <Input
+                  inputMode={isNumericKey(blank) ? "numeric" : undefined}
+                  pattern={isNumericKey(blank) ? "[0-9:]*" : undefined}
+                  autoComplete={isNumericKey(blank) ? "off" : undefined}
                   value={fills[i] ?? ""}
                   onChange={(e) => {
                     const next = [...fills];
