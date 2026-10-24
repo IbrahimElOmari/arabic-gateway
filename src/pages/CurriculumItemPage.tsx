@@ -320,7 +320,10 @@ export default function CurriculumItemPage() {
         }
         uploadPath = path;
         answerText = path;
-        isCorrect = true; // Manual review; mark as submitted/correct for progress tracking
+        // Handmatige beoordeling: geen automatisch oordeel. is_correct = null zet de inzending
+        // in de docentwachtrij (TeacherReviewQueuePage) en in de badge (AppSidebar).
+        isCorrect = null;
+        pending = true;
         break;
       }
     }
