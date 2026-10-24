@@ -12,7 +12,8 @@ Branch `content/N1-W04-inhoud` (vanaf `main` @ `e7317258`). Geen PR en geen merg
 | `keten_P2_N1-W04.sh` | v1.0 | 4T/3T | de P2-keten; argument `a|b` = variant van `U4-luisteren-04-3`. | `a2a35f4c7f62c26034b0d040dc9bec94` |
 | `keten_P3_N1-W04.sh` | v1.3 | 7D/7T/8T | de P3-keten uit het goedgekeurde log (na_p3/) en de back-ups; v1.1 proefgrendel (9T P3 V3); v1.2 definitieve stand; v1.3 `WM=` en `TESTLEERDER=<uuid>` (zonder uuid bit-gelijk). | `7cb43bf4d8d7f0763545d908b3d36366` |
 | `log_naar_md_N1-W04.py` | v1 | 1D | log → leesbare markdown. | `90d6dd4a493e57f164345cfe70fc62f1` |
-| `maak_bundel_deel3_N1-W04.py` | v1.0 | 1T | bundel deel 3 met MD5-manifest. | `78a551df8e24a3e4147bdd165d664488` |
+| `maak_bundel_deel3_N1-W04.py` | v1.0 | 1T | bundel deel 3 met MD5-manifest (definitieve versie: met de W04stap0b-export, de ULTIEME lijst, de master `4673c3eb…` en de voorspelde export voor keten v1.3 en herbouw_master). | `d1bff678a0b2d0a8bec31469f2adbe42` |
+| `maak_bundel_deel4_N1-W04.py` | v1.0 | 1T | bundel deel 4 (afsluiting na P4: master, verse export, verwachte W05-export, P4-log en ruwe uitvoer, nazorg, kern) met MD5-manifest. | `21602e4faa8c5bc1b7c44df73943e834` |
 | `maak_draaiboek_P4_N1-W04.py` | v3 | 1T | het P4-draaiboek uit manifest en verwachtingen; variant a (54 aanroepen) of b (37); afgekapte plakbeurt → splitsen. | `802c4dc11cfb5711e1bbeaa14bece9d2` |
 | `maak_html_bdi.mjs` | v1 | 3T | haalt `isolateArabic` uit de TSX van de checkout. | `65608641f395ee3fe7b3a227e370a5b0` |
 | `maak_json_N1-W02.py` | v1.1 | 7T | JSON per week. | `b4b39e8d402388f1d944f7b48b77d05f` |
