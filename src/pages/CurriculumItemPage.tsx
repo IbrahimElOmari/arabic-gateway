@@ -216,6 +216,8 @@ export default function CurriculumItemPage() {
   const isStaff = isAdmin || isTeacher;
   const hasAudioOrVideo = (linkedMedia ?? []).some((m) => m.kind === "audio" || m.kind === "video");
   const showArabicSource = isStaff || !hasAudioOrVideo;
+  // Opname en upload kijkt de docent na: de leerder krijgt een neutrale melding, geen "Juist!".
+  const isTeacherReviewed = cur.exercise_type === "audio-opname" || cur.exercise_type === "bestand-upload";
 
   const orderedList = unitItems ?? [];
   const currentIndex = orderedList.findIndex((it) => it.id === cur.id);
@@ -334,8 +336,8 @@ export default function CurriculumItemPage() {
         score: isCorrect === true ? cur.points ?? 1 : 0,
       });
       setSubmitted({
-        correct: pending ? null : (isCorrect as boolean),
-        feedback: pending ? "" : (isCorrect ? cur.feedback_correct : cur.feedback_incorrect),
+        correct: pending || isTeacherReviewed ? null : (isCorrect as boolean),
+        feedback: pending || isTeacherReviewed ? "" : (isCorrect ? cur.feedback_correct : cur.feedback_incorrect),
       });
     } catch (e: any) {
       toast({ variant: "destructive", title: t("common.error", "Fout"), description: e?.message });
@@ -637,7 +639,13 @@ export default function CurriculumItemPage() {
           {renderInteraction()}
 
           {/* Result */}
-          {submitted && submitted.correct === null && (
+          {submitted && submitted.correct === null && isTeacherReviewed && (
+            <div role="status" className="rounded-md p-4 border border-primary/30 bg-primary/5 text-sm">
+              <p className="font-semibold mb-1">{t("curriculum.submittedPending", "Ingeleverd.")}</p>
+              <p>{t("curriculum.mediaAwaitingReview", "Je docent kijkt je inzending na.")}</p>
+            </div>
+          )}
+          {submitted && submitted.correct === null && !isTeacherReviewed && (
             <div
               dir="rtl"
               className="rounded-md p-4 border border-primary/30 bg-primary/5 text-sm"
