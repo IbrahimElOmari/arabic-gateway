@@ -642,7 +642,13 @@ export default function CurriculumItemPage() {
           {submitted && submitted.correct === null && isTeacherReviewed && (
             <div role="status" className="rounded-md p-4 border border-primary/30 bg-primary/5 text-sm">
               <p className="font-semibold mb-1">{t("curriculum.submittedPending", "Ingeleverd.")}</p>
-              <p>{t("curriculum.mediaAwaitingReview", "Je docent kijkt je inzending na.")}</p>
+              {/* B26: de zelfcontrole van het item (feedback_correct, bv. «Je opname is ontvangen. Luister hem terug: …»)
+                  blijft zichtbaar; alleen het oordeel «Juist!» verdwijnt. Zonder eigen tekst: de algemene zin. */}
+              {cur.feedback_correct ? (
+                <p>{isolateArabic(cur.feedback_correct)}</p>
+              ) : (
+                <p>{t("curriculum.mediaAwaitingReview", "Je docent kijkt je inzending na.")}</p>
+              )}
             </div>
           )}
           {submitted && submitted.correct === null && !isTeacherReviewed && (
