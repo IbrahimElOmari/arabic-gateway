@@ -226,6 +226,11 @@ export default function CurriculumItemPage() {
   const nothingChosen =
     (cur.exercise_type === "meerkeuze" && !answer) ||
     (cur.exercise_type === "meerdere-antwoorden" && !(Array.isArray(answer) && answer.length > 0));
+  // Rangschikken: de sleutel moet precies één segment per tegel hebben. Anders is het item niet
+  // correct ingesteld; dan geen stille terugval op de optievolgorde maar een duidelijke melding.
+  const orderKeySegments = (cur.correct_answer ?? "").split("|").length;
+  const orderKeyMismatch =
+    cur.exercise_type === "rangschikken" && (!(cur.correct_answer ?? "").trim() || orderKeySegments !== opts.length);
 
   function resetForNewItem() {
     setSubmitted(null);
@@ -275,12 +280,12 @@ export default function CurriculumItemPage() {
         answerJson = order;
         answerText = order.join(" | ");
         const expected = (cur.correct_answer ?? "").split("|").map((v) => normItem(v, cur.strict_tashkeel));
-        if (expected.length === order.length) {
-          isCorrect = order.every((v, i) => normItem(v, cur.strict_tashkeel) === expected[i]);
-        } else {
-          // Fallback: correct order = original options array
-          isCorrect = opts.every((v, i) => normItem(v, cur.strict_tashkeel) === normItem(order[i] ?? "", cur.strict_tashkeel));
+        if (orderKeyMismatch || expected.length !== order.length) {
+          // Geen terugval op de optievolgorde: zonder geldige sleutel wordt er niet nagekeken.
+          toast({ variant: "destructive", title: t("curriculum.itemMisconfigured", "Dit item is nog niet correct ingesteld.") });
+          return;
         }
+        isCorrect = order.every((v, i) => normItem(v, cur.strict_tashkeel) === expected[i]);
         break;
       }
       case "koppelen": {
@@ -439,6 +444,22 @@ export default function CurriculumItemPage() {
         );
       }
       case "rangschikken":
+        if (orderKeyMismatch) {
+          return (
+            <div role="alert" className="rounded-md p-4 border border-destructive bg-destructive/10 text-sm">
+              <p className="font-semibold">{t("curriculum.itemMisconfigured", "Dit item is nog niet correct ingesteld.")}</p>
+              {isStaff && (
+                <p className="mt-1">
+                  {t(
+                    "curriculum.orderKeyMismatch",
+                    "De sleutel heeft {{keys}} segment(en), maar er zijn {{tiles}} tegels. Pas de sleutel of de opties aan.",
+                    { keys: orderKeySegments, tiles: opts.length }
+                  )}
+                </p>
+              )}
+            </div>
+          );
+        }
         return (
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
@@ -731,7 +752,7 @@ export default function CurriculumItemPage() {
             </Button>
             <div className="flex gap-2">
               {!submitted ? (
-                <Button onClick={handleSubmit} disabled={submitAttempt.isPending || nothingChosen}>
+                <Button onClick={handleSubmit} disabled={submitAttempt.isPending || nothingChosen || orderKeyMismatch}>
                   {submitAttempt.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                   {t("curriculum.submit", "Indienen")}
                 </Button>
