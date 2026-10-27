@@ -200,13 +200,17 @@ export default function CurriculumItemPage() {
     },
   });
 
-  if (isLoading || !item) {
+  const access = useUnitAccess(item?.unit_code);
+
+  if (isLoading || !item || access.allowed === null) {
     return (
       <div className="flex justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
+  if (!access.allowed) return <UnitLockedNotice unlockDate={access.unit?.unlock_date} />;
+
   const cur: Item = item;
 
   const opts: string[] = Array.isArray(cur.options) ? cur.options : [];

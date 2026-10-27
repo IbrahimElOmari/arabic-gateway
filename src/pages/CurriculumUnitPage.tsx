@@ -13,6 +13,8 @@ import { CurriculumItemEditDialog, type EditableItem } from "@/components/curric
 import { CurriculumItemCreateDialog } from "@/components/curriculum/CurriculumItemCreateDialog";
 import { deleteCurriculumItem, reorderCurriculumItems, setUnitPublished } from "@/lib/curriculum-admin";
 import { supabase } from "@/integrations/supabase/client";
+import { useUnitAccess } from "@/hooks/use-accessible-units";
+import { UnitLockedNotice } from "@/components/curriculum/UnitLockedNotice";
 
 const SKILLS = ["lezen", "schrijven", "luisteren", "spreken", "grammatica", "woordenschat"] as const;
 
@@ -48,6 +50,7 @@ export default function CurriculumUnitPage() {
   const [skillFilter, setSkillFilter] = useState<string>("all");
   const [editing, setEditing] = useState<EditableItem | null>(null);
   const [creating, setCreating] = useState(false);
+  const access = useUnitAccess(unitCode);
 
   const { data: unit } = useQuery({
     queryKey: ["curriculum-unit", unitCode],
@@ -168,6 +171,15 @@ export default function CurriculumUnitPage() {
 
   const title = unit?.title_nl?.trim() || `Unit ${unit?.week_start ?? unit?.display_order ?? unitCode}`;
   const skillsPresent = Array.from(new Set((items ?? []).map((i) => i.skill)));
+
+  if (access.allowed === null) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+  if (!access.allowed) return <UnitLockedNotice unlockDate={access.unit?.unlock_date} />;
 
   return (
     <div className="container py-8">
