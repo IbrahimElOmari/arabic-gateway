@@ -7,7 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, BookOpen } from "lucide-react";
+import { Loader2, BookOpen, Lock } from "lucide-react";
+import { useAccessibleUnits } from "@/hooks/use-accessible-units";
 
 interface Unit {
   code: string;
@@ -26,8 +27,10 @@ interface ProgressRow {
 }
 
 export default function SelfStudyPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const { data: access, isLoading: accessLoading } = useAccessibleUnits();
+  const accessByUnit = new Map((access ?? []).map((a) => [a.unit_code, a]));
 
   const { data: units, isLoading: unitsLoading } = useQuery({
     queryKey: ["curriculum-units"],
@@ -71,8 +74,8 @@ export default function SelfStudyPage() {
     return acc;
   }, {});
 
-  const isLoading = unitsLoading || (unitCodes.length > 0 && countsLoading);
-  const visibleUnits = (units ?? []).filter((u) => (countsByUnit?.[u.code] ?? 0) > 0);
+  const isLoading = unitsLoading || accessLoading || (unitCodes.length > 0 && countsLoading);
+  const visibleUnits = (units ?? []).filter((u) => accessByUnit.has(u.code) && (countsByUnit?.[u.code] ?? 0) > 0);
 
   return (
     <div className="container py-8">
@@ -94,9 +97,10 @@ export default function SelfStudyPage() {
             const p = progressByUnit[u.code];
             const pct = total > 0 && p ? Math.round((p.items_completed / total) * 100) : 0;
             const title = u.title_nl?.trim() || `Unit ${u.week_start ?? u.display_order}`;
-            return (
-              <Link key={u.code} to={`/self-study/unit/${u.code}`}>
-                <Card className="h-full transition-all hover:shadow-lg hover:border-primary/50">
+            const acc = accessByUnit.get(u.code);
+            const locked = !acc?.is_accessible;
+            const card = (
+                <Card className={locked ? "h-full opacity-60" : "h-full transition-all hover:shadow-lg hover:border-primary/50"}>
                   <CardHeader>
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
@@ -113,6 +117,7 @@ export default function SelfStudyPage() {
                           {total > 0 && ` · ${total} ${t("selfStudy.exercises", "oefeningen")}`}
                         </CardDescription>
                       </div>
+                      {locked && <Lock className="h-5 w-5 text-muted-foreground shrink-0" aria-label={t("selfStudy.locked", "Vergrendeld")} />}
                       {u.cefr_from && (
                         <Badge variant="secondary" className="shrink-0">
                           {u.cefr_from}
@@ -131,10 +136,21 @@ export default function SelfStudyPage() {
                         </span>
                       </div>
                       <Progress value={pct} className="h-2" />
+                      {locked && (
+                        <p className="text-sm text-muted-foreground">
+                          {acc?.unlock_date
+                            ? `${t("selfStudy.opensOn", "Opent op")} ${new Date(acc.unlock_date).toLocaleDateString(i18n.language)}`
+                            : t("selfStudy.notYetOpen", "Nog niet vrijgegeven")}
+                        </p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
-              </Link>
+            );
+            return locked ? (
+              <div key={u.code} aria-disabled="true">{card}</div>
+            ) : (
+              <Link key={u.code} to={`/self-study/unit/${u.code}`}>{card}</Link>
             );
           })}
         </div>
