@@ -177,6 +177,18 @@ export default function CurriculumItemPage() {
   const [orderingState, setOrderingState] = useState<string[] | null>(null);
   const currentOrder = orderingState ?? shuffledOptions;
 
+  // Koppelen: geschudde rechterkolom. Deze hook staat bewust hier, vóór de vroege return bij het laden en buiten
+  // renderInteraction(): een hook die alleen in een render-tak draait, verandert het aantal hooks tussen renders
+  // (React #310 bij het eerste bezoek, #300 na het insturen) en geeft een foutscherm (rules-of-hooks).
+  const shuffledRights = useMemo(() => {
+    if (!item || item.exercise_type !== "koppelen") return [];
+    const rights = (item.correct_answer ?? "")
+      .split("|")
+      .map((p) => (p ?? "").split("=")[1])
+      .filter(Boolean) as string[];
+    return shuffle(rights);
+  }, [item]);
+
   const submitAttempt = useMutation({
     mutationFn: async (payload: { is_correct: boolean | null; answer_text: string; answer_json: any; upload_path?: string | null; score: number }) => {
       if (!user || !item) throw new Error("not ready");
@@ -456,9 +468,6 @@ export default function CurriculumItemPage() {
         );
       case "koppelen": {
         const lefts = opts;
-        const expectedPairs = (cur.correct_answer ?? "").split("|");
-        const rights = expectedPairs.map((p) => (p ?? "").split("=")[1]).filter(Boolean) as string[];
-        const shuffledRights = useMemoShuffle(rights, cur.id);
         const pairs: Record<string, string> = (answer ?? {}) as Record<string, string>;
         return (
           <div className="space-y-2">
@@ -773,7 +782,3 @@ export default function CurriculumItemPage() {
   );
 }
 
-// Stable shuffle keyed by item id
-function useMemoShuffle(arr: string[], key: string): string[] {
-  return useMemo(() => shuffle(arr), [key, arr.length]);
-}
