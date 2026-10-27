@@ -316,6 +316,51 @@ export type Database = {
           },
         ]
       }
+      class_curriculum_schedules: {
+        Row: {
+          class_id: string
+          created_at: string
+          id: string
+          is_unlocked: boolean
+          unit_code: string
+          unlock_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          id?: string
+          is_unlocked?: boolean
+          unit_code: string
+          unlock_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          id?: string
+          is_unlocked?: boolean
+          unit_code?: string
+          unlock_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_curriculum_schedules_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_curriculum_schedules_unit_code_fkey"
+            columns: ["unit_code"]
+            isOneToOne: false
+            referencedRelation: "curriculum_units"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       class_enrollments: {
         Row: {
           class_id: string
@@ -358,6 +403,7 @@ export type Database = {
         Row: {
           created_at: string
           currency: string | null
+          curriculum_all_unlocked: boolean
           description: string | null
           end_date: string | null
           id: string
@@ -379,6 +425,7 @@ export type Database = {
         Insert: {
           created_at?: string
           currency?: string | null
+          curriculum_all_unlocked?: boolean
           description?: string | null
           end_date?: string | null
           id?: string
@@ -400,6 +447,7 @@ export type Database = {
         Update: {
           created_at?: string
           currency?: string | null
+          curriculum_all_unlocked?: boolean
           description?: string | null
           end_date?: string | null
           id?: string
@@ -793,6 +841,7 @@ export type Database = {
           description_nl: string
           display_order: number
           id: string
+          level_id: string | null
           title_ar: string
           title_en: string
           title_nl: string
@@ -808,6 +857,7 @@ export type Database = {
           description_nl?: string
           display_order: number
           id?: string
+          level_id?: string | null
           title_ar?: string
           title_en?: string
           title_nl?: string
@@ -823,6 +873,7 @@ export type Database = {
           description_nl?: string
           display_order?: number
           id?: string
+          level_id?: string | null
           title_ar?: string
           title_en?: string
           title_nl?: string
@@ -830,7 +881,15 @@ export type Database = {
           week_end?: number | null
           week_start?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "curriculum_units_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "levels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       data_retention_log: {
         Row: {
@@ -3318,6 +3377,7 @@ export type Database = {
         Returns: number
       }
       can_access_curriculum: { Args: { _user_id: string }; Returns: boolean }
+      can_manage_class: { Args: { _class_id: string }; Returns: boolean }
       cancel_user_deletion: { Args: { p_user_id: string }; Returns: undefined }
       cleanup_rate_limit_buckets: { Args: never; Returns: number }
       cm_grade_answer: {
@@ -3362,6 +3422,10 @@ export type Database = {
         Args: { p_other_user_id: string }
         Returns: string
       }
+      curriculum_unit_accessible: {
+        Args: { _unit_code: string; _user_id: string }
+        Returns: boolean
+      }
       generate_ticket_number: { Args: never; Returns: string }
       get_cron_job_status: {
         Args: never
@@ -3376,6 +3440,15 @@ export type Database = {
           last_run_started_at: string
           last_run_status: string
           schedule: string
+        }[]
+      }
+      get_my_accessible_units: {
+        Args: never
+        Returns: {
+          is_accessible: boolean
+          level_id: string
+          unit_code: string
+          unlock_date: string
         }[]
       }
       get_upcoming_deletions: {
@@ -3406,6 +3479,10 @@ export type Database = {
         Returns: boolean
       }
       increment_discount_usage: { Args: { p_code: string }; Returns: undefined }
+      init_class_curriculum_schedule: {
+        Args: { _class_id: string }
+        Returns: number
+      }
       is_teacher_of: { Args: { _student: string }; Returns: boolean }
       mark_user_for_deletion: {
         Args: { p_unenrolled_at?: string; p_user_id: string }
@@ -3434,6 +3511,10 @@ export type Database = {
         }
         Returns: string
       }
+      shift_class_schedule: {
+        Args: { _class_id: string; _days: number }
+        Returns: number
+      }
       start_direct_chat: { Args: { _other: string }; Returns: string }
       submit_curriculum_attempt: {
         Args: {
@@ -3445,6 +3526,7 @@ export type Database = {
         }
         Returns: Json
       }
+      unlock_next_class_unit: { Args: { _class_id: string }; Returns: string }
       update_user_streak: { Args: { p_user_id: string }; Returns: number }
       user_can_access_lesson: {
         Args: { _lesson_id: string; _user_id: string }
@@ -3561,12 +3643,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3590,11 +3672,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3615,11 +3697,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3640,11 +3722,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3657,11 +3739,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

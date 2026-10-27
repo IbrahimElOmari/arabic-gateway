@@ -4,6 +4,8 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiQuery, apiMutate } from "@/lib/supabase-api";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUnitAccess } from "@/hooks/use-accessible-units";
+import { UnitLockedNotice } from "@/components/curriculum/UnitLockedNotice";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -200,13 +202,17 @@ export default function CurriculumItemPage() {
     },
   });
 
-  if (isLoading || !item) {
+  const access = useUnitAccess(item?.unit_code);
+
+  if (isLoading || !item || access.allowed === null) {
     return (
       <div className="flex justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
+  if (!access.allowed) return <UnitLockedNotice unlockDate={access.unit?.unlock_date} />;
+
   const cur: Item = item;
 
   const opts: string[] = Array.isArray(cur.options) ? cur.options : [];

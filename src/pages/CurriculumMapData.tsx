@@ -37,9 +37,10 @@ export default function CurriculumMapData() {
         return;
       }
 
-      const [{ data: unitsData, error: unitsErr }, { data: progressData, error: progErr }] =
+      const [{ data: unitsData, error: unitsErr }, { data: accData }, { data: progressData, error: progErr }] =
         await Promise.all([
           supabase.from("curriculum_units").select("code, display_order"),
+          supabase.rpc("get_my_accessible_units"),
           supabase
             .from("curriculum_progress_by_skill")
             .select("unit_code, skill, items_correct")
@@ -77,7 +78,9 @@ export default function CurriculumMapData() {
         return;
       }
 
-      setUnits((unitsData || []).map((u: any) => ({ code: u.code, display_order: u.display_order ?? null })));
+      const allowedCodes = new Set(((accData as any[]) || []).map((a) => a.unit_code));
+      fetchedItems = fetchedItems.filter((i) => allowedCodes.has(i.unit_code));
+      setUnits((unitsData || []).filter((u: any) => allowedCodes.has(u.code)).map((u: any) => ({ code: u.code, display_order: u.display_order ?? null })));
       setItems(fetchedItems);
       setProgress((progressData || []).map((p: any) => ({
         unit_code: p.unit_code,

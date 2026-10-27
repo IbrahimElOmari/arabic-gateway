@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Users, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ClassCurriculumScheduleManager } from "@/components/curriculum/ClassCurriculumScheduleManager";
 
 interface ClassRow {
   id: string;
@@ -175,6 +176,7 @@ export default function TeacherWorkspacePage() {
                       ))}
                     </ul>
                   )}
+                  <ClassCurriculumScheduleManager classId={cls.id} />
                 </CardContent>
               </Card>
             );
