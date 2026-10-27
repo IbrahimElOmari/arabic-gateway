@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1793128269445,
+      "tag": "0000_class_curriculum_schedules",
+      "breakpoints": true
+    }
+  ]
+}
