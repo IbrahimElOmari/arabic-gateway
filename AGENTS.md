@@ -1,0 +1,1 @@
+- Self-study unit access is decided server-side by `curriculum_unit_accessible` / `get_my_accessible_units` (class schedule per level, once-started-stays-open); UI only mirrors it, so never re-implement the rule client-side.
