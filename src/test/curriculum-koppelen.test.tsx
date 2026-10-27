@@ -68,6 +68,8 @@ vi.mock("@/lib/supabase-api", () => ({
     return [];
   }),
   apiMutate: (...args: unknown[]) => apiMutate(...args),
+  // Unit-toegang (main 244de3e, useUnitAccess): de testleerder heeft toegang tot U6.
+  apiRpc: vi.fn(async () => [{ unit_code: "U6", level_id: null, is_accessible: true, unlock_date: null }]),
 }));
 
 import CurriculumItemPage from "@/pages/CurriculumItemPage";
