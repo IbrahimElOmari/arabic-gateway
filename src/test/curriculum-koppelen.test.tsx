@@ -41,9 +41,26 @@ vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string, fallback?: string) => fallback || key, i18n: { language: "nl" } }),
   initReactI18next: { type: "3rdParty", init: () => {} },
 }));
+const ITEM2 = {
+  ...ITEM,
+  id: "22222222-2222-2222-2222-222222222222",
+  item_id: "U6-test-meerkeuze",
+  exercise_type: "meerkeuze",
+  display_order: 2,
+  instruction_nl: "Kies de betekenis.",
+  options: ["koud", "warm"],
+  correct_answer: "koud",
+  points: 1,
+};
+// Route en navigatie: «Volgende» wijzigt het itemId zoals de router dat doet (zelfde component, ander item).
+const route = vi.hoisted(() => ({ itemId: "11111111-1111-1111-1111-111111111111" }));
+const navigate = vi.hoisted(() => vi.fn((pad: string) => {
+  const m = pad.match(/\/self-study\/item\/(.+)$/);
+  if (m?.[1]) route.itemId = m[1];
+}));
 vi.mock("react-router-dom", () => ({
-  useParams: () => ({ itemId: "11111111-1111-1111-1111-111111111111" }),
-  useNavigate: () => vi.fn(),
+  useParams: () => ({ itemId: route.itemId }),
+  useNavigate: () => navigate,
   Link: ({ children, to, ...props }: { children: React.ReactNode; to: string }) => <a href={to} {...props}>{children}</a>,
 }));
 vi.mock("@/contexts/AuthContext", () => ({
@@ -60,11 +77,16 @@ vi.mock("@/lib/supabase-api", () => ({
   // Elke query krijgt een kettingbare nep-builder; de tabel en het einde (maybeSingle) bepalen het antwoord.
   apiQuery: vi.fn(async (table: string, build: (q: unknown) => unknown) => {
     let single = false;
+    const filters: Record<string, unknown> = {};
     const q: Record<string, unknown> = {};
-    for (const m of ["select", "eq", "in", "order"]) q[m] = () => q;
+    for (const m of ["select", "in", "order"]) q[m] = () => q;
+    q.eq = (kolom: string, waarde: unknown) => { filters[kolom] = waarde; return q; };
     q.maybeSingle = () => { single = true; return q; };
     build(q);
-    if (table === "curriculum_items") return single ? ITEM : [{ id: ITEM.id, display_order: 1, created_at: "2026-10-27", item_id: ITEM.item_id }];
+    if (table === "curriculum_items") {
+      if (single) return [ITEM, ITEM2].find((x) => x.id === filters.id) ?? null;
+      return [ITEM, ITEM2].map((x) => ({ id: x.id, display_order: x.display_order, created_at: "2026-10-27", item_id: x.item_id }));
+    }
     return [];
   }),
   apiMutate: (...args: unknown[]) => apiMutate(...args),
@@ -76,15 +98,21 @@ import CurriculumItemPage from "@/pages/CurriculumItemPage";
 
 function renderPage() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
+  const boom = () => (
     <QueryClientProvider client={qc}>
       <CurriculumItemPage />
     </QueryClientProvider>
   );
+  const r = render(boom());
+  return { ...r, herrender: () => r.rerender(boom()) };
 }
 
 describe("CurriculumItemPage · koppelen (C7)", () => {
-  beforeEach(() => apiMutate.mockClear());
+  beforeEach(() => {
+    apiMutate.mockClear();
+    navigate.mockClear();
+    route.itemId = ITEM.id;
+  });
 
   it("rendert na het laden de linkerkolom en een keuzelijst per rij, zonder foutscherm", async () => {
     renderPage();
@@ -115,5 +143,20 @@ describe("CurriculumItemPage · koppelen (C7)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Indienen" }));
     expect(await screen.findByText("Nog niet juist")).toBeInTheDocument();
     expect(screen.getByText("بَارِدٌ=koud")).toBeInTheDocument();
+  });
+
+  it("gaat met «Volgende» van een koppelen-item naar een meerkeuze-item, zonder foutscherm", async () => {
+    const { herrender } = renderPage();
+    await screen.findByText("بَارِدٌ");
+    const [eerste, tweede] = screen.getAllByRole("combobox") as [HTMLElement, HTMLElement];
+    fireEvent.change(eerste, { target: { value: "koud" } });
+    fireEvent.change(tweede, { target: { value: "warm" } });
+    fireEvent.click(screen.getByRole("button", { name: "Indienen" }));
+    await screen.findByText("Juist!");
+    fireEvent.click(screen.getByRole("button", { name: "Volgende" }));
+    expect(navigate).toHaveBeenCalledWith(`/self-study/item/${ITEM2.id}`);
+    herrender();
+    expect(await screen.findByText("Kies de betekenis.")).toBeInTheDocument();
+    expect(screen.queryAllByRole("combobox")).toHaveLength(0);
   });
 });
